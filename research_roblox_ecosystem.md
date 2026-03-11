@@ -406,23 +406,41 @@ Source C: External Assets (KitBash3D, Sketchfab, Unity Asset Store)
 - **Blender**: Decimation, UV unwrap, normal map baking, chunking
 - **Roblox Studio**: Import, arrange, set up SurfaceAppearance + StreamingEnabled
 
-#### Pipeline 3: UI Design (Figma → Roblox Assistant → Studio)
+#### Pipeline 3: UI (Claude Code / Roact / Roblox Assistant → Studio)
+
+Multiple approaches, no external design tool required:
 
 ```
-Figma
-  ↓ design UI screens (HUD, menus, scoreboards)
-Roblox Assistant (Figma-to-Studio MCP)
-  ↓ auto-generates ScreenGuis, Frames, Buttons
-Roblox Studio
-  ↓ refine layout, wire up to scripts
-Claude Code (via MCP)
-  ↓ writes LocalScripts that drive the UI
+Option A: Claude Code via MCP (fastest for iteration)
+  Claude Code
+    ↓ execute_luau to create ScreenGui/Frame/TextLabel hierarchy
+    ↓ or writes Roact components in .ts files
+  Roblox Studio
+    ↓ UI appears, test and refine
+
+Option B: Roact in roblox-ts (best for maintainability)
+  Claude Code
+    ↓ writes React-like UI components in TypeScript (@rbxts/roact)
+  roblox-ts → Rojo → Studio
+    ↓ UI is code-defined, git-tracked, version-controlled
+
+Option C: Roblox Assistant (quick prototyping)
+  You (in Studio)
+    ↓ "Create a HUD with timer, score, and role indicator"
+  Roblox Assistant
+    ↓ generates GUI objects directly in Studio
+
+Option D: Sketch mockups anywhere (reference only)
+  Any tool (paper, Canva, Affinity, etc.)
+    ↓ use as visual reference
+  Build actual UI via Option A, B, or C
 ```
 
 **Who does what:**
-- **You**: Design UI in Figma
-- **Roblox Assistant**: Converts Figma → Studio GUI objects
-- **Claude Code**: Writes the UI logic scripts
+- **You**: Sketch rough mockups (any tool), make design decisions
+- **Claude Code**: Writes UI components in TypeScript (Roact) or creates via MCP
+- **Roblox Assistant**: Quick UI prototyping from natural language
+- No Figma dependency
 
 #### Pipeline 4: AI-Assisted Content (Roblox Assistant / Cube AI → Studio)
 
@@ -464,21 +482,162 @@ WORLD-BUILDING SESSION:
   - Save .rbxlx (Studio's place file — not git-tracked)
 
 UI SESSION:
-  - Design in Figma → Roblox Assistant imports to Studio
-  - Claude Code writes UI logic via MCP
+  - Sketch mockup (paper/any tool) as reference
+  - Claude Code creates UI via Roact (.ts) or MCP execute_luau
+  - OR use Roblox Assistant in Studio for quick prototyping
 ```
+
+#### Team Collaboration
+
+Roblox has **Team Create** — built-in real-time collaboration in Studio (like Google Docs for 3D).
+
+| Concern | Solution |
+|---------|----------|
+| Code collaboration | Git + GitHub (via Rojo, roblox-ts) |
+| 3D world collaboration | **Team Create** (built into Studio) |
+| Reusable assets | **Packages** (Studio's asset versioning system) |
+| Game publishing | Roblox cloud (Studio publishes directly) |
+
+**Team Create features:**
+- Multiple people edit the same place simultaneously in Studio
+- See each other's cursors/selections in real-time
+- Auto-saves to Roblox cloud
+- Built-in version history with rollback
+- No merge conflicts — Roblox handles concurrent edits
+
+**2-person team split (Tokyo Playground):**
+
+| Role | Tools | What they do |
+|------|-------|-------------|
+| **Person A (systems/code)** | Terminal + Claude Code + MCP | Writes all scripts in roblox-ts, debugs via MCP, manages git/GitHub |
+| **Person B (art/level design)** | Roblox Studio (Team Create) | Imports PLATEAU/marketplace assets, uses Roblox AI, arranges/lights/polishes the 3D world |
+
+Both see each other's changes in real-time. Code and world never conflict — Rojo syncs scripts, Team Create syncs everything else.
 
 #### What Lives Where
 
 | Content | Location | Version Control |
 |---------|----------|-----------------|
-| Game scripts (.ts) | Filesystem → Rojo → Studio | Git (primary source of truth) |
-| 3D world, meshes, lighting | Roblox Studio (.rbxlx) | Studio file (not git-tracked) |
-| UI layouts | Roblox Studio | Studio file |
+| Game scripts (.ts) | Filesystem → Rojo → Studio | Git + GitHub |
+| 3D world, meshes, lighting | Roblox Studio | Team Create (Roblox cloud) |
+| UI layouts (if Roact) | Filesystem (.ts) | Git + GitHub |
+| UI layouts (if manual) | Roblox Studio | Team Create (Roblox cloud) |
+| Reusable assets | Studio Packages | Roblox Packages versioning |
 | Project config | Filesystem (tsconfig, rojo config) | Git |
 | Design docs | Filesystem | Git |
-| Figma designs | Figma cloud | Figma versioning |
 | PLATEAU source data | Local download | Not tracked (too large) |
+
+#### Testing & Build Process
+
+**Build speed (roblox-ts + Rojo):**
+```
+Save .ts file
+  → rbxtsc --watch: incremental transpile (50-200ms per file)
+  → Rojo serve: WebSocket sync to Studio (immediate)
+  → Total round-trip: ~500ms from save to Studio update
+```
+Hot-reload libraries (Rewire) can sync changes into a running playtest without full restart.
+
+**Playtesting modes in Studio:**
+
+| Mode | How | Use case |
+|------|-----|----------|
+| **F5 (Play)** | Server + client in one window | Quick single-player testing |
+| **Local Server** | Separate windows: Server + N simulated clients | Multiplayer testing locally (with network lag simulation) |
+| **Team Test** | Hosts on actual Roblox servers, devs join from Studio | Real-world network/performance testing |
+
+**Automated testing:**
+
+| Tool | Where it runs | Best for |
+|------|--------------|----------|
+| **Lune** | Terminal (no Studio) | Unit tests of pure logic — fast, CI-friendly |
+| **TestEZ** | Inside Studio | Integration/E2E tests with actual game state |
+| **MCP (execute_luau)** | Claude Code → Studio | Ad-hoc verification: run Luau assertions, read console |
+
+**MCP for testing workflow:**
+- `execute_luau`: Run assertions against game state
+- `start_stop_play` / `console_output`: Start playtest, capture logs
+- Not a full test framework, but useful for quick verification after changes
+
+#### Publishing & Deployment
+
+**Experience visibility settings:**
+
+| Visibility | Who can access |
+|-----------|---------------|
+| **Private** | Only you and collaborators |
+| **Friends** | Your friends list |
+| **Beta** (2025+) | Searchable/linkable but excluded from Recommended — standard soft-launch |
+| **Public** | Fully live |
+
+**Audience throttling**: Limit beta access by percentage or region before global rollout.
+
+**CI/CD via Open Cloud API (GitHub Actions):**
+- **Universe/Place API**: Push builds to staging or production on PR merge
+- **Asset Management API**: Upload images, meshes, audio programmatically
+- **DataStore API**: Seed test data or verify player state from CI
+
+#### Publishing & Moderation
+
+**No App Store-style review.** Publishing is instant and free.
+
+**Step-by-step:**
+1. Build in Roblox Studio
+2. File → Publish to Roblox (set name, description, icons — AI-scanned)
+3. Answer ~10-question Maturity Questionnaire (mandatory — unrated games are hidden from under-13)
+4. Set visibility (Private → Beta → Public)
+5. Game goes live
+
+**Fees:** None to publish. Badges cost 100 Robux each beyond 5/day. Revenue split: developer 70% / Roblox 30%.
+
+**Moderation:** Hybrid AI + human reviewers. Assets are AI-scanned on upload. High-traffic games get post-publish human audits. Violations → game set to Private + account strikes.
+
+**Banned content (all ratings):** Sexual content, gore, real-world tragedies, simulated gambling.
+
+**Developer requirements:**
+- ID Verification mandatory for Team Create, selling UGC, 18+ content
+- DevEx (cash out): must be 18+, 30,000+ earned Robux, Roblox Premium subscriber
+
+**Child safety (legal obligations):**
+- `PolicyService` API: mandatory — hides loot boxes in restrictive regions, social links for under-13
+- `TextService` filter: mandatory for any player text input
+- Odds disclosure: must show drop rates for randomized paid items
+
+**Japan-specific:** No restrictions on Tokyo themes. Comp-Gacha Ban applies (cannot require collecting all rare paid items to unlock a prize).
+
+#### Age Rating Strategy
+
+**Roblox Experience Guidelines ratings:**
+
+| Rating | Content | Who can play |
+|--------|---------|-------------|
+| **All Ages** | Minimal violence | Everyone |
+| **9+** | Mild fantasy violence | Everyone |
+| **13+** | Moderate violence, blood | Everyone (but invisible to parental-restricted under-13 accounts) |
+| **18+** | Heavy violence, language | ID-verified 18+ only |
+
+**Under-13 players = ~40% of daily active users:**
+
+| Age Group | Share of DAU |
+|-----------|-------------|
+| Under 9 | ~20% |
+| 9-12 | ~20% |
+| 13-16 | ~16% |
+| 17+ | ~44% |
+
+**Why ratings matter for discovery:**
+- Parents can set a hard ceiling (e.g., "All Ages only") — higher-rated games become completely invisible
+- All Ages / 9+ games appear on Home and Charts for **100% of users**
+- 13+ games are invisible to under-13 accounts with parental restrictions
+- Unrated games are hidden from ALL under-13 users by default
+
+**Tokyo Playground target: 9+**
+- Captures entire 9-12 bracket (~20% of platform) without parental consent issues
+- No visibility penalty with any age group
+- Mild cartoon violence (tag, dodgeball, can kick) is fine at 9+
+- Eligible for all ad targeting including under-13
+- Game content has nothing that requires 13+
+- Complete the Maturity Questionnaire before launch
 
 ---
 
@@ -495,20 +654,101 @@ UI SESSION:
 
 ---
 
-## 10. Feasibility Assessment for Tokyo Playground
+## 10. Pre-Development Readiness Review
 
-### Strengths
-- Mini-game platform pattern is proven on Roblox
-- Tokyo theming + neon/stylization works within Roblox visuals
-- PLATEAU provides real Shibuya geometry for free (CC BY 4.0)
-- Roblox AI reduces prop/material/terrain creation labor
-- Design doc already makes smart trade-offs (small MVP, modular systems)
+### Critical Assessment (Codex + Gemini, March 2026)
 
-### Risks
-- PLATEAU → Roblox pipeline requires Blender proficiency
-- AI-generated assets lack artistic consistency (manual curation needed)
-- Mobile performance requires careful optimization of city-scale map
-- Tokyo-specific assets (school interiors, station details) may need custom creation
+**Top-line verdict:** Strong concept, but the plan underestimates Roblox-specific production risk. Not ready to code yet — need scope reset and technical spike first.
 
-### Verdict
-**Absolutely achievable.** The combination of PLATEAU base geometry + Roblox AI for props/materials + Marketplace for Japanese items makes this far more feasible than building from scratch. The primary labor is the Blender decimation pipeline and final arrangement/polish in Studio.
+### MVP Scope: Too Ambitious
+
+Design doc's MVP (3 mini-games + lobby + 12 systems) is **2-3x overscoped** for a 2-person team new to Roblox.
+
+**Realistic MVP for 2 people:**
+- 1 polished mini-game (Can Kick) + simple lobby + match loop + persistence + analytics
+- Add mini-game #2 only after retention and performance are validated
+
+### Recommended Library Stack (roblox-ts, 2026)
+
+| Layer | Library | Purpose |
+|-------|---------|---------|
+| Framework | **Flamework** | Dependency injection, Components, Services |
+| UI | **@rbxts/react** + **@rbxts/flipper** | React-like UI with spring animations |
+| Networking | **Zap** or **Blink** | Buffer-based, type-safe (NOT raw RemoteEvents) |
+| State | **@rbxts/reflex** | Redux/Zustand-like state management |
+| Data | **ProfileStore** | Session locking, auto-migration, prevents double-spend |
+| Cleanup | **Janitor** | Memory leak prevention (event/thread/instance cleanup) |
+
+### Mini-Game Platform Architecture (FSM)
+
+Professional teams use a finite state machine:
+```
+VotingState → LoadingState → ActiveState → ResultsState → CleanupState
+```
+Maps to design doc's `Prepare → AssignRoles → StartRound → Tick → EndRound → RewardPlayers → Cleanup`.
+Formalize with Flamework Services before writing game logic.
+
+### Roblox-Specific Gotchas
+
+| Gotcha | What to do |
+|--------|-----------|
+| **Client-server security** | Client sends intent only. Server validates everything (distance, cooldowns, outcomes) |
+| **DataStore cooldown** | 6-second-per-key. Use ProfileStore caching layer, not raw DataStore |
+| **Connection leaks** | `.Connect()` doesn't auto-cleanup. Use Janitor for all event/thread disposal |
+| **StreamingEnabled** | Parts can stream out. Code defensively. Use `RequestStreamAroundAsync` for teleports. Design in from day one — retrofitting is painful |
+| **Replication lag** | ~100ms+. Play animations locally first, confirm server-side |
+| **Teleport testing** | Cannot test in Studio. Need live/private server testing |
+| **Script-per-object trap** | Use CollectionService tags + centralized Flamework Components |
+| **Network ownership** | Physics can be exploit vectors if not server-validated |
+| **Auto-generated collisions** | Too heavy on imported meshes. Use simplified collision meshes |
+| **UI on mobile** | Use Scale (not Offset) — mobile screens vary wildly |
+| **Streaming + buildings** | Use `ModelStreamingMode = Atomic` so buildings load entirely or not at all |
+
+### Missing Workflow Items
+
+| Item | Status |
+|------|--------|
+| Dev/staging/prod place IDs | Not set up |
+| CI pipeline (compile + lint + tests) | Not set up |
+| Analytics event schema | Not defined |
+| Rollback plan / feature flags | Not planned |
+| Economy model (earn rate vs spend rate) | Not designed |
+| Performance budget / Definition of Done | Not defined |
+| Branch strategy tied to place IDs | Not documented |
+
+### Asset Pipeline Risks (Untested)
+
+- Coordinate scale/orientation mismatches when importing PLATEAU data
+- Too many unique materials/textures → GPU memory spikes
+- Huge monolithic imports hurt streaming and occlusion culling
+- Need chunking strategy by district/cell with distance-based visibility
+- **Must test one Shibuya chunk on low-end mobile before committing to content production**
+
+### Monetization Timing
+
+- Don't ship monetization first
+- Don't leave monetization architecture to post-launch either
+- **Right approach:** Design economy hooks now, keep offers disabled. Implement commerce plumbing by late MVP (entitlements, catalog, purchase telemetry). Activate after core loop proves fun.
+
+### First 3 Steps Before Any Code
+
+**Step 1: Scope Reset (half day)**
+- Cut to 1 mini-game MVP (Can Kick)
+- Define non-negotiable quality bar
+- Create "defer" list for everything else
+
+**Step 2: Technical Risk Spike (2-3 days)**
+- Set up roblox-ts + Rojo + Flamework project
+- Build one vertical test: match flow → persistence → save/load
+- Import one PLATEAU Shibuya chunk → test on low-end mobile
+- Prove the pipeline works end-to-end
+
+**Step 3: Production Foundation (1 day)**
+- Dev/staging/prod place separation
+- CI pipeline (compile + lint)
+- Analytics event schema definition
+- ProfileStore data model design
+
+### Feasibility (Revised)
+
+**Achievable, but must respect the learning curve.** The combination of PLATEAU + Roblox AI + Marketplace makes world-building feasible. The real risk is not art — it's the Roblox-specific systems engineering (client-server security, DataStore, streaming, matchmaking) that trips up first-time developers. The technical spike will reveal how steep the curve actually is.

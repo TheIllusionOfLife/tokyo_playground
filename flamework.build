@@ -1,0 +1,14 @@
+{
+	"version": 1,
+	"flameworkVersion": "1.3.2",
+	"identifiers": {
+		"tokyo_playground:out/client/controllers/HudController@HudController": "client/controllers/HudController@HudController",
+		"tokyo_playground:out/client/controllers/InputController@InputController": "client/controllers/InputController@InputController",
+		"tokyo_playground:out/server/services/PlayerDataService@PlayerDataService": "server/services/PlayerDataService@PlayerDataService",
+		"tokyo_playground:out/server/services/GameStateService@GameStateService": "server/services/GameStateService@GameStateService",
+		"tokyo_playground:out/server/services/MatchService@MatchService": "server/services/MatchService@MatchService",
+		"tokyo_playground:out/server/services/MinigameService@MinigameService": "server/services/MinigameService@MinigameService",
+		"tokyo_playground:out/shared/network@GlobalEvents": "shared/network@GlobalEvents"
+	},
+	"metadata": {}
+}
