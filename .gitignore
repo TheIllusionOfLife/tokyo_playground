@@ -7,3 +7,14 @@ include/
 *.rbxl
 *.rbxlx.lock
 flamework.build
+
+# PLATEAU / Blender assets
+13113_shibuya-ku_pref_2023_citygml_2_op/
+13113_shibuya-ku_pref_2023_citygml_2_op.zip
+city.blend
+city.blend1
+city.glb
+city.fbx
+plateau_importer_fixed.zip
+iphone_13_mini_first_screenshot.png
+.DS_Store
