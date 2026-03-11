@@ -18,6 +18,11 @@ export class HudController implements OnStart {
 		const player = Players.LocalPlayer;
 		const playerGui = player.WaitForChild("PlayerGui") as PlayerGui;
 
+		const existing = playerGui.FindFirstChild("GameHud");
+		if (existing) {
+			existing.Destroy();
+		}
+
 		const screenGui = new Instance("ScreenGui");
 		screenGui.Name = "GameHud";
 		screenGui.ResetOnSpawn = false;

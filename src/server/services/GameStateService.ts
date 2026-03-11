@@ -23,7 +23,7 @@ export class GameStateService implements OnStart {
 			print(`[GameStateService] ${player.Name} is ready`);
 		});
 
-		this.gameLoop();
+		task.spawn(() => this.gameLoop());
 	}
 
 	private gameLoop() {

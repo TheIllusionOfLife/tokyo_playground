@@ -24,6 +24,13 @@ export class PlayerDataService implements OnStart {
 		for (const player of Players.GetPlayers()) {
 			task.spawn(() => this.onPlayerAdded(player));
 		}
+
+		// Release all profiles on server shutdown to prevent data loss
+		game.BindToClose(() => {
+			for (const [, profile] of this.profiles) {
+				profile.Release();
+			}
+		});
 	}
 
 	private onPlayerAdded(player: Player) {

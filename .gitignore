@@ -6,3 +6,4 @@ include/
 *.rbxlx
 *.rbxl
 *.rbxlx.lock
+flamework.build
