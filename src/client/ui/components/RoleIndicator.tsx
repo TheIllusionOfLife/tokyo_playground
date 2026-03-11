@@ -3,13 +3,15 @@ import { useSelector } from "@rbxts/react-reflex";
 import { GameStoreState } from "shared/store/game-store";
 import { MatchPhase, PlayerRole } from "shared/types";
 
-const ROLE_COLORS: Record<string, Color3> = {
+const ROLE_COLORS: Record<PlayerRole, Color3> = {
+	[PlayerRole.None]: Color3.fromRGB(255, 255, 255),
 	[PlayerRole.Oni]: Color3.fromRGB(220, 50, 50),
 	[PlayerRole.Hider]: Color3.fromRGB(50, 130, 220),
 	[PlayerRole.Spectator]: Color3.fromRGB(150, 150, 150),
 };
 
-const ROLE_LABELS: Record<string, string> = {
+const ROLE_LABELS: Record<PlayerRole, string> = {
+	[PlayerRole.None]: "",
 	[PlayerRole.Oni]: "ONI",
 	[PlayerRole.Hider]: "HIDER",
 	[PlayerRole.Spectator]: "SPECTATOR",
@@ -20,11 +22,11 @@ export function RoleIndicator() {
 	const matchPhase = useSelector((state: GameStoreState) => state.matchPhase);
 
 	if (role === PlayerRole.None || matchPhase !== MatchPhase.InProgress) {
-		return undefined!;
+		return undefined;
 	}
 
-	const color = ROLE_COLORS[role] ?? Color3.fromRGB(255, 255, 255);
-	const label = ROLE_LABELS[role] ?? role;
+	const color = ROLE_COLORS[role];
+	const label = ROLE_LABELS[role];
 
 	return (
 		<textlabel

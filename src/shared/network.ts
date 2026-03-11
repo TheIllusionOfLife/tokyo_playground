@@ -27,6 +27,7 @@ interface ServerToClientEvents {
 		timeRemaining: number,
 		role: PlayerRole,
 	): void;
+	playPointsUpdate(points: number, level: number): void;
 }
 
 interface ClientToServerEvents {

@@ -13,8 +13,9 @@ const PHASE_LABELS: Record<string, string> = {
 };
 
 function formatTime(seconds: number): string {
-	const mins = math.floor(seconds / 60);
-	const secs = math.floor(seconds % 60);
+	const clamped = math.max(0, seconds);
+	const mins = math.floor(clamped / 60);
+	const secs = math.floor(clamped % 60);
 	return `${mins}:${secs < 10 ? "0" : ""}${secs}`;
 }
 

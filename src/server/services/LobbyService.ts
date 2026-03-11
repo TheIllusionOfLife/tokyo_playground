@@ -10,9 +10,9 @@ export class LobbyService implements OnStart {
 	onStart() {
 		print("[LobbyService] Started");
 
-		this.lobbySpawns = CollectionService.GetTagged(
-			LOBBY_SPAWN_TAG,
-		) as BasePart[];
+		this.lobbySpawns = CollectionService.GetTagged(LOBBY_SPAWN_TAG).filter(
+			(i): i is BasePart => i.IsA("BasePart"),
+		);
 		print(`[LobbyService] Found ${this.lobbySpawns.size()} lobby spawns`);
 
 		Players.PlayerAdded.Connect((player) => {
@@ -34,15 +34,19 @@ export class LobbyService implements OnStart {
 			const spawn =
 				this.lobbySpawns[math.random(0, this.lobbySpawns.size() - 1)];
 			character.PivotTo(spawn.CFrame.add(new Vector3(0, 3, 0)));
+			print(`[LobbyService] ${player.Name} teleported to lobby`);
 		} else {
 			// Fallback: use first SpawnLocation in Workspace
 			const spawn = Workspace.FindFirstChildWhichIsA("SpawnLocation");
 			if (spawn) {
 				character.PivotTo(spawn.CFrame.add(new Vector3(0, 3, 0)));
+				print(
+					`[LobbyService] ${player.Name} teleported to lobby (fallback spawn)`,
+				);
+			} else {
+				print(`[LobbyService] Warning: no spawn found for ${player.Name}`);
 			}
 		}
-
-		print(`[LobbyService] ${player.Name} teleported to lobby`);
 	}
 
 	teleportToMatchArea(player: Player, position: Vector3) {

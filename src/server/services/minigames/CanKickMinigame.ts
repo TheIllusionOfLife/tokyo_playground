@@ -1,6 +1,10 @@
 import { Janitor } from "@rbxts/janitor";
 import { ServerStorage, Workspace } from "@rbxts/services";
-import { ONI_CATCH_RADIUS, ONI_COUNT_DURATION } from "shared/constants";
+import {
+	CAN_KICK_RADIUS,
+	ONI_CATCH_RADIUS,
+	ONI_COUNT_DURATION,
+} from "shared/constants";
 import { GlobalEvents } from "shared/network";
 import {
 	CanKickPlayerState,
@@ -20,6 +24,7 @@ export class CanKickMinigame implements IMinigame {
 	private canModel?: Model;
 	private jailZone?: Part;
 	private oniCounting = false;
+	private countdownThread?: thread;
 	private lastHintText = "";
 
 	constructor(private readonly serverEvents: ServerEvents) {}
@@ -106,7 +111,7 @@ export class CanKickMinigame implements IMinigame {
 		this.fireHintText("Oni is counting... Hide!");
 
 		// Countdown during counting
-		task.spawn(() => {
+		this.countdownThread = task.spawn(() => {
 			for (let i = ONI_COUNT_DURATION; i >= 1; i--) {
 				if (!this.oniCounting) break;
 				this.serverEvents.countdownTick.broadcast(i);
@@ -197,7 +202,7 @@ export class CanKickMinigame implements IMinigame {
 		const canPos = this.canModel.GetPivot().Position;
 		const dist = kickerPos.sub(canPos).Magnitude;
 
-		if (dist > ONI_CATCH_RADIUS) return; // Using catch radius for can too
+		if (dist > CAN_KICK_RADIUS) return;
 
 		// Free all jailed players
 		const freedIds: number[] = [];
@@ -255,7 +260,18 @@ export class CanKickMinigame implements IMinigame {
 		return this.playerStates;
 	}
 
+	removePlayer(userId: number) {
+		this.playerStates.delete(userId);
+		this.playerObjects.delete(userId);
+	}
+
 	cleanup() {
+		this.oniCounting = false;
+		if (this.countdownThread) {
+			task.cancel(this.countdownThread);
+			this.countdownThread = undefined;
+		}
+		this.lastHintText = "";
 		this.playerStates.clear();
 		this.playerObjects.clear();
 		this.canModel = undefined;

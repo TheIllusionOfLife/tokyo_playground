@@ -57,9 +57,14 @@ export class HudController implements OnStart {
 			gameStore.setScoreboard(entries);
 		});
 
-		this.events.matchSnapshot.connect((phase, _timeRemaining, role) => {
+		this.events.matchSnapshot.connect((phase, timeRemaining, role) => {
 			gameStore.setMatchPhase(phase);
 			gameStore.setRole(role);
+			gameStore.setTimeRemaining(timeRemaining);
+		});
+
+		this.events.playPointsUpdate.connect((points, level) => {
+			gameStore.setPlayPoints(points, level);
 		});
 
 		this.events.scoreUpdated.connect((_coins) => {

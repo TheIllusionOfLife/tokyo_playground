@@ -32,7 +32,7 @@ interface MinigameConfig {
 	roundDuration: number;
 }
 
-export const MINIGAME_CONFIGS: Record<string, MinigameConfig> = {
+export const MINIGAME_CONFIGS: Record<MinigameId, MinigameConfig> = {
 	[MinigameId.CanKick]: {
 		minPlayers: 2,
 		maxPlayers: 10,

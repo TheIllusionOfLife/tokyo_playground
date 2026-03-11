@@ -17,4 +17,5 @@ export interface IMinigame {
 	cleanup(): void;
 	handleCatchRequest?(player: Player): void;
 	handleKickCanRequest?(player: Player): void;
+	removePlayer?(userId: number): void;
 }

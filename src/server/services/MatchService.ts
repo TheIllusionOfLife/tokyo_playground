@@ -15,6 +15,7 @@ import {
 	MinigameId,
 	PlayerRole,
 	RoundResult,
+	ScoreboardEntry,
 } from "shared/types";
 import { GameStateService } from "./GameStateService";
 import { MinigameService } from "./MinigameService";
@@ -25,7 +26,7 @@ import { RewardService } from "./RewardService";
 
 const VALID_TRANSITIONS = new Map<MatchPhase, MatchPhase[]>([
 	[MatchPhase.WaitingForPlayers, [MatchPhase.Countdown]],
-	[MatchPhase.Countdown, [MatchPhase.Preparing]],
+	[MatchPhase.Countdown, [MatchPhase.Preparing, MatchPhase.WaitingForPlayers]],
 	[MatchPhase.Preparing, [MatchPhase.InProgress]],
 	[MatchPhase.InProgress, [MatchPhase.RoundOver, MatchPhase.WaitingForPlayers]],
 	[MatchPhase.RoundOver, [MatchPhase.Rewarding]],
@@ -63,6 +64,12 @@ export class MatchService implements OnStart {
 
 		this.serverEvents.requestKickCan.connect((player) => {
 			this.handleActionRequest(player, "kickCan");
+		});
+
+		Players.PlayerAdded.Connect((player) => {
+			if ((this.currentPhase as MatchPhase) !== MatchPhase.WaitingForPlayers) {
+				this.handlePlayerJoinMidMatch(player);
+			}
 		});
 
 		Players.PlayerRemoving.Connect((player) => {
@@ -103,9 +110,17 @@ export class MatchService implements OnStart {
 		}
 
 		this.transitionPhase(MatchPhase.Countdown);
+		let countdownCancelled = false;
 		for (let i = 3; i >= 1; i--) {
 			this.serverEvents.countdownTick.broadcast(i);
 			task.wait(1);
+			if (Players.GetPlayers().size() < config.minPlayers) {
+				countdownCancelled = true;
+				break;
+			}
+		}
+		if (countdownCancelled) {
+			this.transitionPhase(MatchPhase.WaitingForPlayers);
 		}
 	}
 
@@ -180,6 +195,7 @@ export class MatchService implements OnStart {
 	}
 
 	private endRound(result: RoundResult) {
+		if ((this.currentPhase as MatchPhase) !== MatchPhase.InProgress) return;
 		this.transitionPhase(MatchPhase.RoundOver);
 		this.serverEvents.roundResultAnnounced.broadcast(result);
 
@@ -187,13 +203,7 @@ export class MatchService implements OnStart {
 		const playerStates = minigame.getPlayerStates();
 
 		// Build scoreboard
-		const entries: {
-			playerName: string;
-			role: string;
-			catches: number;
-			rescues: number;
-			points: number;
-		}[] = [];
+		const entries: ScoreboardEntry[] = [];
 
 		// Rewarding phase
 		this.transitionPhase(MatchPhase.Rewarding);
@@ -216,6 +226,16 @@ export class MatchService implements OnStart {
 			);
 			this.serverEvents.rewardGranted.fire(player, breakdown);
 
+			const data = this.playerDataService.getPlayerData(player);
+			if (data) {
+				const level = this.playerDataService.getPlaygroundLevel(player);
+				this.serverEvents.playPointsUpdate.fire(
+					player,
+					data.totalPlayPoints,
+					level,
+				);
+			}
+
 			entries.push({
 				playerName: player.Name,
 				role: state.role,
@@ -225,16 +245,8 @@ export class MatchService implements OnStart {
 			});
 		}
 
-		entries.sort((a, b) => a.points < b.points);
-		this.serverEvents.scoreboard.broadcast(
-			entries as unknown as {
-				playerName: string;
-				role: PlayerRole;
-				catches: number;
-				rescues: number;
-				points: number;
-			}[],
-		);
+		entries.sort((a, b) => a.points > b.points);
+		this.serverEvents.scoreboard.broadcast(entries);
 
 		task.wait(RESULTS_DISPLAY_DURATION);
 		this.cleanup();
@@ -316,15 +328,23 @@ export class MatchService implements OnStart {
 
 		if (!this.activeMinigame) return;
 
-		// If Oni leaves, hiders win
 		const states = this.activeMinigame.getPlayerStates();
 		const playerState = states.get(player.UserId);
-		if (
-			playerState?.role === PlayerRole.Oni &&
-			this.currentPhase === MatchPhase.InProgress
-		) {
+
+		// Remove from minigame state so win condition reflects reality
+		this.activeMinigame.removePlayer?.(player.UserId);
+
+		if ((this.currentPhase as MatchPhase) !== MatchPhase.InProgress) return;
+
+		if (playerState?.role === PlayerRole.Oni) {
 			print("[MatchService] Oni left — Hiders win!");
 			this.endRound(RoundResult.HidersWin);
+		} else {
+			// Last hider may have disconnected — check win condition immediately
+			const result = this.activeMinigame.checkWinCondition();
+			if (result !== undefined) {
+				this.endRound(result);
+			}
 		}
 	}
 

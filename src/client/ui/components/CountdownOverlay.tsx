@@ -8,7 +8,7 @@ export function CountdownOverlay() {
 	);
 
 	if (countdownSeconds <= 0) {
-		return undefined!;
+		return undefined;
 	}
 
 	return (
