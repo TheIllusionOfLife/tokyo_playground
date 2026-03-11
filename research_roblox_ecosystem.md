@@ -406,21 +406,21 @@ Source C: External Assets (KitBash3D, Sketchfab, Unity Asset Store)
 - **Blender**: Decimation, UV unwrap, normal map baking, chunking
 - **Roblox Studio**: Import, arrange, set up SurfaceAppearance + StreamingEnabled
 
-#### Pipeline 3: UI (Claude Code / Roact / Roblox Assistant → Studio)
+#### Pipeline 3: UI (Claude Code / React / Roblox Assistant → Studio)
 
 Multiple approaches, no external design tool required:
 
-```
+```text
 Option A: Claude Code via MCP (fastest for iteration)
   Claude Code
     ↓ execute_luau to create ScreenGui/Frame/TextLabel hierarchy
-    ↓ or writes Roact components in .ts files
+    ↓ or writes React components in .ts files
   Roblox Studio
     ↓ UI appears, test and refine
 
-Option B: Roact in roblox-ts (best for maintainability)
+Option B: React in roblox-ts (best for maintainability)
   Claude Code
-    ↓ writes React-like UI components in TypeScript (@rbxts/roact)
+    ↓ writes React components in TypeScript (@rbxts/react + @rbxts/react-roblox)
   roblox-ts → Rojo → Studio
     ↓ UI is code-defined, git-tracked, version-controlled
 
@@ -438,7 +438,7 @@ Option D: Sketch mockups anywhere (reference only)
 
 **Who does what:**
 - **You**: Sketch rough mockups (any tool), make design decisions
-- **Claude Code**: Writes UI components in TypeScript (Roact) or creates via MCP
+- **Claude Code**: Writes UI components in TypeScript (`@rbxts/react`) or creates via MCP
 - **Roblox Assistant**: Quick UI prototyping from natural language
 - No Figma dependency
 
@@ -530,7 +530,7 @@ Both see each other's changes in real-time. Code and world never conflict — Ro
 #### Testing & Build Process
 
 **Build speed (roblox-ts + Rojo):**
-```
+```text
 Save .ts file
   → rbxtsc --watch: incremental transpile (50-200ms per file)
   → Rojo serve: WebSocket sync to Studio (immediate)
@@ -668,21 +668,23 @@ Design doc's MVP (3 mini-games + lobby + 12 systems) is **2-3x overscoped** for 
 - 1 polished mini-game (Can Kick) + simple lobby + match loop + persistence + analytics
 - Add mini-game #2 only after retention and performance are validated
 
-### Recommended Library Stack (roblox-ts, 2026)
+### Library Stack (roblox-ts, 2026)
+
+> **Note:** This table reflects the project's current dependencies as installed in `package.json`. Zap/Blink may be evaluated later for high-frequency networking (e.g. position updates).
 
 | Layer | Library | Purpose |
 |-------|---------|---------|
 | Framework | **Flamework** | Dependency injection, Components, Services |
-| UI | **@rbxts/react** + **@rbxts/flipper** | React-like UI with spring animations |
-| Networking | **Zap** or **Blink** | Buffer-based, type-safe (NOT raw RemoteEvents) |
+| UI | **@rbxts/react** + **@rbxts/react-roblox** | React-based UI rendering |
+| Networking | **@flamework/networking** | Type-safe events (evaluate Zap/Blink later for high-frequency) |
 | State | **@rbxts/reflex** | Redux/Zustand-like state management |
-| Data | **ProfileStore** | Session locking, auto-migration, prevents double-spend |
+| Data | **@rbxts/profileservice** | Session locking, auto-migration, prevents double-spend |
 | Cleanup | **Janitor** | Memory leak prevention (event/thread/instance cleanup) |
 
 ### Mini-Game Platform Architecture (FSM)
 
 Professional teams use a finite state machine:
-```
+```text
 VotingState → LoadingState → ActiveState → ResultsState → CleanupState
 ```
 Maps to design doc's `Prepare → AssignRoles → StartRound → Tick → EndRound → RewardPlayers → Cleanup`.

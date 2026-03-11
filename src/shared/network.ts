@@ -1,7 +1,8 @@
 import { Networking } from "@flamework/networking";
+import { GameState } from "shared/types";
 
 interface ServerToClientEvents {
-	gameStateChanged(state: string): void;
+	gameStateChanged(state: GameState): void;
 	scoreUpdated(coins: number): void;
 }
 

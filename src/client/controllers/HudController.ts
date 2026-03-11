@@ -1,6 +1,7 @@
 import { Controller, OnStart } from "@flamework/core";
 import { Players } from "@rbxts/services";
 import { GlobalEvents } from "shared/network";
+import { GameState } from "shared/types";
 
 @Controller()
 export class HudController implements OnStart {
@@ -48,7 +49,7 @@ export class HudController implements OnStart {
 	}
 
 	private listenForEvents() {
-		this.events.gameStateChanged.connect((state: string) => {
+		this.events.gameStateChanged.connect((state: GameState) => {
 			print(`[HudController] State changed → ${state}`);
 			if (this.stateLabel) {
 				this.stateLabel.Text = state;

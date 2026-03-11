@@ -42,7 +42,7 @@
 		"HttpService": {
 			"$className": "HttpService",
 			"$properties": {
-				"HttpEnabled": true
+				"HttpEnabled": false
 			}
 		},
 		"SoundService": {

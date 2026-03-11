@@ -1,4 +1,4 @@
-import { Dependency, OnStart, Service } from "@flamework/core";
+import { OnStart, Service } from "@flamework/core";
 import { Players } from "@rbxts/services";
 import {
 	CLEANUP_DURATION,
@@ -16,11 +16,14 @@ export class GameStateService implements OnStart {
 	private currentState = GameState.Lobby;
 	private readonly events = GlobalEvents.createServer({});
 
+	constructor(private readonly playerDataService: PlayerDataService) {}
+
 	onStart() {
 		print("[GameStateService] Started — entering game loop");
 
 		this.events.playerReady.connect((player) => {
 			print(`[GameStateService] ${player.Name} is ready`);
+			this.events.gameStateChanged.fire(player, this.currentState);
 		});
 
 		task.spawn(() => this.gameLoop());
@@ -50,10 +53,15 @@ export class GameStateService implements OnStart {
 	}
 
 	private awardRoundRewards() {
-		const playerDataService = Dependency<PlayerDataService>();
 		for (const player of Players.GetPlayers()) {
-			playerDataService.addCoins(player, ROUND_REWARD_COINS);
-			this.events.scoreUpdated.fire(player, playerDataService.getCoins(player));
+			if (this.playerDataService.getPlayerData(player) === undefined) {
+				continue;
+			}
+			this.playerDataService.addCoins(player, ROUND_REWARD_COINS);
+			this.events.scoreUpdated.fire(
+				player,
+				this.playerDataService.getCoins(player),
+			);
 		}
 	}
 

@@ -13,6 +13,7 @@ export class PlayerDataService implements OnStart {
 		DEFAULT_PLAYER_DATA,
 	);
 	private profiles = new Map<Player, Profile<PlayerData>>();
+	private expectedReleases = new Set<Player>();
 
 	onStart() {
 		print("[PlayerDataService] Started");
@@ -27,7 +28,8 @@ export class PlayerDataService implements OnStart {
 
 		// Release all profiles on server shutdown to prevent data loss
 		game.BindToClose(() => {
-			for (const [, profile] of this.profiles) {
+			for (const [player, profile] of this.profiles) {
+				this.expectedReleases.add(player);
 				profile.Release();
 			}
 		});
@@ -48,10 +50,15 @@ export class PlayerDataService implements OnStart {
 
 		profile.ListenToRelease(() => {
 			this.profiles.delete(player);
+			if (this.expectedReleases.has(player)) {
+				this.expectedReleases.delete(player);
+				return;
+			}
 			player.Kick("Your data was loaded on another server. Please rejoin.");
 		});
 
 		if (!player.IsDescendantOf(Players)) {
+			this.expectedReleases.add(player);
 			profile.Release();
 			return;
 		}
@@ -65,6 +72,7 @@ export class PlayerDataService implements OnStart {
 	private onPlayerRemoving(player: Player) {
 		const profile = this.profiles.get(player);
 		if (profile) {
+			this.expectedReleases.add(player);
 			profile.Release();
 			this.profiles.delete(player);
 			print(`[PlayerDataService] Released profile for ${player.Name}`);
