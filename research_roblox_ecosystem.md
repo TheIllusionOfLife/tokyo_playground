@@ -277,9 +277,8 @@ Search terms that yield results:
 | Sync | Rojo |
 | Toolchain Manager | Rokit |
 | Version Control | Git |
-| Package Manager | npm (@rbxts packages) + Wally (Luau) |
-| Linter | Selene |
-| Formatter | StyLua |
+| Package Manager | bun (@rbxts packages) |
+| Linter/Formatter | Biome |
 | Testing | TestEZ |
 | AI Assist (code) | Claude Code (via MCP → Studio) + Code Assist |
 | AI Assist (3D) | Roblox Assistant + Cube AI APIs |
@@ -483,7 +482,7 @@ WORLD-BUILDING SESSION:
 
 UI SESSION:
   - Sketch mockup (paper/any tool) as reference
-  - Claude Code creates UI via Roact (.ts) or MCP execute_luau
+  - Claude Code creates UI via React (.ts, @rbxts/react) or MCP execute_luau
   - OR use Roblox Assistant in Studio for quick prototyping
 ```
 
