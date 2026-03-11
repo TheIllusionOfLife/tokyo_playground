@@ -18,6 +18,7 @@ import {
 } from "shared/types";
 import { GameStateService } from "./GameStateService";
 import { MinigameService } from "./MinigameService";
+import { CanKickMinigame } from "./minigames/CanKickMinigame";
 import { IMinigame } from "./minigames/MinigameBase";
 import { PlayerDataService } from "./PlayerDataService";
 import { RewardService } from "./RewardService";
@@ -49,6 +50,12 @@ export class MatchService implements OnStart {
 
 	onStart() {
 		print("[MatchService] Started — entering match loop");
+
+		// Register minigames
+		this.minigameService.register(
+			MinigameId.CanKick,
+			(events) => new CanKickMinigame(events),
+		);
 
 		this.serverEvents.requestCatch.connect((player) => {
 			this.handleActionRequest(player, "catch");
@@ -109,11 +116,7 @@ export class MatchService implements OnStart {
 		this.matchPlayers = new Set(Players.GetPlayers());
 		this.playerCooldowns.clear();
 
-		const minigame = this.minigameService.create(
-			minigameId,
-			this.serverEvents,
-			this.matchJanitor,
-		);
+		const minigame = this.minigameService.create(minigameId, this.serverEvents);
 		if (!minigame) {
 			print(`[MatchService] Failed to create minigame: ${minigameId}`);
 			return;
