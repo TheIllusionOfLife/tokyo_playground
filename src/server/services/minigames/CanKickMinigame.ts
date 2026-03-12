@@ -274,6 +274,18 @@ export class CanKickMinigame implements IMinigame {
 			task.cancel(this.countdownThread);
 			this.countdownThread = undefined;
 		}
+		// Unfreeze Oni — the coroutine tail is now skipped, so restore WalkSpeed here
+		for (const [userId, state] of this.playerStates) {
+			if (state.role === PlayerRole.Oni) {
+				const player = this.playerObjects.get(userId);
+				if (player?.Character) {
+					const humanoid = player.Character.FindFirstChildOfClass("Humanoid");
+					if (humanoid) {
+						humanoid.WalkSpeed = 16;
+					}
+				}
+			}
+		}
 	}
 
 	cleanup() {
