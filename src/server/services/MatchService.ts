@@ -119,6 +119,8 @@ export class MatchService implements OnStart {
 				break;
 			}
 		}
+		// Clear countdown overlay regardless of cancellation
+		this.serverEvents.countdownTick.broadcast(0);
 		if (countdownCancelled) {
 			this.transitionPhase(MatchPhase.WaitingForPlayers);
 		}

@@ -118,6 +118,9 @@ export class CanKickMinigame implements IMinigame {
 				task.wait(1);
 			}
 
+			// Clear countdown overlay now that counting is done
+			this.serverEvents.countdownTick.broadcast(0);
+
 			// Guard: if round ended during counting, do not run the tail
 			if (!this.oniCounting) return;
 
@@ -270,6 +273,8 @@ export class CanKickMinigame implements IMinigame {
 
 	stopCountdown() {
 		this.oniCounting = false;
+		// Clear countdown overlay on all clients immediately
+		this.serverEvents.countdownTick.broadcast(0);
 		if (this.countdownThread) {
 			task.cancel(this.countdownThread);
 			this.countdownThread = undefined;
