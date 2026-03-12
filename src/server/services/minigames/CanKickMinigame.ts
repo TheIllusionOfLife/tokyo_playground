@@ -118,6 +118,9 @@ export class CanKickMinigame implements IMinigame {
 				task.wait(1);
 			}
 
+			// Guard: if round ended during counting, do not run the tail
+			if (!this.oniCounting) return;
+
 			// Unfreeze Oni
 			this.oniCounting = false;
 			for (const [userId, state] of this.playerStates) {
@@ -249,7 +252,7 @@ export class CanKickMinigame implements IMinigame {
 			}
 		}
 
-		if (hiderCount > 0 && caughtCount >= hiderCount) {
+		if (hiderCount === 0 || caughtCount >= hiderCount) {
 			return RoundResult.OniWins;
 		}
 
@@ -263,6 +266,14 @@ export class CanKickMinigame implements IMinigame {
 	removePlayer(userId: number) {
 		this.playerStates.delete(userId);
 		this.playerObjects.delete(userId);
+	}
+
+	stopCountdown() {
+		this.oniCounting = false;
+		if (this.countdownThread) {
+			task.cancel(this.countdownThread);
+			this.countdownThread = undefined;
+		}
 	}
 
 	cleanup() {

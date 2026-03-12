@@ -197,6 +197,8 @@ export class MatchService implements OnStart {
 	private endRound(result: RoundResult) {
 		if ((this.currentPhase as MatchPhase) !== MatchPhase.InProgress) return;
 		this.transitionPhase(MatchPhase.RoundOver);
+		// Stop countdown immediately so its tail never fires during results display
+		this.activeMinigame?.stopCountdown?.();
 		this.serverEvents.roundResultAnnounced.broadcast(result);
 
 		const minigame = this.activeMinigame!;
@@ -310,7 +312,7 @@ export class MatchService implements OnStart {
 	handlePlayerJoinMidMatch(player: Player) {
 		if (this.currentPhase === MatchPhase.WaitingForPlayers) return;
 
-		this.matchPlayers.add(player);
+		// Spectators are NOT added to matchPlayers — that set tracks live participants only
 		this.serverEvents.roleAssigned.fire(player, PlayerRole.Spectator);
 		this.serverEvents.matchSnapshot.fire(
 			player,
