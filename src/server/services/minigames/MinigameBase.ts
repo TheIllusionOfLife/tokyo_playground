@@ -16,7 +16,7 @@ export interface IMinigame {
 	getPlayerStates(): Map<number, CanKickPlayerState>;
 	cleanup(): void;
 	handleCatchRequest?(player: Player): void;
-	handleKickCanRequest?(player: Player): boolean | undefined;
+	handleKickCanRequest?(player: Player): boolean;
 	removePlayer?(userId: number): void;
 	stopCountdown?(): void;
 }

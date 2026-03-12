@@ -31,7 +31,7 @@ interface ServerToClientEvents {
 		timeRemaining: number,
 		role: PlayerRole,
 	): void;
-	playPointsUpdate(points: number, level: number): void;
+	playPointsUpdate(points: number, level: number, shopBalance: number): void;
 	missionUpdate(missions: MissionProgressData[]): void;
 	missionCompleted(id: MissionId, pointsReward: number): void;
 	shopCatalog(items: ShopItemData[]): void;

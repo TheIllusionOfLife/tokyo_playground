@@ -13,6 +13,12 @@ export class ShopService implements OnStart {
 	onStart() {
 		print("[ShopService] Started");
 
+		// Push catalog as soon as profile loads — handles the case where the client
+		// fires requestShopCatalog before the profile is ready (early-return race).
+		this.playerDataService.registerOnProfileLoaded((player) => {
+			this.handleRequestCatalog(player);
+		});
+
 		this.serverEvents.requestShopCatalog.connect((player) => {
 			this.handleRequestCatalog(player);
 		});

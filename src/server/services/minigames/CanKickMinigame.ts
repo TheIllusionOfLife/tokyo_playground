@@ -199,6 +199,7 @@ export class CanKickMinigame implements IMinigame {
 		const kickerState = this.playerStates.get(player.UserId);
 		if (!kickerState || kickerState.role !== PlayerRole.Hider) return false;
 		if (kickerState.isCaught) return false;
+		if (this.oniCounting) return false;
 
 		// Check proximity to can
 		const kickerChar = player.Character;

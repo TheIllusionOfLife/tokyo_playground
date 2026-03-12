@@ -1,13 +1,11 @@
 import { Controller, OnStart } from "@flamework/core";
 import { UserInputService } from "@rbxts/services";
-import { GlobalEvents } from "shared/network";
+import { clientEvents } from "client/network";
 import { gameStore } from "shared/store/game-store";
 import { MatchPhase, PlayerRole } from "shared/types";
 
 @Controller()
 export class InputController implements OnStart {
-	private readonly events = GlobalEvents.createClient({});
-
 	onStart() {
 		print("[InputController] Started");
 
@@ -28,9 +26,9 @@ export class InputController implements OnStart {
 		if (state.matchPhase !== MatchPhase.InProgress) return;
 
 		if (state.role === PlayerRole.Oni) {
-			this.events.requestCatch.fire();
+			clientEvents.requestCatch.fire();
 		} else if (state.role === PlayerRole.Hider) {
-			this.events.requestKickCan.fire();
+			clientEvents.requestKickCan.fire();
 		}
 	}
 }

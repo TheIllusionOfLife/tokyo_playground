@@ -63,8 +63,9 @@ export class HudController implements OnStart {
 			gameStore.setTimeRemaining(timeRemaining);
 		});
 
-		clientEvents.playPointsUpdate.connect((points, level) => {
+		clientEvents.playPointsUpdate.connect((points, level, shopBalance) => {
 			gameStore.setPlayPoints(points, level);
+			gameStore.setShopBalance(shopBalance);
 		});
 
 		clientEvents.scoreUpdated.connect((_coins) => {

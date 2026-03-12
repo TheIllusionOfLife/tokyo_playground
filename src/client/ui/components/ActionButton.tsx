@@ -1,10 +1,8 @@
 import React from "@rbxts/react";
 import { useSelector } from "@rbxts/react-reflex";
-import { GlobalEvents } from "shared/network";
+import { clientEvents } from "client/network";
 import { GameStoreState } from "shared/store/game-store";
 import { MatchPhase, PlayerRole } from "shared/types";
-
-const clientEvents = GlobalEvents.createClient({});
 
 export function ActionButton() {
 	const role = useSelector((state: GameStoreState) => state.role);

@@ -8,18 +8,24 @@ import { PlayerRole } from "shared/types";
 export class CanKickController implements OnStart {
 	private billboard?: BillboardGui;
 	private heartbeatConn?: RBXScriptConnection;
+	// Incremented on every role assignment — lets spawned async work self-cancel
+	// if a second roleAssigned fires before WaitForChild resolves.
+	private assignVersion = 0;
 
 	onStart() {
 		print("[CanKickController] Started");
 
 		clientEvents.roleAssigned.connect((role) => {
+			const version = ++this.assignVersion;
 			if (role === PlayerRole.Hider) {
 				// WaitForChild inside task.spawn — model may not be replicated yet
 				task.spawn(() => {
 					const can = Workspace.WaitForChild("GiantCan", 10) as
 						| Model
 						| undefined;
-					if (can) this.startProximityLoop(can);
+					// Guard: another roleAssigned may have fired while we waited
+					if (can && version === this.assignVersion)
+						this.startProximityLoop(can);
 				});
 			} else {
 				this.cleanupProximity();

@@ -142,14 +142,17 @@ export class MatchService implements OnStart {
 		this.matchPlayers.clear();
 		this.playerCooldowns.clear();
 		this.currentPhase = MatchPhase.WaitingForPlayers;
+		this.gameStateService.transitionTo(GameState.Lobby);
 	}
 
 	private runMatch(minigameId: MinigameId) {
 		if (this.currentPhase !== MatchPhase.Countdown) return;
 
-		// Guard against leaked state from a previous match (e.g. force-quit mid-results)
+		// Guard against leaked state from a previous match (e.g. force-quit mid-results).
+		// Return so startMatchLoop restarts from intermission with a clean state.
 		if (this.matchJanitor !== undefined) {
 			this.forceCleanup();
+			return;
 		}
 
 		this.matchJanitor = new Janitor();
@@ -247,7 +250,9 @@ export class MatchService implements OnStart {
 			);
 			const won =
 				(state.role === PlayerRole.Oni && result === RoundResult.OniWins) ||
-				(state.role !== PlayerRole.Oni && result !== RoundResult.OniWins);
+				(state.role === PlayerRole.Hider &&
+					(result === RoundResult.HidersWin ||
+						result === RoundResult.TimerExpired));
 
 			const levelResult = this.playerDataService.recordGameResult(
 				player,
@@ -263,6 +268,7 @@ export class MatchService implements OnStart {
 					player,
 					data.totalPlayPoints,
 					level,
+					data.shopBalance,
 				);
 			}
 

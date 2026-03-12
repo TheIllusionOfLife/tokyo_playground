@@ -1,5 +1,4 @@
 import { OnStart, Service } from "@flamework/core";
-import { Players } from "@rbxts/services";
 import { ALL_MISSION_IDS, MISSION_DEFS } from "shared/constants";
 import { GlobalEvents } from "shared/network";
 import {
@@ -20,17 +19,12 @@ export class MissionService implements OnStart {
 	onStart() {
 		print("[MissionService] Started");
 
-		// Register callback so onPlayerJoined fires after profile.Reconcile()
+		// Register callback so onPlayerJoined fires after profile.Reconcile().
+		// PlayerDataService bootstraps existing players via task.spawn in its own onStart,
+		// so those profiles also complete via this callback — no separate loop needed.
 		this.playerDataService.registerOnProfileLoaded((player) => {
 			this.onPlayerJoined(player);
 		});
-
-		// Handle players already present at bootstrap (Studio solo testing)
-		for (const player of Players.GetPlayers()) {
-			if (this.playerDataService.getPlayerData(player)) {
-				this.onPlayerJoined(player);
-			}
-		}
 
 		this.serverEvents.collectMissionReward.connect((player, id) => {
 			this.handleCollectReward(player, id);
@@ -52,7 +46,7 @@ export class MissionService implements OnStart {
 		if (data.missions.slots.size() === 0) {
 			const slots: MissionSlot[] = [];
 			const total = ALL_MISSION_IDS.size();
-			for (let i = 0; i < 3; i++) {
+			for (let i = 0; i < math.min(3, total); i++) {
 				const idx = ((day % total) + i) % total;
 				slots.push({
 					id: ALL_MISSION_IDS[idx],
@@ -75,8 +69,7 @@ export class MissionService implements OnStart {
 		state: { catchCount: number; rescueCount: number },
 		pointsEarned: number,
 	) {
-		const data = this.playerDataService.getPlayerData(player);
-		if (!data) return;
+		if (!this.playerDataService.getPlayerData(player)) return;
 
 		this.incrementAndNotify(player, MissionId.PlayGames, 1);
 
@@ -133,6 +126,7 @@ export class MissionService implements OnStart {
 				player,
 				data.totalPlayPoints,
 				level,
+				data.shopBalance,
 			);
 		}
 

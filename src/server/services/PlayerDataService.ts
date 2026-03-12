@@ -115,6 +115,7 @@ export class PlayerDataService implements OnStart {
 		const profile = this.profiles.get(player);
 		if (profile) {
 			profile.Data.totalPlayPoints += amount;
+			profile.Data.shopBalance += amount;
 			print(
 				`[PlayerDataService] ${player.Name} +${amount} pts (total: ${profile.Data.totalPlayPoints})`,
 			);

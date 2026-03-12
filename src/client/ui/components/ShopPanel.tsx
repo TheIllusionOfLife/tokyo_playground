@@ -136,11 +136,15 @@ export function ShopPanel() {
 						Font={Enum.Font.GothamBold}
 						Text={`Balance: ${shopBalance} pts`}
 					/>
-					<frame
+					<scrollingframe
 						Size={new UDim2(1, -8, 1, -32)}
 						Position={new UDim2(0, 4, 0, 28)}
 						BackgroundTransparency={1}
 						BorderSizePixel={0}
+						CanvasSize={new UDim2(0, 0, 0, 0)}
+						AutomaticCanvasSize={Enum.AutomaticSize.Y}
+						ScrollBarThickness={6}
+						ScrollBarImageColor3={Color3.fromRGB(100, 100, 150)}
 					>
 						<uigridlayout
 							CellSize={new UDim2(0, 128, 0, 96)}
@@ -154,7 +158,7 @@ export function ShopPanel() {
 								level={level}
 							/>
 						))}
-					</frame>
+					</scrollingframe>
 				</frame>
 			) : (
 				undefined!

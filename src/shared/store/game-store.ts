@@ -98,6 +98,7 @@ export const gameStore = createProducer(initialState, {
 		scoreboard: [],
 		showRewardAnimation: false,
 		roundResult: undefined,
+		showLevelUp: false,
 	}),
 	setMissions: (state, missions: MissionProgressData[]) => ({
 		...state,
