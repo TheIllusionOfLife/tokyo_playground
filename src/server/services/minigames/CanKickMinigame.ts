@@ -162,7 +162,7 @@ export class CanKickMinigame implements IMinigame {
 
 			const hiderPos = hiderPlayer.Character.GetPivot().Position;
 			const dist = oniPos.sub(hiderPos).Magnitude;
-			if (dist < closestDist) {
+			if (dist <= closestDist) {
 				closestDist = dist;
 				closestHider = hiderPlayer;
 			}
@@ -289,11 +289,8 @@ export class CanKickMinigame implements IMinigame {
 	}
 
 	cleanup() {
-		this.oniCounting = false;
-		if (this.countdownThread) {
-			task.cancel(this.countdownThread);
-			this.countdownThread = undefined;
-		}
+		// stopCountdown unfreezes Oni and cancels the thread — must run before clearing playerStates
+		this.stopCountdown();
 		this.lastHintText = "";
 		this.playerStates.clear();
 		this.playerObjects.clear();
