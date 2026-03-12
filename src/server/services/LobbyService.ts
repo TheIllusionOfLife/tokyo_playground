@@ -1,11 +1,14 @@
 import { OnStart, Service } from "@flamework/core";
 import { CollectionService, Players, Workspace } from "@rbxts/services";
+import { CAN_KICK_PORTAL_TAG } from "shared/constants";
+import { GlobalEvents } from "shared/network";
 
 const LOBBY_SPAWN_TAG = "LobbySpawn";
 
 @Service()
 export class LobbyService implements OnStart {
 	private lobbySpawns: BasePart[] = [];
+	private readonly serverEvents = GlobalEvents.createServer({});
 
 	onStart() {
 		print("[LobbyService] Started");
@@ -24,6 +27,24 @@ export class LobbyService implements OnStart {
 				}
 			});
 		});
+
+		this.setupPortals();
+	}
+
+	private setupPortals() {
+		const portals = CollectionService.GetTagged(CAN_KICK_PORTAL_TAG);
+		for (const portal of portals) {
+			if (!portal.IsA("BasePart")) continue;
+			const prompt = portal.FindFirstChildOfClass("ProximityPrompt");
+			if (!prompt) continue;
+			prompt.Triggered.Connect((player: Player) => {
+				this.serverEvents.hintTextChanged.fire(
+					player,
+					"Joining Can Kick queue…",
+				);
+			});
+		}
+		print(`[LobbyService] Set up ${portals.size()} Can Kick portals`);
 	}
 
 	teleportToLobby(player: Player) {
