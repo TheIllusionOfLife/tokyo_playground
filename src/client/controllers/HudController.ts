@@ -3,25 +3,25 @@ import React from "@rbxts/react";
 import { ReflexProvider } from "@rbxts/react-reflex";
 import ReactRoblox from "@rbxts/react-roblox";
 import { Players } from "@rbxts/services";
-import { GlobalEvents } from "shared/network";
+import { clientEvents } from "client/network";
 import { gameStore } from "shared/store/game-store";
 import { MatchPhase } from "shared/types";
 import { GameHud } from "../ui/GameHud";
 
 @Controller()
 export class HudController implements OnStart {
-	private readonly events = GlobalEvents.createClient({});
 	private root?: ReactRoblox.Root;
 
 	onStart() {
 		print("[HudController] Client initialized");
 		this.wireNetworkEvents();
 		this.mountReactUi();
-		this.events.playerReady.fire();
+		clientEvents.playerReady.fire();
+		clientEvents.requestShopCatalog.fire();
 	}
 
 	private wireNetworkEvents() {
-		this.events.matchPhaseChanged.connect((phase) => {
+		clientEvents.matchPhaseChanged.connect((phase) => {
 			gameStore.setMatchPhase(phase);
 
 			if (phase === MatchPhase.WaitingForPlayers) {
@@ -29,50 +29,76 @@ export class HudController implements OnStart {
 			}
 		});
 
-		this.events.roleAssigned.connect((role) => {
+		clientEvents.roleAssigned.connect((role) => {
 			gameStore.setRole(role);
 		});
 
-		this.events.roundTimerUpdate.connect((timeRemaining) => {
+		clientEvents.roundTimerUpdate.connect((timeRemaining) => {
 			gameStore.setTimeRemaining(timeRemaining);
 		});
 
-		this.events.hintTextChanged.connect((hint) => {
+		clientEvents.hintTextChanged.connect((hint) => {
 			gameStore.setHintText(hint);
 		});
 
-		this.events.countdownTick.connect((secondsLeft) => {
+		clientEvents.countdownTick.connect((secondsLeft) => {
 			gameStore.setCountdownSeconds(secondsLeft);
 		});
 
-		this.events.rewardGranted.connect((breakdown) => {
+		clientEvents.rewardGranted.connect((breakdown) => {
 			gameStore.setRewardBreakdown(breakdown);
 		});
 
-		this.events.roundResultAnnounced.connect((result) => {
+		clientEvents.roundResultAnnounced.connect((result) => {
 			gameStore.setRoundResult(result);
 		});
 
-		this.events.scoreboard.connect((entries) => {
+		clientEvents.scoreboard.connect((entries) => {
 			gameStore.setScoreboard(entries);
 		});
 
-		this.events.matchSnapshot.connect((phase, timeRemaining, role) => {
+		clientEvents.matchSnapshot.connect((phase, timeRemaining, role) => {
 			gameStore.setMatchPhase(phase);
 			gameStore.setRole(role);
 			gameStore.setTimeRemaining(timeRemaining);
 		});
 
-		this.events.playPointsUpdate.connect((points, level) => {
+		clientEvents.playPointsUpdate.connect((points, level) => {
 			gameStore.setPlayPoints(points, level);
 		});
 
-		this.events.scoreUpdated.connect((_coins) => {
+		clientEvents.scoreUpdated.connect((_coins) => {
 			// Legacy event, kept for compatibility
 		});
 
-		this.events.gameStateChanged.connect((_state) => {
+		clientEvents.gameStateChanged.connect((_state) => {
 			// Legacy event, kept for compatibility
+		});
+
+		// ── New events ──────────────────────────────────────────────────────
+
+		clientEvents.missionUpdate.connect((missions) => {
+			gameStore.setMissions(missions);
+		});
+
+		clientEvents.missionCompleted.connect((_id, _pts) => {
+			// missionUpdate handles the state refresh; this fires for future toast notifications
+		});
+
+		clientEvents.shopCatalog.connect((items) => {
+			gameStore.setShopItems(items);
+		});
+
+		clientEvents.purchaseResult.connect((ok, _id, newShopBal, _err) => {
+			if (ok) {
+				clientEvents.requestShopCatalog.fire(); // refresh owned flags
+				gameStore.setShopBalance(newShopBal); // shop balance only — NOT setPlayPoints
+			}
+		});
+
+		clientEvents.levelUp.connect((lv) => {
+			gameStore.setLevelUp(lv);
+			task.delay(3, () => gameStore.hideLevelUp());
 		});
 	}
 
