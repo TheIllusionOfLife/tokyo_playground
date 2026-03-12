@@ -2,7 +2,8 @@ import { OnStart, Service } from "@flamework/core";
 import ProfileService from "@rbxts/profileservice";
 import { Profile } from "@rbxts/profileservice/globals";
 import { Players } from "@rbxts/services";
-import { DEFAULT_PLAYER_DATA, PlayerData } from "shared/types";
+import { LEVEL_THRESHOLDS } from "shared/constants";
+import { DEFAULT_PLAYER_DATA, PlayerData, RewardBreakdown } from "shared/types";
 
 const PROFILE_STORE_KEY = "PlayerData_v1";
 
@@ -21,12 +22,10 @@ export class PlayerDataService implements OnStart {
 		Players.PlayerAdded.Connect((player) => this.onPlayerAdded(player));
 		Players.PlayerRemoving.Connect((player) => this.onPlayerRemoving(player));
 
-		// Handle players already in-game (Studio fast-start)
 		for (const player of Players.GetPlayers()) {
 			task.spawn(() => this.onPlayerAdded(player));
 		}
 
-		// Release all profiles on server shutdown to prevent data loss
 		game.BindToClose(() => {
 			for (const [player, profile] of this.profiles) {
 				this.expectedReleases.add(player);
@@ -65,7 +64,7 @@ export class PlayerDataService implements OnStart {
 
 		this.profiles.set(player, profile);
 		print(
-			`[PlayerDataService] Loaded profile for ${player.Name}: ${profile.Data.coins} coins`,
+			`[PlayerDataService] Loaded profile for ${player.Name}: ${profile.Data.totalPlayPoints} pts, level ${this.getPlaygroundLevel(player)}`,
 		);
 	}
 
@@ -91,8 +90,49 @@ export class PlayerDataService implements OnStart {
 		const profile = this.profiles.get(player);
 		if (profile) {
 			profile.Data.coins += amount;
+		}
+	}
+
+	addPlayPoints(player: Player, amount: number) {
+		const profile = this.profiles.get(player);
+		if (profile) {
+			profile.Data.totalPlayPoints += amount;
 			print(
-				`[PlayerDataService] ${player.Name} +${amount} coins (total: ${profile.Data.coins})`,
+				`[PlayerDataService] ${player.Name} +${amount} pts (total: ${profile.Data.totalPlayPoints})`,
+			);
+		}
+	}
+
+	getPlaygroundLevel(player: Player): number {
+		const data = this.profiles.get(player)?.Data;
+		if (!data) return 1;
+
+		let level = 1;
+		for (let i = 1; i < LEVEL_THRESHOLDS.size(); i++) {
+			if (data.totalPlayPoints >= LEVEL_THRESHOLDS[i]) {
+				level = i + 1;
+			} else {
+				break;
+			}
+		}
+		return level;
+	}
+
+	recordGameResult(player: Player, breakdown: RewardBreakdown, won: boolean) {
+		const profile = this.profiles.get(player);
+		if (!profile) return;
+
+		const oldLevel = this.getPlaygroundLevel(player);
+		profile.Data.totalPlayPoints += breakdown.totalPoints;
+		profile.Data.gamesPlayed += 1;
+		if (won) {
+			profile.Data.gamesWon += 1;
+		}
+
+		const newLevel = this.getPlaygroundLevel(player);
+		if (newLevel > oldLevel) {
+			print(
+				`[PlayerDataService] ${player.Name} leveled up! ${oldLevel} → ${newLevel}`,
 			);
 		}
 	}

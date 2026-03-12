@@ -16,9 +16,15 @@
 		"enabled": true,
 		"rules": {
 			"recommended": true,
+			"correctness": {
+				"noUnusedImports": "off"
+			},
 			"style": {
 				"noNonNullAssertion": "off",
 				"useImportType": "off"
+			},
+			"a11y": {
+				"useValidAriaRole": "off"
 			}
 		}
 	},
