@@ -19,6 +19,7 @@ import {
 } from "shared/types";
 import { GameStateService } from "./GameStateService";
 import { MinigameService } from "./MinigameService";
+import { MissionService } from "./MissionService";
 import { CanKickMinigame } from "./minigames/CanKickMinigame";
 import { IMinigame } from "./minigames/MinigameBase";
 import { PlayerDataService } from "./PlayerDataService";
@@ -47,6 +48,7 @@ export class MatchService implements OnStart {
 		private readonly minigameService: MinigameService,
 		private readonly playerDataService: PlayerDataService,
 		private readonly rewardService: RewardService,
+		private readonly missionService: MissionService,
 	) {}
 
 	onStart() {
@@ -243,11 +245,14 @@ export class MatchService implements OnStart {
 				result,
 				state.role,
 			);
-			this.playerDataService.recordGameResult(
+			const won =
+				(state.role === PlayerRole.Oni && result === RoundResult.OniWins) ||
+				(state.role !== PlayerRole.Oni && result !== RoundResult.OniWins);
+
+			const levelResult = this.playerDataService.recordGameResult(
 				player,
 				breakdown,
-				(state.role === PlayerRole.Oni && result === RoundResult.OniWins) ||
-					(state.role !== PlayerRole.Oni && result !== RoundResult.OniWins),
+				won,
 			);
 			this.serverEvents.rewardGranted.fire(player, breakdown);
 
@@ -260,6 +265,18 @@ export class MatchService implements OnStart {
 					level,
 				);
 			}
+
+			if (levelResult.leveledUp) {
+				this.serverEvents.levelUp.fire(player, levelResult.newLevel);
+			}
+
+			this.missionService.recordGameResult(
+				player,
+				state.role,
+				result,
+				state,
+				breakdown.totalPoints,
+			);
 
 			entries.push({
 				playerName: player.Name,
@@ -328,7 +345,8 @@ export class MatchService implements OnStart {
 		if (action === "catch") {
 			this.activeMinigame.handleCatchRequest?.(player);
 		} else {
-			this.activeMinigame.handleKickCanRequest?.(player);
+			const kicked = this.activeMinigame.handleKickCanRequest?.(player);
+			if (kicked) this.missionService.onCanKicked(player);
 		}
 	}
 
