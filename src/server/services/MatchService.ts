@@ -76,6 +76,11 @@ export class MatchService implements OnStart {
 			this.handlePlayerLeaveMidMatch(player);
 		});
 
+		// Guarantee cleanup if Studio/server is force-quit mid-match
+		game.BindToClose(() => {
+			this.forceCleanup();
+		});
+
 		task.spawn(() => this.startMatchLoop());
 	}
 
@@ -126,8 +131,24 @@ export class MatchService implements OnStart {
 		}
 	}
 
+	// Atomically resets ALL match state — safe to call mid-match or on force-quit
+	private forceCleanup(): void {
+		this.activeMinigame?.cleanup();
+		this.activeMinigame = undefined;
+		this.matchJanitor?.Cleanup();
+		this.matchJanitor = undefined;
+		this.matchPlayers.clear();
+		this.playerCooldowns.clear();
+		this.currentPhase = MatchPhase.WaitingForPlayers;
+	}
+
 	private runMatch(minigameId: MinigameId) {
 		if (this.currentPhase !== MatchPhase.Countdown) return;
+
+		// Guard against leaked state from a previous match (e.g. force-quit mid-results)
+		if (this.matchJanitor !== undefined) {
+			this.forceCleanup();
+		}
 
 		this.matchJanitor = new Janitor();
 		this.matchPlayers = new Set(Players.GetPlayers());
