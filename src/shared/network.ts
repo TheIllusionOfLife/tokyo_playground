@@ -1,11 +1,15 @@
 import { Networking } from "@flamework/networking";
 import {
 	GameState,
+	ItemId,
 	MatchPhase,
+	MissionId,
+	MissionProgressData,
 	PlayerRole,
 	RewardBreakdown,
 	RoundResult,
 	ScoreboardEntry,
+	ShopItemData,
 } from "shared/types";
 
 interface ServerToClientEvents {
@@ -27,13 +31,26 @@ interface ServerToClientEvents {
 		timeRemaining: number,
 		role: PlayerRole,
 	): void;
-	playPointsUpdate(points: number, level: number): void;
+	playPointsUpdate(points: number, level: number, shopBalance: number): void;
+	missionUpdate(missions: MissionProgressData[]): void;
+	missionCompleted(id: MissionId, pointsReward: number): void;
+	shopCatalog(items: ShopItemData[]): void;
+	purchaseResult(
+		success: boolean,
+		itemId: ItemId,
+		newBalance: number,
+		errorMessage: string,
+	): void;
+	levelUp(newLevel: number): void;
 }
 
 interface ClientToServerEvents {
 	playerReady(): void;
 	requestCatch(): void;
 	requestKickCan(): void;
+	collectMissionReward(id: MissionId): void;
+	requestShopCatalog(): void;
+	requestPurchase(itemId: ItemId): void;
 }
 
 export const GlobalEvents = Networking.createEvent<

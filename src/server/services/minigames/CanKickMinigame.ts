@@ -195,20 +195,21 @@ export class CanKickMinigame implements IMinigame {
 		);
 	}
 
-	handleKickCanRequest(player: Player) {
+	handleKickCanRequest(player: Player): boolean {
 		const kickerState = this.playerStates.get(player.UserId);
-		if (!kickerState || kickerState.role !== PlayerRole.Hider) return;
-		if (kickerState.isCaught) return;
+		if (!kickerState || kickerState.role !== PlayerRole.Hider) return false;
+		if (kickerState.isCaught) return false;
+		if (this.oniCounting) return false;
 
 		// Check proximity to can
 		const kickerChar = player.Character;
-		if (!kickerChar || !this.canModel) return;
+		if (!kickerChar || !this.canModel) return false;
 
 		const kickerPos = kickerChar.GetPivot().Position;
 		const canPos = this.canModel.GetPivot().Position;
 		const dist = kickerPos.sub(canPos).Magnitude;
 
-		if (dist > CAN_KICK_RADIUS) return;
+		if (dist > CAN_KICK_RADIUS) return false;
 
 		// Free all jailed players
 		const freedIds: number[] = [];
@@ -240,6 +241,8 @@ export class CanKickMinigame implements IMinigame {
 		print(
 			`[CanKick] ${player.Name} kicked the can, freed ${freedIds.size()} players`,
 		);
+
+		return true;
 	}
 
 	checkWinCondition(): RoundResult | undefined {

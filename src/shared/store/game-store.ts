@@ -1,10 +1,12 @@
 import { createProducer } from "@rbxts/reflex";
 import {
 	MatchPhase,
+	MissionProgressData,
 	PlayerRole,
 	RewardBreakdown,
 	RoundResult,
 	ScoreboardEntry,
+	ShopItemData,
 } from "shared/types";
 
 export interface GameStoreState {
@@ -19,6 +21,11 @@ export interface GameStoreState {
 	playgroundLevel: number;
 	showRewardAnimation: boolean;
 	roundResult?: RoundResult;
+	missions: MissionProgressData[];
+	shopItems: ShopItemData[];
+	shopBalance: number;
+	showLevelUp: boolean;
+	levelUpNewLevel: number;
 }
 
 const initialState: GameStoreState = {
@@ -31,6 +38,11 @@ const initialState: GameStoreState = {
 	playPoints: 0,
 	playgroundLevel: 1,
 	showRewardAnimation: false,
+	missions: [],
+	shopItems: [],
+	shopBalance: 0,
+	showLevelUp: false,
+	levelUpNewLevel: 1,
 };
 
 export const gameStore = createProducer(initialState, {
@@ -86,5 +98,27 @@ export const gameStore = createProducer(initialState, {
 		scoreboard: [],
 		showRewardAnimation: false,
 		roundResult: undefined,
+		showLevelUp: false,
+	}),
+	setMissions: (state, missions: MissionProgressData[]) => ({
+		...state,
+		missions,
+	}),
+	setShopItems: (state, shopItems: ShopItemData[]) => ({
+		...state,
+		shopItems,
+	}),
+	setShopBalance: (state, shopBalance: number) => ({
+		...state,
+		shopBalance,
+	}),
+	setLevelUp: (state, levelUpNewLevel: number) => ({
+		...state,
+		showLevelUp: true,
+		levelUpNewLevel,
+	}),
+	hideLevelUp: (state) => ({
+		...state,
+		showLevelUp: false,
 	}),
 });
