@@ -44,6 +44,11 @@ export const MINIGAME_CONFIGS: Record<MinigameId, MinigameConfig> = {
 		maxPlayers: 10,
 		roundDuration: 180,
 	},
+	[MinigameId.ShibuyaScramble]: {
+		minPlayers: 2,
+		maxPlayers: 10,
+		roundDuration: 150,
+	},
 };
 
 // Missions
@@ -78,6 +83,21 @@ export const MISSION_DEFS: Record<
 		target: 100,
 		pointsReward: 35,
 	},
+	[MissionId.SurviveScramble]: {
+		label: "Survive Shibuya Scramble",
+		target: 1,
+		pointsReward: 45,
+	},
+	[MissionId.TagInScramble]: {
+		label: "Tag 3 Hiders as Oni",
+		target: 3,
+		pointsReward: 55,
+	},
+	[MissionId.ReachRooftop]: {
+		label: "Reach a Rooftop",
+		target: 1,
+		pointsReward: 30,
+	},
 };
 
 export const ALL_MISSION_IDS: MissionId[] = [
@@ -88,6 +108,9 @@ export const ALL_MISSION_IDS: MissionId[] = [
 	MissionId.RescueTeammates,
 	MissionId.KickCan,
 	MissionId.EarnPoints,
+	MissionId.SurviveScramble,
+	MissionId.TagInScramble,
+	MissionId.ReachRooftop,
 ];
 
 export const SHOP_CATALOG: Omit<ShopItemData, "owned">[] = [
@@ -164,3 +187,14 @@ export const SHOP_CATALOG: Omit<ShopItemData, "owned">[] = [
 ];
 
 export const CAN_KICK_PORTAL_TAG = "CanKickPortal";
+export const SCRAMBLE_PORTAL_TAG = "ShibuyaScramblePortal";
+
+// Shibuya Scramble
+export const SCRAMBLE_TAG_RADIUS = 8;
+export const SCRAMBLE_ONI_COUNT_DURATION = 10;
+export const SCRAMBLE_CROWD_WAVE_INTERVAL = 20;
+export const SCRAMBLE_CROWD_WAVE_DURATION = 10;
+export const SCRAMBLE_CROWD_NPC_COUNT = 12;
+export const SCRAMBLE_SLIDE_SPEED = 80;
+export const SCRAMBLE_SLIDE_COOLDOWN = 8;
+export const SCRAMBLE_TAG_BONUS_PER_TAG = 5;

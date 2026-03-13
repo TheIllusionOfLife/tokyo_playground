@@ -2,6 +2,8 @@ import { OnStart, Service } from "@flamework/core";
 import { ALL_MISSION_IDS, MISSION_DEFS } from "shared/constants";
 import { GlobalEvents } from "shared/network";
 import {
+	AnyPlayerState,
+	MinigameId,
 	MissionId,
 	MissionProgressData,
 	MissionSlot,
@@ -66,7 +68,7 @@ export class MissionService implements OnStart {
 		player: Player,
 		role: PlayerRole,
 		result: RoundResult,
-		state: { catchCount: number; rescueCount: number },
+		state: AnyPlayerState,
 		pointsEarned: number,
 	) {
 		if (!this.playerDataService.getPlayerData(player)) return;
@@ -99,6 +101,21 @@ export class MissionService implements OnStart {
 			this.incrementAndNotify(player, MissionId.EarnPoints, pointsEarned);
 		}
 
+		if (state.minigameId === MinigameId.ShibuyaScramble) {
+			if (role === PlayerRole.Hider && won) {
+				this.incrementAndNotify(player, MissionId.SurviveScramble, 1);
+			}
+			if (role === PlayerRole.Oni && state.catchCount >= 3) {
+				this.incrementAndNotify(player, MissionId.TagInScramble, 1);
+			}
+		}
+
+		const missions = this.buildProgressData(player);
+		this.serverEvents.missionUpdate.fire(player, missions);
+	}
+
+	onSlideUsed(player: Player) {
+		this.incrementAndNotify(player, MissionId.ReachRooftop, 1);
 		const missions = this.buildProgressData(player);
 		this.serverEvents.missionUpdate.fire(player, missions);
 	}

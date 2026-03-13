@@ -7,6 +7,7 @@ import {
 } from "shared/constants";
 import { GlobalEvents } from "shared/network";
 import {
+	AnyPlayerState,
 	CanKickPlayerState,
 	MinigameId,
 	PlayerRole,
@@ -57,6 +58,7 @@ export class CanKickMinigame implements IMinigame {
 		// Initialize player states
 		for (const player of players) {
 			this.playerStates.set(player.UserId, {
+				minigameId: MinigameId.CanKick,
 				playerId: player.UserId,
 				role: PlayerRole.None,
 				isCaught: false,
@@ -265,8 +267,8 @@ export class CanKickMinigame implements IMinigame {
 		return undefined;
 	}
 
-	getPlayerStates(): Map<number, CanKickPlayerState> {
-		return this.playerStates;
+	getPlayerStates(): Map<number, AnyPlayerState> {
+		return this.playerStates as Map<number, AnyPlayerState>;
 	}
 
 	removePlayer(userId: number) {

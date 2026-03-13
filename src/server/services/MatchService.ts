@@ -22,6 +22,7 @@ import { MinigameService } from "./MinigameService";
 import { MissionService } from "./MissionService";
 import { CanKickMinigame } from "./minigames/CanKickMinigame";
 import { IMinigame } from "./minigames/MinigameBase";
+import { ShibuyaScrambleMinigame } from "./minigames/ShibuyaScrambleMinigame";
 import { PlayerDataService } from "./PlayerDataService";
 import { RewardService } from "./RewardService";
 
@@ -42,6 +43,9 @@ export class MatchService implements OnStart {
 	private matchJanitor?: Janitor;
 	private matchPlayers = new Set<Player>();
 	private playerCooldowns = new Map<Player, number>();
+	private minigameIndex = -1;
+	private nextMinigameId: MinigameId = MinigameId.CanKick;
+	private currentMinigameId: MinigameId = MinigameId.CanKick;
 
 	constructor(
 		private readonly gameStateService: GameStateService,
@@ -58,6 +62,10 @@ export class MatchService implements OnStart {
 		this.minigameService.register(
 			MinigameId.CanKick,
 			(events) => new CanKickMinigame(events),
+		);
+		this.minigameService.register(
+			MinigameId.ShibuyaScramble,
+			(events) => new ShibuyaScrambleMinigame(events, this.missionService),
 		);
 
 		this.serverEvents.requestCatch.connect((player) => {
@@ -88,9 +96,9 @@ export class MatchService implements OnStart {
 
 	private startMatchLoop() {
 		while (true) {
+			this.selectNextMinigame();
 			this.runIntermission();
-			const minigameId = this.selectNextMinigame();
-			this.runMatch(minigameId);
+			this.runMatch(this.nextMinigameId);
 		}
 	}
 
@@ -104,13 +112,13 @@ export class MatchService implements OnStart {
 			waited += dt;
 
 			const players = Players.GetPlayers();
-			const config = MINIGAME_CONFIGS[MinigameId.CanKick];
+			const config = MINIGAME_CONFIGS[this.nextMinigameId];
 			if (players.size() >= config.minPlayers && waited >= 5) {
 				break;
 			}
 		}
 
-		const config = MINIGAME_CONFIGS[MinigameId.CanKick];
+		const config = MINIGAME_CONFIGS[this.nextMinigameId];
 		if (Players.GetPlayers().size() < config.minPlayers) {
 			print("[MatchService] Not enough players, restarting intermission");
 			return;
@@ -158,6 +166,7 @@ export class MatchService implements OnStart {
 		this.matchJanitor = new Janitor();
 		this.matchPlayers = new Set(Players.GetPlayers());
 		this.playerCooldowns.clear();
+		this.currentMinigameId = minigameId;
 
 		const minigame = this.minigameService.create(minigameId, this.serverEvents);
 		if (!minigame) {
@@ -175,7 +184,7 @@ export class MatchService implements OnStart {
 
 		const roles = minigame.assignRoles(players);
 		for (const [player, role] of roles) {
-			this.serverEvents.roleAssigned.fire(player, role);
+			this.serverEvents.roleAssigned.fire(player, role, minigameId);
 		}
 
 		// In Progress
@@ -243,11 +252,18 @@ export class MatchService implements OnStart {
 			const player = Players.GetPlayerByUserId(userId);
 			if (!player) continue;
 
-			const breakdown = this.rewardService.calculateCanKickRewards(
-				state,
-				result,
-				state.role,
-			);
+			const breakdown =
+				state.minigameId === MinigameId.ShibuyaScramble
+					? this.rewardService.calculateShibuyaScrambleRewards(
+							state,
+							result,
+							state.role,
+						)
+					: this.rewardService.calculateCanKickRewards(
+							state,
+							result,
+							state.role,
+						);
 			const won =
 				(state.role === PlayerRole.Oni && result === RoundResult.OniWins) ||
 				(state.role === PlayerRole.Hider &&
@@ -360,12 +376,17 @@ export class MatchService implements OnStart {
 		if (this.currentPhase === MatchPhase.WaitingForPlayers) return;
 
 		// Spectators are NOT added to matchPlayers — that set tracks live participants only
-		this.serverEvents.roleAssigned.fire(player, PlayerRole.Spectator);
+		this.serverEvents.roleAssigned.fire(
+			player,
+			PlayerRole.Spectator,
+			this.currentMinigameId,
+		);
 		this.serverEvents.matchSnapshot.fire(
 			player,
 			this.currentPhase,
 			0,
 			PlayerRole.Spectator,
+			this.currentMinigameId,
 		);
 		print(`[MatchService] ${player.Name} joined mid-match as Spectator`);
 	}
@@ -398,6 +419,9 @@ export class MatchService implements OnStart {
 	}
 
 	private selectNextMinigame(): MinigameId {
-		return MinigameId.CanKick;
+		const available = this.minigameService.getRegisteredIds();
+		this.minigameIndex = (this.minigameIndex + 1) % available.size();
+		this.nextMinigameId = available[this.minigameIndex];
+		return this.nextMinigameId;
 	}
 }

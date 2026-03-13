@@ -1,6 +1,6 @@
 import { OnStart, Service } from "@flamework/core";
 import { CollectionService, Players, Workspace } from "@rbxts/services";
-import { CAN_KICK_PORTAL_TAG } from "shared/constants";
+import { CAN_KICK_PORTAL_TAG, SCRAMBLE_PORTAL_TAG } from "shared/constants";
 import { GlobalEvents } from "shared/network";
 
 const LOBBY_SPAWN_TAG = "LobbySpawn";
@@ -45,6 +45,18 @@ export class LobbyService implements OnStart {
 			});
 		}
 		print(`[LobbyService] Set up ${portals.size()} Can Kick portals`);
+
+		for (const portal of CollectionService.GetTagged(SCRAMBLE_PORTAL_TAG)) {
+			if (!portal.IsA("BasePart")) continue;
+			portal
+				.FindFirstChildOfClass("ProximityPrompt")
+				?.Triggered.Connect((player: Player) => {
+					this.serverEvents.hintTextChanged.fire(
+						player,
+						"Shibuya Scramble starts next round!",
+					);
+				});
+		}
 	}
 
 	teleportToLobby(player: Player) {

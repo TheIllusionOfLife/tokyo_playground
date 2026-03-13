@@ -2,7 +2,7 @@ import { Controller, OnStart } from "@flamework/core";
 import { UserInputService } from "@rbxts/services";
 import { clientEvents } from "client/network";
 import { gameStore } from "shared/store/game-store";
-import { MatchPhase, PlayerRole } from "shared/types";
+import { MatchPhase, MinigameId, PlayerRole } from "shared/types";
 
 @Controller()
 export class InputController implements OnStart {
@@ -28,6 +28,7 @@ export class InputController implements OnStart {
 		if (state.role === PlayerRole.Oni) {
 			clientEvents.requestCatch.fire();
 		} else if (state.role === PlayerRole.Hider) {
+			if (state.activeMinigameId === MinigameId.ShibuyaScramble) return;
 			clientEvents.requestKickCan.fire();
 		}
 	}

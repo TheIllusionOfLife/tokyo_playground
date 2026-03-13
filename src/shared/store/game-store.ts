@@ -1,6 +1,7 @@
 import { createProducer } from "@rbxts/reflex";
 import {
 	MatchPhase,
+	MinigameId,
 	MissionProgressData,
 	PlayerRole,
 	RewardBreakdown,
@@ -12,6 +13,7 @@ import {
 export interface GameStoreState {
 	matchPhase: MatchPhase;
 	role: PlayerRole;
+	activeMinigameId: MinigameId | undefined;
 	hintText: string;
 	timeRemaining: number;
 	countdownSeconds: number;
@@ -31,6 +33,7 @@ export interface GameStoreState {
 const initialState: GameStoreState = {
 	matchPhase: MatchPhase.WaitingForPlayers,
 	role: PlayerRole.None,
+	activeMinigameId: undefined,
 	hintText: "",
 	timeRemaining: 0,
 	countdownSeconds: 0,
@@ -53,6 +56,10 @@ export const gameStore = createProducer(initialState, {
 	setRole: (state, role: PlayerRole) => ({
 		...state,
 		role,
+	}),
+	setActiveMinigameId: (state, activeMinigameId: MinigameId | undefined) => ({
+		...state,
+		activeMinigameId,
 	}),
 	setHintText: (state, hintText: string) => ({
 		...state,
