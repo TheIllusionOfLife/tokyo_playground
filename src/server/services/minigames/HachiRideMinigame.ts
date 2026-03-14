@@ -281,6 +281,8 @@ export class HachiRideMinigame implements IMinigame {
 		this.playerObjects.clear();
 		this.hachiModels.clear();
 		this.wallRunStates.clear();
+		this.jumpCooldowns.clear();
+		this.ejectCooldowns.clear();
 		this.keyItems = [];
 	}
 
@@ -310,6 +312,17 @@ export class HachiRideMinigame implements IMinigame {
 	}
 
 	private handleJumpRequest(player: Player) {
+		const hachiModel = this.hachiModels.get(player.UserId);
+		if (!hachiModel) return;
+
+		// Verify player is actually seated in their Hachi before applying any effect.
+		const seat = hachiModel.FindFirstChildOfClass("VehicleSeat") as
+			| VehicleSeat
+			| undefined;
+		if (!seat) return;
+		const humanoid = player.Character?.FindFirstChildOfClass("Humanoid");
+		if (!humanoid || seat.Occupant !== humanoid) return;
+
 		const now = os.clock();
 		if (
 			now - (this.jumpCooldowns.get(player.UserId) ?? 0) <
@@ -318,8 +331,6 @@ export class HachiRideMinigame implements IMinigame {
 			return;
 		this.jumpCooldowns.set(player.UserId, now);
 
-		const hachiModel = this.hachiModels.get(player.UserId);
-		if (!hachiModel) return;
 		const body = hachiModel.FindFirstChild("Body") as BasePart | undefined;
 		if (!body) return;
 		body.AssemblyLinearVelocity = new Vector3(
@@ -330,6 +341,17 @@ export class HachiRideMinigame implements IMinigame {
 	}
 
 	private handleEjectRequest(player: Player) {
+		const hachiModel = this.hachiModels.get(player.UserId);
+		if (!hachiModel) return;
+
+		// Verify player is actually seated in their Hachi before applying any effect.
+		const seat = hachiModel.FindFirstChildOfClass("VehicleSeat") as
+			| VehicleSeat
+			| undefined;
+		if (!seat) return;
+		const humanoid = player.Character?.FindFirstChildOfClass("Humanoid");
+		if (!humanoid || seat.Occupant !== humanoid) return;
+
 		const now = os.clock();
 		if (
 			now - (this.ejectCooldowns.get(player.UserId) ?? 0) <
@@ -338,12 +360,6 @@ export class HachiRideMinigame implements IMinigame {
 			return;
 		this.ejectCooldowns.set(player.UserId, now);
 
-		const hachiModel = this.hachiModels.get(player.UserId);
-		if (!hachiModel) return;
-		const seat = hachiModel.FindFirstChildOfClass("VehicleSeat") as
-			| VehicleSeat
-			| undefined;
-		if (!seat) return;
 		seat.Disabled = true;
 		task.delay(HACHI_EJECT_SEAT_DISABLE_DURATION, () => {
 			if (seat.Parent) seat.Disabled = false;

@@ -5,12 +5,15 @@ import {
 	HACHI_RIDE_PORTAL_TAG,
 	HACHI_RIDE_TAG,
 	HACHI_SLIDE_FORCE_RESTORE_DELAY,
+	HACHI_SLIDE_RAMP_PROXIMITY,
 	SCRAMBLE_PORTAL_TAG,
 	SCRAMBLE_ROOFTOP_TP_COOLDOWN,
 	SCRAMBLE_ROOFTOP_TP_DEST,
 	SCRAMBLE_ROOFTOP_TP_TAG,
 	SCRAMBLE_SLIDE_COOLDOWN,
 	SCRAMBLE_SLIDE_SPEED,
+	SLIDE_DIR_Y_OFFSET,
+	SLIDE_RAMP_TAG,
 } from "shared/constants";
 import { GlobalEvents } from "shared/network";
 import { MinigameId } from "shared/types";
@@ -174,31 +177,45 @@ export class LobbyService implements OnStart {
 	}
 
 	private setupHachiSlideHandler() {
-		this.serverEvents.requestHachiSlide.connect((player, dir) => {
-			// Validate direction: reject NaN (fails > 0), zero, and Infinity (>= math.huge).
-			const mag = dir.Magnitude;
-			if (!(mag > 0 && mag < math.huge)) return;
-			const safeDir = dir.Unit;
-
-			// Rate-limit: reuse slideCooldowns; prevents rapid-fire requests and the
-			// MaxForce race condition (second call can't arrive before restore fires).
+		this.serverEvents.requestHachiSlide.connect((player) => {
+			// Rate-limit first — prevents rapid-fire requests and MaxForce race.
 			const now = os.clock();
 			if (
 				now - (this.slideCooldowns.get(player.UserId) ?? 0) <
 				SCRAMBLE_SLIDE_COOLDOWN
 			)
 				return;
-			this.slideCooldowns.set(player.UserId, now);
 
+			// Verify player is seated in their own Hachi clone.
 			const character = player.Character;
 			if (!character) return;
 			const humanoid = character.FindFirstChildOfClass("Humanoid");
 			const seatPart = humanoid?.SeatPart;
 			if (!seatPart) return;
 			const hachiModel = seatPart.Parent;
-			if (!hachiModel) return;
+			if (!hachiModel || hachiModel.Name !== `Hachi_${player.UserId}`) return;
 			const body = hachiModel.FindFirstChild("Body") as BasePart | undefined;
 			if (!body) return;
+
+			// Verify the Hachi body is within range of a slide ramp, and derive
+			// direction server-side from that ramp so the client cannot spoof it.
+			const ramps = CollectionService.GetTagged(SLIDE_RAMP_TAG);
+			let nearestRamp: BasePart | undefined;
+			let nearestDist = HACHI_SLIDE_RAMP_PROXIMITY;
+			for (const ramp of ramps) {
+				if (!ramp.IsA("BasePart")) continue;
+				const dist = body.Position.sub(ramp.Position).Magnitude;
+				if (dist < nearestDist) {
+					nearestDist = dist;
+					nearestRamp = ramp;
+				}
+			}
+			if (!nearestRamp) return; // not near any ramp — reject spoofed request
+
+			this.slideCooldowns.set(player.UserId, now);
+			const serverDir = nearestRamp.CFrame.LookVector.add(
+				new Vector3(0, SLIDE_DIR_Y_OFFSET, 0),
+			).Unit;
 
 			const bv = body.FindFirstChildOfClass("BodyVelocity");
 			if (bv) {
@@ -207,13 +224,13 @@ export class LobbyService implements OnStart {
 				this.hachiSlideActive.add(player.UserId);
 				const origForce = bv.MaxForce;
 				bv.MaxForce = Vector3.zero;
-				body.AssemblyLinearVelocity = safeDir.mul(SCRAMBLE_SLIDE_SPEED);
+				body.AssemblyLinearVelocity = serverDir.mul(SCRAMBLE_SLIDE_SPEED);
 				task.delay(HACHI_SLIDE_FORCE_RESTORE_DELAY, () => {
 					if (bv.Parent) bv.MaxForce = origForce;
 					this.hachiSlideActive.delete(player.UserId);
 				});
 			} else {
-				body.AssemblyLinearVelocity = safeDir.mul(SCRAMBLE_SLIDE_SPEED);
+				body.AssemblyLinearVelocity = serverDir.mul(SCRAMBLE_SLIDE_SPEED);
 			}
 		});
 	}

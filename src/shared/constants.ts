@@ -209,6 +209,10 @@ export const SHOP_CATALOG: Omit<ShopItemData, "owned">[] = [
 	},
 ];
 
+export const SLIDE_RAMP_TAG = "ShibuyaSlideRamp";
+export const SLIDE_DIR_Y_OFFSET = -0.4; // downward bias added to ramp LookVector
+export const HACHI_SLIDE_RAMP_PROXIMITY = 10; // studs — server-side ramp ownership check
+
 export const CAN_KICK_PORTAL_TAG = "CanKickPortal";
 export const SCRAMBLE_PORTAL_TAG = "ShibuyaScramblePortal";
 export const HACHI_RIDE_TAG = "HachiRide";

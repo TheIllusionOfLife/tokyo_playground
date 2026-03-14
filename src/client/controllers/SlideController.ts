@@ -4,11 +4,13 @@ import { clientEvents } from "client/network";
 import {
 	SCRAMBLE_SLIDE_COOLDOWN,
 	SCRAMBLE_SLIDE_SPEED,
+	SLIDE_DIR_Y_OFFSET,
+	SLIDE_RAMP_TAG,
 } from "shared/constants";
+import { gameStore } from "shared/store/game-store";
+import { MatchPhase, MinigameId } from "shared/types";
 
-const SLIDE_RAMP_TAG = "ShibuyaSlideRamp";
 const SURFACE_THRESHOLD = 2.5; // studs from ramp surface to trigger
-const SLIDE_DIR_Y_OFFSET = -0.4; // downward bias added to ramp LookVector
 
 @Controller()
 export class SlideController implements OnStart {
@@ -29,6 +31,15 @@ export class SlideController implements OnStart {
 	}
 
 	private check() {
+		// ShibuyaScramble handles slides server-side (slideImpulse); skip local path
+		// to avoid double-impulse. HachiRide and lobby still use this path.
+		const { matchPhase, activeMinigameId } = gameStore.getState();
+		if (
+			matchPhase === MatchPhase.InProgress &&
+			activeMinigameId === MinigameId.ShibuyaScramble
+		)
+			return;
+
 		const now = os.clock();
 		if (now - this.lastSlideTime < SCRAMBLE_SLIDE_COOLDOWN) return;
 
@@ -67,7 +78,7 @@ export class SlideController implements OnStart {
 			if (vehicleBody) {
 				// Server must apply impulse to vehicle (server owns Body physics).
 				// Client fires event; server zeros BodyVelocity.MaxForce then applies.
-				clientEvents.requestHachiSlide.fire(dir);
+				clientEvents.requestHachiSlide.fire();
 			} else {
 				// Character physics are client-owned. Disable Humanoid ground
 				// controller via PlatformStand so the impulse isn't dampened.

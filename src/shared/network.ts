@@ -62,7 +62,7 @@ interface ClientToServerEvents {
 	requestPurchase(itemId: ItemId): void;
 	hachiJump(): void;
 	hachiEject(): void;
-	requestHachiSlide(dir: Vector3): void;
+	requestHachiSlide(): void;
 }
 
 export const GlobalEvents = Networking.createEvent<
