@@ -134,7 +134,13 @@ export class LobbyService implements OnStart {
 			portal
 				.FindFirstChildOfClass("ProximityPrompt")
 				?.Triggered.Connect((_player: Player) => {
-					this.onStartRequested?.(MinigameId.HachiRide);
+					if (!this.onStartRequested) {
+						warn(
+							"[LobbyService] HachiRide portal triggered before onStartRequested registered",
+						);
+						return;
+					}
+					this.onStartRequested(MinigameId.HachiRide);
 				});
 		}
 		print(`[LobbyService] Set up ${portals.size()} Hachi Ride portals`);

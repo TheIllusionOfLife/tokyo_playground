@@ -354,11 +354,6 @@ export class HachiRideMinigame implements IMinigame {
 		if (newLevel === 3) {
 			const hachiModel = this.hachiModels.get(userId);
 			if (hachiModel) {
-				TweenService.Create(
-					hachiModel.GetPivot() as never,
-					new TweenInfo(0.5, Enum.EasingStyle.Quad),
-					{},
-				);
 				// Scale all BaseParts in the model
 				for (const part of hachiModel.GetDescendants()) {
 					if (part.IsA("BasePart") && !part.IsA("UnionOperation")) {
@@ -456,14 +451,8 @@ export class HachiRideMinigame implements IMinigame {
 					wallState.normal = wallResult.Normal;
 					this.serverEvents.hachiWallRunStart.fire(player, wallResult.Normal);
 					humanoid.PlatformStand = true;
-
-					// Apply wall-run velocity on server side too
-					const wallDir = new Vector3(
-						hrp.CFrame.LookVector.X,
-						0,
-						hrp.CFrame.LookVector.Z,
-					).Unit;
-					hrp.AssemblyLinearVelocity = wallDir.mul(HACHI_WALL_RUN_SPEED);
+					// Velocity is applied client-side each Heartbeat to avoid
+					// network ownership conflicts and physics jitter.
 				} else {
 					wallState.duration += dt;
 					if (wallState.duration >= HACHI_WALL_RUN_MAX_DUR) {

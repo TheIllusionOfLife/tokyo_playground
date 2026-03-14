@@ -311,7 +311,8 @@ export class MatchService implements OnStart {
 							);
 			const won =
 				state.minigameId === MinigameId.HachiRide
-					? (state as HachiRidePlayerState).itemCount === maxHachiItems
+					? maxHachiItems > 0 &&
+						(state as HachiRidePlayerState).itemCount === maxHachiItems
 					: (state.role === PlayerRole.Oni && result === RoundResult.OniWins) ||
 						(state.role === PlayerRole.Hider &&
 							(result === RoundResult.HidersWin ||

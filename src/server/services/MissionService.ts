@@ -117,11 +117,11 @@ export class MissionService implements OnStart {
 		}
 
 		if (state.minigameId === MinigameId.HachiRide) {
-			if (state.catchCount > 0) {
+			if (state.itemCount > 0) {
 				this.incrementAndNotify(
 					player,
 					MissionId.CollectHachiItems,
-					state.catchCount,
+					state.itemCount,
 				);
 			}
 			if (state.evolutionLevel >= 3) {

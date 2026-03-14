@@ -140,9 +140,11 @@ export class HachiRideController implements OnStart {
 					hrp.CFrame.LookVector.Z,
 				).Unit;
 				// Project forward onto the wall plane
-				this.wallRunDir = forward.sub(
-					wallNormal.mul(forward.Dot(wallNormal)),
-				).Unit;
+				const projected = forward.sub(wallNormal.mul(forward.Dot(wallNormal)));
+				this.wallRunDir =
+					projected.Magnitude > 0.001
+						? projected.Unit
+						: new Vector3(wallNormal.Z, 0, -wallNormal.X).Unit;
 			}
 			const humanoid = character.FindFirstChildOfClass("Humanoid");
 			if (humanoid) humanoid.PlatformStand = true;
