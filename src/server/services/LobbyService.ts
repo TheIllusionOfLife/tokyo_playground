@@ -70,15 +70,9 @@ export class LobbyService implements OnStart {
 				if (!hrp) return;
 
 				const dir = ramp.CFrame.LookVector.add(new Vector3(0, -0.4, 0)).Unit;
-				// BodyVelocity replicates to the client, so the CLIENT's physics
-				// engine (which owns the character) applies the impulse — reliable
-				// unlike SetNetworkOwner which has a multi-frame propagation delay.
-				const bv = new Instance("BodyVelocity");
-				bv.Velocity = dir.mul(SCRAMBLE_SLIDE_SPEED);
-				bv.MaxForce = new Vector3(1e5, 1e5, 1e5);
-				bv.P = 1e5;
-				bv.Parent = hrp;
-				task.delay(0.15, () => bv.Destroy());
+				// Fire to client — only the client can reliably set
+				// AssemblyLinearVelocity on its own character assembly.
+				this.serverEvents.slideImpulse.fire(player, dir);
 			});
 		}
 		print(`[LobbyService] Connected ${ramps.size()} slide ramps (always-on)`);
