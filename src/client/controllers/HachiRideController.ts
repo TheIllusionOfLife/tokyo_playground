@@ -33,19 +33,23 @@ export class HachiRideController implements OnStart {
 		});
 
 		clientEvents.hachiDoubleJumpGranted.connect(() => {
+			if (!this.active) return;
 			this.canDoubleJump = true;
 		});
 
 		clientEvents.hachiWallRunStart.connect((wallNormal) => {
+			if (!this.active) return;
 			this.startWallRun(wallNormal);
 		});
 
 		clientEvents.hachiWallRunStop.connect(() => {
+			if (!this.active) return;
 			this.stopWallRun();
 		});
 	}
 
 	private activate() {
+		if (this.active) return;
 		this.active = true;
 		this.canDoubleJump = false;
 		this.hasDoubleJumped = false;
@@ -134,17 +138,28 @@ export class HachiRideController implements OnStart {
 				| BasePart
 				| undefined;
 			if (hrp) {
-				const forward = new Vector3(
+				const eps = 1e-4;
+				const xzRaw = new Vector3(
 					hrp.CFrame.LookVector.X,
 					0,
 					hrp.CFrame.LookVector.Z,
-				).Unit;
+				);
+				const forward =
+					xzRaw.Magnitude > eps ? xzRaw.Unit : new Vector3(0, 0, 1);
 				// Project forward onto the wall plane
 				const projected = forward.sub(wallNormal.mul(forward.Dot(wallNormal)));
-				this.wallRunDir =
-					projected.Magnitude > 0.001
-						? projected.Unit
-						: new Vector3(wallNormal.Z, 0, -wallNormal.X).Unit;
+				let wallDir: Vector3;
+				if (projected.Magnitude > eps) {
+					wallDir = projected.Unit;
+				} else {
+					// forward is parallel to wallNormal — use perpendicular in XZ
+					const perp = new Vector3(wallNormal.Z, 0, -wallNormal.X);
+					wallDir =
+						perp.Magnitude > eps
+							? perp.Unit
+							: Vector3.yAxis.Cross(wallNormal).Unit;
+				}
+				this.wallRunDir = wallDir;
 			}
 			const humanoid = character.FindFirstChildOfClass("Humanoid");
 			if (humanoid) humanoid.PlatformStand = true;

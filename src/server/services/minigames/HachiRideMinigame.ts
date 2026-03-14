@@ -265,6 +265,13 @@ export class HachiRideMinigame implements IMinigame {
 				if (humanoid) humanoid.PlatformStand = false;
 			}
 		}
+		// Destroy the player's Hachi model immediately rather than waiting for
+		// the round janitor, to avoid orphaned visible models mid-round.
+		const hachiModel = this.hachiModels.get(userId);
+		if (hachiModel) {
+			hachiModel.Destroy();
+			this.hachiModels.delete(userId);
+		}
 		this.playerStates.delete(userId);
 		this.playerObjects.delete(userId);
 		this.wallRunStates.delete(userId);
@@ -432,7 +439,15 @@ export class HachiRideMinigame implements IMinigame {
 			const leftResult = Workspace.Raycast(hrp.Position, left, rayParams);
 			const rightResult = Workspace.Raycast(hrp.Position, right, rayParams);
 
-			const wallResult = leftResult ?? rightResult;
+			// Prefer the closer wall; fall back to the other side if only one hit.
+			let wallResult: RaycastResult | undefined;
+			if (leftResult && rightResult) {
+				const leftDist = hrp.Position.sub(leftResult.Position).Magnitude;
+				const rightDist = hrp.Position.sub(rightResult.Position).Magnitude;
+				wallResult = leftDist <= rightDist ? leftResult : rightResult;
+			} else {
+				wallResult = leftResult ?? rightResult;
+			}
 
 			if (wallResult) {
 				let wallState = this.wallRunStates.get(userId);
