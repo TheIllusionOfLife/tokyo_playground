@@ -325,9 +325,7 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 			| undefined;
 		if (!hrp) return;
 
-		const dir = ramp.CFrame.LookVector.mul(-1).add(
-			new Vector3(0, -0.4, 0),
-		).Unit;
+		const dir = ramp.CFrame.LookVector.add(new Vector3(0, -0.4, 0)).Unit;
 		hrp.AssemblyLinearVelocity = dir.mul(SCRAMBLE_SLIDE_SPEED);
 
 		this.missionService.onSlideUsed(player);

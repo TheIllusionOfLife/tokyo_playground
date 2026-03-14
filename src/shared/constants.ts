@@ -40,12 +40,12 @@ interface MinigameConfig {
 
 export const MINIGAME_CONFIGS: Record<MinigameId, MinigameConfig> = {
 	[MinigameId.CanKick]: {
-		minPlayers: 2,
+		minPlayers: 1,
 		maxPlayers: 10,
 		roundDuration: 180,
 	},
 	[MinigameId.ShibuyaScramble]: {
-		minPlayers: 2,
+		minPlayers: 1,
 		maxPlayers: 10,
 		roundDuration: 150,
 	},
