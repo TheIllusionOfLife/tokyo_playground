@@ -109,14 +109,23 @@ export class LobbyService implements OnStart {
 
 	private setupHachiRide() {
 		for (const hachi of CollectionService.GetTagged("HachiRide")) {
-			const body = (hachi as Model).FindFirstChild("Body") as
-				| BasePart
+			const seat = (hachi as Model).FindFirstChild("VehicleSeat") as
+				| VehicleSeat
 				| undefined;
-			body
-				?.FindFirstChildOfClass("ProximityPrompt")
-				?.Triggered.Connect((player) => {
-					this.serverEvents.hintTextChanged.fire(player, "Riding ハチ公!");
-				});
+			if (!seat) continue;
+
+			seat.GetPropertyChangedSignal("Occupant").Connect(() => {
+				if (!seat.Occupant) return;
+				const player = Players.GetPlayerFromCharacter(
+					seat.Occupant.Parent as Model,
+				);
+				if (player) {
+					this.serverEvents.hintTextChanged.fire(
+						player,
+						"WASD / arrow keys to drive ハチ公!",
+					);
+				}
+			});
 		}
 	}
 
