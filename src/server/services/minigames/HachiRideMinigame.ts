@@ -12,6 +12,7 @@ import {
 	HACHI_EVOLUTION_THRESHOLDS,
 	HACHI_ITEM_TAG,
 	HACHI_ITEMS_TO_SPAWN,
+	HACHI_JUMP_VELOCITY,
 	HACHI_KEY_ITEM_TAG,
 	HACHI_SPAWN_TAG,
 	HACHI_WALK_SPEEDS,
@@ -181,6 +182,19 @@ export class HachiRideMinigame implements IMinigame {
 			});
 			matchJanitor.Add(conn);
 		}
+
+		// Hachi jump and eject requests from client
+		matchJanitor.Add(
+			this.serverEvents.hachiJump.connect((player) => {
+				if (!this.roundStarted) return;
+				this.handleJumpRequest(player);
+			}),
+		);
+		matchJanitor.Add(
+			this.serverEvents.hachiEject.connect((player) => {
+				this.handleEjectRequest(player);
+			}),
+		);
 	}
 
 	assignRoles(players: Player[]): Map<Player, PlayerRole> {
@@ -286,6 +300,31 @@ export class HachiRideMinigame implements IMinigame {
 		this.playerStates.delete(userId);
 		this.playerObjects.delete(userId);
 		this.wallRunStates.delete(userId);
+	}
+
+	private handleJumpRequest(player: Player) {
+		const hachiModel = this.hachiModels.get(player.UserId);
+		if (!hachiModel) return;
+		const body = hachiModel.FindFirstChild("Body") as BasePart | undefined;
+		if (!body) return;
+		body.AssemblyLinearVelocity = new Vector3(
+			body.AssemblyLinearVelocity.X,
+			HACHI_JUMP_VELOCITY,
+			body.AssemblyLinearVelocity.Z,
+		);
+	}
+
+	private handleEjectRequest(player: Player) {
+		const hachiModel = this.hachiModels.get(player.UserId);
+		if (!hachiModel) return;
+		const seat = hachiModel.FindFirstChildOfClass("VehicleSeat") as
+			| VehicleSeat
+			| undefined;
+		if (!seat) return;
+		seat.Disabled = true;
+		task.delay(0.1, () => {
+			if (seat.Parent) seat.Disabled = false;
+		});
 	}
 
 	private checkItemCollection() {
@@ -402,10 +441,18 @@ export class HachiRideMinigame implements IMinigame {
 			}
 		}
 
-		// Update WalkSpeed
+		// Update WalkSpeed (on foot) and Hachi drive speed (while riding)
 		const humanoid = player.Character?.FindFirstChildOfClass("Humanoid");
 		if (humanoid) {
 			humanoid.WalkSpeed =
+				HACHI_WALK_SPEEDS[math.min(newLevel, HACHI_WALK_SPEEDS.size() - 1)];
+		}
+		const hachiModel = this.hachiModels.get(userId);
+		const seat = hachiModel?.FindFirstChildOfClass("VehicleSeat") as
+			| VehicleSeat
+			| undefined;
+		if (seat) {
+			seat.MaxSpeed =
 				HACHI_WALK_SPEEDS[math.min(newLevel, HACHI_WALK_SPEEDS.size() - 1)];
 		}
 

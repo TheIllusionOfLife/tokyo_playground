@@ -122,6 +122,21 @@ export class HudController implements OnStart {
 				| BasePart
 				| undefined;
 			if (!hrp) return;
+
+			// If seated in a vehicle (Hachi), push the vehicle's Body so it
+			// carries the rider — setting velocity on the HRP alone has no effect.
+			const humanoid = character.FindFirstChildOfClass("Humanoid");
+			const seatPart = humanoid?.SeatPart;
+			if (seatPart) {
+				const body = seatPart.Parent?.FindFirstChild("Body") as
+					| BasePart
+					| undefined;
+				if (body) {
+					body.AssemblyLinearVelocity = dir.mul(SCRAMBLE_SLIDE_SPEED);
+					return;
+				}
+			}
+
 			hrp.AssemblyLinearVelocity = dir.mul(SCRAMBLE_SLIDE_SPEED);
 		});
 	}

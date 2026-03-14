@@ -60,6 +60,9 @@ interface ClientToServerEvents {
 	collectMissionReward(id: MissionId): void;
 	requestShopCatalog(): void;
 	requestPurchase(itemId: ItemId): void;
+	hachiJump(): void;
+	hachiEject(): void;
+	requestHachiSlide(dir: Vector3): void;
 }
 
 export const GlobalEvents = Networking.createEvent<

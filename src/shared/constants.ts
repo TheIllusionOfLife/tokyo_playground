@@ -230,6 +230,7 @@ export const HACHI_WALL_RUN_RAYCAST = 3;
 export const HACHI_WALL_RUN_MAX_DUR = 3;
 export const HACHI_ITEM_POINT_VALUE = 1;
 export const HACHI_WIN_ITEM_BONUS = 20;
+export const HACHI_JUMP_VELOCITY = 50;
 
 // Shibuya Scramble
 export const SCRAMBLE_ROOFTOP_TP_TAG = "ShibuyaRooftopTP";
@@ -241,6 +242,6 @@ export const SCRAMBLE_ONI_COUNT_DURATION = 10;
 export const SCRAMBLE_CROWD_WAVE_INTERVAL = 20;
 export const SCRAMBLE_CROWD_WAVE_DURATION = 10;
 export const SCRAMBLE_CROWD_NPC_COUNT = 12;
-export const SCRAMBLE_SLIDE_SPEED = 80;
+export const SCRAMBLE_SLIDE_SPEED = 800;
 export const SCRAMBLE_SLIDE_COOLDOWN = 8;
 export const SCRAMBLE_TAG_BONUS_PER_TAG = 5;

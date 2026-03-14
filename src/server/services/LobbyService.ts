@@ -9,6 +9,7 @@ import {
 	SCRAMBLE_ROOFTOP_TP_DEST,
 	SCRAMBLE_ROOFTOP_TP_TAG,
 	SCRAMBLE_SLIDE_COOLDOWN,
+	SCRAMBLE_SLIDE_SPEED,
 } from "shared/constants";
 import { GlobalEvents } from "shared/network";
 import { MinigameId } from "shared/types";
@@ -64,6 +65,7 @@ export class LobbyService implements OnStart {
 		this.setupHachiRidePortal();
 		this.setupSlideRamps();
 		this.setupRooftopTPs();
+		this.setupHachiSlideHandler();
 	}
 
 	private setupSlideRamps() {
@@ -72,7 +74,6 @@ export class LobbyService implements OnStart {
 		);
 		for (const ramp of ramps) {
 			ramp.Touched.Connect((touching) => {
-				if (this.matchActive) return;
 				const character = touching.FindFirstAncestorOfClass("Model");
 				if (!character) return;
 				const player = Players.GetPlayerFromCharacter(character);
@@ -197,6 +198,33 @@ export class LobbyService implements OnStart {
 				});
 		}
 		print(`[LobbyService] Set up ${scramblePortals.size()} Scramble portals`);
+	}
+
+	private setupHachiSlideHandler() {
+		this.serverEvents.requestHachiSlide.connect((player, dir) => {
+			const character = player.Character;
+			if (!character) return;
+			const humanoid = character.FindFirstChildOfClass("Humanoid");
+			const seatPart = humanoid?.SeatPart;
+			if (!seatPart) return;
+			const hachiModel = seatPart.Parent;
+			if (!hachiModel) return;
+			const body = hachiModel.FindFirstChild("Body") as BasePart | undefined;
+			if (!body) return;
+
+			const bv = body.FindFirstChildOfClass("BodyVelocity");
+			if (bv) {
+				// Temporarily zero MaxForce so our impulse isn't cancelled
+				const origForce = bv.MaxForce;
+				bv.MaxForce = new Vector3(0, 0, 0);
+				body.AssemblyLinearVelocity = dir.mul(SCRAMBLE_SLIDE_SPEED);
+				task.delay(0.5, () => {
+					if (bv.Parent) bv.MaxForce = origForce;
+				});
+			} else {
+				body.AssemblyLinearVelocity = dir.mul(SCRAMBLE_SLIDE_SPEED);
+			}
+		});
 	}
 
 	teleportToLobby(player: Player) {
