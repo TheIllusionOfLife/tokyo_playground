@@ -420,6 +420,9 @@ export class MatchService implements OnStart {
 
 	private selectNextMinigame(): MinigameId {
 		const available = this.minigameService.getRegisteredIds();
+		if (available.size() === 0) {
+			error("[MatchService] No minigames registered — cannot start match loop");
+		}
 		this.minigameIndex = (this.minigameIndex + 1) % available.size();
 		this.nextMinigameId = available[this.minigameIndex];
 		return this.nextMinigameId;

@@ -105,8 +105,12 @@ export class MissionService implements OnStart {
 			if (role === PlayerRole.Hider && won) {
 				this.incrementAndNotify(player, MissionId.SurviveScramble, 1);
 			}
-			if (role === PlayerRole.Oni && state.catchCount >= 3) {
-				this.incrementAndNotify(player, MissionId.TagInScramble, 1);
+			if (role === PlayerRole.Oni && state.catchCount > 0) {
+				this.incrementAndNotify(
+					player,
+					MissionId.TagInScramble,
+					state.catchCount,
+				);
 			}
 		}
 

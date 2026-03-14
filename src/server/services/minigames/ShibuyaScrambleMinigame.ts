@@ -6,6 +6,7 @@ import {
 	Workspace,
 } from "@rbxts/services";
 import {
+	SCRAMBLE_CROWD_NPC_COUNT,
 	SCRAMBLE_CROWD_WAVE_DURATION,
 	SCRAMBLE_CROWD_WAVE_INTERVAL,
 	SCRAMBLE_ONI_COUNT_DURATION,
@@ -42,7 +43,6 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 	private activeCrowdNPCs: Part[] = [];
 	private slideCooldowns = new Map<number, number>();
 	private lastHintText = "";
-	private matchJanitor?: Janitor;
 
 	constructor(
 		private readonly serverEvents: ServerEvents,
@@ -50,8 +50,6 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 	) {}
 
 	prepare(players: Player[], matchJanitor: Janitor) {
-		this.matchJanitor = matchJanitor;
-
 		for (const player of players) {
 			this.playerStates.set(player.UserId, {
 				minigameId: MinigameId.ShibuyaScramble,
@@ -238,7 +236,6 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 		this.playerStates.clear();
 		this.playerObjects.clear();
 		this.slideCooldowns.clear();
-		this.matchJanitor = undefined;
 	}
 
 	private runCrowdLoop() {
@@ -260,6 +257,7 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 		const waypointsFolder = Workspace.FindFirstChild("CrowdWaypoints");
 		if (!waypointsFolder) return;
 
+		const npcsPerPath = math.floor(SCRAMBLE_CROWD_NPC_COUNT / 4);
 		for (let i = 1; i <= 4; i++) {
 			const pathFolder = waypointsFolder.FindFirstChild(`Path${i}`);
 			if (!pathFolder) continue;
@@ -269,7 +267,7 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 			const endPart = pathFolder.FindFirstChild("End") as BasePart | undefined;
 			if (!startPart || !endPart) continue;
 
-			for (let j = 0; j < 3; j++) {
+			for (let j = 0; j < npcsPerPath; j++) {
 				const offset = new Vector3(
 					(math.random() - 0.5) * 4,
 					0,
@@ -285,7 +283,6 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 				npcPart.Parent = Workspace;
 
 				this.activeCrowdNPCs.push(npcPart);
-				this.matchJanitor?.Add(npcPart);
 
 				TweenService.Create(
 					npcPart,
@@ -328,7 +325,9 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 		const dir = ramp.CFrame.LookVector.add(new Vector3(0, -0.4, 0)).Unit;
 		hrp.AssemblyLinearVelocity = dir.mul(SCRAMBLE_SLIDE_SPEED);
 
-		this.missionService.onSlideUsed(player);
+		if (state.role === PlayerRole.Hider) {
+			this.missionService.onSlideUsed(player);
+		}
 	}
 
 	private teleportPlayers(players: Player[], roles: Map<Player, PlayerRole>) {
