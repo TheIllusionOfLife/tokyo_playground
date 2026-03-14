@@ -9,9 +9,13 @@ import {
 import {
 	HACHI_BIG_SCALE,
 	HACHI_COLLECTION_RADIUS,
+	HACHI_EJECT_COOLDOWN,
+	HACHI_EJECT_SEAT_DISABLE_DURATION,
 	HACHI_EVOLUTION_THRESHOLDS,
 	HACHI_ITEM_TAG,
 	HACHI_ITEMS_TO_SPAWN,
+	HACHI_JUMP_COOLDOWN,
+	HACHI_JUMP_VELOCITY,
 	HACHI_KEY_ITEM_TAG,
 	HACHI_SPAWN_TAG,
 	HACHI_WALK_SPEEDS,
@@ -58,6 +62,8 @@ export class HachiRideMinigame implements IMinigame {
 	private activeItems: BasePart[] = [];
 	private keyItems: BasePart[] = [];
 	private wallRunStates = new Map<number, WallRunState>();
+	private jumpCooldowns = new Map<number, number>();
+	private ejectCooldowns = new Map<number, number>();
 	private roundStarted = false;
 
 	constructor(private readonly serverEvents: ServerEvents) {}
@@ -181,6 +187,19 @@ export class HachiRideMinigame implements IMinigame {
 			});
 			matchJanitor.Add(conn);
 		}
+
+		// Hachi jump and eject requests from client
+		matchJanitor.Add(
+			this.serverEvents.hachiJump.connect((player) => {
+				if (!this.roundStarted) return;
+				this.handleJumpRequest(player);
+			}),
+		);
+		matchJanitor.Add(
+			this.serverEvents.hachiEject.connect((player) => {
+				this.handleEjectRequest(player);
+			}),
+		);
 	}
 
 	assignRoles(players: Player[]): Map<Player, PlayerRole> {
@@ -262,6 +281,8 @@ export class HachiRideMinigame implements IMinigame {
 		this.playerObjects.clear();
 		this.hachiModels.clear();
 		this.wallRunStates.clear();
+		this.jumpCooldowns.clear();
+		this.ejectCooldowns.clear();
 		this.keyItems = [];
 	}
 
@@ -286,6 +307,63 @@ export class HachiRideMinigame implements IMinigame {
 		this.playerStates.delete(userId);
 		this.playerObjects.delete(userId);
 		this.wallRunStates.delete(userId);
+		this.jumpCooldowns.delete(userId);
+		this.ejectCooldowns.delete(userId);
+	}
+
+	private handleJumpRequest(player: Player) {
+		const hachiModel = this.hachiModels.get(player.UserId);
+		if (!hachiModel) return;
+
+		// Verify player is actually seated in their Hachi before applying any effect.
+		const seat = hachiModel.FindFirstChildOfClass("VehicleSeat") as
+			| VehicleSeat
+			| undefined;
+		if (!seat) return;
+		const humanoid = player.Character?.FindFirstChildOfClass("Humanoid");
+		if (!humanoid || seat.Occupant !== humanoid) return;
+
+		const now = os.clock();
+		if (
+			now - (this.jumpCooldowns.get(player.UserId) ?? 0) <
+			HACHI_JUMP_COOLDOWN
+		)
+			return;
+		this.jumpCooldowns.set(player.UserId, now);
+
+		const body = hachiModel.FindFirstChild("Body") as BasePart | undefined;
+		if (!body) return;
+		body.AssemblyLinearVelocity = new Vector3(
+			body.AssemblyLinearVelocity.X,
+			HACHI_JUMP_VELOCITY,
+			body.AssemblyLinearVelocity.Z,
+		);
+	}
+
+	private handleEjectRequest(player: Player) {
+		const hachiModel = this.hachiModels.get(player.UserId);
+		if (!hachiModel) return;
+
+		// Verify player is actually seated in their Hachi before applying any effect.
+		const seat = hachiModel.FindFirstChildOfClass("VehicleSeat") as
+			| VehicleSeat
+			| undefined;
+		if (!seat) return;
+		const humanoid = player.Character?.FindFirstChildOfClass("Humanoid");
+		if (!humanoid || seat.Occupant !== humanoid) return;
+
+		const now = os.clock();
+		if (
+			now - (this.ejectCooldowns.get(player.UserId) ?? 0) <
+			HACHI_EJECT_COOLDOWN
+		)
+			return;
+		this.ejectCooldowns.set(player.UserId, now);
+
+		seat.Disabled = true;
+		task.delay(HACHI_EJECT_SEAT_DISABLE_DURATION, () => {
+			if (seat.Parent) seat.Disabled = false;
+		});
 	}
 
 	private checkItemCollection() {
@@ -402,10 +480,18 @@ export class HachiRideMinigame implements IMinigame {
 			}
 		}
 
-		// Update WalkSpeed
+		// Update WalkSpeed (on foot) and Hachi drive speed (while riding)
 		const humanoid = player.Character?.FindFirstChildOfClass("Humanoid");
 		if (humanoid) {
 			humanoid.WalkSpeed =
+				HACHI_WALK_SPEEDS[math.min(newLevel, HACHI_WALK_SPEEDS.size() - 1)];
+		}
+		const hachiModel = this.hachiModels.get(userId);
+		const seat = hachiModel?.FindFirstChildOfClass("VehicleSeat") as
+			| VehicleSeat
+			| undefined;
+		if (seat) {
+			seat.MaxSpeed =
 				HACHI_WALK_SPEEDS[math.min(newLevel, HACHI_WALK_SPEEDS.size() - 1)];
 		}
 

@@ -209,6 +209,10 @@ export const SHOP_CATALOG: Omit<ShopItemData, "owned">[] = [
 	},
 ];
 
+export const SLIDE_RAMP_TAG = "ShibuyaSlideRamp";
+export const SLIDE_DIR_Y_OFFSET = -0.4; // downward bias added to ramp LookVector
+export const HACHI_SLIDE_RAMP_PROXIMITY = 10; // studs — server-side ramp ownership check
+
 export const CAN_KICK_PORTAL_TAG = "CanKickPortal";
 export const SCRAMBLE_PORTAL_TAG = "ShibuyaScramblePortal";
 export const HACHI_RIDE_TAG = "HachiRide";
@@ -230,6 +234,11 @@ export const HACHI_WALL_RUN_RAYCAST = 3;
 export const HACHI_WALL_RUN_MAX_DUR = 3;
 export const HACHI_ITEM_POINT_VALUE = 1;
 export const HACHI_WIN_ITEM_BONUS = 20;
+export const HACHI_JUMP_VELOCITY = 50;
+export const HACHI_JUMP_COOLDOWN = 0.4; // seconds between jump requests
+export const HACHI_EJECT_COOLDOWN = 1.0; // seconds between eject requests
+export const HACHI_SLIDE_FORCE_RESTORE_DELAY = 0.5; // seconds to hold MaxForce=0 after impulse
+export const HACHI_EJECT_SEAT_DISABLE_DURATION = 0.1; // seconds VehicleSeat stays disabled on eject
 
 // Shibuya Scramble
 export const SCRAMBLE_ROOFTOP_TP_TAG = "ShibuyaRooftopTP";
@@ -241,6 +250,6 @@ export const SCRAMBLE_ONI_COUNT_DURATION = 10;
 export const SCRAMBLE_CROWD_WAVE_INTERVAL = 20;
 export const SCRAMBLE_CROWD_WAVE_DURATION = 10;
 export const SCRAMBLE_CROWD_NPC_COUNT = 12;
-export const SCRAMBLE_SLIDE_SPEED = 80;
+export const SCRAMBLE_SLIDE_SPEED = 800;
 export const SCRAMBLE_SLIDE_COOLDOWN = 8;
 export const SCRAMBLE_TAG_BONUS_PER_TAG = 5;

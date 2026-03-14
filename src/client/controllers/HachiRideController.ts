@@ -1,5 +1,10 @@
 import { Controller, OnStart } from "@flamework/core";
-import { Players, RunService, UserInputService } from "@rbxts/services";
+import {
+	ContextActionService,
+	Players,
+	RunService,
+	UserInputService,
+} from "@rbxts/services";
 import { clientEvents } from "client/network";
 import {
 	HACHI_DOUBLE_JUMP_IMPULSE,
@@ -8,6 +13,9 @@ import {
 } from "shared/constants";
 import { MinigameId, PlayerRole, RoundResult } from "shared/types";
 
+const ACTION_HACHI_JUMP = "HachiJump";
+const ACTION_HACHI_EJECT = "HachiEject";
+
 @Controller()
 export class HachiRideController implements OnStart {
 	private active = false;
@@ -15,6 +23,7 @@ export class HachiRideController implements OnStart {
 	private hasDoubleJumped = false;
 	private isWallRunning = false;
 	private wallRunDir = new Vector3(0, 0, 1);
+	private wasSeated = false;
 
 	private heartbeatConn?: RBXScriptConnection;
 	private inputConn?: RBXScriptConnection;
@@ -54,8 +63,9 @@ export class HachiRideController implements OnStart {
 		this.canDoubleJump = false;
 		this.hasDoubleJumped = false;
 		this.isWallRunning = false;
+		this.wasSeated = false;
 
-		// Double jump — listen for jump input while airborne
+		// Double jump — only fires while airborne and NOT seated
 		this.inputConn = UserInputService.InputBegan.Connect((input, processed) => {
 			if (processed) return;
 			if (!this.active || !this.canDoubleJump) return;
@@ -65,6 +75,9 @@ export class HachiRideController implements OnStart {
 			if (!character) return;
 			const humanoid = character.FindFirstChildOfClass("Humanoid");
 			if (!humanoid) return;
+			// While seated the jump is handled by ContextActionService binding;
+			// this handler only fires when ContextActionService hasn't sunk the event.
+			if (humanoid.Sit) return;
 			if (humanoid.FloorMaterial !== Enum.Material.Air) return;
 			if (this.hasDoubleJumped) return;
 
@@ -81,7 +94,7 @@ export class HachiRideController implements OnStart {
 			}
 		});
 
-		// Reset double jump when grounded; apply wall-run velocity each frame
+		// Heartbeat: seated transitions, double-jump reset, wall-run velocity
 		this.heartbeatConn = RunService.Heartbeat.Connect((_dt) => {
 			if (!this.active) return;
 			const character = Players.LocalPlayer.Character;
@@ -89,22 +102,35 @@ export class HachiRideController implements OnStart {
 			const humanoid = character.FindFirstChildOfClass("Humanoid");
 			if (!humanoid) return;
 
-			// Reset double jump on landing
-			if (humanoid.FloorMaterial !== Enum.Material.Air) {
-				this.hasDoubleJumped = false;
+			// Seated state transitions
+			const seated = humanoid.Sit;
+			if (seated !== this.wasSeated) {
+				this.wasSeated = seated;
+				if (seated) {
+					this.onSeated();
+				} else {
+					this.onStoodUp();
+				}
 			}
 
-			// Apply wall-run horizontal velocity each frame
-			if (this.isWallRunning) {
-				const hrp = character.FindFirstChild("HumanoidRootPart") as
-					| BasePart
-					| undefined;
-				if (hrp) {
-					hrp.AssemblyLinearVelocity = new Vector3(
-						this.wallRunDir.X * HACHI_WALL_RUN_SPEED,
-						hrp.AssemblyLinearVelocity.Y,
-						this.wallRunDir.Z * HACHI_WALL_RUN_SPEED,
-					);
+			if (!seated) {
+				// Reset double jump on landing
+				if (humanoid.FloorMaterial !== Enum.Material.Air) {
+					this.hasDoubleJumped = false;
+				}
+
+				// Apply wall-run horizontal velocity each frame
+				if (this.isWallRunning) {
+					const hrp = character.FindFirstChild("HumanoidRootPart") as
+						| BasePart
+						| undefined;
+					if (hrp) {
+						hrp.AssemblyLinearVelocity = new Vector3(
+							this.wallRunDir.X * HACHI_WALL_RUN_SPEED,
+							hrp.AssemblyLinearVelocity.Y,
+							this.wallRunDir.Z * HACHI_WALL_RUN_SPEED,
+						);
+					}
 				}
 			}
 		});
@@ -113,9 +139,11 @@ export class HachiRideController implements OnStart {
 	private deactivate() {
 		if (!this.active) return;
 		this.stopWallRun();
+		this.onStoodUp(); // unbind any seated ContextAction bindings
 		this.active = false;
 		this.canDoubleJump = false;
 		this.hasDoubleJumped = false;
+		this.wasSeated = false;
 
 		this.inputConn?.Disconnect();
 		this.heartbeatConn?.Disconnect();
@@ -128,6 +156,42 @@ export class HachiRideController implements OnStart {
 			const humanoid = character.FindFirstChildOfClass("Humanoid");
 			if (humanoid) humanoid.WalkSpeed = HACHI_WALK_SPEEDS[0];
 		}
+	}
+
+	// Called when player sits in Hachi's VehicleSeat
+	private onSeated() {
+		// Sink Space to prevent the VehicleSeat's default jump-eject; fire hachiJump instead
+		ContextActionService.BindAction(
+			ACTION_HACHI_JUMP,
+			(_name, inputState, _input) => {
+				if (inputState === Enum.UserInputState.Begin) {
+					clientEvents.hachiJump.fire();
+				}
+				return Enum.ContextActionResult.Sink;
+			},
+			false,
+			Enum.KeyCode.Space,
+			Enum.KeyCode.ButtonA,
+		);
+
+		// E key to dismount
+		ContextActionService.BindAction(
+			ACTION_HACHI_EJECT,
+			(_name, inputState, _input) => {
+				if (inputState === Enum.UserInputState.Begin) {
+					clientEvents.hachiEject.fire();
+				}
+				return Enum.ContextActionResult.Sink;
+			},
+			false,
+			Enum.KeyCode.E,
+		);
+	}
+
+	// Called when player stands up (or deactivate is called)
+	private onStoodUp() {
+		ContextActionService.UnbindAction(ACTION_HACHI_JUMP);
+		ContextActionService.UnbindAction(ACTION_HACHI_EJECT);
 	}
 
 	private startWallRun(wallNormal: Vector3) {
