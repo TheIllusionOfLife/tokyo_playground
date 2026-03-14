@@ -138,12 +138,15 @@ export class HachiRideMinigame implements IMinigame {
 		}
 
 		// Clone HachiTemplate for each player
-		const template = ServerStorage.FindFirstChild("HachiTemplate") as
-			| Model
-			| undefined;
-		if (!template) {
+		const templateRaw = ServerStorage.FindFirstChild("HachiTemplate");
+		const template = templateRaw?.IsA("Model") ? templateRaw : undefined;
+		if (!templateRaw) {
 			warn(
 				"[HachiRide] Missing ServerStorage.HachiTemplate — Hachi models will not spawn",
+			);
+		} else if (!template) {
+			warn(
+				"[HachiRide] ServerStorage.HachiTemplate is not a Model — Hachi models will not spawn",
 			);
 		}
 
@@ -151,7 +154,7 @@ export class HachiRideMinigame implements IMinigame {
 			const player = players[i];
 			if (!template) break;
 
-			const clone = template.Clone() as Model;
+			const clone = template.Clone();
 			clone.Name = `Hachi_${player.UserId}`;
 			clone.Parent = Workspace;
 			this.hachiModels.set(player.UserId, clone);
@@ -246,6 +249,14 @@ export class HachiRideMinigame implements IMinigame {
 			item.Transparency = 0;
 		}
 
+		// Release PlatformStand for any player still wall-running at round end
+		for (const [userId, wallState] of this.wallRunStates) {
+			if (!wallState.running) continue;
+			const player = this.playerObjects.get(userId);
+			const humanoid = player?.Character?.FindFirstChildOfClass("Humanoid");
+			if (humanoid) humanoid.PlatformStand = false;
+		}
+
 		this.roundStarted = false;
 		this.playerStates.clear();
 		this.playerObjects.clear();
@@ -313,6 +324,8 @@ export class HachiRideMinigame implements IMinigame {
 				if (item.Transparency === 1) continue; // already collected this session
 				if (pos.sub(item.Position).Magnitude <= HACHI_COLLECTION_RADIUS) {
 					item.Transparency = 1;
+					item.CanCollide = false;
+					item.CanQuery = false;
 					this.onItemCollected(userId, state, player);
 				}
 			}

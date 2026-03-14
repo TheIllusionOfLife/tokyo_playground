@@ -111,6 +111,7 @@ export class HachiRideController implements OnStart {
 	}
 
 	private deactivate() {
+		if (!this.active) return;
 		this.stopWallRun();
 		this.active = false;
 		this.canDoubleJump = false;
@@ -130,40 +131,39 @@ export class HachiRideController implements OnStart {
 	}
 
 	private startWallRun(wallNormal: Vector3) {
-		this.isWallRunning = true;
-		// Wall-run direction is perpendicular to the wall normal in the horizontal plane
+		// Validate character before mutating state
 		const character = Players.LocalPlayer.Character;
-		if (character) {
-			const hrp = character.FindFirstChild("HumanoidRootPart") as
-				| BasePart
-				| undefined;
-			if (hrp) {
-				const eps = 1e-4;
-				const xzRaw = new Vector3(
-					hrp.CFrame.LookVector.X,
-					0,
-					hrp.CFrame.LookVector.Z,
-				);
-				const forward =
-					xzRaw.Magnitude > eps ? xzRaw.Unit : new Vector3(0, 0, 1);
-				// Project forward onto the wall plane
-				const projected = forward.sub(wallNormal.mul(forward.Dot(wallNormal)));
-				let wallDir: Vector3;
-				if (projected.Magnitude > eps) {
-					wallDir = projected.Unit;
-				} else {
-					// forward is parallel to wallNormal — use perpendicular in XZ
-					const perp = new Vector3(wallNormal.Z, 0, -wallNormal.X);
-					wallDir =
-						perp.Magnitude > eps
-							? perp.Unit
-							: Vector3.yAxis.Cross(wallNormal).Unit;
-				}
-				this.wallRunDir = wallDir;
-			}
-			const humanoid = character.FindFirstChildOfClass("Humanoid");
-			if (humanoid) humanoid.PlatformStand = true;
+		if (!character) return;
+		const hrp = character.FindFirstChild("HumanoidRootPart") as
+			| BasePart
+			| undefined;
+		if (!hrp) return;
+		const humanoid = character.FindFirstChildOfClass("Humanoid");
+		if (!humanoid) return;
+
+		// Wall-run direction is perpendicular to the wall normal in the horizontal plane
+		const eps = 1e-4;
+		const xzRaw = new Vector3(
+			hrp.CFrame.LookVector.X,
+			0,
+			hrp.CFrame.LookVector.Z,
+		);
+		const forward = xzRaw.Magnitude > eps ? xzRaw.Unit : new Vector3(0, 0, 1);
+		// Project forward onto the wall plane
+		const projected = forward.sub(wallNormal.mul(forward.Dot(wallNormal)));
+		let wallDir: Vector3;
+		if (projected.Magnitude > eps) {
+			wallDir = projected.Unit;
+		} else {
+			// forward is parallel to wallNormal — use perpendicular in XZ
+			const perp = new Vector3(wallNormal.Z, 0, -wallNormal.X);
+			wallDir =
+				perp.Magnitude > eps ? perp.Unit : Vector3.yAxis.Cross(wallNormal).Unit;
 		}
+
+		this.wallRunDir = wallDir;
+		this.isWallRunning = true;
+		humanoid.PlatformStand = true;
 	}
 
 	private stopWallRun() {
