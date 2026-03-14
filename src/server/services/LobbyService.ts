@@ -29,6 +29,20 @@ export class LobbyService implements OnStart {
 		});
 
 		this.setupPortals();
+		this.setupHachiRide();
+	}
+
+	private setupHachiRide() {
+		for (const hachi of CollectionService.GetTagged("HachiRide")) {
+			const body = (hachi as Model).FindFirstChild("Body") as
+				| BasePart
+				| undefined;
+			body
+				?.FindFirstChildOfClass("ProximityPrompt")
+				?.Triggered.Connect((player) => {
+					this.serverEvents.hintTextChanged.fire(player, "Riding ハチ公!");
+				});
+		}
 	}
 
 	private setupPortals() {

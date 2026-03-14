@@ -10,6 +10,9 @@ import {
 	SCRAMBLE_CROWD_WAVE_DURATION,
 	SCRAMBLE_CROWD_WAVE_INTERVAL,
 	SCRAMBLE_ONI_COUNT_DURATION,
+	SCRAMBLE_ROOFTOP_TP_COOLDOWN,
+	SCRAMBLE_ROOFTOP_TP_DEST,
+	SCRAMBLE_ROOFTOP_TP_TAG,
 	SCRAMBLE_SLIDE_COOLDOWN,
 	SCRAMBLE_SLIDE_SPEED,
 	SCRAMBLE_TAG_RADIUS,
@@ -42,6 +45,7 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 	private crowdLoopRunning = false;
 	private activeCrowdNPCs: Part[] = [];
 	private slideCooldowns = new Map<number, number>();
+	private rooftopTpCooldowns = new Map<number, number>();
 	private lastHintText = "";
 
 	constructor(
@@ -76,6 +80,21 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 				ramp.Touched.Connect((touching) =>
 					this.handleSlideTouch(touching, ramp),
 				),
+			);
+		}
+
+		// Connect rooftop teleport pad handlers
+		const tpPads = CollectionService.GetTagged(SCRAMBLE_ROOFTOP_TP_TAG).filter(
+			(i): i is BasePart => i.IsA("BasePart"),
+		);
+		if (tpPads.size() === 0) {
+			warn(
+				"[ShibuyaScramble] Missing Studio asset: ShibuyaRooftopTP — check map setup",
+			);
+		}
+		for (const pad of tpPads) {
+			matchJanitor.Add(
+				pad.Touched.Connect((touching) => this.handleRooftopTpTouch(touching)),
 			);
 		}
 
@@ -236,6 +255,7 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 		this.playerStates.clear();
 		this.playerObjects.clear();
 		this.slideCooldowns.clear();
+		this.rooftopTpCooldowns.clear();
 	}
 
 	private runCrowdLoop() {
@@ -298,6 +318,27 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 			npc.Destroy();
 		}
 		this.activeCrowdNPCs = [];
+	}
+
+	private handleRooftopTpTouch(touching: BasePart) {
+		const character = touching.Parent;
+		if (!character) return;
+		const player = Players.GetPlayerFromCharacter(character as Model);
+		if (!player) return;
+
+		const state = this.playerStates.get(player.UserId);
+		if (!state || state.isTagged || this.oniCounting) return;
+
+		const now = os.clock();
+		if (
+			now - (this.rooftopTpCooldowns.get(player.UserId) ?? 0) <
+			SCRAMBLE_ROOFTOP_TP_COOLDOWN
+		)
+			return;
+		this.rooftopTpCooldowns.set(player.UserId, now);
+
+		player.Character?.PivotTo(new CFrame(SCRAMBLE_ROOFTOP_TP_DEST));
+		this.fireHintText(`${player.Name} flew to the rooftop!`);
 	}
 
 	private handleSlideTouch(touching: BasePart, ramp: BasePart) {
