@@ -1,14 +1,25 @@
 import { OnStart, Service } from "@flamework/core";
 import { CollectionService, Players, Workspace } from "@rbxts/services";
-import { CAN_KICK_PORTAL_TAG, SCRAMBLE_PORTAL_TAG } from "shared/constants";
+import {
+	CAN_KICK_PORTAL_TAG,
+	SCRAMBLE_PORTAL_TAG,
+	SCRAMBLE_ROOFTOP_TP_COOLDOWN,
+	SCRAMBLE_ROOFTOP_TP_DEST,
+	SCRAMBLE_ROOFTOP_TP_TAG,
+	SCRAMBLE_SLIDE_COOLDOWN,
+	SCRAMBLE_SLIDE_SPEED,
+} from "shared/constants";
 import { GlobalEvents } from "shared/network";
 
 const LOBBY_SPAWN_TAG = "LobbySpawn";
+const SLIDE_RAMP_TAG = "ShibuyaSlideRamp";
 
 @Service()
 export class LobbyService implements OnStart {
 	private lobbySpawns: BasePart[] = [];
 	private readonly serverEvents = GlobalEvents.createServer({});
+	private readonly slideCooldowns = new Map<number, number>();
+	private readonly tpCooldowns = new Map<number, number>();
 
 	onStart() {
 		print("[LobbyService] Started");
@@ -30,6 +41,70 @@ export class LobbyService implements OnStart {
 
 		this.setupPortals();
 		this.setupHachiRide();
+		this.setupSlideRamps();
+		this.setupRooftopTPs();
+	}
+
+	private setupSlideRamps() {
+		const ramps = CollectionService.GetTagged(SLIDE_RAMP_TAG).filter(
+			(i): i is BasePart => i.IsA("BasePart"),
+		);
+		for (const ramp of ramps) {
+			ramp.Touched.Connect((touching) => {
+				const character = touching.Parent;
+				if (!character) return;
+				const player = Players.GetPlayerFromCharacter(character as Model);
+				if (!player) return;
+
+				const now = os.clock();
+				if (
+					now - (this.slideCooldowns.get(player.UserId) ?? 0) <
+					SCRAMBLE_SLIDE_COOLDOWN
+				)
+					return;
+				this.slideCooldowns.set(player.UserId, now);
+
+				const hrp = character.FindFirstChild("HumanoidRootPart") as
+					| BasePart
+					| undefined;
+				if (!hrp) return;
+
+				const dir = ramp.CFrame.LookVector.add(new Vector3(0, -0.4, 0)).Unit;
+				hrp.AssemblyLinearVelocity = dir.mul(SCRAMBLE_SLIDE_SPEED);
+			});
+		}
+		print(`[LobbyService] Connected ${ramps.size()} slide ramps (always-on)`);
+	}
+
+	private setupRooftopTPs() {
+		const pads = CollectionService.GetTagged(SCRAMBLE_ROOFTOP_TP_TAG).filter(
+			(i): i is BasePart => i.IsA("BasePart"),
+		);
+		for (const pad of pads) {
+			pad.Touched.Connect((touching) => {
+				const character = touching.Parent;
+				if (!character) return;
+				const player = Players.GetPlayerFromCharacter(character as Model);
+				if (!player) return;
+
+				const now = os.clock();
+				if (
+					now - (this.tpCooldowns.get(player.UserId) ?? 0) <
+					SCRAMBLE_ROOFTOP_TP_COOLDOWN
+				)
+					return;
+				this.tpCooldowns.set(player.UserId, now);
+
+				player.Character?.PivotTo(new CFrame(SCRAMBLE_ROOFTOP_TP_DEST));
+				this.serverEvents.hintTextChanged.fire(
+					player,
+					`${player.Name} flew to the rooftop!`,
+				);
+			});
+		}
+		print(
+			`[LobbyService] Connected ${pads.size()} rooftop TP pads (always-on)`,
+		);
 	}
 
 	private setupHachiRide() {
