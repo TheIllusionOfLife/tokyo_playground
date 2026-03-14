@@ -7,6 +7,7 @@ export enum GameState {
 
 export enum MinigameId {
 	CanKick = "CanKick",
+	ShibuyaScramble = "ShibuyaScramble",
 }
 
 export enum PlayerRole {
@@ -39,6 +40,9 @@ export enum MissionId {
 	RescueTeammates = "RescueTeammates",
 	KickCan = "KickCan",
 	EarnPoints = "EarnPoints",
+	SurviveScramble = "SurviveScramble",
+	TagInScramble = "TagInScramble",
+	ReachRooftop = "ReachRooftop",
 }
 
 export enum ItemId {
@@ -61,6 +65,7 @@ export enum ItemCategory {
 }
 
 export interface CanKickPlayerState {
+	minigameId: MinigameId.CanKick;
 	playerId: number;
 	role: PlayerRole;
 	isCaught: boolean;
@@ -68,6 +73,17 @@ export interface CanKickPlayerState {
 	rescueCount: number;
 	catchCount: number;
 }
+
+export interface ShibuyaScramblePlayerState {
+	minigameId: MinigameId.ShibuyaScramble;
+	playerId: number;
+	role: PlayerRole;
+	isTagged: boolean;
+	catchCount: number;
+	rescueCount: number;
+}
+
+export type AnyPlayerState = CanKickPlayerState | ShibuyaScramblePlayerState;
 
 export interface MatchState {
 	matchId: string;

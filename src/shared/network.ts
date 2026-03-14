@@ -3,6 +3,7 @@ import {
 	GameState,
 	ItemId,
 	MatchPhase,
+	MinigameId,
 	MissionId,
 	MissionProgressData,
 	PlayerRole,
@@ -16,7 +17,8 @@ interface ServerToClientEvents {
 	gameStateChanged(state: GameState): void;
 	scoreUpdated(coins: number): void;
 	matchPhaseChanged(phase: MatchPhase): void;
-	roleAssigned(role: PlayerRole): void;
+	roleAssigned(role: PlayerRole, minigameId: MinigameId): void;
+	crowdWaveStarted(pathCount: number): void;
 	roundTimerUpdate(timeRemaining: number): void;
 	hintTextChanged(hint: string): void;
 	rewardGranted(breakdown: RewardBreakdown): void;
@@ -30,6 +32,7 @@ interface ServerToClientEvents {
 		phase: MatchPhase,
 		timeRemaining: number,
 		role: PlayerRole,
+		minigameId: MinigameId,
 	): void;
 	playPointsUpdate(points: number, level: number, shopBalance: number): void;
 	missionUpdate(missions: MissionProgressData[]): void;

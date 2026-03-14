@@ -5,6 +5,7 @@ import {
 	HIDER_RESCUE_BONUS,
 	LOSS_MULTIPLIER,
 	ONI_CATCH_BONUS,
+	SCRAMBLE_TAG_BONUS_PER_TAG,
 	WIN_BONUS_POINTS,
 } from "shared/constants";
 import {
@@ -12,6 +13,7 @@ import {
 	PlayerRole,
 	RewardBreakdown,
 	RoundResult,
+	ShibuyaScramblePlayerState,
 } from "shared/types";
 
 @Service()
@@ -43,6 +45,29 @@ export class RewardService {
 			}
 		}
 
+		const rescueBonus = 0;
+		const totalPoints = baseReward + winBonus + roleBonus + rescueBonus;
+
+		return { baseReward, winBonus, roleBonus, rescueBonus, totalPoints };
+	}
+
+	calculateShibuyaScrambleRewards(
+		playerState: ShibuyaScramblePlayerState,
+		roundResult: RoundResult,
+		role: PlayerRole,
+	): RewardBreakdown {
+		const isOni = role === PlayerRole.Oni;
+		const won =
+			(isOni && roundResult === RoundResult.OniWins) ||
+			(!isOni && roundResult !== RoundResult.OniWins);
+
+		const baseReward = won
+			? BASE_PARTICIPATION_POINTS
+			: math.floor(BASE_PARTICIPATION_POINTS * LOSS_MULTIPLIER);
+		const winBonus = won ? WIN_BONUS_POINTS : 0;
+		const roleBonus = isOni
+			? SCRAMBLE_TAG_BONUS_PER_TAG * playerState.catchCount
+			: 0;
 		const rescueBonus = 0;
 		const totalPoints = baseReward + winBonus + roleBonus + rescueBonus;
 

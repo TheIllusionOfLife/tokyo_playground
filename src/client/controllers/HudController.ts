@@ -29,8 +29,9 @@ export class HudController implements OnStart {
 			}
 		});
 
-		clientEvents.roleAssigned.connect((role) => {
+		clientEvents.roleAssigned.connect((role, minigameId) => {
 			gameStore.setRole(role);
+			gameStore.setActiveMinigameId(minigameId);
 		});
 
 		clientEvents.roundTimerUpdate.connect((timeRemaining) => {
@@ -57,11 +58,14 @@ export class HudController implements OnStart {
 			gameStore.setScoreboard(entries);
 		});
 
-		clientEvents.matchSnapshot.connect((phase, timeRemaining, role) => {
-			gameStore.setMatchPhase(phase);
-			gameStore.setRole(role);
-			gameStore.setTimeRemaining(timeRemaining);
-		});
+		clientEvents.matchSnapshot.connect(
+			(phase, timeRemaining, role, minigameId) => {
+				gameStore.setMatchPhase(phase);
+				gameStore.setRole(role);
+				gameStore.setTimeRemaining(timeRemaining);
+				gameStore.setActiveMinigameId(minigameId);
+			},
+		);
 
 		clientEvents.playPointsUpdate.connect((points, level, shopBalance) => {
 			gameStore.setPlayPoints(points, level);

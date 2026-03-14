@@ -1,6 +1,6 @@
 import { Janitor } from "@rbxts/janitor";
 import {
-	CanKickPlayerState,
+	AnyPlayerState,
 	MinigameId,
 	PlayerRole,
 	RoundResult,
@@ -13,7 +13,7 @@ export interface IMinigame {
 	startRound(): void;
 	tick(dt: number): void;
 	checkWinCondition(): RoundResult | undefined;
-	getPlayerStates(): Map<number, CanKickPlayerState>;
+	getPlayerStates(): Map<number, AnyPlayerState>;
 	cleanup(): void;
 	handleCatchRequest?(player: Player): void;
 	handleKickCanRequest?(player: Player): boolean;

@@ -33,4 +33,8 @@ export class MinigameService {
 		}
 		return ids;
 	}
+
+	getRegisteredIds(): MinigameId[] {
+		return this.getAvailableMinigames();
+	}
 }

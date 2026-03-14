@@ -2,7 +2,7 @@ import { Controller, OnStart } from "@flamework/core";
 import { Players, RunService, TweenService, Workspace } from "@rbxts/services";
 import { clientEvents } from "client/network";
 import { CAN_KICK_RADIUS } from "shared/constants";
-import { PlayerRole } from "shared/types";
+import { MinigameId, PlayerRole } from "shared/types";
 
 @Controller()
 export class CanKickController implements OnStart {
@@ -15,8 +15,12 @@ export class CanKickController implements OnStart {
 	onStart() {
 		print("[CanKickController] Started");
 
-		clientEvents.roleAssigned.connect((role) => {
+		clientEvents.roleAssigned.connect((role, minigameId) => {
 			const version = ++this.assignVersion;
+			if (minigameId !== MinigameId.CanKick) {
+				this.cleanupProximity();
+				return;
+			}
 			if (role === PlayerRole.Hider) {
 				// WaitForChild inside task.spawn — model may not be replicated yet
 				task.spawn(() => {
