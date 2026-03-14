@@ -18,6 +18,7 @@ import {
 	ScoreboardEntry,
 } from "shared/types";
 import { GameStateService } from "./GameStateService";
+import { LobbyService } from "./LobbyService";
 import { MinigameService } from "./MinigameService";
 import { MissionService } from "./MissionService";
 import { CanKickMinigame } from "./minigames/CanKickMinigame";
@@ -53,6 +54,7 @@ export class MatchService implements OnStart {
 		private readonly playerDataService: PlayerDataService,
 		private readonly rewardService: RewardService,
 		private readonly missionService: MissionService,
+		private readonly lobbyService: LobbyService,
 	) {}
 
 	onStart() {
@@ -150,6 +152,7 @@ export class MatchService implements OnStart {
 		this.matchPlayers.clear();
 		this.playerCooldowns.clear();
 		this.currentPhase = MatchPhase.WaitingForPlayers;
+		this.lobbyService.setMatchActive(false);
 		this.gameStateService.transitionTo(GameState.Lobby);
 	}
 
@@ -167,6 +170,7 @@ export class MatchService implements OnStart {
 		this.matchPlayers = new Set(Players.GetPlayers());
 		this.playerCooldowns.clear();
 		this.currentMinigameId = minigameId;
+		this.lobbyService.setMatchActive(true);
 
 		const minigame = this.minigameService.create(minigameId, this.serverEvents);
 		if (!minigame) {
@@ -333,6 +337,7 @@ export class MatchService implements OnStart {
 		}
 		this.matchPlayers.clear();
 		this.playerCooldowns.clear();
+		this.lobbyService.setMatchActive(false);
 		task.wait(CLEANUP_DURATION);
 	}
 

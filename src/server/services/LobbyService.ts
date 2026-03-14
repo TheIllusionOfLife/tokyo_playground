@@ -20,6 +20,12 @@ export class LobbyService implements OnStart {
 	private readonly serverEvents = GlobalEvents.createServer({});
 	private readonly slideCooldowns = new Map<number, number>();
 	private readonly tpCooldowns = new Map<number, number>();
+	private matchActive = false;
+
+	/** Called by MatchService when a match starts/ends to disable lobby-level handlers. */
+	setMatchActive(active: boolean) {
+		this.matchActive = active;
+	}
 
 	onStart() {
 		print("[LobbyService] Started");
@@ -56,6 +62,7 @@ export class LobbyService implements OnStart {
 		);
 		for (const ramp of ramps) {
 			ramp.Touched.Connect((touching) => {
+				if (this.matchActive) return;
 				const character = touching.FindFirstAncestorOfClass("Model");
 				if (!character) return;
 				const player = Players.GetPlayerFromCharacter(character);
@@ -84,6 +91,7 @@ export class LobbyService implements OnStart {
 		);
 		for (const pad of pads) {
 			pad.Touched.Connect((touching) => {
+				if (this.matchActive) return;
 				const character = touching.FindFirstAncestorOfClass("Model");
 				if (!character) return;
 				const player = Players.GetPlayerFromCharacter(character);
@@ -117,10 +125,11 @@ export class LobbyService implements OnStart {
 			if (!seat) continue;
 
 			seat.GetPropertyChangedSignal("Occupant").Connect(() => {
-				if (!seat.Occupant) return;
-				const player = Players.GetPlayerFromCharacter(
-					seat.Occupant.Parent as Model,
-				);
+				const occupant = seat.Occupant;
+				if (!occupant) return;
+				const character = occupant.FindFirstAncestorOfClass("Model");
+				if (!character) return;
+				const player = Players.GetPlayerFromCharacter(character);
 				if (player) {
 					this.serverEvents.hintTextChanged.fire(
 						player,
