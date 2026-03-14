@@ -70,7 +70,13 @@ export class LobbyService implements OnStart {
 				if (!hrp) return;
 
 				const dir = ramp.CFrame.LookVector.add(new Vector3(0, -0.4, 0)).Unit;
+				// Server must own the character physics for velocity to stick;
+				// client ownership overrides server-set velocity in the same frame.
+				hrp.SetNetworkOwner(undefined);
 				hrp.AssemblyLinearVelocity = dir.mul(SCRAMBLE_SLIDE_SPEED);
+				task.delay(0.1, () => {
+					if (hrp.Parent !== undefined) hrp.SetNetworkOwner(player);
+				});
 			});
 		}
 		print(`[LobbyService] Connected ${ramps.size()} slide ramps (always-on)`);
