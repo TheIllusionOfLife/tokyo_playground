@@ -1,7 +1,10 @@
 import { Controller, OnStart } from "@flamework/core";
 import { CollectionService, Players, RunService } from "@rbxts/services";
 import { clientEvents } from "client/network";
-import { SCRAMBLE_SLIDE_COOLDOWN, SCRAMBLE_SLIDE_SPEED } from "shared/constants";
+import {
+	SCRAMBLE_SLIDE_COOLDOWN,
+	SCRAMBLE_SLIDE_SPEED,
+} from "shared/constants";
 
 const SLIDE_RAMP_TAG = "ShibuyaSlideRamp";
 const SURFACE_THRESHOLD = 2.5; // studs from ramp surface to trigger
@@ -68,7 +71,7 @@ export class SlideController implements OnStart {
 				if (humanoid) humanoid.PlatformStand = true;
 				hrp.AssemblyLinearVelocity = dir.mul(SCRAMBLE_SLIDE_SPEED);
 				task.delay(0.4, () => {
-					if (humanoid && humanoid.Parent) humanoid.PlatformStand = false;
+					if (humanoid?.Parent) humanoid.PlatformStand = false;
 				});
 			}
 			return;

@@ -23,6 +23,7 @@ export class LobbyService implements OnStart {
 	private readonly serverEvents = GlobalEvents.createServer({});
 	private readonly slideCooldowns = new Map<number, number>();
 	private readonly tpCooldowns = new Map<number, number>();
+	private readonly hachiSlideActive = new Set<number>();
 	private matchActive = false;
 	private onStartRequested?: (minigameId: MinigameId) => void;
 
@@ -58,6 +59,7 @@ export class LobbyService implements OnStart {
 		Players.PlayerRemoving.Connect((player) => {
 			this.slideCooldowns.delete(player.UserId);
 			this.tpCooldowns.delete(player.UserId);
+			this.hachiSlideActive.delete(player.UserId);
 		});
 
 		this.setupPortals();
@@ -202,6 +204,21 @@ export class LobbyService implements OnStart {
 
 	private setupHachiSlideHandler() {
 		this.serverEvents.requestHachiSlide.connect((player, dir) => {
+			// Validate direction: reject NaN (fails > 0), zero, and Infinity (>= math.huge).
+			const mag = dir.Magnitude;
+			if (!(mag > 0 && mag < math.huge)) return;
+			const safeDir = dir.Unit;
+
+			// Rate-limit: reuse slideCooldowns; prevents rapid-fire requests and the
+			// MaxForce race condition (second call can't arrive before restore fires).
+			const now = os.clock();
+			if (
+				now - (this.slideCooldowns.get(player.UserId) ?? 0) <
+				SCRAMBLE_SLIDE_COOLDOWN
+			)
+				return;
+			this.slideCooldowns.set(player.UserId, now);
+
 			const character = player.Character;
 			if (!character) return;
 			const humanoid = character.FindFirstChildOfClass("Humanoid");
@@ -214,15 +231,18 @@ export class LobbyService implements OnStart {
 
 			const bv = body.FindFirstChildOfClass("BodyVelocity");
 			if (bv) {
-				// Temporarily zero MaxForce so our impulse isn't cancelled
+				// Guard against in-flight restore overwriting origForce.
+				if (this.hachiSlideActive.has(player.UserId)) return;
+				this.hachiSlideActive.add(player.UserId);
 				const origForce = bv.MaxForce;
 				bv.MaxForce = new Vector3(0, 0, 0);
-				body.AssemblyLinearVelocity = dir.mul(SCRAMBLE_SLIDE_SPEED);
+				body.AssemblyLinearVelocity = safeDir.mul(SCRAMBLE_SLIDE_SPEED);
 				task.delay(0.5, () => {
 					if (bv.Parent) bv.MaxForce = origForce;
+					this.hachiSlideActive.delete(player.UserId);
 				});
 			} else {
-				body.AssemblyLinearVelocity = dir.mul(SCRAMBLE_SLIDE_SPEED);
+				body.AssemblyLinearVelocity = safeDir.mul(SCRAMBLE_SLIDE_SPEED);
 			}
 		});
 	}

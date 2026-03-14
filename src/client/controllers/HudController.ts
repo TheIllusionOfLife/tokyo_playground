@@ -133,8 +133,10 @@ export class HudController implements OnStart {
 					| undefined;
 				if (body) {
 					body.AssemblyLinearVelocity = dir.mul(SCRAMBLE_SLIDE_SPEED);
-					return;
 				}
+				// Seated: applied to Body, or no Body found (no-op).
+				// Do NOT fall through to HRP — setting HRP velocity while seated has no effect.
+				return;
 			}
 
 			hrp.AssemblyLinearVelocity = dir.mul(SCRAMBLE_SLIDE_SPEED);
