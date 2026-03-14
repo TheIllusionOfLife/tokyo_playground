@@ -8,6 +8,7 @@ export enum GameState {
 export enum MinigameId {
 	CanKick = "CanKick",
 	ShibuyaScramble = "ShibuyaScramble",
+	HachiRide = "HachiRide",
 }
 
 export enum PlayerRole {
@@ -43,6 +44,9 @@ export enum MissionId {
 	SurviveScramble = "SurviveScramble",
 	TagInScramble = "TagInScramble",
 	ReachRooftop = "ReachRooftop",
+	CollectHachiItems = "CollectHachiItems",
+	ReachHachiLevel3 = "ReachHachiLevel3",
+	WinHachiRide = "WinHachiRide",
 }
 
 export enum ItemId {
@@ -83,7 +87,20 @@ export interface ShibuyaScramblePlayerState {
 	rescueCount: number;
 }
 
-export type AnyPlayerState = CanKickPlayerState | ShibuyaScramblePlayerState;
+export interface HachiRidePlayerState {
+	minigameId: MinigameId.HachiRide;
+	playerId: number;
+	role: PlayerRole;
+	itemCount: number;
+	evolutionLevel: number;
+	catchCount: number;
+	rescueCount: number;
+}
+
+export type AnyPlayerState =
+	| CanKickPlayerState
+	| ShibuyaScramblePlayerState
+	| HachiRidePlayerState;
 
 export interface MatchState {
 	matchId: string;

@@ -1,6 +1,7 @@
 import React from "@rbxts/react";
 import { ActionButton } from "./components/ActionButton";
 import { CountdownOverlay } from "./components/CountdownOverlay";
+import { HachiHud } from "./components/HachiHud";
 import { HintText } from "./components/HintText";
 import { LevelUpOverlay } from "./components/LevelUpOverlay";
 import { MissionPanel } from "./components/MissionPanel";
@@ -21,6 +22,7 @@ export function GameHud() {
 			<PlayPointsDisplay />
 			<TopBar />
 			<RoleIndicator />
+			<HachiHud />
 			<HintText />
 			<CountdownOverlay />
 			<RewardPopup />

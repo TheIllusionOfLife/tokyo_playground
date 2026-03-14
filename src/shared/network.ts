@@ -46,6 +46,11 @@ interface ServerToClientEvents {
 	): void;
 	levelUp(newLevel: number): void;
 	slideImpulse(dir: Vector3): void;
+	hachiEvolved(newLevel: number): void;
+	hachiItemCollected(itemCount: number): void;
+	hachiWallRunStart(wallNormal: Vector3): void;
+	hachiWallRunStop(): void;
+	hachiDoubleJumpGranted(): void;
 }
 
 interface ClientToServerEvents {

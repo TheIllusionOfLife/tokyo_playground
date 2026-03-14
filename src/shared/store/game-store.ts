@@ -28,6 +28,8 @@ export interface GameStoreState {
 	shopBalance: number;
 	showLevelUp: boolean;
 	levelUpNewLevel: number;
+	hachiItemCount: number;
+	hachiEvolutionLevel: number;
 }
 
 const initialState: GameStoreState = {
@@ -46,6 +48,8 @@ const initialState: GameStoreState = {
 	shopBalance: 0,
 	showLevelUp: false,
 	levelUpNewLevel: 1,
+	hachiItemCount: 0,
+	hachiEvolutionLevel: 0,
 };
 
 export const gameStore = createProducer(initialState, {
@@ -95,6 +99,14 @@ export const gameStore = createProducer(initialState, {
 		...state,
 		roundResult,
 	}),
+	setHachiItemCount: (state, hachiItemCount: number) => ({
+		...state,
+		hachiItemCount,
+	}),
+	setHachiEvolutionLevel: (state, hachiEvolutionLevel: number) => ({
+		...state,
+		hachiEvolutionLevel,
+	}),
 	resetForNewMatch: (state) => ({
 		...state,
 		role: PlayerRole.None,
@@ -107,6 +119,8 @@ export const gameStore = createProducer(initialState, {
 		showRewardAnimation: false,
 		roundResult: undefined,
 		showLevelUp: false,
+		hachiItemCount: 0,
+		hachiEvolutionLevel: 0,
 	}),
 	setMissions: (state, missions: MissionProgressData[]) => ({
 		...state,

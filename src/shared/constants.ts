@@ -49,6 +49,11 @@ export const MINIGAME_CONFIGS: Record<MinigameId, MinigameConfig> = {
 		maxPlayers: 10,
 		roundDuration: 150,
 	},
+	[MinigameId.HachiRide]: {
+		minPlayers: 1,
+		maxPlayers: 8,
+		roundDuration: 180,
+	},
 };
 
 // Missions
@@ -98,6 +103,21 @@ export const MISSION_DEFS: Record<
 		target: 1,
 		pointsReward: 30,
 	},
+	[MissionId.CollectHachiItems]: {
+		label: "Collect 20 Items on Hachi",
+		target: 20,
+		pointsReward: 50,
+	},
+	[MissionId.ReachHachiLevel3]: {
+		label: "Evolve Hachi to Big Hachi",
+		target: 1,
+		pointsReward: 60,
+	},
+	[MissionId.WinHachiRide]: {
+		label: "Win Hachi Ride",
+		target: 1,
+		pointsReward: 75,
+	},
 };
 
 export const ALL_MISSION_IDS: MissionId[] = [
@@ -111,6 +131,9 @@ export const ALL_MISSION_IDS: MissionId[] = [
 	MissionId.SurviveScramble,
 	MissionId.TagInScramble,
 	MissionId.ReachRooftop,
+	MissionId.CollectHachiItems,
+	MissionId.ReachHachiLevel3,
+	MissionId.WinHachiRide,
 ];
 
 export const SHOP_CATALOG: Omit<ShopItemData, "owned">[] = [
@@ -189,6 +212,24 @@ export const SHOP_CATALOG: Omit<ShopItemData, "owned">[] = [
 export const CAN_KICK_PORTAL_TAG = "CanKickPortal";
 export const SCRAMBLE_PORTAL_TAG = "ShibuyaScramblePortal";
 export const HACHI_RIDE_TAG = "HachiRide";
+export const HACHI_RIDE_PORTAL_TAG = "HachiRidePortal";
+export const HACHI_ITEM_TAG = "HachiCollectible";
+export const HACHI_KEY_ITEM_TAG = "HachiKeyItem";
+export const HACHI_SPAWN_TAG = "HachiRideSpawn";
+
+// Hachi Ride tuning
+export const HACHI_ROUND_DURATION = 180;
+export const HACHI_EVOLUTION_THRESHOLDS = [0, 10, 25, 40, 60];
+export const HACHI_WALK_SPEEDS = [16, 18, 20, 24, 30];
+export const HACHI_ITEMS_TO_SPAWN = 80;
+export const HACHI_COLLECTION_RADIUS = 8;
+export const HACHI_BIG_SCALE = 1.5;
+export const HACHI_DOUBLE_JUMP_IMPULSE = 80;
+export const HACHI_WALL_RUN_SPEED = 28;
+export const HACHI_WALL_RUN_RAYCAST = 3;
+export const HACHI_WALL_RUN_MAX_DUR = 3;
+export const HACHI_ITEM_POINT_VALUE = 1;
+export const HACHI_WIN_ITEM_BONUS = 20;
 
 // Shibuya Scramble
 export const SCRAMBLE_ROOFTOP_TP_TAG = "ShibuyaRooftopTP";

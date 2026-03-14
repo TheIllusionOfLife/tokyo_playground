@@ -107,6 +107,14 @@ export class HudController implements OnStart {
 			task.delay(3, () => gameStore.hideLevelUp());
 		});
 
+		clientEvents.hachiItemCollected.connect((count) => {
+			gameStore.setHachiItemCount(count);
+		});
+
+		clientEvents.hachiEvolved.connect((level) => {
+			gameStore.setHachiEvolutionLevel(level);
+		});
+
 		clientEvents.slideImpulse.connect((dir) => {
 			const character = Players.LocalPlayer.Character;
 			if (!character) return;

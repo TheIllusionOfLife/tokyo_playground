@@ -11,6 +11,7 @@ import {
 import { GlobalEvents } from "shared/network";
 import {
 	GameState,
+	HachiRidePlayerState,
 	MatchPhase,
 	MinigameId,
 	PlayerRole,
@@ -22,6 +23,7 @@ import { LobbyService } from "./LobbyService";
 import { MinigameService } from "./MinigameService";
 import { MissionService } from "./MissionService";
 import { CanKickMinigame } from "./minigames/CanKickMinigame";
+import { HachiRideMinigame } from "./minigames/HachiRideMinigame";
 import { IMinigame } from "./minigames/MinigameBase";
 import { ShibuyaScrambleMinigame } from "./minigames/ShibuyaScrambleMinigame";
 import { PlayerDataService } from "./PlayerDataService";
@@ -47,6 +49,7 @@ export class MatchService implements OnStart {
 	private minigameIndex = -1;
 	private nextMinigameId: MinigameId = MinigameId.CanKick;
 	private currentMinigameId: MinigameId = MinigameId.CanKick;
+	private startRequested = false;
 
 	constructor(
 		private readonly gameStateService: GameStateService,
@@ -69,6 +72,13 @@ export class MatchService implements OnStart {
 			MinigameId.ShibuyaScramble,
 			(events) => new ShibuyaScrambleMinigame(events, this.missionService),
 		);
+		this.minigameService.register(
+			MinigameId.HachiRide,
+			(events) => new HachiRideMinigame(events),
+		);
+
+		// Wire portal start requests (avoids circular DI: MatchService already holds LobbyService)
+		this.lobbyService.setOnStartRequested((id) => this.requestStart(id));
 
 		this.serverEvents.requestCatch.connect((player) => {
 			this.handleActionRequest(player, "catch");
@@ -104,6 +114,12 @@ export class MatchService implements OnStart {
 		}
 	}
 
+	/** Called by portal handlers (e.g. HachiRidePortal) to signal an explicit game start. */
+	requestStart(minigameId: MinigameId) {
+		this.nextMinigameId = minigameId;
+		this.startRequested = true;
+	}
+
 	private runIntermission() {
 		this.gameStateService.transitionTo(GameState.Lobby);
 		this.transitionPhase(MatchPhase.WaitingForPlayers);
@@ -115,10 +131,18 @@ export class MatchService implements OnStart {
 
 			const players = Players.GetPlayers();
 			const config = MINIGAME_CONFIGS[this.nextMinigameId];
-			if (players.size() >= config.minPlayers && waited >= 5) {
+			if (this.startRequested && players.size() >= config.minPlayers) {
+				break;
+			}
+			if (
+				!this.startRequested &&
+				players.size() >= config.minPlayers &&
+				waited >= 5
+			) {
 				break;
 			}
 		}
+		this.startRequested = false;
 
 		const config = MINIGAME_CONFIGS[this.nextMinigameId];
 		if (Players.GetPlayers().size() < config.minPlayers) {
@@ -245,6 +269,18 @@ export class MatchService implements OnStart {
 		const minigame = this.activeMinigame!;
 		const playerStates = minigame.getPlayerStates();
 
+		// Pre-compute HachiRide winner threshold (highest itemCount wins)
+		let maxHachiItems = 0;
+		if (this.currentMinigameId === MinigameId.HachiRide) {
+			for (const [, state] of playerStates) {
+				if (state.minigameId === MinigameId.HachiRide) {
+					if ((state as HachiRidePlayerState).itemCount > maxHachiItems) {
+						maxHachiItems = (state as HachiRidePlayerState).itemCount;
+					}
+				}
+			}
+		}
+
 		// Build scoreboard
 		const entries: ScoreboardEntry[] = [];
 
@@ -257,22 +293,30 @@ export class MatchService implements OnStart {
 			if (!player) continue;
 
 			const breakdown =
-				state.minigameId === MinigameId.ShibuyaScramble
-					? this.rewardService.calculateShibuyaScrambleRewards(
-							state,
-							result,
-							state.role,
+				state.minigameId === MinigameId.HachiRide
+					? this.rewardService.calculateHachiRideRewards(
+							state as HachiRidePlayerState,
+							maxHachiItems,
 						)
-					: this.rewardService.calculateCanKickRewards(
-							state,
-							result,
-							state.role,
-						);
+					: state.minigameId === MinigameId.ShibuyaScramble
+						? this.rewardService.calculateShibuyaScrambleRewards(
+								state,
+								result,
+								state.role,
+							)
+						: this.rewardService.calculateCanKickRewards(
+								state,
+								result,
+								state.role,
+							);
 			const won =
-				(state.role === PlayerRole.Oni && result === RoundResult.OniWins) ||
-				(state.role === PlayerRole.Hider &&
-					(result === RoundResult.HidersWin ||
-						result === RoundResult.TimerExpired));
+				state.minigameId === MinigameId.HachiRide
+					? maxHachiItems > 0 &&
+						(state as HachiRidePlayerState).itemCount === maxHachiItems
+					: (state.role === PlayerRole.Oni && result === RoundResult.OniWins) ||
+						(state.role === PlayerRole.Hider &&
+							(result === RoundResult.HidersWin ||
+								result === RoundResult.TimerExpired));
 
 			const levelResult = this.playerDataService.recordGameResult(
 				player,
@@ -302,6 +346,7 @@ export class MatchService implements OnStart {
 				result,
 				state,
 				breakdown.totalPoints,
+				won,
 			);
 
 			entries.push({

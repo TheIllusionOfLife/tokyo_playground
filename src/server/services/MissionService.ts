@@ -70,16 +70,18 @@ export class MissionService implements OnStart {
 		result: RoundResult,
 		state: AnyPlayerState,
 		pointsEarned: number,
+		isWinner?: boolean,
 	) {
 		if (!this.playerDataService.getPlayerData(player)) return;
 
 		this.incrementAndNotify(player, MissionId.PlayGames, 1);
 
 		const won =
-			(role === PlayerRole.Oni && result === RoundResult.OniWins) ||
-			(role === PlayerRole.Hider &&
-				(result === RoundResult.HidersWin ||
-					result === RoundResult.TimerExpired));
+			isWinner ??
+			((role === PlayerRole.Oni && result === RoundResult.OniWins) ||
+				(role === PlayerRole.Hider &&
+					(result === RoundResult.HidersWin ||
+						result === RoundResult.TimerExpired)));
 
 		if (won && role === PlayerRole.Oni) {
 			this.incrementAndNotify(player, MissionId.WinAsOni, 1);
@@ -111,6 +113,22 @@ export class MissionService implements OnStart {
 					MissionId.TagInScramble,
 					state.catchCount,
 				);
+			}
+		}
+
+		if (state.minigameId === MinigameId.HachiRide) {
+			if (state.itemCount > 0) {
+				this.incrementAndNotify(
+					player,
+					MissionId.CollectHachiItems,
+					state.itemCount,
+				);
+			}
+			if (state.evolutionLevel >= 3) {
+				this.incrementAndNotify(player, MissionId.ReachHachiLevel3, 1);
+			}
+			if (won) {
+				this.incrementAndNotify(player, MissionId.WinHachiRide, 1);
 			}
 		}
 
