@@ -10,8 +10,10 @@ import {
 	SCRAMBLE_CROWD_WAVE_DURATION,
 	SCRAMBLE_CROWD_WAVE_INTERVAL,
 	SCRAMBLE_ONI_COUNT_DURATION,
+	SCRAMBLE_ROOFTOP_TP_COOLDOWN,
+	SCRAMBLE_ROOFTOP_TP_DEST,
+	SCRAMBLE_ROOFTOP_TP_TAG,
 	SCRAMBLE_SLIDE_COOLDOWN,
-	SCRAMBLE_SLIDE_SPEED,
 	SCRAMBLE_TAG_RADIUS,
 } from "shared/constants";
 import { GlobalEvents } from "shared/network";
@@ -42,6 +44,7 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 	private crowdLoopRunning = false;
 	private activeCrowdNPCs: Part[] = [];
 	private slideCooldowns = new Map<number, number>();
+	private rooftopTpCooldowns = new Map<number, number>();
 	private lastHintText = "";
 
 	constructor(
@@ -76,6 +79,21 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 				ramp.Touched.Connect((touching) =>
 					this.handleSlideTouch(touching, ramp),
 				),
+			);
+		}
+
+		// Connect rooftop teleport pad handlers
+		const tpPads = CollectionService.GetTagged(SCRAMBLE_ROOFTOP_TP_TAG).filter(
+			(i): i is BasePart => i.IsA("BasePart"),
+		);
+		if (tpPads.size() === 0) {
+			warn(
+				"[ShibuyaScramble] Missing Studio asset: ShibuyaRooftopTP — check map setup",
+			);
+		}
+		for (const pad of tpPads) {
+			matchJanitor.Add(
+				pad.Touched.Connect((touching) => this.handleRooftopTpTouch(touching)),
 			);
 		}
 
@@ -212,6 +230,8 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 	removePlayer(userId: number) {
 		this.playerStates.delete(userId);
 		this.playerObjects.delete(userId);
+		this.slideCooldowns.delete(userId);
+		this.rooftopTpCooldowns.delete(userId);
 	}
 
 	stopCountdown() {
@@ -221,6 +241,13 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 			task.cancel(this.countdownThread);
 			this.countdownThread = undefined;
 		}
+		// Stop crowd wave loop immediately (called before cleanup during results display)
+		this.crowdLoopRunning = false;
+		if (this.crowdThread) {
+			task.cancel(this.crowdThread);
+			this.crowdThread = undefined;
+		}
+		this.despawnCrowdNPCs();
 		this.setOniWalkSpeed(16);
 	}
 
@@ -236,6 +263,7 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 		this.playerStates.clear();
 		this.playerObjects.clear();
 		this.slideCooldowns.clear();
+		this.rooftopTpCooldowns.clear();
 	}
 
 	private runCrowdLoop() {
@@ -300,10 +328,32 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 		this.activeCrowdNPCs = [];
 	}
 
-	private handleSlideTouch(touching: BasePart, ramp: BasePart) {
-		const character = touching.Parent;
+	private handleRooftopTpTouch(touching: BasePart) {
+		const character = touching.FindFirstAncestorOfClass("Model");
 		if (!character) return;
-		const player = Players.GetPlayerFromCharacter(character as Model);
+		const player = Players.GetPlayerFromCharacter(character);
+		if (!player) return;
+
+		const state = this.playerStates.get(player.UserId);
+		if (!state || state.isTagged || this.oniCounting) return;
+
+		const now = os.clock();
+		if (
+			now - (this.rooftopTpCooldowns.get(player.UserId) ?? 0) <
+			SCRAMBLE_ROOFTOP_TP_COOLDOWN
+		)
+			return;
+		this.rooftopTpCooldowns.set(player.UserId, now);
+
+		player.Character?.PivotTo(new CFrame(SCRAMBLE_ROOFTOP_TP_DEST));
+		// Targeted hint — broadcasting would reveal a hider's position to the Oni
+		this.serverEvents.hintTextChanged.fire(player, "You reached the rooftop!");
+	}
+
+	private handleSlideTouch(touching: BasePart, ramp: BasePart) {
+		const character = touching.FindFirstAncestorOfClass("Model");
+		if (!character) return;
+		const player = Players.GetPlayerFromCharacter(character);
 		if (!player) return;
 
 		const state = this.playerStates.get(player.UserId);
@@ -317,13 +367,9 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 			return;
 		this.slideCooldowns.set(player.UserId, now);
 
-		const hrp = character.FindFirstChild("HumanoidRootPart") as
-			| BasePart
-			| undefined;
-		if (!hrp) return;
-
 		const dir = ramp.CFrame.LookVector.add(new Vector3(0, -0.4, 0)).Unit;
-		hrp.AssemblyLinearVelocity = dir.mul(SCRAMBLE_SLIDE_SPEED);
+		// Fire to client — matches LobbyService pattern; client applies speed locally
+		this.serverEvents.slideImpulse.fire(player, dir);
 
 		if (state.role === PlayerRole.Hider) {
 			this.missionService.onSlideUsed(player);

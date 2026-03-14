@@ -4,6 +4,7 @@ import { ReflexProvider } from "@rbxts/react-reflex";
 import ReactRoblox from "@rbxts/react-roblox";
 import { Players } from "@rbxts/services";
 import { clientEvents } from "client/network";
+import { SCRAMBLE_SLIDE_SPEED } from "shared/constants";
 import { gameStore } from "shared/store/game-store";
 import { MatchPhase } from "shared/types";
 import { GameHud } from "../ui/GameHud";
@@ -104,6 +105,16 @@ export class HudController implements OnStart {
 		clientEvents.levelUp.connect((lv) => {
 			gameStore.setLevelUp(lv);
 			task.delay(3, () => gameStore.hideLevelUp());
+		});
+
+		clientEvents.slideImpulse.connect((dir) => {
+			const character = Players.LocalPlayer.Character;
+			if (!character) return;
+			const hrp = character.FindFirstChild("HumanoidRootPart") as
+				| BasePart
+				| undefined;
+			if (!hrp) return;
+			hrp.AssemblyLinearVelocity = dir.mul(SCRAMBLE_SLIDE_SPEED);
 		});
 	}
 

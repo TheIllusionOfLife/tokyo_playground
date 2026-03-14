@@ -45,6 +45,7 @@ interface ServerToClientEvents {
 		errorMessage: string,
 	): void;
 	levelUp(newLevel: number): void;
+	slideImpulse(dir: Vector3): void;
 }
 
 interface ClientToServerEvents {

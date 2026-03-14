@@ -1,14 +1,31 @@
 import { OnStart, Service } from "@flamework/core";
 import { CollectionService, Players, Workspace } from "@rbxts/services";
-import { CAN_KICK_PORTAL_TAG, SCRAMBLE_PORTAL_TAG } from "shared/constants";
+import {
+	CAN_KICK_PORTAL_TAG,
+	HACHI_RIDE_TAG,
+	SCRAMBLE_PORTAL_TAG,
+	SCRAMBLE_ROOFTOP_TP_COOLDOWN,
+	SCRAMBLE_ROOFTOP_TP_DEST,
+	SCRAMBLE_ROOFTOP_TP_TAG,
+	SCRAMBLE_SLIDE_COOLDOWN,
+} from "shared/constants";
 import { GlobalEvents } from "shared/network";
 
 const LOBBY_SPAWN_TAG = "LobbySpawn";
+const SLIDE_RAMP_TAG = "ShibuyaSlideRamp";
 
 @Service()
 export class LobbyService implements OnStart {
 	private lobbySpawns: BasePart[] = [];
 	private readonly serverEvents = GlobalEvents.createServer({});
+	private readonly slideCooldowns = new Map<number, number>();
+	private readonly tpCooldowns = new Map<number, number>();
+	private matchActive = false;
+
+	/** Called by MatchService when a match starts/ends to disable lobby-level handlers. */
+	setMatchActive(active: boolean) {
+		this.matchActive = active;
+	}
 
 	onStart() {
 		print("[LobbyService] Started");
@@ -28,7 +45,99 @@ export class LobbyService implements OnStart {
 			});
 		});
 
+		Players.PlayerRemoving.Connect((player) => {
+			this.slideCooldowns.delete(player.UserId);
+			this.tpCooldowns.delete(player.UserId);
+		});
+
 		this.setupPortals();
+		this.setupHachiRide();
+		this.setupSlideRamps();
+		this.setupRooftopTPs();
+	}
+
+	private setupSlideRamps() {
+		const ramps = CollectionService.GetTagged(SLIDE_RAMP_TAG).filter(
+			(i): i is BasePart => i.IsA("BasePart"),
+		);
+		for (const ramp of ramps) {
+			ramp.Touched.Connect((touching) => {
+				if (this.matchActive) return;
+				const character = touching.FindFirstAncestorOfClass("Model");
+				if (!character) return;
+				const player = Players.GetPlayerFromCharacter(character);
+				if (!player) return;
+
+				const now = os.clock();
+				if (
+					now - (this.slideCooldowns.get(player.UserId) ?? 0) <
+					SCRAMBLE_SLIDE_COOLDOWN
+				)
+					return;
+				this.slideCooldowns.set(player.UserId, now);
+
+				const dir = ramp.CFrame.LookVector.add(new Vector3(0, -0.4, 0)).Unit;
+				// Fire to client — only the client can reliably set
+				// AssemblyLinearVelocity on its own character assembly.
+				this.serverEvents.slideImpulse.fire(player, dir);
+			});
+		}
+		print(`[LobbyService] Connected ${ramps.size()} slide ramps (always-on)`);
+	}
+
+	private setupRooftopTPs() {
+		const pads = CollectionService.GetTagged(SCRAMBLE_ROOFTOP_TP_TAG).filter(
+			(i): i is BasePart => i.IsA("BasePart"),
+		);
+		for (const pad of pads) {
+			pad.Touched.Connect((touching) => {
+				if (this.matchActive) return;
+				const character = touching.FindFirstAncestorOfClass("Model");
+				if (!character) return;
+				const player = Players.GetPlayerFromCharacter(character);
+				if (!player) return;
+
+				const now = os.clock();
+				if (
+					now - (this.tpCooldowns.get(player.UserId) ?? 0) <
+					SCRAMBLE_ROOFTOP_TP_COOLDOWN
+				)
+					return;
+				this.tpCooldowns.set(player.UserId, now);
+
+				player.Character?.PivotTo(new CFrame(SCRAMBLE_ROOFTOP_TP_DEST));
+				this.serverEvents.hintTextChanged.fire(
+					player,
+					`${player.Name} flew to the rooftop!`,
+				);
+			});
+		}
+		print(
+			`[LobbyService] Connected ${pads.size()} rooftop TP pads (always-on)`,
+		);
+	}
+
+	private setupHachiRide() {
+		for (const hachi of CollectionService.GetTagged(HACHI_RIDE_TAG)) {
+			const seat = (hachi as Model).FindFirstChild("VehicleSeat") as
+				| VehicleSeat
+				| undefined;
+			if (!seat) continue;
+
+			seat.GetPropertyChangedSignal("Occupant").Connect(() => {
+				const occupant = seat.Occupant;
+				if (!occupant) return;
+				const character = occupant.FindFirstAncestorOfClass("Model");
+				if (!character) return;
+				const player = Players.GetPlayerFromCharacter(character);
+				if (player) {
+					this.serverEvents.hintTextChanged.fire(
+						player,
+						"WASD / arrow keys to drive ハチ公!",
+					);
+				}
+			});
+		}
 	}
 
 	private setupPortals() {
@@ -46,7 +155,8 @@ export class LobbyService implements OnStart {
 		}
 		print(`[LobbyService] Set up ${portals.size()} Can Kick portals`);
 
-		for (const portal of CollectionService.GetTagged(SCRAMBLE_PORTAL_TAG)) {
+		const scramblePortals = CollectionService.GetTagged(SCRAMBLE_PORTAL_TAG);
+		for (const portal of scramblePortals) {
 			if (!portal.IsA("BasePart")) continue;
 			portal
 				.FindFirstChildOfClass("ProximityPrompt")
@@ -57,6 +167,7 @@ export class LobbyService implements OnStart {
 					);
 				});
 		}
+		print(`[LobbyService] Set up ${scramblePortals.size()} Scramble portals`);
 	}
 
 	teleportToLobby(player: Player) {

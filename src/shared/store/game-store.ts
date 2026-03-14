@@ -98,6 +98,7 @@ export const gameStore = createProducer(initialState, {
 	resetForNewMatch: (state) => ({
 		...state,
 		role: PlayerRole.None,
+		activeMinigameId: undefined,
 		hintText: "",
 		timeRemaining: 0,
 		countdownSeconds: 0,

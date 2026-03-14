@@ -40,12 +40,12 @@ interface MinigameConfig {
 
 export const MINIGAME_CONFIGS: Record<MinigameId, MinigameConfig> = {
 	[MinigameId.CanKick]: {
-		minPlayers: 1,
+		minPlayers: 2,
 		maxPlayers: 10,
 		roundDuration: 180,
 	},
 	[MinigameId.ShibuyaScramble]: {
-		minPlayers: 1,
+		minPlayers: 2,
 		maxPlayers: 10,
 		roundDuration: 150,
 	},
@@ -188,8 +188,13 @@ export const SHOP_CATALOG: Omit<ShopItemData, "owned">[] = [
 
 export const CAN_KICK_PORTAL_TAG = "CanKickPortal";
 export const SCRAMBLE_PORTAL_TAG = "ShibuyaScramblePortal";
+export const HACHI_RIDE_TAG = "HachiRide";
 
 // Shibuya Scramble
+export const SCRAMBLE_ROOFTOP_TP_TAG = "ShibuyaRooftopTP";
+export const SCRAMBLE_ROOFTOP_TP_COOLDOWN = 15; // seconds
+export const SCRAMBLE_ROOFTOP_TP_DEST = new Vector3(-73, 1476, -1512);
+
 export const SCRAMBLE_TAG_RADIUS = 8;
 export const SCRAMBLE_ONI_COUNT_DURATION = 10;
 export const SCRAMBLE_CROWD_WAVE_INTERVAL = 20;
