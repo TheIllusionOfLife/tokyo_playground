@@ -188,6 +188,7 @@ export const SHOP_CATALOG: Omit<ShopItemData, "owned">[] = [
 
 export const CAN_KICK_PORTAL_TAG = "CanKickPortal";
 export const SCRAMBLE_PORTAL_TAG = "ShibuyaScramblePortal";
+export const HACHI_RIDE_TAG = "HachiRide";
 
 // Shibuya Scramble
 export const SCRAMBLE_ROOFTOP_TP_TAG = "ShibuyaRooftopTP";

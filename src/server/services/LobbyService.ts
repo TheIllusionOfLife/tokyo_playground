@@ -2,12 +2,12 @@ import { OnStart, Service } from "@flamework/core";
 import { CollectionService, Players, Workspace } from "@rbxts/services";
 import {
 	CAN_KICK_PORTAL_TAG,
+	HACHI_RIDE_TAG,
 	SCRAMBLE_PORTAL_TAG,
 	SCRAMBLE_ROOFTOP_TP_COOLDOWN,
 	SCRAMBLE_ROOFTOP_TP_DEST,
 	SCRAMBLE_ROOFTOP_TP_TAG,
 	SCRAMBLE_SLIDE_COOLDOWN,
-	SCRAMBLE_SLIDE_SPEED,
 } from "shared/constants";
 import { GlobalEvents } from "shared/network";
 
@@ -39,6 +39,11 @@ export class LobbyService implements OnStart {
 			});
 		});
 
+		Players.PlayerRemoving.Connect((player) => {
+			this.slideCooldowns.delete(player.UserId);
+			this.tpCooldowns.delete(player.UserId);
+		});
+
 		this.setupPortals();
 		this.setupHachiRide();
 		this.setupSlideRamps();
@@ -51,9 +56,9 @@ export class LobbyService implements OnStart {
 		);
 		for (const ramp of ramps) {
 			ramp.Touched.Connect((touching) => {
-				const character = touching.Parent;
+				const character = touching.FindFirstAncestorOfClass("Model");
 				if (!character) return;
-				const player = Players.GetPlayerFromCharacter(character as Model);
+				const player = Players.GetPlayerFromCharacter(character);
 				if (!player) return;
 
 				const now = os.clock();
@@ -63,11 +68,6 @@ export class LobbyService implements OnStart {
 				)
 					return;
 				this.slideCooldowns.set(player.UserId, now);
-
-				const hrp = character.FindFirstChild("HumanoidRootPart") as
-					| BasePart
-					| undefined;
-				if (!hrp) return;
 
 				const dir = ramp.CFrame.LookVector.add(new Vector3(0, -0.4, 0)).Unit;
 				// Fire to client — only the client can reliably set
@@ -84,9 +84,9 @@ export class LobbyService implements OnStart {
 		);
 		for (const pad of pads) {
 			pad.Touched.Connect((touching) => {
-				const character = touching.Parent;
+				const character = touching.FindFirstAncestorOfClass("Model");
 				if (!character) return;
-				const player = Players.GetPlayerFromCharacter(character as Model);
+				const player = Players.GetPlayerFromCharacter(character);
 				if (!player) return;
 
 				const now = os.clock();
@@ -110,7 +110,7 @@ export class LobbyService implements OnStart {
 	}
 
 	private setupHachiRide() {
-		for (const hachi of CollectionService.GetTagged("HachiRide")) {
+		for (const hachi of CollectionService.GetTagged(HACHI_RIDE_TAG)) {
 			const seat = (hachi as Model).FindFirstChild("VehicleSeat") as
 				| VehicleSeat
 				| undefined;
@@ -146,7 +146,8 @@ export class LobbyService implements OnStart {
 		}
 		print(`[LobbyService] Set up ${portals.size()} Can Kick portals`);
 
-		for (const portal of CollectionService.GetTagged(SCRAMBLE_PORTAL_TAG)) {
+		const scramblePortals = CollectionService.GetTagged(SCRAMBLE_PORTAL_TAG);
+		for (const portal of scramblePortals) {
 			if (!portal.IsA("BasePart")) continue;
 			portal
 				.FindFirstChildOfClass("ProximityPrompt")
@@ -157,6 +158,7 @@ export class LobbyService implements OnStart {
 					);
 				});
 		}
+		print(`[LobbyService] Set up ${scramblePortals.size()} Scramble portals`);
 	}
 
 	teleportToLobby(player: Player) {

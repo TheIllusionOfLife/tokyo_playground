@@ -14,7 +14,6 @@ import {
 	SCRAMBLE_ROOFTOP_TP_DEST,
 	SCRAMBLE_ROOFTOP_TP_TAG,
 	SCRAMBLE_SLIDE_COOLDOWN,
-	SCRAMBLE_SLIDE_SPEED,
 	SCRAMBLE_TAG_RADIUS,
 } from "shared/constants";
 import { GlobalEvents } from "shared/network";
@@ -231,6 +230,8 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 	removePlayer(userId: number) {
 		this.playerStates.delete(userId);
 		this.playerObjects.delete(userId);
+		this.slideCooldowns.delete(userId);
+		this.rooftopTpCooldowns.delete(userId);
 	}
 
 	stopCountdown() {
@@ -240,6 +241,13 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 			task.cancel(this.countdownThread);
 			this.countdownThread = undefined;
 		}
+		// Stop crowd wave loop immediately (called before cleanup during results display)
+		this.crowdLoopRunning = false;
+		if (this.crowdThread) {
+			task.cancel(this.crowdThread);
+			this.crowdThread = undefined;
+		}
+		this.despawnCrowdNPCs();
 		this.setOniWalkSpeed(16);
 	}
 
@@ -321,9 +329,9 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 	}
 
 	private handleRooftopTpTouch(touching: BasePart) {
-		const character = touching.Parent;
+		const character = touching.FindFirstAncestorOfClass("Model");
 		if (!character) return;
-		const player = Players.GetPlayerFromCharacter(character as Model);
+		const player = Players.GetPlayerFromCharacter(character);
 		if (!player) return;
 
 		const state = this.playerStates.get(player.UserId);
@@ -338,13 +346,14 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 		this.rooftopTpCooldowns.set(player.UserId, now);
 
 		player.Character?.PivotTo(new CFrame(SCRAMBLE_ROOFTOP_TP_DEST));
-		this.fireHintText(`${player.Name} flew to the rooftop!`);
+		// Targeted hint — broadcasting would reveal a hider's position to the Oni
+		this.serverEvents.hintTextChanged.fire(player, "You reached the rooftop!");
 	}
 
 	private handleSlideTouch(touching: BasePart, ramp: BasePart) {
-		const character = touching.Parent;
+		const character = touching.FindFirstAncestorOfClass("Model");
 		if (!character) return;
-		const player = Players.GetPlayerFromCharacter(character as Model);
+		const player = Players.GetPlayerFromCharacter(character);
 		if (!player) return;
 
 		const state = this.playerStates.get(player.UserId);
@@ -358,13 +367,9 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 			return;
 		this.slideCooldowns.set(player.UserId, now);
 
-		const hrp = character.FindFirstChild("HumanoidRootPart") as
-			| BasePart
-			| undefined;
-		if (!hrp) return;
-
 		const dir = ramp.CFrame.LookVector.add(new Vector3(0, -0.4, 0)).Unit;
-		hrp.AssemblyLinearVelocity = dir.mul(SCRAMBLE_SLIDE_SPEED);
+		// Fire to client — matches LobbyService pattern; client applies speed locally
+		this.serverEvents.slideImpulse.fire(player, dir);
 
 		if (state.role === PlayerRole.Hider) {
 			this.missionService.onSlideUsed(player);
