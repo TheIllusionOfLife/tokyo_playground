@@ -2,6 +2,7 @@ import { OnStart, Service } from "@flamework/core";
 import { CollectionService, Players, Workspace } from "@rbxts/services";
 import {
 	CAN_KICK_PORTAL_TAG,
+	HACHI_RIDE_PORTAL_TAG,
 	HACHI_RIDE_TAG,
 	SCRAMBLE_PORTAL_TAG,
 	SCRAMBLE_ROOFTOP_TP_COOLDOWN,
@@ -10,6 +11,7 @@ import {
 	SCRAMBLE_SLIDE_COOLDOWN,
 } from "shared/constants";
 import { GlobalEvents } from "shared/network";
+import { MinigameId } from "shared/types";
 
 const LOBBY_SPAWN_TAG = "LobbySpawn";
 const SLIDE_RAMP_TAG = "ShibuyaSlideRamp";
@@ -21,6 +23,12 @@ export class LobbyService implements OnStart {
 	private readonly slideCooldowns = new Map<number, number>();
 	private readonly tpCooldowns = new Map<number, number>();
 	private matchActive = false;
+	private onStartRequested?: (minigameId: MinigameId) => void;
+
+	/** Registered by MatchService to avoid circular DI. */
+	setOnStartRequested(cb: (minigameId: MinigameId) => void) {
+		this.onStartRequested = cb;
+	}
 
 	/** Called by MatchService when a match starts/ends to disable lobby-level handlers. */
 	setMatchActive(active: boolean) {
@@ -39,6 +47,7 @@ export class LobbyService implements OnStart {
 			player.CharacterAdded.Connect(() => {
 				// Small delay to let character load
 				task.wait(0.5);
+				if (this.matchActive) return;
 				if (player.Character) {
 					this.teleportToLobby(player);
 				}
@@ -52,6 +61,7 @@ export class LobbyService implements OnStart {
 
 		this.setupPortals();
 		this.setupHachiRide();
+		this.setupHachiRidePortal();
 		this.setupSlideRamps();
 		this.setupRooftopTPs();
 	}
@@ -115,6 +125,19 @@ export class LobbyService implements OnStart {
 		print(
 			`[LobbyService] Connected ${pads.size()} rooftop TP pads (always-on)`,
 		);
+	}
+
+	private setupHachiRidePortal() {
+		const portals = CollectionService.GetTagged(HACHI_RIDE_PORTAL_TAG);
+		for (const portal of portals) {
+			if (!portal.IsA("BasePart")) continue;
+			portal
+				.FindFirstChildOfClass("ProximityPrompt")
+				?.Triggered.Connect((_player: Player) => {
+					this.onStartRequested?.(MinigameId.HachiRide);
+				});
+		}
+		print(`[LobbyService] Set up ${portals.size()} Hachi Ride portals`);
 	}
 
 	private setupHachiRide() {

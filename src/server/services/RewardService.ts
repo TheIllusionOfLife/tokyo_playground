@@ -2,6 +2,8 @@ import { Service } from "@flamework/core";
 import {
 	BASE_PARTICIPATION_POINTS,
 	CAN_KICK_BONUS,
+	HACHI_ITEM_POINT_VALUE,
+	HACHI_WIN_ITEM_BONUS,
 	HIDER_RESCUE_BONUS,
 	LOSS_MULTIPLIER,
 	ONI_CATCH_BONUS,
@@ -10,6 +12,7 @@ import {
 } from "shared/constants";
 import {
 	CanKickPlayerState,
+	HachiRidePlayerState,
 	PlayerRole,
 	RewardBreakdown,
 	RoundResult,
@@ -48,6 +51,19 @@ export class RewardService {
 		const rescueBonus = 0;
 		const totalPoints = baseReward + winBonus + roleBonus + rescueBonus;
 
+		return { baseReward, winBonus, roleBonus, rescueBonus, totalPoints };
+	}
+
+	calculateHachiRideRewards(
+		playerState: HachiRidePlayerState,
+		maxItemCount: number,
+	): RewardBreakdown {
+		const won = playerState.itemCount === maxItemCount && maxItemCount > 0;
+		const baseReward = BASE_PARTICIPATION_POINTS;
+		const winBonus = won ? HACHI_WIN_ITEM_BONUS : 0;
+		const roleBonus = playerState.itemCount * HACHI_ITEM_POINT_VALUE;
+		const rescueBonus = 0;
+		const totalPoints = baseReward + winBonus + roleBonus + rescueBonus;
 		return { baseReward, winBonus, roleBonus, rescueBonus, totalPoints };
 	}
 

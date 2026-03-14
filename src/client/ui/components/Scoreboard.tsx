@@ -50,9 +50,11 @@ export function Scoreboard() {
 					playerName={entry.playerName}
 					role={entry.role}
 					stat={
-						entry.role === PlayerRole.Oni
-							? `${entry.catches}C`
-							: `${entry.rescues}R`
+						entry.role === PlayerRole.None
+							? `${entry.catches} items`
+							: entry.role === PlayerRole.Oni
+								? `${entry.catches}C`
+								: `${entry.rescues}R`
 					}
 					points={tostring(entry.points)}
 					color={ROLE_COLORS[entry.role] ?? Color3.fromRGB(200, 200, 200)}
