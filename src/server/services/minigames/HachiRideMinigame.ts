@@ -9,9 +9,12 @@ import {
 import {
 	HACHI_BIG_SCALE,
 	HACHI_COLLECTION_RADIUS,
+	HACHI_EJECT_COOLDOWN,
+	HACHI_EJECT_SEAT_DISABLE_DURATION,
 	HACHI_EVOLUTION_THRESHOLDS,
 	HACHI_ITEM_TAG,
 	HACHI_ITEMS_TO_SPAWN,
+	HACHI_JUMP_COOLDOWN,
 	HACHI_JUMP_VELOCITY,
 	HACHI_KEY_ITEM_TAG,
 	HACHI_SPAWN_TAG,
@@ -59,6 +62,8 @@ export class HachiRideMinigame implements IMinigame {
 	private activeItems: BasePart[] = [];
 	private keyItems: BasePart[] = [];
 	private wallRunStates = new Map<number, WallRunState>();
+	private jumpCooldowns = new Map<number, number>();
+	private ejectCooldowns = new Map<number, number>();
 	private roundStarted = false;
 
 	constructor(private readonly serverEvents: ServerEvents) {}
@@ -300,9 +305,19 @@ export class HachiRideMinigame implements IMinigame {
 		this.playerStates.delete(userId);
 		this.playerObjects.delete(userId);
 		this.wallRunStates.delete(userId);
+		this.jumpCooldowns.delete(userId);
+		this.ejectCooldowns.delete(userId);
 	}
 
 	private handleJumpRequest(player: Player) {
+		const now = os.clock();
+		if (
+			now - (this.jumpCooldowns.get(player.UserId) ?? 0) <
+			HACHI_JUMP_COOLDOWN
+		)
+			return;
+		this.jumpCooldowns.set(player.UserId, now);
+
 		const hachiModel = this.hachiModels.get(player.UserId);
 		if (!hachiModel) return;
 		const body = hachiModel.FindFirstChild("Body") as BasePart | undefined;
@@ -315,6 +330,14 @@ export class HachiRideMinigame implements IMinigame {
 	}
 
 	private handleEjectRequest(player: Player) {
+		const now = os.clock();
+		if (
+			now - (this.ejectCooldowns.get(player.UserId) ?? 0) <
+			HACHI_EJECT_COOLDOWN
+		)
+			return;
+		this.ejectCooldowns.set(player.UserId, now);
+
 		const hachiModel = this.hachiModels.get(player.UserId);
 		if (!hachiModel) return;
 		const seat = hachiModel.FindFirstChildOfClass("VehicleSeat") as
@@ -322,7 +345,7 @@ export class HachiRideMinigame implements IMinigame {
 			| undefined;
 		if (!seat) return;
 		seat.Disabled = true;
-		task.delay(0.1, () => {
+		task.delay(HACHI_EJECT_SEAT_DISABLE_DURATION, () => {
 			if (seat.Parent) seat.Disabled = false;
 		});
 	}

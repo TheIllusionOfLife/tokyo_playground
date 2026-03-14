@@ -4,7 +4,10 @@ import { ReflexProvider } from "@rbxts/react-reflex";
 import ReactRoblox from "@rbxts/react-roblox";
 import { Players } from "@rbxts/services";
 import { clientEvents } from "client/network";
-import { SCRAMBLE_SLIDE_SPEED } from "shared/constants";
+import {
+	SCRAMBLE_SLIDE_COOLDOWN,
+	SCRAMBLE_SLIDE_SPEED,
+} from "shared/constants";
 import { gameStore } from "shared/store/game-store";
 import { MatchPhase } from "shared/types";
 import { GameHud } from "../ui/GameHud";
@@ -115,31 +118,26 @@ export class HudController implements OnStart {
 			gameStore.setHachiEvolutionLevel(level);
 		});
 
+		// Server-side slide impulse fired by ShibuyaScrambleMinigame during matches.
+		// SlideController handles the lobby case directly; this covers the in-match path.
+		let lastSlideImpulseTime = 0;
 		clientEvents.slideImpulse.connect((dir) => {
+			const now = os.clock();
+			if (now - lastSlideImpulseTime < SCRAMBLE_SLIDE_COOLDOWN) return;
+			lastSlideImpulseTime = now;
+
 			const character = Players.LocalPlayer.Character;
 			if (!character) return;
 			const hrp = character.FindFirstChild("HumanoidRootPart") as
 				| BasePart
 				| undefined;
 			if (!hrp) return;
-
-			// If seated in a vehicle (Hachi), push the vehicle's Body so it
-			// carries the rider — setting velocity on the HRP alone has no effect.
 			const humanoid = character.FindFirstChildOfClass("Humanoid");
-			const seatPart = humanoid?.SeatPart;
-			if (seatPart) {
-				const body = seatPart.Parent?.FindFirstChild("Body") as
-					| BasePart
-					| undefined;
-				if (body) {
-					body.AssemblyLinearVelocity = dir.mul(SCRAMBLE_SLIDE_SPEED);
-				}
-				// Seated: applied to Body, or no Body found (no-op).
-				// Do NOT fall through to HRP — setting HRP velocity while seated has no effect.
-				return;
-			}
-
+			if (humanoid) humanoid.PlatformStand = true;
 			hrp.AssemblyLinearVelocity = dir.mul(SCRAMBLE_SLIDE_SPEED);
+			task.delay(0.4, () => {
+				if (humanoid?.Parent) humanoid.PlatformStand = false;
+			});
 		});
 	}
 

@@ -8,6 +8,7 @@ import {
 
 const SLIDE_RAMP_TAG = "ShibuyaSlideRamp";
 const SURFACE_THRESHOLD = 2.5; // studs from ramp surface to trigger
+const SLIDE_DIR_Y_OFFSET = -0.4; // downward bias added to ramp LookVector
 
 @Controller()
 export class SlideController implements OnStart {
@@ -59,7 +60,9 @@ export class SlideController implements OnStart {
 			if (dist > SURFACE_THRESHOLD) continue;
 
 			this.lastSlideTime = now;
-			const dir = ramp.CFrame.LookVector.add(new Vector3(0, -0.4, 0)).Unit;
+			const dir = ramp.CFrame.LookVector.add(
+				new Vector3(0, SLIDE_DIR_Y_OFFSET, 0),
+			).Unit;
 
 			if (vehicleBody) {
 				// Server must apply impulse to vehicle (server owns Body physics).

@@ -4,6 +4,7 @@ import {
 	CAN_KICK_PORTAL_TAG,
 	HACHI_RIDE_PORTAL_TAG,
 	HACHI_RIDE_TAG,
+	HACHI_SLIDE_FORCE_RESTORE_DELAY,
 	SCRAMBLE_PORTAL_TAG,
 	SCRAMBLE_ROOFTOP_TP_COOLDOWN,
 	SCRAMBLE_ROOFTOP_TP_DEST,
@@ -15,7 +16,6 @@ import { GlobalEvents } from "shared/network";
 import { MinigameId } from "shared/types";
 
 const LOBBY_SPAWN_TAG = "LobbySpawn";
-const SLIDE_RAMP_TAG = "ShibuyaSlideRamp";
 
 @Service()
 export class LobbyService implements OnStart {
@@ -65,37 +65,8 @@ export class LobbyService implements OnStart {
 		this.setupPortals();
 		this.setupHachiRide();
 		this.setupHachiRidePortal();
-		this.setupSlideRamps();
 		this.setupRooftopTPs();
 		this.setupHachiSlideHandler();
-	}
-
-	private setupSlideRamps() {
-		const ramps = CollectionService.GetTagged(SLIDE_RAMP_TAG).filter(
-			(i): i is BasePart => i.IsA("BasePart"),
-		);
-		for (const ramp of ramps) {
-			ramp.Touched.Connect((touching) => {
-				const character = touching.FindFirstAncestorOfClass("Model");
-				if (!character) return;
-				const player = Players.GetPlayerFromCharacter(character);
-				if (!player) return;
-
-				const now = os.clock();
-				if (
-					now - (this.slideCooldowns.get(player.UserId) ?? 0) <
-					SCRAMBLE_SLIDE_COOLDOWN
-				)
-					return;
-				this.slideCooldowns.set(player.UserId, now);
-
-				const dir = ramp.CFrame.LookVector.add(new Vector3(0, -0.4, 0)).Unit;
-				// Fire to client — only the client can reliably set
-				// AssemblyLinearVelocity on its own character assembly.
-				this.serverEvents.slideImpulse.fire(player, dir);
-			});
-		}
-		print(`[LobbyService] Connected ${ramps.size()} slide ramps (always-on)`);
 	}
 
 	private setupRooftopTPs() {
@@ -235,9 +206,9 @@ export class LobbyService implements OnStart {
 				if (this.hachiSlideActive.has(player.UserId)) return;
 				this.hachiSlideActive.add(player.UserId);
 				const origForce = bv.MaxForce;
-				bv.MaxForce = new Vector3(0, 0, 0);
+				bv.MaxForce = Vector3.zero;
 				body.AssemblyLinearVelocity = safeDir.mul(SCRAMBLE_SLIDE_SPEED);
-				task.delay(0.5, () => {
+				task.delay(HACHI_SLIDE_FORCE_RESTORE_DELAY, () => {
 					if (bv.Parent) bv.MaxForce = origForce;
 					this.hachiSlideActive.delete(player.UserId);
 				});

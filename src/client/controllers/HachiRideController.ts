@@ -13,6 +13,9 @@ import {
 } from "shared/constants";
 import { MinigameId, PlayerRole, RoundResult } from "shared/types";
 
+const ACTION_HACHI_JUMP = "HachiJump";
+const ACTION_HACHI_EJECT = "HachiEject";
+
 @Controller()
 export class HachiRideController implements OnStart {
 	private active = false;
@@ -159,7 +162,7 @@ export class HachiRideController implements OnStart {
 	private onSeated() {
 		// Sink Space to prevent the VehicleSeat's default jump-eject; fire hachiJump instead
 		ContextActionService.BindAction(
-			"HachiJump",
+			ACTION_HACHI_JUMP,
 			(_name, inputState, _input) => {
 				if (inputState === Enum.UserInputState.Begin) {
 					clientEvents.hachiJump.fire();
@@ -173,7 +176,7 @@ export class HachiRideController implements OnStart {
 
 		// E key to dismount
 		ContextActionService.BindAction(
-			"HachiEject",
+			ACTION_HACHI_EJECT,
 			(_name, inputState, _input) => {
 				if (inputState === Enum.UserInputState.Begin) {
 					clientEvents.hachiEject.fire();
@@ -187,8 +190,8 @@ export class HachiRideController implements OnStart {
 
 	// Called when player stands up (or deactivate is called)
 	private onStoodUp() {
-		ContextActionService.UnbindAction("HachiJump");
-		ContextActionService.UnbindAction("HachiEject");
+		ContextActionService.UnbindAction(ACTION_HACHI_JUMP);
+		ContextActionService.UnbindAction(ACTION_HACHI_EJECT);
 	}
 
 	private startWallRun(wallNormal: Vector3) {

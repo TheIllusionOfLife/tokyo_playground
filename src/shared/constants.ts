@@ -231,6 +231,10 @@ export const HACHI_WALL_RUN_MAX_DUR = 3;
 export const HACHI_ITEM_POINT_VALUE = 1;
 export const HACHI_WIN_ITEM_BONUS = 20;
 export const HACHI_JUMP_VELOCITY = 50;
+export const HACHI_JUMP_COOLDOWN = 0.4; // seconds between jump requests
+export const HACHI_EJECT_COOLDOWN = 1.0; // seconds between eject requests
+export const HACHI_SLIDE_FORCE_RESTORE_DELAY = 0.5; // seconds to hold MaxForce=0 after impulse
+export const HACHI_EJECT_SEAT_DISABLE_DURATION = 0.1; // seconds VehicleSeat stays disabled on eject
 
 // Shibuya Scramble
 export const SCRAMBLE_ROOFTOP_TP_TAG = "ShibuyaRooftopTP";
