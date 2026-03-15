@@ -14,7 +14,9 @@ import {
 	SCRAMBLE_ROOFTOP_TP_DEST,
 	SCRAMBLE_ROOFTOP_TP_TAG,
 	SCRAMBLE_SLIDE_COOLDOWN,
+	SCRAMBLE_SLIDE_SPEED,
 	SCRAMBLE_TAG_RADIUS,
+	SLIDE_DIR_Y_OFFSET,
 } from "shared/constants";
 import { GlobalEvents } from "shared/network";
 import {
@@ -367,9 +369,16 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 			return;
 		this.slideCooldowns.set(player.UserId, now);
 
-		const dir = ramp.CFrame.LookVector.add(new Vector3(0, -0.4, 0)).Unit;
+		const dir = ramp.CFrame.LookVector.add(
+			new Vector3(0, SLIDE_DIR_Y_OFFSET, 0),
+		).Unit;
+		const rawSpeed = ramp.GetAttribute("SlideSpeed");
+		const speed =
+			typeIs(rawSpeed, "number") && rawSpeed > 0
+				? rawSpeed
+				: SCRAMBLE_SLIDE_SPEED;
 		// Fire to client — matches LobbyService pattern; client applies speed locally
-		this.serverEvents.slideImpulse.fire(player, dir);
+		this.serverEvents.slideImpulse.fire(player, dir, speed);
 
 		if (state.role === PlayerRole.Hider) {
 			this.missionService.onSlideUsed(player);

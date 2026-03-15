@@ -1,21 +1,29 @@
 import { Controller, OnStart } from "@flamework/core";
-import { CollectionService, Players, RunService } from "@rbxts/services";
+import {
+	CollectionService,
+	Players,
+	RunService,
+	SoundService,
+} from "@rbxts/services";
 import { clientEvents } from "client/network";
 import {
 	SCRAMBLE_SLIDE_COOLDOWN,
 	SCRAMBLE_SLIDE_SPEED,
+	SE_SLIDE,
 	SLIDE_DIR_Y_OFFSET,
 	SLIDE_RAMP_TAG,
+	SLIDE_TRIGGER_RADIUS,
 } from "shared/constants";
 import { gameStore } from "shared/store/game-store";
 import { MatchPhase, MinigameId } from "shared/types";
 
-const SURFACE_THRESHOLD = 2.5; // studs from ramp surface to trigger
+const SURFACE_THRESHOLD = SLIDE_TRIGGER_RADIUS;
 
 @Controller()
 export class SlideController implements OnStart {
 	private lastSlideTime = 0;
 	private slideRamps: BasePart[] = [];
+	private slideSE?: Sound;
 
 	onStart() {
 		this.slideRamps = CollectionService.GetTagged(SLIDE_RAMP_TAG).filter(
@@ -75,6 +83,12 @@ export class SlideController implements OnStart {
 				new Vector3(0, SLIDE_DIR_Y_OFFSET, 0),
 			).Unit;
 
+			const rawSpeed = ramp.GetAttribute("SlideSpeed");
+			const speed =
+				typeIs(rawSpeed, "number") && rawSpeed > 0
+					? rawSpeed
+					: SCRAMBLE_SLIDE_SPEED;
+
 			if (vehicleBody) {
 				// Server must apply impulse to vehicle (server owns Body physics).
 				// Client fires event; server zeros BodyVelocity.MaxForce then applies.
@@ -83,11 +97,20 @@ export class SlideController implements OnStart {
 				// Character physics are client-owned. Disable Humanoid ground
 				// controller via PlatformStand so the impulse isn't dampened.
 				if (humanoid) humanoid.PlatformStand = true;
-				hrp.AssemblyLinearVelocity = dir.mul(SCRAMBLE_SLIDE_SPEED);
+				hrp.AssemblyLinearVelocity = dir.mul(speed);
 				task.delay(0.4, () => {
 					if (humanoid?.Parent) humanoid.PlatformStand = false;
 				});
 			}
+
+			// Slide sound effect (cached instance)
+			if (!this.slideSE) {
+				this.slideSE = new Instance("Sound");
+				this.slideSE.SoundId = SE_SLIDE;
+				this.slideSE.Volume = 0.6;
+				this.slideSE.Parent = SoundService;
+			}
+			this.slideSE.Play();
 			return;
 		}
 	}

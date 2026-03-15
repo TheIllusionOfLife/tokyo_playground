@@ -211,7 +211,8 @@ export const SHOP_CATALOG: Omit<ShopItemData, "owned">[] = [
 
 export const SLIDE_RAMP_TAG = "ShibuyaSlideRamp";
 export const SLIDE_DIR_Y_OFFSET = -0.4; // downward bias added to ramp LookVector
-export const HACHI_SLIDE_RAMP_PROXIMITY = 10; // studs — server-side ramp ownership check
+export const SLIDE_TRIGGER_RADIUS = 6; // studs from ramp surface to trigger (OBB closest-point)
+export const HACHI_SLIDE_RAMP_PROXIMITY = 20; // studs — server-side ramp ownership check (OBB)
 
 export const CAN_KICK_PORTAL_TAG = "CanKickPortal";
 export const SCRAMBLE_PORTAL_TAG = "ShibuyaScramblePortal";
@@ -224,17 +225,17 @@ export const HACHI_SPAWN_TAG = "HachiRideSpawn";
 // Hachi Ride tuning
 export const HACHI_ROUND_DURATION = 180;
 export const HACHI_EVOLUTION_THRESHOLDS = [0, 10, 25, 40, 60];
-export const HACHI_WALK_SPEEDS = [16, 18, 20, 24, 30];
-export const HACHI_ITEMS_TO_SPAWN = 80;
+export const HACHI_WALK_SPEEDS = [48, 54, 60, 72, 90];
+export const HACHI_ITEMS_TO_SPAWN = 200;
 export const HACHI_COLLECTION_RADIUS = 8;
 export const HACHI_BIG_SCALE = 1.5;
-export const HACHI_DOUBLE_JUMP_IMPULSE = 80;
-export const HACHI_WALL_RUN_SPEED = 28;
+export const HACHI_DOUBLE_JUMP_IMPULSE = 139; // old 80 × √3 — yields ~3× jump height
+export const HACHI_WALL_RUN_SPEED = 84; // 28 × 3
 export const HACHI_WALL_RUN_RAYCAST = 3;
 export const HACHI_WALL_RUN_MAX_DUR = 3;
 export const HACHI_ITEM_POINT_VALUE = 1;
 export const HACHI_WIN_ITEM_BONUS = 20;
-export const HACHI_JUMP_VELOCITY = 50;
+export const HACHI_JUMP_VELOCITY = 87; // old 50 × √3 — yields ~3× jump height
 export const HACHI_JUMP_COOLDOWN = 0.4; // seconds between jump requests
 export const HACHI_EJECT_COOLDOWN = 1.0; // seconds between eject requests
 export const HACHI_SLIDE_FORCE_RESTORE_DELAY = 0.5; // seconds to hold MaxForce=0 after impulse
@@ -253,3 +254,10 @@ export const SCRAMBLE_CROWD_NPC_COUNT = 12;
 export const SCRAMBLE_SLIDE_SPEED = 800;
 export const SCRAMBLE_SLIDE_COOLDOWN = 8;
 export const SCRAMBLE_TAG_BONUS_PER_TAG = 5;
+
+// Audio (source from Roblox Creator Store — verify IDs before ship)
+export const BGM_TRACK_ID = "rbxassetid://1839723701";
+export const SE_ITEM_PICKUP = "rbxassetid://4590662766";
+export const SE_EVOLVE = "rbxassetid://3837373967";
+export const SE_SLIDE = "rbxassetid://6735925655";
+export const SE_JUMP = "rbxassetid://2912050360";

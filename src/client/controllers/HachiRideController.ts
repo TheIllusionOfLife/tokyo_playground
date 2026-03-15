@@ -3,6 +3,7 @@ import {
 	ContextActionService,
 	Players,
 	RunService,
+	SoundService,
 	UserInputService,
 } from "@rbxts/services";
 import { clientEvents } from "client/network";
@@ -10,6 +11,7 @@ import {
 	HACHI_DOUBLE_JUMP_IMPULSE,
 	HACHI_WALK_SPEEDS,
 	HACHI_WALL_RUN_SPEED,
+	SE_JUMP,
 } from "shared/constants";
 import { MinigameId, PlayerRole, RoundResult } from "shared/types";
 
@@ -166,6 +168,7 @@ export class HachiRideController implements OnStart {
 			(_name, inputState, _input) => {
 				if (inputState === Enum.UserInputState.Begin) {
 					clientEvents.hachiJump.fire();
+					this.playJumpSE();
 				}
 				return Enum.ContextActionResult.Sink;
 			},
@@ -192,6 +195,18 @@ export class HachiRideController implements OnStart {
 	private onStoodUp() {
 		ContextActionService.UnbindAction(ACTION_HACHI_JUMP);
 		ContextActionService.UnbindAction(ACTION_HACHI_EJECT);
+	}
+
+	private jumpSE?: Sound;
+
+	private playJumpSE() {
+		if (!this.jumpSE) {
+			this.jumpSE = new Instance("Sound");
+			this.jumpSE.SoundId = SE_JUMP;
+			this.jumpSE.Volume = 0.6;
+			this.jumpSE.Parent = SoundService;
+		}
+		this.jumpSE.Play();
 	}
 
 	private startWallRun(wallNormal: Vector3) {

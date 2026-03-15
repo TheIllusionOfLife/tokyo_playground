@@ -45,7 +45,7 @@ interface ServerToClientEvents {
 		errorMessage: string,
 	): void;
 	levelUp(newLevel: number): void;
-	slideImpulse(dir: Vector3): void;
+	slideImpulse(dir: Vector3, speed: number): void;
 	hachiEvolved(newLevel: number): void;
 	hachiItemCollected(itemCount: number): void;
 	hachiWallRunStart(wallNormal: Vector3): void;

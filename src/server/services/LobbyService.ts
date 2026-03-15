@@ -1,5 +1,10 @@
 import { OnStart, Service } from "@flamework/core";
-import { CollectionService, Players, Workspace } from "@rbxts/services";
+import {
+	CollectionService,
+	Players,
+	RunService,
+	Workspace,
+} from "@rbxts/services";
 import {
 	CAN_KICK_PORTAL_TAG,
 	HACHI_RIDE_PORTAL_TAG,
@@ -20,6 +25,27 @@ import { MinigameId } from "shared/types";
 
 const LOBBY_SPAWN_TAG = "LobbySpawn";
 
+/** Procedural leg/ear/tail animation for Hachi models (server-side, replicated). */
+function animateHachi(body: BasePart, dt: number, animTime: number): number {
+	const spd = body.AssemblyLinearVelocity.Magnitude;
+	const freq = math.max(1, spd / 15) * 3;
+	animTime += dt * freq;
+	const frontSwing = math.sin(animTime) * 0.35;
+	const backSwing = math.sin(animTime + math.pi) * 0.35;
+	const setC1 = (name: string, cf: CFrame) => {
+		const w = body.FindFirstChild(name) as Weld | undefined;
+		if (w) w.C1 = cf;
+	};
+	setC1("Anim_LegFL", CFrame.Angles(frontSwing, 0, 0));
+	setC1("Anim_LegFR", CFrame.Angles(frontSwing, 0, 0));
+	setC1("Anim_LegBL", CFrame.Angles(backSwing, 0, 0));
+	setC1("Anim_LegBR", CFrame.Angles(backSwing, 0, 0));
+	setC1("Anim_EarL", CFrame.Angles(0, math.sin(os.clock() * 2.5) * 0.12, 0));
+	setC1("Anim_EarR", CFrame.Angles(0, -math.sin(os.clock() * 2.5) * 0.12, 0));
+	setC1("Anim_Tail", CFrame.Angles(0, math.sin(os.clock() * 3) * 0.2, 0));
+	return animTime;
+}
+
 @Service()
 export class LobbyService implements OnStart {
 	private lobbySpawns: BasePart[] = [];
@@ -27,6 +53,7 @@ export class LobbyService implements OnStart {
 	private readonly slideCooldowns = new Map<number, number>();
 	private readonly tpCooldowns = new Map<number, number>();
 	private readonly hachiSlideActive = new Set<number>();
+	private readonly hachiAnimTimes = new Map<Model, number>();
 	private matchActive = false;
 	private onStartRequested?: (minigameId: MinigameId) => void;
 
@@ -70,6 +97,7 @@ export class LobbyService implements OnStart {
 		this.setupHachiRidePortal();
 		this.setupRooftopTPs();
 		this.setupHachiSlideHandler();
+		this.setupHachiAnimation();
 	}
 
 	private setupRooftopTPs() {
@@ -193,18 +221,29 @@ export class LobbyService implements OnStart {
 			const seatPart = humanoid?.SeatPart;
 			if (!seatPart) return;
 			const hachiModel = seatPart.Parent;
-			if (!hachiModel || hachiModel.Name !== `Hachi_${player.UserId}`) return;
+			if (!hachiModel) return;
+			const isMinigameHachi = hachiModel.Name === `Hachi_${player.UserId}`;
+			const isLobbyHachi = CollectionService.HasTag(hachiModel, HACHI_RIDE_TAG);
+			if (!isMinigameHachi && !isLobbyHachi) return;
 			const body = hachiModel.FindFirstChild("Body") as BasePart | undefined;
 			if (!body) return;
 
-			// Verify the Hachi body is within range of a slide ramp, and derive
-			// direction server-side from that ramp so the client cannot spoof it.
+			// Verify the Hachi body is within range of a slide ramp using OBB
+			// closest-point (same math as client SlideController) so both sides agree.
 			const ramps = CollectionService.GetTagged(SLIDE_RAMP_TAG);
 			let nearestRamp: BasePart | undefined;
 			let nearestDist = HACHI_SLIDE_RAMP_PROXIMITY;
 			for (const ramp of ramps) {
 				if (!ramp.IsA("BasePart")) continue;
-				const dist = body.Position.sub(ramp.Position).Magnitude;
+				const localPos = ramp.CFrame.PointToObjectSpace(body.Position);
+				const half = ramp.Size.mul(0.5);
+				const clamped = new Vector3(
+					math.clamp(localPos.X, -half.X, half.X),
+					math.clamp(localPos.Y, -half.Y, half.Y),
+					math.clamp(localPos.Z, -half.Z, half.Z),
+				);
+				const closestWorld = ramp.CFrame.PointToWorldSpace(clamped);
+				const dist = body.Position.sub(closestWorld).Magnitude;
 				if (dist < nearestDist) {
 					nearestDist = dist;
 					nearestRamp = ramp;
@@ -216,6 +255,11 @@ export class LobbyService implements OnStart {
 			const serverDir = nearestRamp.CFrame.LookVector.add(
 				new Vector3(0, SLIDE_DIR_Y_OFFSET, 0),
 			).Unit;
+			const rawSpeed = nearestRamp.GetAttribute("SlideSpeed");
+			const speed =
+				typeIs(rawSpeed, "number") && rawSpeed > 0
+					? rawSpeed
+					: SCRAMBLE_SLIDE_SPEED;
 
 			const bv = body.FindFirstChildOfClass("BodyVelocity");
 			if (bv) {
@@ -224,13 +268,33 @@ export class LobbyService implements OnStart {
 				this.hachiSlideActive.add(player.UserId);
 				const origForce = bv.MaxForce;
 				bv.MaxForce = Vector3.zero;
-				body.AssemblyLinearVelocity = serverDir.mul(SCRAMBLE_SLIDE_SPEED);
+				body.AssemblyLinearVelocity = serverDir.mul(speed);
 				task.delay(HACHI_SLIDE_FORCE_RESTORE_DELAY, () => {
 					if (bv.Parent) bv.MaxForce = origForce;
 					this.hachiSlideActive.delete(player.UserId);
 				});
 			} else {
-				body.AssemblyLinearVelocity = serverDir.mul(SCRAMBLE_SLIDE_SPEED);
+				body.AssemblyLinearVelocity = serverDir.mul(speed);
+			}
+		});
+	}
+
+	private setupHachiAnimation() {
+		const lobbyHachis = CollectionService.GetTagged(HACHI_RIDE_TAG).filter(
+			(i): i is Model => i.IsA("Model"),
+		);
+		for (const hachi of lobbyHachis) {
+			this.hachiAnimTimes.set(hachi, 0);
+		}
+		RunService.Heartbeat.Connect((dt) => {
+			for (const [hachi, t] of this.hachiAnimTimes) {
+				if (!hachi.Parent) {
+					this.hachiAnimTimes.delete(hachi);
+					continue;
+				}
+				const body = hachi.FindFirstChild("Body") as BasePart | undefined;
+				if (!body) continue;
+				this.hachiAnimTimes.set(hachi, animateHachi(body, dt, t));
 			}
 		});
 	}

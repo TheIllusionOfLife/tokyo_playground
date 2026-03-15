@@ -53,12 +53,34 @@ function shuffle(arr: BasePart[]): BasePart[] {
 	return result;
 }
 
+/** Procedural leg/ear/tail animation for Hachi models (server-side, replicated). */
+function animateHachi(body: BasePart, dt: number, animTime: number): number {
+	const spd = body.AssemblyLinearVelocity.Magnitude;
+	const freq = math.max(1, spd / 15) * 3;
+	animTime += dt * freq;
+	const frontSwing = math.sin(animTime) * 0.35;
+	const backSwing = math.sin(animTime + math.pi) * 0.35;
+	const setC1 = (name: string, cf: CFrame) => {
+		const w = body.FindFirstChild(name) as Weld | undefined;
+		if (w) w.C1 = cf;
+	};
+	setC1("Anim_LegFL", CFrame.Angles(frontSwing, 0, 0));
+	setC1("Anim_LegFR", CFrame.Angles(frontSwing, 0, 0));
+	setC1("Anim_LegBL", CFrame.Angles(backSwing, 0, 0));
+	setC1("Anim_LegBR", CFrame.Angles(backSwing, 0, 0));
+	setC1("Anim_EarL", CFrame.Angles(0, math.sin(os.clock() * 2.5) * 0.12, 0));
+	setC1("Anim_EarR", CFrame.Angles(0, -math.sin(os.clock() * 2.5) * 0.12, 0));
+	setC1("Anim_Tail", CFrame.Angles(0, math.sin(os.clock() * 3) * 0.2, 0));
+	return animTime;
+}
+
 export class HachiRideMinigame implements IMinigame {
 	readonly id = MinigameId.HachiRide;
 
 	private playerStates = new Map<number, HachiRidePlayerState>();
 	private playerObjects = new Map<number, Player>();
 	private hachiModels = new Map<number, Model>();
+	private hachiAnimTimes = new Map<number, number>();
 	private activeItems: BasePart[] = [];
 	private keyItems: BasePart[] = [];
 	private wallRunStates = new Map<number, WallRunState>();
@@ -241,6 +263,7 @@ export class HachiRideMinigame implements IMinigame {
 		if (!this.roundStarted) return;
 		this.checkItemCollection();
 		this.detectWallRun(dt);
+		this.tickHachiAnimation(dt);
 	}
 
 	checkWinCondition(): RoundResult | undefined {
@@ -280,6 +303,7 @@ export class HachiRideMinigame implements IMinigame {
 		this.playerStates.clear();
 		this.playerObjects.clear();
 		this.hachiModels.clear();
+		this.hachiAnimTimes.clear();
 		this.wallRunStates.clear();
 		this.jumpCooldowns.clear();
 		this.ejectCooldowns.clear();
@@ -306,6 +330,7 @@ export class HachiRideMinigame implements IMinigame {
 		}
 		this.playerStates.delete(userId);
 		this.playerObjects.delete(userId);
+		this.hachiAnimTimes.delete(userId);
 		this.wallRunStates.delete(userId);
 		this.jumpCooldowns.delete(userId);
 		this.ejectCooldowns.delete(userId);
@@ -374,7 +399,21 @@ export class HachiRideMinigame implements IMinigame {
 				| BasePart
 				| undefined;
 			if (!hrp) continue;
-			const pos = hrp.Position;
+
+			// Use Hachi body position when seated — HRP sits ~5-8 studs above ground.
+			// Use this.hachiModels to verify ownership (not tags — another player's
+			// tagged Hachi would incorrectly shift collection position).
+			const ownHachi = this.hachiModels.get(userId);
+			const humanoid = player.Character.FindFirstChildOfClass("Humanoid");
+			const seatPart = humanoid?.SeatPart;
+			const isSeatedInOwnHachi =
+				ownHachi !== undefined &&
+				seatPart !== undefined &&
+				seatPart.IsDescendantOf(ownHachi);
+			const hachiBody = isSeatedInOwnHachi
+				? (ownHachi.FindFirstChild("Body") as BasePart | undefined)
+				: undefined;
+			const pos = hachiBody?.Position ?? hrp.Position;
 
 			// Check regular collectible items
 			const toRemove: BasePart[] = [];
@@ -503,6 +542,17 @@ export class HachiRideMinigame implements IMinigame {
 		print(
 			`[HachiRide] ${player.Name} evolved to level ${newLevel} (${state.itemCount} items)`,
 		);
+	}
+
+	private tickHachiAnimation(dt: number) {
+		for (const [userId] of this.playerStates) {
+			const hachiModel = this.hachiModels.get(userId);
+			if (!hachiModel) continue;
+			const body = hachiModel.FindFirstChild("Body") as BasePart | undefined;
+			if (!body) continue;
+			const t = this.hachiAnimTimes.get(userId) ?? 0;
+			this.hachiAnimTimes.set(userId, animateHachi(body, dt, t));
+		}
 	}
 
 	private detectWallRun(dt: number) {
