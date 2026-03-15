@@ -255,9 +255,9 @@ export const SCRAMBLE_SLIDE_SPEED = 800;
 export const SCRAMBLE_SLIDE_COOLDOWN = 8;
 export const SCRAMBLE_TAG_BONUS_PER_TAG = 5;
 
-// Audio (source from Roblox Creator Store — verify IDs before ship)
-export const BGM_TRACK_ID = "rbxassetid://1839723701";
-export const SE_ITEM_PICKUP = "rbxassetid://4590662766";
-export const SE_EVOLVE = "rbxassetid://3837373967";
-export const SE_SLIDE = "rbxassetid://6735925655";
-export const SE_JUMP = "rbxassetid://2912050360";
+// Audio — verified IDs that load successfully in Studio
+export const BGM_TRACK_ID = "rbxassetid://7024340270"; // Tokyo Machine "Moshi" (215s chiptune)
+export const SE_ITEM_PICKUP = "rbxassetid://4590662766"; // collect chime (1.9s)
+export const SE_EVOLVE = "rbxassetid://6647877129"; // magic level-up sparkle (3.1s)
+export const SE_SLIDE = "rbxassetid://151284431"; // brief swoosh (2.0s)
+export const SE_JUMP = "rbxassetid://5682262154"; // cartoon bounce (0.5s)
