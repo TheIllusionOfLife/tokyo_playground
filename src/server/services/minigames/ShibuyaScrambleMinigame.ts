@@ -16,6 +16,7 @@ import {
 	SCRAMBLE_SLIDE_COOLDOWN,
 	SCRAMBLE_SLIDE_SPEED,
 	SCRAMBLE_TAG_RADIUS,
+	SLIDE_DIR_Y_OFFSET,
 } from "shared/constants";
 import { GlobalEvents } from "shared/network";
 import {
@@ -368,7 +369,9 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 			return;
 		this.slideCooldowns.set(player.UserId, now);
 
-		const dir = ramp.CFrame.LookVector.add(new Vector3(0, -0.4, 0)).Unit;
+		const dir = ramp.CFrame.LookVector.add(
+			new Vector3(0, SLIDE_DIR_Y_OFFSET, 0),
+		).Unit;
 		const speed =
 			(ramp.GetAttribute("SlideSpeed") as number | undefined) ??
 			SCRAMBLE_SLIDE_SPEED;
