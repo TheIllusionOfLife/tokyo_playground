@@ -6,6 +6,7 @@ import { BGM_TRACK_ID, SE_EVOLVE, SE_ITEM_PICKUP } from "shared/constants";
 @Controller()
 export class BGMController implements OnStart {
 	private bgm!: Sound;
+	private readonly seCache = new Map<string, Sound>();
 
 	onStart() {
 		this.bgm = new Instance("Sound");
@@ -20,11 +21,14 @@ export class BGMController implements OnStart {
 	}
 
 	private playSE(id: string) {
-		const s = new Instance("Sound");
-		s.SoundId = id;
-		s.Volume = 0.6;
-		s.Parent = SoundService;
+		let s = this.seCache.get(id);
+		if (!s) {
+			s = new Instance("Sound");
+			s.SoundId = id;
+			s.Volume = 0.6;
+			s.Parent = SoundService;
+			this.seCache.set(id, s);
+		}
 		s.Play();
-		s.Ended.Once(() => s.Destroy());
 	}
 }

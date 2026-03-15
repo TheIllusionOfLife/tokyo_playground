@@ -197,13 +197,16 @@ export class HachiRideController implements OnStart {
 		ContextActionService.UnbindAction(ACTION_HACHI_EJECT);
 	}
 
+	private jumpSE?: Sound;
+
 	private playJumpSE() {
-		const s = new Instance("Sound");
-		s.SoundId = SE_JUMP;
-		s.Volume = 0.6;
-		s.Parent = SoundService;
-		s.Play();
-		s.Ended.Once(() => s.Destroy());
+		if (!this.jumpSE) {
+			this.jumpSE = new Instance("Sound");
+			this.jumpSE.SoundId = SE_JUMP;
+			this.jumpSE.Volume = 0.6;
+			this.jumpSE.Parent = SoundService;
+		}
+		this.jumpSE.Play();
 	}
 
 	private startWallRun(wallNormal: Vector3) {

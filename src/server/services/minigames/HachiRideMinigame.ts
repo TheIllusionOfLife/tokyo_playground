@@ -17,7 +17,6 @@ import {
 	HACHI_JUMP_COOLDOWN,
 	HACHI_JUMP_VELOCITY,
 	HACHI_KEY_ITEM_TAG,
-	HACHI_RIDE_TAG,
 	HACHI_SPAWN_TAG,
 	HACHI_WALK_SPEEDS,
 	HACHI_WALL_RUN_MAX_DUR,
@@ -401,16 +400,18 @@ export class HachiRideMinigame implements IMinigame {
 				| undefined;
 			if (!hrp) continue;
 
-			// Use Hachi body position when seated — HRP sits ~5-8 studs above ground
+			// Use Hachi body position when seated — HRP sits ~5-8 studs above ground.
+			// Use this.hachiModels to verify ownership (not tags — another player's
+			// tagged Hachi would incorrectly shift collection position).
+			const ownHachi = this.hachiModels.get(userId);
 			const humanoid = player.Character.FindFirstChildOfClass("Humanoid");
 			const seatPart = humanoid?.SeatPart;
-			const hachiModel = seatPart?.Parent;
-			const isOwnHachi =
-				hachiModel?.Name === `Hachi_${userId}` ||
-				(hachiModel !== undefined &&
-					CollectionService.HasTag(hachiModel, HACHI_RIDE_TAG));
-			const hachiBody = isOwnHachi
-				? (hachiModel?.FindFirstChild("Body") as BasePart | undefined)
+			const isSeatedInOwnHachi =
+				ownHachi !== undefined &&
+				seatPart !== undefined &&
+				seatPart.IsDescendantOf(ownHachi);
+			const hachiBody = isSeatedInOwnHachi
+				? (ownHachi.FindFirstChild("Body") as BasePart | undefined)
 				: undefined;
 			const pos = hachiBody?.Position ?? hrp.Position;
 

@@ -1,5 +1,10 @@
 import { Controller, OnStart } from "@flamework/core";
-import { CollectionService, Players, RunService } from "@rbxts/services";
+import {
+	CollectionService,
+	Players,
+	RunService,
+	SoundService,
+} from "@rbxts/services";
 import { clientEvents } from "client/network";
 import {
 	SCRAMBLE_SLIDE_COOLDOWN,
@@ -18,6 +23,7 @@ const SURFACE_THRESHOLD = SLIDE_TRIGGER_RADIUS;
 export class SlideController implements OnStart {
 	private lastSlideTime = 0;
 	private slideRamps: BasePart[] = [];
+	private slideSE?: Sound;
 
 	onStart() {
 		this.slideRamps = CollectionService.GetTagged(SLIDE_RAMP_TAG).filter(
@@ -95,13 +101,14 @@ export class SlideController implements OnStart {
 				});
 			}
 
-			// Slide sound effect
-			const se = new Instance("Sound");
-			se.SoundId = SE_SLIDE;
-			se.Volume = 0.6;
-			se.Parent = hrp;
-			se.Play();
-			se.Ended.Once(() => se.Destroy());
+			// Slide sound effect (cached instance)
+			if (!this.slideSE) {
+				this.slideSE = new Instance("Sound");
+				this.slideSE.SoundId = SE_SLIDE;
+				this.slideSE.Volume = 0.6;
+				this.slideSE.Parent = SoundService;
+			}
+			this.slideSE.Play();
 			return;
 		}
 	}
