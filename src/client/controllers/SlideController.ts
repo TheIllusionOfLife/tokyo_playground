@@ -4,13 +4,15 @@ import { clientEvents } from "client/network";
 import {
 	SCRAMBLE_SLIDE_COOLDOWN,
 	SCRAMBLE_SLIDE_SPEED,
+	SE_SLIDE,
 	SLIDE_DIR_Y_OFFSET,
 	SLIDE_RAMP_TAG,
+	SLIDE_TRIGGER_RADIUS,
 } from "shared/constants";
 import { gameStore } from "shared/store/game-store";
 import { MatchPhase, MinigameId } from "shared/types";
 
-const SURFACE_THRESHOLD = 2.5; // studs from ramp surface to trigger
+const SURFACE_THRESHOLD = SLIDE_TRIGGER_RADIUS;
 
 @Controller()
 export class SlideController implements OnStart {
@@ -75,6 +77,10 @@ export class SlideController implements OnStart {
 				new Vector3(0, SLIDE_DIR_Y_OFFSET, 0),
 			).Unit;
 
+			const speed =
+				(ramp.GetAttribute("SlideSpeed") as number | undefined) ??
+				SCRAMBLE_SLIDE_SPEED;
+
 			if (vehicleBody) {
 				// Server must apply impulse to vehicle (server owns Body physics).
 				// Client fires event; server zeros BodyVelocity.MaxForce then applies.
@@ -83,11 +89,19 @@ export class SlideController implements OnStart {
 				// Character physics are client-owned. Disable Humanoid ground
 				// controller via PlatformStand so the impulse isn't dampened.
 				if (humanoid) humanoid.PlatformStand = true;
-				hrp.AssemblyLinearVelocity = dir.mul(SCRAMBLE_SLIDE_SPEED);
+				hrp.AssemblyLinearVelocity = dir.mul(speed);
 				task.delay(0.4, () => {
 					if (humanoid?.Parent) humanoid.PlatformStand = false;
 				});
 			}
+
+			// Slide sound effect
+			const se = new Instance("Sound");
+			se.SoundId = SE_SLIDE;
+			se.Volume = 0.6;
+			se.Parent = hrp;
+			se.Play();
+			se.Ended.Once(() => se.Destroy());
 			return;
 		}
 	}
