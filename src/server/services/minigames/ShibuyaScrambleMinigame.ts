@@ -372,9 +372,11 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 		const dir = ramp.CFrame.LookVector.add(
 			new Vector3(0, SLIDE_DIR_Y_OFFSET, 0),
 		).Unit;
+		const rawSpeed = ramp.GetAttribute("SlideSpeed");
 		const speed =
-			(ramp.GetAttribute("SlideSpeed") as number | undefined) ??
-			SCRAMBLE_SLIDE_SPEED;
+			typeIs(rawSpeed, "number") && rawSpeed > 0
+				? rawSpeed
+				: SCRAMBLE_SLIDE_SPEED;
 		// Fire to client — matches LobbyService pattern; client applies speed locally
 		this.serverEvents.slideImpulse.fire(player, dir, speed);
 

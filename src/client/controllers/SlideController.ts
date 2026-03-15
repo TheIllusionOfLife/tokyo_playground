@@ -83,9 +83,11 @@ export class SlideController implements OnStart {
 				new Vector3(0, SLIDE_DIR_Y_OFFSET, 0),
 			).Unit;
 
+			const rawSpeed = ramp.GetAttribute("SlideSpeed");
 			const speed =
-				(ramp.GetAttribute("SlideSpeed") as number | undefined) ??
-				SCRAMBLE_SLIDE_SPEED;
+				typeIs(rawSpeed, "number") && rawSpeed > 0
+					? rawSpeed
+					: SCRAMBLE_SLIDE_SPEED;
 
 			if (vehicleBody) {
 				// Server must apply impulse to vehicle (server owns Body physics).

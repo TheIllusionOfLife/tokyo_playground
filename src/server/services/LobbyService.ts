@@ -255,9 +255,11 @@ export class LobbyService implements OnStart {
 			const serverDir = nearestRamp.CFrame.LookVector.add(
 				new Vector3(0, SLIDE_DIR_Y_OFFSET, 0),
 			).Unit;
+			const rawSpeed = nearestRamp.GetAttribute("SlideSpeed");
 			const speed =
-				(nearestRamp.GetAttribute("SlideSpeed") as number | undefined) ??
-				SCRAMBLE_SLIDE_SPEED;
+				typeIs(rawSpeed, "number") && rawSpeed > 0
+					? rawSpeed
+					: SCRAMBLE_SLIDE_SPEED;
 
 			const bv = body.FindFirstChildOfClass("BodyVelocity");
 			if (bv) {

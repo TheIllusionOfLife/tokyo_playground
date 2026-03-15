@@ -2,9 +2,9 @@ import { Controller, OnStart } from "@flamework/core";
 import React from "@rbxts/react";
 import { ReflexProvider } from "@rbxts/react-reflex";
 import ReactRoblox from "@rbxts/react-roblox";
-import { Players } from "@rbxts/services";
+import { Players, SoundService } from "@rbxts/services";
 import { clientEvents } from "client/network";
-import { SCRAMBLE_SLIDE_COOLDOWN } from "shared/constants";
+import { SCRAMBLE_SLIDE_COOLDOWN, SE_SLIDE } from "shared/constants";
 import { gameStore } from "shared/store/game-store";
 import { MatchPhase } from "shared/types";
 import { GameHud } from "../ui/GameHud";
@@ -118,6 +118,7 @@ export class HudController implements OnStart {
 		// Server-side slide impulse fired by ShibuyaScrambleMinigame during matches.
 		// SlideController handles the lobby case directly; this covers the in-match path.
 		let lastSlideImpulseTime = 0;
+		let slideSE: Sound | undefined;
 		clientEvents.slideImpulse.connect((dir, speed) => {
 			const now = os.clock();
 			if (now - lastSlideImpulseTime < SCRAMBLE_SLIDE_COOLDOWN) return;
@@ -135,6 +136,15 @@ export class HudController implements OnStart {
 			task.delay(0.4, () => {
 				if (humanoid?.Parent) humanoid.PlatformStand = false;
 			});
+
+			// Slide SFX — SlideController is skipped during Scramble, so play here
+			if (!slideSE) {
+				slideSE = new Instance("Sound");
+				slideSE.SoundId = SE_SLIDE;
+				slideSE.Volume = 0.6;
+				slideSE.Parent = SoundService;
+			}
+			slideSE.Play();
 		});
 	}
 
