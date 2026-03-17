@@ -22,6 +22,7 @@ import {
 	HACHI_JUMP_VELOCITY,
 	HACHI_KEY_ITEM_TAG,
 	HACHI_MAX_SPEED_TOLERANCE,
+	HACHI_SLIDE_FORCE_RESTORE_DELAY,
 	HACHI_SPAWN_TAG,
 	HACHI_WALK_SPEEDS,
 	HACHI_WALL_RUN_MAX_DUR,
@@ -77,6 +78,7 @@ export class HachiRideMinigame implements IMinigame {
 	private lastPositionTime = 0;
 	private strikes = new Map<number, number>();
 	private lastStrikeTime = new Map<number, number>();
+	private hachiSlideActive = new Set<number>();
 	private roundStarted = false;
 
 	constructor(private readonly serverEvents: ServerEvents) {}
@@ -115,10 +117,10 @@ export class HachiRideMinigame implements IMinigame {
 			part.CanCollide = false;
 			part.CanQuery = false;
 		}
-		// Show chosen items
+		// Show chosen items (CanCollide=false so they don't block Hachi)
 		for (const part of chosen) {
 			part.Transparency = 0;
-			part.CanCollide = true;
+			part.CanCollide = false;
 			part.CanQuery = true;
 			this.activeItems.push(part);
 		}
@@ -142,7 +144,7 @@ export class HachiRideMinigame implements IMinigame {
 		}
 		for (const item of this.keyItems) {
 			item.Transparency = 0;
-			item.CanCollide = true;
+			item.CanCollide = false;
 			item.CanQuery = true;
 		}
 
@@ -219,6 +221,17 @@ export class HachiRideMinigame implements IMinigame {
 			this.serverEvents.hachiDoubleJump.connect((player) => {
 				if (!this.roundStarted) return;
 				this.handleDoubleJumpEvent(player);
+			}),
+		);
+
+		// Track slide state for anti-cheat exemption
+		matchJanitor.Add(
+			this.serverEvents.requestHachiSlide.connect((player) => {
+				if (!this.playerStates.has(player.UserId)) return;
+				this.hachiSlideActive.add(player.UserId);
+				task.delay(HACHI_SLIDE_FORCE_RESTORE_DELAY, () => {
+					this.hachiSlideActive.delete(player.UserId);
+				});
 			}),
 		);
 	}
@@ -316,6 +329,7 @@ export class HachiRideMinigame implements IMinigame {
 		this.lastPositionTime = 0;
 		this.strikes.clear();
 		this.lastStrikeTime.clear();
+		this.hachiSlideActive.clear();
 		this.keyItems = [];
 		this.spawnParts = [];
 	}
@@ -348,6 +362,7 @@ export class HachiRideMinigame implements IMinigame {
 		this.lastPositions.delete(userId);
 		this.strikes.delete(userId);
 		this.lastStrikeTime.delete(userId);
+		this.hachiSlideActive.delete(userId);
 	}
 
 	private handleJumpRequest(player: Player) {
@@ -597,6 +612,9 @@ export class HachiRideMinigame implements IMinigame {
 		const maxDist = maxSpeed * elapsed + HACHI_ANTICHEAT_GRACE_STUDS;
 
 		for (const [userId] of this.playerStates) {
+			// Skip players currently in a slide impulse (speed far exceeds walk threshold)
+			if (this.hachiSlideActive.has(userId)) continue;
+
 			const player = this.playerObjects.get(userId);
 			if (!player?.Character) continue;
 			const hrp = player.Character.FindFirstChild("HumanoidRootPart") as
