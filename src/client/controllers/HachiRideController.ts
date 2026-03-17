@@ -134,15 +134,17 @@ export class HachiRideController implements OnStart {
 			| BasePart
 			| undefined;
 		const rootMotor = lowerTorso?.FindFirstChild("Root") as Motor6D | undefined;
-		const seatPart = humanoid?.SeatPart;
-		const hachiBody = seatPart?.Parent?.FindFirstChild("Body") as
-			| BasePart
-			| undefined;
-		if (rootMotor && hachiBody) {
+		if (rootMotor && humanoid) {
 			this.bobRootC0 = rootMotor.C0;
 			let bobTime = 0;
 			this.bobConn = RunService.RenderStepped.Connect((dt) => {
-				const spd = hachiBody.AssemblyLinearVelocity.Magnitude;
+				// Resolve Hachi body lazily: SeatPart may not be assigned
+				// in the same frame that Sit becomes true.
+				const body = humanoid.SeatPart?.Parent?.FindFirstChild("Body") as
+					| BasePart
+					| undefined;
+				if (!body) return;
+				const spd = body.AssemblyLinearVelocity.Magnitude;
 				const freq = math.max(1, spd / 15) * 3;
 				bobTime += dt * freq;
 				// Ramp amplitude from 0 to max based on speed
