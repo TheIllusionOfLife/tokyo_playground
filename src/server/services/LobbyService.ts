@@ -344,6 +344,12 @@ export class LobbyService implements OnStart {
 			if (!hachiModel || !CollectionService.HasTag(hachiModel, HACHI_RIDE_TAG))
 				return;
 
+			// Verify player actually occupies this seat
+			const seat = hachiModel.FindFirstChildOfClass("VehicleSeat") as
+				| VehicleSeat
+				| undefined;
+			if (!seat || seat.Occupant !== humanoid) return;
+
 			const now = os.clock();
 			if (
 				now - (this.hachiJumpCooldowns.get(player.UserId) ?? 0) <
@@ -374,6 +380,12 @@ export class LobbyService implements OnStart {
 			if (!hachiModel || !CollectionService.HasTag(hachiModel, HACHI_RIDE_TAG))
 				return;
 
+			// Verify player actually occupies this seat
+			const seat = hachiModel.FindFirstChildOfClass("VehicleSeat") as
+				| VehicleSeat
+				| undefined;
+			if (!seat || seat.Occupant !== humanoid) return;
+
 			const now = os.clock();
 			if (
 				now - (this.hachiEjectCooldowns.get(player.UserId) ?? 0) <
@@ -382,10 +394,6 @@ export class LobbyService implements OnStart {
 				return;
 			this.hachiEjectCooldowns.set(player.UserId, now);
 
-			const seat = hachiModel.FindFirstChildOfClass("VehicleSeat") as
-				| VehicleSeat
-				| undefined;
-			if (!seat) return;
 			seat.Disabled = true;
 			task.delay(HACHI_EJECT_SEAT_DISABLE_DURATION, () => {
 				if (seat.Parent) seat.Disabled = false;

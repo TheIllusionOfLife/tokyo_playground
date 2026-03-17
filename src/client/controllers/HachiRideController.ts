@@ -25,6 +25,9 @@ function isHachiSeat(seat: BasePart): boolean {
 @Controller()
 export class HachiRideController implements OnStart {
 	private seatedInHachi = false;
+	// Guard: true while the ContextActionService callback is handling a jump,
+	// so the Jump property listener doesn't double-fire the event.
+	private contextJumpActive = false;
 
 	private jumpConn?: RBXScriptConnection;
 	private bobConn?: RBXScriptConnection;
@@ -34,9 +37,17 @@ export class HachiRideController implements OnStart {
 		// Always-on: detect seating in any Hachi (lobby or minigame).
 		RunService.Heartbeat.Connect(() => {
 			const character = Players.LocalPlayer.Character;
-			if (!character) return;
-			const humanoid = character.FindFirstChildOfClass("Humanoid");
-			if (!humanoid) return;
+			const humanoid = character?.FindFirstChildOfClass("Humanoid");
+
+			// If character/humanoid is gone while we think we're seated,
+			// clean up stale bindings (e.g. character died while mounted).
+			if (!character || !humanoid) {
+				if (this.seatedInHachi) {
+					this.seatedInHachi = false;
+					this.onStoodUp();
+				}
+				return;
+			}
 
 			const seatPart = humanoid.SeatPart;
 			const inHachi =
@@ -60,8 +71,10 @@ export class HachiRideController implements OnStart {
 			ACTION_HACHI_JUMP,
 			(_name, inputState, _input) => {
 				if (inputState === Enum.UserInputState.Begin) {
+					this.contextJumpActive = true;
 					clientEvents.hachiJump.fire();
 					this.playJumpSE();
+					this.contextJumpActive = false;
 				}
 				return Enum.ContextActionResult.Sink;
 			},
@@ -86,14 +99,18 @@ export class HachiRideController implements OnStart {
 		// Mobile: the touch jump button bypasses ContextActionService and
 		// directly sets Humanoid.Jump = true, which unseats the player.
 		// Intercept that property change, cancel the unseat, and fire Hachi jump.
+		// The contextJumpActive guard prevents double-fire when ContextActionService
+		// Sink doesn't fully suppress the default jump handler.
 		const character = Players.LocalPlayer.Character;
 		const humanoid = character?.FindFirstChildOfClass("Humanoid");
 		if (humanoid) {
 			this.jumpConn = humanoid.GetPropertyChangedSignal("Jump").Connect(() => {
 				if (humanoid.Jump) {
 					humanoid.Jump = false;
-					clientEvents.hachiJump.fire();
-					this.playJumpSE();
+					if (!this.contextJumpActive) {
+						clientEvents.hachiJump.fire();
+						this.playJumpSE();
+					}
 				}
 			});
 		}
@@ -114,7 +131,8 @@ export class HachiRideController implements OnStart {
 				const body = humanoid.SeatPart?.Parent?.FindFirstChild("Body") as
 					| BasePart
 					| undefined;
-				if (!body) return;
+				// Guard: body may be destroyed mid-ride (server cleanup).
+				if (!body || !body.IsDescendantOf(game)) return;
 				const spd = body.AssemblyLinearVelocity.Magnitude;
 				const freq = math.max(1, spd / 25) * BOB_FREQ_SCALE;
 				bobTime += dt * freq;
