@@ -12,9 +12,10 @@ import { MinigameId, PlayerRole, RoundResult } from "shared/types";
 const ACTION_HACHI_JUMP = "HachiJump";
 const ACTION_HACHI_EJECT = "HachiEject";
 
-// Body bob tuning — matches animateHachi freq so rider bounces in sync with legs
-const BOB_MAX_AMPLITUDE = 0.35; // studs at full speed
+// Body bob tuning — slower than Hachi's leg freq for a gentle gallop sway
+const BOB_MAX_AMPLITUDE = 0.3; // studs at full speed
 const BOB_SPEED_THRESHOLD = 5; // studs/s below which bob is zero
+const BOB_FREQ_SCALE = 1.5; // multiplier on base frequency (spd / 25)
 
 @Controller()
 export class HachiRideController implements OnStart {
@@ -145,11 +146,11 @@ export class HachiRideController implements OnStart {
 					| undefined;
 				if (!body) return;
 				const spd = body.AssemblyLinearVelocity.Magnitude;
-				const freq = math.max(1, spd / 15) * 3;
+				const freq = math.max(1, spd / 25) * BOB_FREQ_SCALE;
 				bobTime += dt * freq;
 				// Ramp amplitude from 0 to max based on speed
 				const t = math.clamp((spd - BOB_SPEED_THRESHOLD) / 30, 0, 1);
-				const offset = math.sin(bobTime * 2) * BOB_MAX_AMPLITUDE * t;
+				const offset = math.sin(bobTime) * BOB_MAX_AMPLITUDE * t;
 				rootMotor.C0 = this.bobRootC0!.mul(new CFrame(0, offset, 0));
 			});
 		}
