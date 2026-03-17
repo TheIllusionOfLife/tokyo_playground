@@ -15,7 +15,6 @@ import {
 	HachiRidePlayerState,
 	PlayerRole,
 	RewardBreakdown,
-	RoundResult,
 	ShibuyaScramblePlayerState,
 } from "shared/types";
 
@@ -23,14 +22,10 @@ import {
 export class RewardService {
 	calculateCanKickRewards(
 		playerState: CanKickPlayerState,
-		roundResult: RoundResult,
 		role: PlayerRole,
+		won: boolean,
 	): RewardBreakdown {
 		const isOni = role === PlayerRole.Oni;
-		const won =
-			(isOni && roundResult === RoundResult.OniWins) ||
-			(!isOni && roundResult === RoundResult.HidersWin) ||
-			(!isOni && roundResult === RoundResult.TimerExpired);
 
 		const baseReward = won
 			? BASE_PARTICIPATION_POINTS
@@ -56,9 +51,8 @@ export class RewardService {
 
 	calculateHachiRideRewards(
 		playerState: HachiRidePlayerState,
-		maxItemCount: number,
+		won: boolean,
 	): RewardBreakdown {
-		const won = playerState.itemCount === maxItemCount && maxItemCount > 0;
 		const baseReward = BASE_PARTICIPATION_POINTS;
 		const winBonus = won ? HACHI_WIN_ITEM_BONUS : 0;
 		const roleBonus = playerState.itemCount * HACHI_ITEM_POINT_VALUE;
@@ -69,13 +63,10 @@ export class RewardService {
 
 	calculateShibuyaScrambleRewards(
 		playerState: ShibuyaScramblePlayerState,
-		roundResult: RoundResult,
 		role: PlayerRole,
+		won: boolean,
 	): RewardBreakdown {
 		const isOni = role === PlayerRole.Oni;
-		const won =
-			(isOni && roundResult === RoundResult.OniWins) ||
-			(!isOni && roundResult !== RoundResult.OniWins);
 
 		const baseReward = won
 			? BASE_PARTICIPATION_POINTS

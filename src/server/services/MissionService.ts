@@ -8,7 +8,6 @@ import {
 	MissionProgressData,
 	MissionSlot,
 	PlayerRole,
-	RoundResult,
 } from "shared/types";
 import { PlayerDataService } from "./PlayerDataService";
 
@@ -67,21 +66,15 @@ export class MissionService implements OnStart {
 	recordGameResult(
 		player: Player,
 		role: PlayerRole,
-		result: RoundResult,
 		state: AnyPlayerState,
 		pointsEarned: number,
-		isWinner?: boolean,
+		isWinner: boolean,
 	) {
 		if (!this.playerDataService.getPlayerData(player)) return;
 
 		this.incrementAndNotify(player, MissionId.PlayGames, 1);
 
-		const won =
-			isWinner ??
-			((role === PlayerRole.Oni && result === RoundResult.OniWins) ||
-				(role === PlayerRole.Hider &&
-					(result === RoundResult.HidersWin ||
-						result === RoundResult.TimerExpired)));
+		const won = isWinner;
 
 		if (won && role === PlayerRole.Oni) {
 			this.incrementAndNotify(player, MissionId.WinAsOni, 1);

@@ -263,7 +263,7 @@ export class MatchService implements OnStart {
 		if ((this.currentPhase as MatchPhase) !== MatchPhase.InProgress) return;
 		this.transitionPhase(MatchPhase.RoundOver);
 		// Stop countdown immediately so its tail never fires during results display
-		this.activeMinigame?.stopCountdown?.();
+		this.activeMinigame?.stopCountdown();
 		this.serverEvents.roundResultAnnounced.broadcast(result);
 
 		const minigame = this.activeMinigame!;
@@ -292,23 +292,6 @@ export class MatchService implements OnStart {
 			const player = Players.GetPlayerByUserId(userId);
 			if (!player) continue;
 
-			const breakdown =
-				state.minigameId === MinigameId.HachiRide
-					? this.rewardService.calculateHachiRideRewards(
-							state as HachiRidePlayerState,
-							maxHachiItems,
-						)
-					: state.minigameId === MinigameId.ShibuyaScramble
-						? this.rewardService.calculateShibuyaScrambleRewards(
-								state,
-								result,
-								state.role,
-							)
-						: this.rewardService.calculateCanKickRewards(
-								state,
-								result,
-								state.role,
-							);
 			const won =
 				state.minigameId === MinigameId.HachiRide
 					? maxHachiItems > 0 &&
@@ -317,6 +300,24 @@ export class MatchService implements OnStart {
 						(state.role === PlayerRole.Hider &&
 							(result === RoundResult.HidersWin ||
 								result === RoundResult.TimerExpired));
+
+			const breakdown =
+				state.minigameId === MinigameId.HachiRide
+					? this.rewardService.calculateHachiRideRewards(
+							state as HachiRidePlayerState,
+							won,
+						)
+					: state.minigameId === MinigameId.ShibuyaScramble
+						? this.rewardService.calculateShibuyaScrambleRewards(
+								state,
+								state.role,
+								won,
+							)
+						: this.rewardService.calculateCanKickRewards(
+								state,
+								state.role,
+								won,
+							);
 
 			const levelResult = this.playerDataService.recordGameResult(
 				player,
@@ -343,7 +344,6 @@ export class MatchService implements OnStart {
 			this.missionService.recordGameResult(
 				player,
 				state.role,
-				result,
 				state,
 				breakdown.totalPoints,
 				won,
@@ -358,7 +358,7 @@ export class MatchService implements OnStart {
 			});
 		}
 
-		entries.sort((a, b) => a.points > b.points);
+		entries.sort((a, b) => b.points > a.points);
 		this.serverEvents.scoreboard.broadcast(entries);
 
 		task.wait(RESULTS_DISPLAY_DURATION);
@@ -415,9 +415,9 @@ export class MatchService implements OnStart {
 		this.playerCooldowns.set(player, now);
 
 		if (action === "catch") {
-			this.activeMinigame.handleCatchRequest?.(player);
+			this.activeMinigame.handleCatchRequest(player);
 		} else {
-			const kicked = this.activeMinigame.handleKickCanRequest?.(player);
+			const kicked = this.activeMinigame.handleKickCanRequest(player);
 			if (kicked) this.missionService.onCanKicked(player);
 		}
 	}
@@ -452,7 +452,7 @@ export class MatchService implements OnStart {
 		const playerState = states.get(player.UserId);
 
 		// Remove from minigame state so win condition reflects reality
-		this.activeMinigame.removePlayer?.(player.UserId);
+		this.activeMinigame.removePlayer(player.UserId);
 
 		if ((this.currentPhase as MatchPhase) !== MatchPhase.InProgress) return;
 

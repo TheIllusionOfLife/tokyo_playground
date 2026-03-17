@@ -6,6 +6,9 @@ import {
 	ShopItemData,
 } from "shared/types";
 
+// Defaults
+export const DEFAULT_WALK_SPEED = 16;
+
 // Lobby & Match Flow
 export const LOBBY_INTERMISSION = 15;
 export const RESULTS_DISPLAY_DURATION = 8;
@@ -209,6 +212,9 @@ export const SHOP_CATALOG: Omit<ShopItemData, "owned">[] = [
 	},
 ];
 
+// Shop
+export const SHOP_CATALOG_COOLDOWN = 2; // seconds between catalog requests
+
 export const SLIDE_RAMP_TAG = "ShibuyaSlideRamp";
 export const SLIDE_DIR_Y_OFFSET = -0.4; // downward bias added to ramp LookVector
 export const SLIDE_TRIGGER_RADIUS = 6; // studs from ramp surface to trigger (OBB closest-point)
@@ -254,6 +260,13 @@ export const SCRAMBLE_CROWD_NPC_COUNT = 12;
 export const SCRAMBLE_SLIDE_SPEED = 800;
 export const SCRAMBLE_SLIDE_COOLDOWN = 8;
 export const SCRAMBLE_TAG_BONUS_PER_TAG = 5;
+
+// Hachi anti-cheat
+export const HACHI_MAX_SPEED_TOLERANCE = 1.5; // multiplier over max expected speed
+export const HACHI_ANTICHEAT_GRACE_STUDS = 10; // extra tolerance per check interval
+export const HACHI_ANTICHEAT_STRIKE_LIMIT = 3; // strikes before snapback
+export const HACHI_ANTICHEAT_CHECK_INTERVAL = 1; // seconds between position checks
+export const HACHI_ANTICHEAT_STRIKE_DECAY = 30; // seconds clean before strikes reset
 
 // Audio — verified IDs that load successfully in Studio
 export const BGM_TRACK_ID = "rbxassetid://7024340270"; // Tokyo Machine "Moshi" (215s chiptune)

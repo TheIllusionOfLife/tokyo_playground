@@ -62,6 +62,7 @@ interface ClientToServerEvents {
 	requestPurchase(itemId: ItemId): void;
 	hachiJump(): void;
 	hachiEject(): void;
+	hachiDoubleJump(): void;
 	requestHachiSlide(): void;
 }
 

@@ -22,29 +22,9 @@ import {
 } from "shared/constants";
 import { GlobalEvents } from "shared/network";
 import { MinigameId } from "shared/types";
+import { animateHachi } from "../utils/animateHachi";
 
 const LOBBY_SPAWN_TAG = "LobbySpawn";
-
-/** Procedural leg/ear/tail animation for Hachi models (server-side, replicated). */
-function animateHachi(body: BasePart, dt: number, animTime: number): number {
-	const spd = body.AssemblyLinearVelocity.Magnitude;
-	const freq = math.max(1, spd / 15) * 3;
-	animTime += dt * freq;
-	const frontSwing = math.sin(animTime) * 0.35;
-	const backSwing = math.sin(animTime + math.pi) * 0.35;
-	const setC1 = (name: string, cf: CFrame) => {
-		const w = body.FindFirstChild(name) as Weld | undefined;
-		if (w) w.C1 = cf;
-	};
-	setC1("Anim_LegFL", CFrame.Angles(frontSwing, 0, 0));
-	setC1("Anim_LegFR", CFrame.Angles(frontSwing, 0, 0));
-	setC1("Anim_LegBL", CFrame.Angles(backSwing, 0, 0));
-	setC1("Anim_LegBR", CFrame.Angles(backSwing, 0, 0));
-	setC1("Anim_EarL", CFrame.Angles(0, math.sin(os.clock() * 2.5) * 0.12, 0));
-	setC1("Anim_EarR", CFrame.Angles(0, -math.sin(os.clock() * 2.5) * 0.12, 0));
-	setC1("Anim_Tail", CFrame.Angles(0, math.sin(os.clock() * 3) * 0.2, 0));
-	return animTime;
-}
 
 @Service()
 export class LobbyService implements OnStart {
@@ -54,6 +34,7 @@ export class LobbyService implements OnStart {
 	private readonly tpCooldowns = new Map<number, number>();
 	private readonly hachiSlideActive = new Set<number>();
 	private readonly hachiAnimTimes = new Map<Model, number>();
+	private slideRamps: BasePart[] = [];
 	private matchActive = false;
 	private onStartRequested?: (minigameId: MinigameId) => void;
 
@@ -91,6 +72,21 @@ export class LobbyService implements OnStart {
 			this.tpCooldowns.delete(player.UserId);
 			this.hachiSlideActive.delete(player.UserId);
 		});
+
+		// Cache slide ramps with live add/remove tracking
+		this.slideRamps = CollectionService.GetTagged(SLIDE_RAMP_TAG).filter(
+			(i): i is BasePart => i.IsA("BasePart"),
+		);
+		CollectionService.GetInstanceAddedSignal(SLIDE_RAMP_TAG).Connect((inst) => {
+			if (inst.IsA("BasePart")) this.slideRamps.push(inst);
+		});
+		CollectionService.GetInstanceRemovedSignal(SLIDE_RAMP_TAG).Connect(
+			(inst) => {
+				if (!inst.IsA("BasePart")) return;
+				const idx = this.slideRamps.indexOf(inst);
+				if (idx !== -1) this.slideRamps.remove(idx);
+			},
+		);
 
 		this.setupPortals();
 		this.setupHachiRide();
@@ -230,11 +226,9 @@ export class LobbyService implements OnStart {
 
 			// Verify the Hachi body is within range of a slide ramp using OBB
 			// closest-point (same math as client SlideController) so both sides agree.
-			const ramps = CollectionService.GetTagged(SLIDE_RAMP_TAG);
 			let nearestRamp: BasePart | undefined;
 			let nearestDist = HACHI_SLIDE_RAMP_PROXIMITY;
-			for (const ramp of ramps) {
-				if (!ramp.IsA("BasePart")) continue;
+			for (const ramp of this.slideRamps) {
 				const localPos = ramp.CFrame.PointToObjectSpace(body.Position);
 				const half = ramp.Size.mul(0.5);
 				const clamped = new Vector3(
@@ -317,7 +311,7 @@ export class LobbyService implements OnStart {
 					`[LobbyService] ${player.Name} teleported to lobby (fallback spawn)`,
 				);
 			} else {
-				print(`[LobbyService] Warning: no spawn found for ${player.Name}`);
+				warn(`[LobbyService] No spawn found for ${player.Name}`);
 			}
 		}
 	}

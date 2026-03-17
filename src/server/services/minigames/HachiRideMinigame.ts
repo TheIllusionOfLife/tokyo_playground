@@ -7,6 +7,10 @@ import {
 	Workspace,
 } from "@rbxts/services";
 import {
+	HACHI_ANTICHEAT_CHECK_INTERVAL,
+	HACHI_ANTICHEAT_GRACE_STUDS,
+	HACHI_ANTICHEAT_STRIKE_DECAY,
+	HACHI_ANTICHEAT_STRIKE_LIMIT,
 	HACHI_BIG_SCALE,
 	HACHI_COLLECTION_RADIUS,
 	HACHI_EJECT_COOLDOWN,
@@ -17,6 +21,7 @@ import {
 	HACHI_JUMP_COOLDOWN,
 	HACHI_JUMP_VELOCITY,
 	HACHI_KEY_ITEM_TAG,
+	HACHI_MAX_SPEED_TOLERANCE,
 	HACHI_SPAWN_TAG,
 	HACHI_WALK_SPEEDS,
 	HACHI_WALL_RUN_MAX_DUR,
@@ -31,6 +36,7 @@ import {
 	PlayerRole,
 	RoundResult,
 } from "shared/types";
+import { animateHachi } from "../../utils/animateHachi";
 import { IMinigame } from "./MinigameBase";
 
 type ServerEvents = ReturnType<typeof GlobalEvents.createServer>;
@@ -53,27 +59,6 @@ function shuffle(arr: BasePart[]): BasePart[] {
 	return result;
 }
 
-/** Procedural leg/ear/tail animation for Hachi models (server-side, replicated). */
-function animateHachi(body: BasePart, dt: number, animTime: number): number {
-	const spd = body.AssemblyLinearVelocity.Magnitude;
-	const freq = math.max(1, spd / 15) * 3;
-	animTime += dt * freq;
-	const frontSwing = math.sin(animTime) * 0.35;
-	const backSwing = math.sin(animTime + math.pi) * 0.35;
-	const setC1 = (name: string, cf: CFrame) => {
-		const w = body.FindFirstChild(name) as Weld | undefined;
-		if (w) w.C1 = cf;
-	};
-	setC1("Anim_LegFL", CFrame.Angles(frontSwing, 0, 0));
-	setC1("Anim_LegFR", CFrame.Angles(frontSwing, 0, 0));
-	setC1("Anim_LegBL", CFrame.Angles(backSwing, 0, 0));
-	setC1("Anim_LegBR", CFrame.Angles(backSwing, 0, 0));
-	setC1("Anim_EarL", CFrame.Angles(0, math.sin(os.clock() * 2.5) * 0.12, 0));
-	setC1("Anim_EarR", CFrame.Angles(0, -math.sin(os.clock() * 2.5) * 0.12, 0));
-	setC1("Anim_Tail", CFrame.Angles(0, math.sin(os.clock() * 3) * 0.2, 0));
-	return animTime;
-}
-
 export class HachiRideMinigame implements IMinigame {
 	readonly id = MinigameId.HachiRide;
 
@@ -83,9 +68,15 @@ export class HachiRideMinigame implements IMinigame {
 	private hachiAnimTimes = new Map<number, number>();
 	private activeItems: BasePart[] = [];
 	private keyItems: BasePart[] = [];
+	private spawnParts: BasePart[] = [];
 	private wallRunStates = new Map<number, WallRunState>();
 	private jumpCooldowns = new Map<number, number>();
 	private ejectCooldowns = new Map<number, number>();
+	private doubleJumpUsed = new Map<number, boolean>();
+	private lastPositions = new Map<number, Vector3>();
+	private lastPositionTime = 0;
+	private strikes = new Map<number, number>();
+	private lastStrikeTime = new Map<number, number>();
 	private roundStarted = false;
 
 	constructor(private readonly serverEvents: ServerEvents) {}
@@ -155,10 +146,11 @@ export class HachiRideMinigame implements IMinigame {
 			item.CanQuery = true;
 		}
 
-		// Spawn points
-		const spawnParts = CollectionService.GetTagged(HACHI_SPAWN_TAG).filter(
+		// Spawn points (cached for reuse in assignRoles)
+		this.spawnParts = CollectionService.GetTagged(HACHI_SPAWN_TAG).filter(
 			(i): i is BasePart => i.IsA("BasePart"),
 		);
+		const spawnParts = this.spawnParts;
 		if (spawnParts.size() === 0) {
 			warn(
 				"[HachiRide] Missing Studio asset: HachiRideSpawn — check map setup",
@@ -205,6 +197,7 @@ export class HachiRideMinigame implements IMinigame {
 					player.Character.PivotTo(
 						new CFrame(spawnPart.Position.add(new Vector3(0, 3, 0))),
 					);
+					this.resetAnticheatBaseline(player.UserId, spawnPart.Position);
 				}
 			});
 			matchJanitor.Add(conn);
@@ -222,14 +215,17 @@ export class HachiRideMinigame implements IMinigame {
 				this.handleEjectRequest(player);
 			}),
 		);
+		matchJanitor.Add(
+			this.serverEvents.hachiDoubleJump.connect((player) => {
+				if (!this.roundStarted) return;
+				this.handleDoubleJumpEvent(player);
+			}),
+		);
 	}
 
 	assignRoles(players: Player[]): Map<Player, PlayerRole> {
 		const roles = new Map<Player, PlayerRole>();
-
-		const spawnParts = CollectionService.GetTagged(HACHI_SPAWN_TAG).filter(
-			(i): i is BasePart => i.IsA("BasePart"),
-		);
+		const spawnParts = this.spawnParts;
 
 		for (let i = 0; i < players.size(); i++) {
 			const player = players[i];
@@ -243,6 +239,7 @@ export class HachiRideMinigame implements IMinigame {
 				player.Character.PivotTo(
 					new CFrame(spawnPart.Position.add(new Vector3(0, 3, 0))),
 				);
+				this.resetAnticheatBaseline(player.UserId, spawnPart.Position);
 			}
 		}
 
@@ -264,7 +261,14 @@ export class HachiRideMinigame implements IMinigame {
 		this.checkItemCollection();
 		this.detectWallRun(dt);
 		this.tickHachiAnimation(dt);
+		this.checkSpeedViolations(dt);
 	}
+
+	handleCatchRequest(_player: Player): void {}
+	handleKickCanRequest(_player: Player): boolean {
+		return false;
+	}
+	stopCountdown(): void {}
 
 	checkWinCondition(): RoundResult | undefined {
 		// Timer-based — MatchService handles expiry
@@ -307,7 +311,13 @@ export class HachiRideMinigame implements IMinigame {
 		this.wallRunStates.clear();
 		this.jumpCooldowns.clear();
 		this.ejectCooldowns.clear();
+		this.doubleJumpUsed.clear();
+		this.lastPositions.clear();
+		this.lastPositionTime = 0;
+		this.strikes.clear();
+		this.lastStrikeTime.clear();
 		this.keyItems = [];
+		this.spawnParts = [];
 	}
 
 	removePlayer(userId: number) {
@@ -334,6 +344,10 @@ export class HachiRideMinigame implements IMinigame {
 		this.wallRunStates.delete(userId);
 		this.jumpCooldowns.delete(userId);
 		this.ejectCooldowns.delete(userId);
+		this.doubleJumpUsed.delete(userId);
+		this.lastPositions.delete(userId);
+		this.strikes.delete(userId);
+		this.lastStrikeTime.delete(userId);
 	}
 
 	private handleJumpRequest(player: Player) {
@@ -555,9 +569,83 @@ export class HachiRideMinigame implements IMinigame {
 		}
 	}
 
+	private resetAnticheatBaseline(userId: number, position: Vector3) {
+		this.lastPositions.set(userId, position);
+		this.strikes.set(userId, 0);
+		this.lastStrikeTime.delete(userId);
+	}
+
+	private handleDoubleJumpEvent(player: Player) {
+		const state = this.playerStates.get(player.UserId);
+		if (!state) return;
+		// Require evolution >= 1 (double jump unlock)
+		if (state.evolutionLevel < 1) return;
+		// Reject if already used this airborne session
+		if (this.doubleJumpUsed.get(player.UserId)) return;
+		this.doubleJumpUsed.set(player.UserId, true);
+	}
+
+	private checkSpeedViolations(_dt: number) {
+		const now = os.clock();
+		if (now - this.lastPositionTime < HACHI_ANTICHEAT_CHECK_INTERVAL) return;
+		const elapsed = now - this.lastPositionTime;
+		this.lastPositionTime = now;
+
+		const maxSpeed =
+			HACHI_WALK_SPEEDS[HACHI_WALK_SPEEDS.size() - 1] *
+			HACHI_MAX_SPEED_TOLERANCE;
+		const maxDist = maxSpeed * elapsed + HACHI_ANTICHEAT_GRACE_STUDS;
+
+		for (const [userId] of this.playerStates) {
+			const player = this.playerObjects.get(userId);
+			if (!player?.Character) continue;
+			const hrp = player.Character.FindFirstChild("HumanoidRootPart") as
+				| BasePart
+				| undefined;
+			if (!hrp) continue;
+
+			const pos = hrp.Position;
+			const lastPos = this.lastPositions.get(userId);
+			this.lastPositions.set(userId, pos);
+
+			if (!lastPos) continue;
+
+			const dist = pos.sub(lastPos).Magnitude;
+			if (dist <= maxDist) {
+				// Clean movement: decay strikes over time
+				const lastStrike = this.lastStrikeTime.get(userId) ?? 0;
+				if (
+					now - lastStrike > HACHI_ANTICHEAT_STRIKE_DECAY &&
+					(this.strikes.get(userId) ?? 0) > 0
+				) {
+					this.strikes.set(userId, 0);
+				}
+				continue;
+			}
+
+			// Speed violation
+			const currentStrikes = (this.strikes.get(userId) ?? 0) + 1;
+			this.strikes.set(userId, currentStrikes);
+			this.lastStrikeTime.set(userId, now);
+
+			if (currentStrikes < HACHI_ANTICHEAT_STRIKE_LIMIT) {
+				warn(
+					`[HachiRide] Speed warning for ${player.Name}: ${math.floor(dist)} studs in ${string.format("%.1f", elapsed)}s (strike ${currentStrikes})`,
+				);
+			} else {
+				// Teleport back to last valid position
+				warn(
+					`[HachiRide] Snapback for ${player.Name}: ${math.floor(dist)} studs in ${string.format("%.1f", elapsed)}s (strike ${currentStrikes})`,
+				);
+				player.Character?.PivotTo(new CFrame(lastPos));
+				if (hrp) hrp.AssemblyLinearVelocity = Vector3.zero;
+				this.lastPositions.set(userId, lastPos);
+			}
+		}
+	}
+
 	private detectWallRun(dt: number) {
 		for (const [userId, state] of this.playerStates) {
-			if (state.evolutionLevel < 2) continue;
 			const player = this.playerObjects.get(userId);
 			if (!player?.Character) continue;
 			const hrp = player.Character.FindFirstChild("HumanoidRootPart") as
@@ -567,8 +655,9 @@ export class HachiRideMinigame implements IMinigame {
 			const humanoid = player.Character.FindFirstChildOfClass("Humanoid");
 			if (!humanoid) continue;
 
-			// Only wall-run when airborne
+			// Reset double-jump on landing (must run for level >= 1, before wall-run gate)
 			if (humanoid.FloorMaterial !== Enum.Material.Air) {
+				this.doubleJumpUsed.set(userId, false);
 				const wallState = this.wallRunStates.get(userId);
 				if (wallState?.running) {
 					wallState.running = false;
@@ -577,6 +666,9 @@ export class HachiRideMinigame implements IMinigame {
 				}
 				continue;
 			}
+
+			// Wall-run requires evolution >= 2
+			if (state.evolutionLevel < 2) continue;
 
 			const rayParams = new RaycastParams();
 			rayParams.FilterDescendantsInstances = [player.Character];

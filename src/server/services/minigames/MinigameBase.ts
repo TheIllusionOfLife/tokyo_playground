@@ -15,8 +15,8 @@ export interface IMinigame {
 	checkWinCondition(): RoundResult | undefined;
 	getPlayerStates(): Map<number, AnyPlayerState>;
 	cleanup(): void;
-	handleCatchRequest?(player: Player): void;
-	handleKickCanRequest?(player: Player): boolean;
-	removePlayer?(userId: number): void;
-	stopCountdown?(): void;
+	handleCatchRequest(player: Player): void;
+	handleKickCanRequest(player: Player): boolean;
+	removePlayer(userId: number): void;
+	stopCountdown(): void;
 }

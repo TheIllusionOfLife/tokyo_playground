@@ -84,6 +84,7 @@ export class HachiRideController implements OnStart {
 			if (this.hasDoubleJumped) return;
 
 			this.hasDoubleJumped = true;
+			clientEvents.hachiDoubleJump.fire();
 			const hrp = character.FindFirstChild("HumanoidRootPart") as
 				| BasePart
 				| undefined;
