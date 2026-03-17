@@ -17,6 +17,7 @@ import {
 	SCRAMBLE_ROOFTOP_TP_TAG,
 	SCRAMBLE_SLIDE_COOLDOWN,
 	SCRAMBLE_SLIDE_SPEED,
+	DEFAULT_WALK_SPEED,
 	SLIDE_DIR_Y_OFFSET,
 	SLIDE_RAMP_TAG,
 } from "shared/constants";
@@ -57,9 +58,12 @@ export class LobbyService implements OnStart {
 		print(`[LobbyService] Found ${this.lobbySpawns.size()} lobby spawns`);
 
 		Players.PlayerAdded.Connect((player) => {
-			player.CharacterAdded.Connect(() => {
+			player.CharacterAdded.Connect((character) => {
 				// Small delay to let character load
 				task.wait(0.5);
+				// Set walk speed to project default (Roblox default is 16)
+				const humanoid = character.FindFirstChildOfClass("Humanoid");
+				if (humanoid) humanoid.WalkSpeed = DEFAULT_WALK_SPEED;
 				if (this.matchActive) return;
 				if (player.Character) {
 					this.teleportToLobby(player);
