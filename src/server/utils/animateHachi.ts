@@ -51,6 +51,10 @@ export function animateHachi(
 		setC1("Anim_EarL", CFrame.Angles(0, math.sin(os.clock() * 2.5) * 0.3, 0));
 		setC1("Anim_EarR", CFrame.Angles(0, -math.sin(os.clock() * 2.5) * 0.3, 0));
 		setC1("Anim_Tail", CFrame.Angles(0, math.sin(os.clock() * 3) * 0.5, 0));
+		// Head/snout bob: subtle up/down bounce synced with leg stride
+		const bobAmount = spd > 5 ? math.sin(animTime * 2) * 0.25 : 0;
+		setC1("Anim_Head", new CFrame(0, bobAmount, 0));
+		setC1("Anim_Snout", new CFrame(0, bobAmount, 0));
 	}
 
 	return { animTime, airborne };

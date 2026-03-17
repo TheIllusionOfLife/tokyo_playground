@@ -7,6 +7,7 @@ import {
 } from "@rbxts/services";
 import {
 	CAN_KICK_PORTAL_TAG,
+	DEFAULT_WALK_SPEED,
 	HACHI_RIDE_PORTAL_TAG,
 	HACHI_RIDE_TAG,
 	HACHI_SLIDE_FORCE_RESTORE_DELAY,
@@ -57,9 +58,12 @@ export class LobbyService implements OnStart {
 		print(`[LobbyService] Found ${this.lobbySpawns.size()} lobby spawns`);
 
 		Players.PlayerAdded.Connect((player) => {
-			player.CharacterAdded.Connect(() => {
+			player.CharacterAdded.Connect((character) => {
 				// Small delay to let character load
 				task.wait(0.5);
+				// Set walk speed to project default (Roblox default is 16)
+				const humanoid = character.FindFirstChildOfClass("Humanoid");
+				if (humanoid) humanoid.WalkSpeed = DEFAULT_WALK_SPEED;
 				if (this.matchActive) return;
 				if (player.Character) {
 					this.teleportToLobby(player);
@@ -257,9 +261,21 @@ export class LobbyService implements OnStart {
 			if (!nearestRamp) return; // not near any ramp — reject spoofed request
 
 			this.slideCooldowns.set(player.UserId, now);
-			const serverDir = nearestRamp.CFrame.LookVector.add(
-				new Vector3(0, SLIDE_DIR_Y_OFFSET, 0),
-			).Unit;
+			const usePlayerDir = nearestRamp.GetAttribute("UsePlayerDirection");
+			let serverDir: Vector3;
+			if (typeIs(usePlayerDir, "boolean") && usePlayerDir) {
+				// Use player/Hachi's current horizontal velocity as boost direction
+				const vel = body.AssemblyLinearVelocity;
+				const horizontal = new Vector3(vel.X, 0, vel.Z);
+				serverDir =
+					horizontal.Magnitude > 1
+						? horizontal.Unit
+						: nearestRamp.CFrame.LookVector.Unit;
+			} else {
+				serverDir = nearestRamp.CFrame.LookVector.add(
+					new Vector3(0, SLIDE_DIR_Y_OFFSET, 0),
+				).Unit;
+			}
 			const rawSpeed = nearestRamp.GetAttribute("SlideSpeed");
 			const speed =
 				typeIs(rawSpeed, "number") && rawSpeed > 0

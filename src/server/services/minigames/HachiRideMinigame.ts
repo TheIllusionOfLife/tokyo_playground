@@ -12,7 +12,10 @@ import {
 	HACHI_ANTICHEAT_STRIKE_DECAY,
 	HACHI_ANTICHEAT_STRIKE_LIMIT,
 	HACHI_BIG_SCALE,
+	HACHI_BONUS_ITEM_COUNT,
+	HACHI_BONUS_ITEM_VALUE,
 	HACHI_COLLECTION_RADIUS,
+	HACHI_DOUBLE_JUMP_IMPULSE,
 	HACHI_EJECT_COOLDOWN,
 	HACHI_EJECT_SEAT_DISABLE_DURATION,
 	HACHI_EVOLUTION_THRESHOLDS,
@@ -47,6 +50,8 @@ interface WallRunState {
 	running: boolean;
 	duration: number;
 	normal: Vector3;
+	wallDir: Vector3;
+	origMaxForce: Vector3;
 }
 
 // Fisher-Yates shuffle for BasePart arrays
@@ -62,6 +67,7 @@ function shuffle(arr: BasePart[]): BasePart[] {
 }
 
 export class HachiRideMinigame implements IMinigame {
+	static activeInstance?: HachiRideMinigame;
 	readonly id = MinigameId.HachiRide;
 
 	private playerStates = new Map<number, HachiRidePlayerState>();
@@ -69,12 +75,15 @@ export class HachiRideMinigame implements IMinigame {
 	private hachiModels = new Map<number, Model>();
 	private hachiAnimStates = new Map<number, HachiAnimState>();
 	private activeItems: BasePart[] = [];
+	private bonusItems = new Set<BasePart>();
 	private keyItems: BasePart[] = [];
 	private spawnParts: BasePart[] = [];
 	private wallRunStates = new Map<number, WallRunState>();
 	private jumpCooldowns = new Map<number, number>();
 	private ejectCooldowns = new Map<number, number>();
 	private doubleJumpUsed = new Map<number, boolean>();
+	private jumpPhase = new Map<number, number>();
+	private jumpTime = new Map<number, number>();
 	private lastPositions = new Map<number, Vector3>();
 	private lastPositionTime = 0;
 	private strikes = new Map<number, number>();
@@ -83,7 +92,9 @@ export class HachiRideMinigame implements IMinigame {
 	private slideCooldowns = new Map<number, number>();
 	private roundStarted = false;
 
-	constructor(private readonly serverEvents: ServerEvents) {}
+	constructor(private readonly serverEvents: ServerEvents) {
+		HachiRideMinigame.activeInstance = this;
+	}
 
 	prepare(players: Player[], matchJanitor: Janitor) {
 		// Initialise per-player state
@@ -120,11 +131,24 @@ export class HachiRideMinigame implements IMinigame {
 			part.CanQuery = false;
 		}
 		// Show chosen items (CanCollide=false so they don't block Hachi)
-		for (const part of chosen) {
-			part.Transparency = 0;
+		// First HACHI_BONUS_ITEM_COUNT items are bonus (shuffled = random)
+		const originalColors = new Map<BasePart, Color3>();
+		const originalSizes = new Map<BasePart, Vector3>();
+		for (let i = 0; i < chosen.size(); i++) {
+			const part = chosen[i];
+			part.Transparency = 1; // Hidden until startRound
 			part.CanCollide = false;
-			part.CanQuery = true;
+			part.CanQuery = false;
 			this.activeItems.push(part);
+			if (i < HACHI_BONUS_ITEM_COUNT) {
+				// Mark as bonus: bigger, gold color
+				this.bonusItems.add(part);
+				originalColors.set(part, part.Color);
+				originalSizes.set(part, part.Size);
+				part.Size = part.Size.mul(2.5);
+				part.Color = Color3.fromRGB(255, 215, 0);
+				part.Material = Enum.Material.Neon;
+			}
 		}
 
 		// Register cleanup: restore all anchors to hidden state
@@ -133,8 +157,14 @@ export class HachiRideMinigame implements IMinigame {
 				part.Transparency = 1;
 				part.CanCollide = false;
 				part.CanQuery = false;
+				// Restore original size/color for bonus items
+				const origColor = originalColors.get(part);
+				if (origColor) part.Color = origColor;
+				const origSize = originalSizes.get(part);
+				if (origSize) part.Size = origSize;
 			}
 			this.activeItems = [];
+			this.bonusItems.clear();
 		});
 
 		// Key items — always visible
@@ -144,10 +174,12 @@ export class HachiRideMinigame implements IMinigame {
 		if (this.keyItems.size() === 0) {
 			warn("[HachiRide] Missing Studio asset: HachiKeyItem — check map setup");
 		}
-		for (const item of this.keyItems) {
-			item.Transparency = 0;
+		for (let i = 0; i < this.keyItems.size(); i++) {
+			const item = this.keyItems[i];
+			item.Transparency = 1; // Hidden until round starts
 			item.CanCollide = false;
-			item.CanQuery = true;
+			item.CanQuery = false;
+			if (i === 0) this.bonusItems.add(item); // Only first key item is bonus
 		}
 
 		// Spawn points (cached for reuse in assignRoles)
@@ -180,6 +212,11 @@ export class HachiRideMinigame implements IMinigame {
 
 			const clone = template.Clone();
 			clone.Name = `Hachi_${player.UserId}`;
+			// Set initial MaxSpeed from level 0
+			const cloneSeat = clone.FindFirstChildOfClass("VehicleSeat") as
+				| VehicleSeat
+				| undefined;
+			if (cloneSeat) cloneSeat.MaxSpeed = HACHI_WALK_SPEEDS[0];
 			clone.Parent = Workspace;
 			this.hachiModels.set(player.UserId, clone);
 			matchJanitor.Add(clone);
@@ -284,6 +321,15 @@ export class HachiRideMinigame implements IMinigame {
 
 	startRound() {
 		this.roundStarted = true;
+		// Reveal all items now
+		for (const item of this.activeItems) {
+			item.Transparency = 0;
+			item.CanQuery = true;
+		}
+		for (const item of this.keyItems) {
+			item.Transparency = 0;
+			item.CanQuery = true;
+		}
 		this.serverEvents.hintTextChanged.broadcast(
 			"Go! Collect as much trash as you can!",
 		);
@@ -292,6 +338,7 @@ export class HachiRideMinigame implements IMinigame {
 	tick(dt: number) {
 		if (!this.roundStarted) return;
 		this.checkItemCollection();
+		this.resetLandedJumps();
 		this.detectWallRun(dt);
 		this.tickHachiAnimation(dt);
 		this.checkSpeedViolations(dt);
@@ -312,6 +359,61 @@ export class HachiRideMinigame implements IMinigame {
 		return this.playerStates as Map<number, AnyPlayerState>;
 	}
 
+	/** Admin debug: set evolution level for a player mid-match. */
+	adminSetEvolution(player: Player, level: number) {
+		const state = this.playerStates.get(player.UserId);
+		if (!state) return;
+		const userId = player.UserId;
+		const hachiModel = this.hachiModels.get(userId);
+
+		// Apply visual effects for each level up to target
+		if (level >= 3 && state.evolutionLevel < 3 && hachiModel) {
+			for (const part of hachiModel.GetDescendants()) {
+				if (part.IsA("BasePart") && !part.IsA("UnionOperation")) {
+					TweenService.Create(part, new TweenInfo(0.5, Enum.EasingStyle.Quad), {
+						Size: part.Size.mul(HACHI_BIG_SCALE),
+					}).Play();
+				}
+			}
+		}
+		if (level >= 4 && state.evolutionLevel < 4 && hachiModel) {
+			const fluffyColor = Color3.fromRGB(255, 182, 193);
+			for (const part of hachiModel.GetDescendants()) {
+				if (part.IsA("BasePart")) {
+					TweenService.Create(part, new TweenInfo(1, Enum.EasingStyle.Quad), {
+						Color: fluffyColor,
+					}).Play();
+				}
+			}
+		}
+
+		state.evolutionLevel = level;
+		state.itemCount = level * 15;
+		const seat = hachiModel?.FindFirstChildOfClass("VehicleSeat") as
+			| VehicleSeat
+			| undefined;
+		if (seat) {
+			seat.MaxSpeed =
+				HACHI_WALK_SPEEDS[math.min(level, HACHI_WALK_SPEEDS.size() - 1)];
+		}
+		this.serverEvents.hachiEvolved.fire(player, level);
+		this.serverEvents.hachiItemCollected.fire(player, state.itemCount);
+		if (level >= 1) {
+			this.serverEvents.hachiDoubleJumpGranted.fire(player);
+		}
+		this.serverEvents.hintTextChanged.fire(player, this.getAbilityText(level));
+	}
+
+	/** Admin debug: set item count and trigger evolution checks. */
+	adminSetItems(player: Player, count: number) {
+		const state = this.playerStates.get(player.UserId);
+		if (!state) return;
+		state.itemCount = count;
+		state.catchCount = count;
+		this.serverEvents.hachiItemCollected.fire(player, count);
+		this.tryEvolve(player.UserId, state, player);
+	}
+
 	cleanup() {
 		// Eject players from VehicleSeats before janitor destroys Hachi models
 		for (const [, model] of this.hachiModels) {
@@ -328,14 +430,13 @@ export class HachiRideMinigame implements IMinigame {
 			item.Transparency = 0;
 		}
 
-		// Release PlatformStand for any player still wall-running at round end
-		for (const [userId, wallState] of this.wallRunStates) {
-			if (!wallState.running) continue;
+		// Restore BodyVelocity for any Hachi still wall-running at round end
+		for (const [userId] of this.wallRunStates) {
 			const player = this.playerObjects.get(userId);
-			const humanoid = player?.Character?.FindFirstChildOfClass("Humanoid");
-			if (humanoid) humanoid.PlatformStand = false;
+			if (player) this.stopWallRun(userId, player);
 		}
 
+		HachiRideMinigame.activeInstance = undefined;
 		this.roundStarted = false;
 		this.playerStates.clear();
 		this.playerObjects.clear();
@@ -345,6 +446,8 @@ export class HachiRideMinigame implements IMinigame {
 		this.jumpCooldowns.clear();
 		this.ejectCooldowns.clear();
 		this.doubleJumpUsed.clear();
+		this.jumpPhase.clear();
+		this.jumpTime.clear();
 		this.lastPositions.clear();
 		this.lastPositionTime = 0;
 		this.strikes.clear();
@@ -358,13 +461,7 @@ export class HachiRideMinigame implements IMinigame {
 	removePlayer(userId: number) {
 		const player = this.playerObjects.get(userId);
 		if (player) {
-			// Stop wall run and reset PlatformStand if mid-wall-run
-			const wallState = this.wallRunStates.get(userId);
-			if (wallState?.running) {
-				this.serverEvents.hachiWallRunStop.fire(player);
-				const humanoid = player.Character?.FindFirstChildOfClass("Humanoid");
-				if (humanoid) humanoid.PlatformStand = false;
-			}
+			this.stopWallRun(userId, player);
 		}
 		// Destroy the player's Hachi model immediately rather than waiting for
 		// the round janitor, to avoid orphaned visible models mid-round.
@@ -380,6 +477,8 @@ export class HachiRideMinigame implements IMinigame {
 		this.jumpCooldowns.delete(userId);
 		this.ejectCooldowns.delete(userId);
 		this.doubleJumpUsed.delete(userId);
+		this.jumpPhase.delete(userId);
+		this.jumpTime.delete(userId);
 		this.lastPositions.delete(userId);
 		this.strikes.delete(userId);
 		this.lastStrikeTime.delete(userId);
@@ -405,15 +504,73 @@ export class HachiRideMinigame implements IMinigame {
 			HACHI_JUMP_COOLDOWN
 		)
 			return;
-		this.jumpCooldowns.set(player.UserId, now);
 
 		const body = hachiModel.FindFirstChild("Body") as BasePart | undefined;
 		if (!body) return;
-		body.AssemblyLinearVelocity = new Vector3(
-			body.AssemblyLinearVelocity.X,
-			HACHI_JUMP_VELOCITY,
-			body.AssemblyLinearVelocity.Z,
-		);
+
+		// Jump phase: 0 = grounded/ready, 1 = jumped once (double available), 2 = fully used
+		const phase = this.jumpPhase.get(player.UserId) ?? 0;
+
+		if (phase === 0) {
+			// First jump: only from near-ground (low Y velocity)
+			if (math.abs(body.AssemblyLinearVelocity.Y) > 15) return;
+			this.jumpCooldowns.set(player.UserId, now);
+			this.applyJumpImpulse(body, HACHI_JUMP_VELOCITY);
+			const state = this.playerStates.get(player.UserId);
+			this.jumpPhase.set(
+				player.UserId,
+				state && state.evolutionLevel >= 1 ? 1 : 2,
+			);
+			this.jumpTime.set(player.UserId, now);
+		} else if (phase === 1) {
+			// Double jump (midair, evolution >= 1)
+			this.jumpCooldowns.set(player.UserId, now);
+			this.applyJumpImpulse(body, HACHI_DOUBLE_JUMP_IMPULSE);
+			this.jumpPhase.set(player.UserId, 2);
+		}
+		// phase 2: reject
+	}
+
+	/** Reset jump phase when Hachi has landed (Y velocity settled after jump). */
+	private resetLandedJumps() {
+		const now = os.clock();
+		for (const [userId] of this.playerStates) {
+			const phase = this.jumpPhase.get(userId) ?? 0;
+			if (phase === 0) continue; // Already ready
+			const wallState = this.wallRunStates.get(userId);
+			if (wallState?.running) continue; // Don't reset during wall-run
+			const jumpT = this.jumpTime.get(userId) ?? 0;
+			if (now - jumpT < 1.0) continue; // Too soon after jump (avoid apex false positive)
+			const hachiModel = this.hachiModels.get(userId);
+			const body = hachiModel?.FindFirstChild("Body") as BasePart | undefined;
+			if (!body) continue;
+			if (math.abs(body.AssemblyLinearVelocity.Y) < 5) {
+				this.jumpPhase.set(userId, 0);
+			}
+		}
+	}
+
+	/** Zero BodyVelocity briefly then apply Y impulse to Hachi body. */
+	private applyJumpImpulse(body: BasePart, velocity: number) {
+		const bv = body.FindFirstChildOfClass("BodyVelocity");
+		if (bv) {
+			const origForce = bv.MaxForce;
+			bv.MaxForce = Vector3.zero;
+			body.AssemblyLinearVelocity = new Vector3(
+				body.AssemblyLinearVelocity.X,
+				velocity,
+				body.AssemblyLinearVelocity.Z,
+			);
+			task.delay(HACHI_SLIDE_FORCE_RESTORE_DELAY, () => {
+				if (this.roundStarted && bv.Parent) bv.MaxForce = origForce;
+			});
+		} else {
+			body.AssemblyLinearVelocity = new Vector3(
+				body.AssemblyLinearVelocity.X,
+				velocity,
+				body.AssemblyLinearVelocity.Z,
+			);
+		}
 	}
 
 	private handleEjectRequest(player: Player) {
@@ -478,7 +635,7 @@ export class HachiRideMinigame implements IMinigame {
 					item.CanCollide = false;
 					item.CanQuery = false;
 					toRemove.push(item);
-					this.onItemCollected(userId, state, player);
+					this.onItemCollected(userId, state, player, item);
 				}
 			}
 			for (const item of toRemove) {
@@ -494,7 +651,7 @@ export class HachiRideMinigame implements IMinigame {
 					item.Transparency = 1;
 					item.CanCollide = false;
 					item.CanQuery = false;
-					this.onItemCollected(userId, state, player);
+					this.onItemCollected(userId, state, player, item);
 				}
 			}
 		}
@@ -504,10 +661,20 @@ export class HachiRideMinigame implements IMinigame {
 		userId: number,
 		state: HachiRidePlayerState,
 		player: Player,
+		item: BasePart,
 	) {
-		state.itemCount += 1;
+		const isBonus = this.bonusItems.has(item);
+		const value = isBonus ? HACHI_BONUS_ITEM_VALUE : 1;
+		state.itemCount += value;
 		state.catchCount = state.itemCount; // mirror for scoreboard
 		this.serverEvents.hachiItemCollected.fire(player, state.itemCount);
+		if (isBonus) {
+			this.serverEvents.hachiBonusCollected.fire(player);
+			this.serverEvents.hintTextChanged.fire(
+				player,
+				`BONUS! +${HACHI_BONUS_ITEM_VALUE} points!`,
+			);
+		}
 		this.tryEvolve(userId, state, player);
 	}
 
@@ -570,12 +737,7 @@ export class HachiRideMinigame implements IMinigame {
 			}
 		}
 
-		// Update WalkSpeed (on foot) and Hachi drive speed (while riding)
-		const humanoid = player.Character?.FindFirstChildOfClass("Humanoid");
-		if (humanoid) {
-			humanoid.WalkSpeed =
-				HACHI_WALK_SPEEDS[math.min(newLevel, HACHI_WALK_SPEEDS.size() - 1)];
-		}
+		// Update Hachi drive speed (VehicleSeat only, not humanoid WalkSpeed)
 		const hachiModel = this.hachiModels.get(userId);
 		const seat = hachiModel?.FindFirstChildOfClass("VehicleSeat") as
 			| VehicleSeat
@@ -585,14 +747,34 @@ export class HachiRideMinigame implements IMinigame {
 				HACHI_WALK_SPEEDS[math.min(newLevel, HACHI_WALK_SPEEDS.size() - 1)];
 		}
 
-		this.serverEvents.hintTextChanged.fire(
-			player,
-			`Hachi evolved to level ${newLevel}!`,
-		);
+		// Show ability description
+		const abilityText = this.getAbilityText(newLevel);
+		this.serverEvents.hintTextChanged.fire(player, abilityText);
+
+		// Also show level-up in generic hint after a delay
+		task.delay(3, () => {
+			if (!this.roundStarted) return;
+			this.serverEvents.hintTextChanged.fire(player, "Keep collecting!");
+		});
 
 		print(
 			`[HachiRide] ${player.Name} evolved to level ${newLevel} (${state.itemCount} items)`,
 		);
+	}
+
+	private getAbilityText(level: number): string {
+		switch (level) {
+			case 1:
+				return "Level 1: DOUBLE JUMP unlocked! Press Space mid-air!";
+			case 2:
+				return "Level 2: WALL RUN unlocked! Jump near walls!";
+			case 3:
+				return "Level 3: BIG HACHI! Bigger and faster!";
+			case 4:
+				return "Level 4: FLUFFY HACHI! Maximum cuteness!";
+			default:
+				return `Hachi evolved to level ${level}!`;
+		}
 	}
 
 	private tickHachiAnimation(dt: number) {
@@ -695,26 +877,45 @@ export class HachiRideMinigame implements IMinigame {
 		}
 	}
 
+	private stopWallRun(userId: number, player: Player) {
+		const wallState = this.wallRunStates.get(userId);
+		if (!wallState?.running) return;
+		wallState.running = false;
+		this.serverEvents.hachiWallRunStop.fire(player);
+
+		// Restore BodyVelocity MaxForce
+		const hachiModel = this.hachiModels.get(userId);
+		const body = hachiModel?.FindFirstChild("Body") as BasePart | undefined;
+		const bv = body?.FindFirstChildOfClass("BodyVelocity");
+		if (bv) bv.MaxForce = wallState.origMaxForce;
+	}
+
 	private detectWallRun(dt: number) {
 		for (const [userId, state] of this.playerStates) {
 			const player = this.playerObjects.get(userId);
 			if (!player?.Character) continue;
-			const hrp = player.Character.FindFirstChild("HumanoidRootPart") as
-				| BasePart
-				| undefined;
-			if (!hrp) continue;
+
+			// Wall-run is a Hachi ability: must be seated
+			const hachiModel = this.hachiModels.get(userId);
+			if (!hachiModel) continue;
+			const body = hachiModel.FindFirstChild("Body") as BasePart | undefined;
+			if (!body) continue;
 			const humanoid = player.Character.FindFirstChildOfClass("Humanoid");
 			if (!humanoid) continue;
+			const seat = hachiModel.FindFirstChildOfClass("VehicleSeat") as
+				| VehicleSeat
+				| undefined;
+			if (!seat || seat.Occupant !== humanoid) {
+				this.stopWallRun(userId, player);
+				continue;
+			}
 
-			// Reset double-jump on landing (must run for level >= 1, before wall-run gate)
-			if (humanoid.FloorMaterial !== Enum.Material.Air) {
+			// Grounded detection via Y velocity (avoids model geometry issues)
+			const isGrounded = math.abs(body.AssemblyLinearVelocity.Y) < 5;
+
+			if (isGrounded) {
 				this.doubleJumpUsed.set(userId, false);
-				const wallState = this.wallRunStates.get(userId);
-				if (wallState?.running) {
-					wallState.running = false;
-					this.serverEvents.hachiWallRunStop.fire(player);
-					humanoid.PlatformStand = false;
-				}
+				this.stopWallRun(userId, player);
 				continue;
 			}
 
@@ -722,20 +923,22 @@ export class HachiRideMinigame implements IMinigame {
 			if (state.evolutionLevel < 2) continue;
 
 			const rayParams = new RaycastParams();
-			rayParams.FilterDescendantsInstances = [player.Character];
+			rayParams.FilterDescendantsInstances = [
+				hachiModel,
+				...(player.Character ? [player.Character] : []),
+			];
 			rayParams.FilterType = Enum.RaycastFilterType.Exclude;
 
-			// Cast left and right
-			const left = hrp.CFrame.RightVector.mul(-HACHI_WALL_RUN_RAYCAST);
-			const right = hrp.CFrame.RightVector.mul(HACHI_WALL_RUN_RAYCAST);
-			const leftResult = Workspace.Raycast(hrp.Position, left, rayParams);
-			const rightResult = Workspace.Raycast(hrp.Position, right, rayParams);
+			// Cast left and right from Hachi body
+			const left = body.CFrame.RightVector.mul(-HACHI_WALL_RUN_RAYCAST);
+			const right = body.CFrame.RightVector.mul(HACHI_WALL_RUN_RAYCAST);
+			const leftResult = Workspace.Raycast(body.Position, left, rayParams);
+			const rightResult = Workspace.Raycast(body.Position, right, rayParams);
 
-			// Prefer the closer wall; fall back to the other side if only one hit.
 			let wallResult: RaycastResult | undefined;
 			if (leftResult && rightResult) {
-				const leftDist = hrp.Position.sub(leftResult.Position).Magnitude;
-				const rightDist = hrp.Position.sub(rightResult.Position).Magnitude;
+				const leftDist = body.Position.sub(leftResult.Position).Magnitude;
+				const rightDist = body.Position.sub(rightResult.Position).Magnitude;
 				wallResult = leftDist <= rightDist ? leftResult : rightResult;
 			} else {
 				wallResult = leftResult ?? rightResult;
@@ -743,38 +946,64 @@ export class HachiRideMinigame implements IMinigame {
 
 			if (wallResult) {
 				let wallState = this.wallRunStates.get(userId);
-				if (!wallState) {
+
+				if (!wallState || !wallState.running) {
+					// Compute wall-run direction from Hachi body forward
+					const eps = 1e-4;
+					const xzRaw = new Vector3(
+						body.CFrame.LookVector.X,
+						0,
+						body.CFrame.LookVector.Z,
+					);
+					const forward =
+						xzRaw.Magnitude > eps ? xzRaw.Unit : new Vector3(0, 0, 1);
+					const projected = forward.sub(
+						wallResult.Normal.mul(forward.Dot(wallResult.Normal)),
+					);
+					let wallDir: Vector3;
+					if (projected.Magnitude > eps) {
+						wallDir = projected.Unit;
+					} else {
+						const perp = new Vector3(
+							wallResult.Normal.Z,
+							0,
+							-wallResult.Normal.X,
+						);
+						wallDir =
+							perp.Magnitude > eps
+								? perp.Unit
+								: Vector3.yAxis.Cross(wallResult.Normal).Unit;
+					}
+
+					// Zero BodyVelocity so it doesn't fight wall-run
+					const bv = body.FindFirstChildOfClass("BodyVelocity");
+					const origForce = bv?.MaxForce ?? Vector3.zero;
+					if (bv) bv.MaxForce = Vector3.zero;
+
 					wallState = {
-						running: false,
+						running: true,
 						duration: 0,
 						normal: wallResult.Normal,
+						wallDir,
+						origMaxForce: origForce,
 					};
 					this.wallRunStates.set(userId, wallState);
+					this.serverEvents.hachiWallRunStart.fire(player, wallResult.Normal);
 				}
 
-				if (!wallState.running) {
-					wallState.running = true;
-					wallState.duration = 0;
-					wallState.normal = wallResult.Normal;
-					this.serverEvents.hachiWallRunStart.fire(player, wallResult.Normal);
-					humanoid.PlatformStand = true;
-					// Velocity is applied client-side each Heartbeat to avoid
-					// network ownership conflicts and physics jitter.
+				wallState.duration += dt;
+				if (wallState.duration >= HACHI_WALL_RUN_MAX_DUR) {
+					this.stopWallRun(userId, player);
 				} else {
-					wallState.duration += dt;
-					if (wallState.duration >= HACHI_WALL_RUN_MAX_DUR) {
-						wallState.running = false;
-						this.serverEvents.hachiWallRunStop.fire(player);
-						humanoid.PlatformStand = false;
-					}
+					// Apply wall-run velocity to Hachi body each tick
+					body.AssemblyLinearVelocity = new Vector3(
+						wallState.wallDir.X * HACHI_WALL_RUN_SPEED,
+						body.AssemblyLinearVelocity.Y,
+						wallState.wallDir.Z * HACHI_WALL_RUN_SPEED,
+					);
 				}
 			} else {
-				const wallState = this.wallRunStates.get(userId);
-				if (wallState?.running) {
-					wallState.running = false;
-					this.serverEvents.hachiWallRunStop.fire(player);
-					humanoid.PlatformStand = false;
-				}
+				this.stopWallRun(userId, player);
 			}
 		}
 	}

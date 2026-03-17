@@ -10,6 +10,7 @@ import { RewardPopup } from "./components/RewardPopup";
 import { RoleIndicator } from "./components/RoleIndicator";
 import { Scoreboard } from "./components/Scoreboard";
 import { ShopPanel } from "./components/ShopPanel";
+import { SkillsPanel } from "./components/SkillsPanel";
 import { TopBar } from "./components/TopBar";
 
 export function GameHud() {
@@ -31,6 +32,7 @@ export function GameHud() {
 			<LevelUpOverlay />
 			<MissionPanel />
 			<ShopPanel />
+			<SkillsPanel />
 		</screengui>
 	);
 }

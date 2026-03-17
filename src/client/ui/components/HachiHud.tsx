@@ -51,7 +51,7 @@ export function HachiHud() {
 				LayoutOrder={1}
 				Size={new UDim2(1, 0, 0, 28)}
 				BackgroundTransparency={1}
-				Text={`Items: ${itemCount}`}
+				Text={`Points: ${itemCount}`}
 				TextColor3={Color3.fromRGB(255, 220, 80)}
 				TextScaled={true}
 				Font={Enum.Font.GothamBold}

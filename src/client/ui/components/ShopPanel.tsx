@@ -104,26 +104,28 @@ export function ShopPanel() {
 	return (
 		<frame
 			key="ShopPanel"
-			Size={new UDim2(0, 40, 0, 40)}
-			Position={new UDim2(1, -10, 0, 60)}
+			Size={new UDim2(0, 100, 0, 30)}
+			Position={new UDim2(1, -10, 0, 48)}
 			AnchorPoint={new Vector2(1, 0)}
-			BackgroundColor3={Color3.fromRGB(80, 50, 30)}
-			BackgroundTransparency={0.2}
+			BackgroundColor3={Color3.fromRGB(70, 45, 25)}
+			BackgroundTransparency={0.3}
 			BorderSizePixel={0}
 			ZIndex={10}
 		>
-			<uicorner CornerRadius={new UDim(0, 6)} />
+			<uicorner CornerRadius={new UDim(0, 15)} />
 			<textbutton
 				Size={new UDim2(1, 0, 1, 0)}
 				BackgroundTransparency={1}
-				TextColor3={Color3.fromRGB(255, 200, 80)}
+				TextColor3={Color3.fromRGB(255, 210, 100)}
 				TextScaled={true}
 				Font={Enum.Font.GothamBold}
-				Text="$"
+				Text="$ Shop"
 				Event={{
 					Activated: () => setOpen(!open),
 				}}
-			/>
+			>
+				<uipadding PaddingLeft={new UDim(0, 8)} PaddingRight={new UDim(0, 8)} />
+			</textbutton>
 			{open ? (
 				<frame
 					Size={new UDim2(0, 420, 0, 260)}

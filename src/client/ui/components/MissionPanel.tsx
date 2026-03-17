@@ -95,26 +95,28 @@ export function MissionPanel() {
 	return (
 		<frame
 			key="MissionPanel"
-			Size={new UDim2(0, 40, 0, 40)}
+			Size={new UDim2(0, 100, 0, 30)}
 			Position={new UDim2(1, -10, 0, 10)}
 			AnchorPoint={new Vector2(1, 0)}
-			BackgroundColor3={Color3.fromRGB(30, 30, 80)}
-			BackgroundTransparency={0.2}
+			BackgroundColor3={Color3.fromRGB(30, 30, 70)}
+			BackgroundTransparency={0.3}
 			BorderSizePixel={0}
 			ZIndex={10}
 		>
-			<uicorner CornerRadius={new UDim(0, 6)} />
+			<uicorner CornerRadius={new UDim(0, 15)} />
 			<textbutton
 				Size={new UDim2(1, 0, 1, 0)}
 				BackgroundTransparency={1}
-				TextColor3={Color3.fromRGB(255, 255, 120)}
+				TextColor3={Color3.fromRGB(255, 255, 150)}
 				TextScaled={true}
 				Font={Enum.Font.GothamBold}
-				Text="★"
+				Text="★ Missions"
 				Event={{
 					Activated: () => setOpen(!open),
 				}}
-			/>
+			>
+				<uipadding PaddingLeft={new UDim(0, 8)} PaddingRight={new UDim(0, 8)} />
+			</textbutton>
 			{open ? (
 				<frame
 					Size={new UDim2(0, 290, 0, 205)}

@@ -79,9 +79,22 @@ export class SlideController implements OnStart {
 			if (dist > SURFACE_THRESHOLD) continue;
 
 			this.lastSlideTime = now;
-			const dir = ramp.CFrame.LookVector.add(
-				new Vector3(0, SLIDE_DIR_Y_OFFSET, 0),
-			).Unit;
+			const usePlayerDir = ramp.GetAttribute("UsePlayerDirection");
+			let dir: Vector3;
+			if (typeIs(usePlayerDir, "boolean") && usePlayerDir) {
+				const vel = vehicleBody
+					? vehicleBody.AssemblyLinearVelocity
+					: hrp.AssemblyLinearVelocity;
+				const horizontal = new Vector3(vel.X, 0, vel.Z);
+				dir =
+					horizontal.Magnitude > 1
+						? horizontal.Unit
+						: ramp.CFrame.LookVector.Unit;
+			} else {
+				dir = ramp.CFrame.LookVector.add(
+					new Vector3(0, SLIDE_DIR_Y_OFFSET, 0),
+				).Unit;
+			}
 
 			const rawSpeed = ramp.GetAttribute("SlideSpeed");
 			const speed =
@@ -107,7 +120,7 @@ export class SlideController implements OnStart {
 			if (!this.slideSE) {
 				this.slideSE = new Instance("Sound");
 				this.slideSE.SoundId = SE_SLIDE;
-				this.slideSE.Volume = 0.6;
+				this.slideSE.Volume = 0.3;
 				this.slideSE.Parent = SoundService;
 			}
 			this.slideSE.Play();

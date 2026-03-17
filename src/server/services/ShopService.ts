@@ -19,6 +19,17 @@ export class ShopService implements OnStart {
 		// fires requestShopCatalog before the profile is ready (early-return race).
 		this.playerDataService.registerOnProfileLoaded((player) => {
 			this.handleRequestCatalog(player);
+			// Push play points on initial load so UI shows correct values
+			const data = this.playerDataService.getPlayerData(player);
+			if (data) {
+				const level = this.playerDataService.getPlaygroundLevel(player);
+				this.serverEvents.playPointsUpdate.fire(
+					player,
+					data.totalPlayPoints,
+					level,
+					data.shopBalance,
+				);
+			}
 		});
 
 		this.serverEvents.requestShopCatalog.connect((player) => {

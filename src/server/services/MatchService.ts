@@ -135,7 +135,12 @@ export class MatchService implements OnStart {
 				break;
 			}
 		}
+		const wasRequested = this.startRequested;
 		this.startRequested = false;
+		if (!wasRequested) {
+			// No portal triggered during intermission — restart
+			return;
+		}
 
 		const config = MINIGAME_CONFIGS[this.nextMinigameId];
 		if (Players.GetPlayers().size() < config.minPlayers) {
