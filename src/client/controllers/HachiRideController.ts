@@ -166,7 +166,6 @@ export class HachiRideController implements OnStart {
 		this.bobConn?.Disconnect();
 		this.bobConn = undefined;
 		if (this.bobRootC0) {
-			const character = Players.LocalPlayer.Character;
 			const lowerTorso = character?.FindFirstChild("LowerTorso") as
 				| BasePart
 				| undefined;
