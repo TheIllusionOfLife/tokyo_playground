@@ -139,7 +139,7 @@ export const ALL_MISSION_IDS: MissionId[] = [
 	MissionId.WinHachiRide,
 ];
 
-export const SHOP_CATALOG: Omit<ShopItemData, "owned">[] = [
+export const SHOP_CATALOG: Omit<ShopItemData, "owned" | "equipped">[] = [
 	{
 		id: ItemId.HatCone,
 		name: "Cone Hat",

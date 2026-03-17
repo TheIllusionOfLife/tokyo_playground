@@ -1,6 +1,7 @@
 import { Networking } from "@flamework/networking";
 import {
 	GameState,
+	ItemCategory,
 	ItemId,
 	MatchPhase,
 	MinigameId,
@@ -44,6 +45,11 @@ interface ServerToClientEvents {
 		newBalance: number,
 		errorMessage: string,
 	): void;
+	equipResult(
+		success: boolean,
+		category: ItemCategory,
+		itemId: ItemId | undefined,
+	): void;
 	levelUp(newLevel: number): void;
 	slideImpulse(dir: Vector3, speed: number): void;
 	hachiEvolved(newLevel: number): void;
@@ -60,6 +66,7 @@ interface ClientToServerEvents {
 	collectMissionReward(id: MissionId): void;
 	requestShopCatalog(): void;
 	requestPurchase(itemId: ItemId): void;
+	requestEquip(itemId: ItemId): void;
 	hachiJump(): void;
 	hachiEject(): void;
 	hachiDoubleJump(): void;
