@@ -12,6 +12,10 @@ import { MinigameId, PlayerRole, RoundResult } from "shared/types";
 const ACTION_HACHI_JUMP = "HachiJump";
 const ACTION_HACHI_EJECT = "HachiEject";
 
+// Body bob tuning — matches animateHachi freq so rider bounces in sync with legs
+const BOB_MAX_AMPLITUDE = 0.35; // studs at full speed
+const BOB_SPEED_THRESHOLD = 5; // studs/s below which bob is zero
+
 @Controller()
 export class HachiRideController implements OnStart {
 	private active = false;
@@ -19,6 +23,8 @@ export class HachiRideController implements OnStart {
 
 	private heartbeatConn?: RBXScriptConnection;
 	private jumpConn?: RBXScriptConnection;
+	private bobConn?: RBXScriptConnection;
+	private bobRootC0?: CFrame; // original Motor6D.C0 to restore on dismount
 
 	onStart() {
 		clientEvents.roleAssigned.connect((role, minigameId) => {
@@ -120,6 +126,30 @@ export class HachiRideController implements OnStart {
 				}
 			});
 		}
+
+		// Body bob: sinusoidal vertical offset on the character's root Motor6D,
+		// synced with Hachi's leg animation frequency so the rider bounces in rhythm.
+		const hrp = character?.FindFirstChild("HumanoidRootPart") as
+			| BasePart
+			| undefined;
+		const rootMotor = hrp?.FindFirstChild("RootJoint") as Motor6D | undefined;
+		const seatPart = humanoid?.SeatPart;
+		const hachiBody = seatPart?.Parent?.FindFirstChild("Body") as
+			| BasePart
+			| undefined;
+		if (rootMotor && hachiBody) {
+			this.bobRootC0 = rootMotor.C0;
+			let bobTime = 0;
+			this.bobConn = RunService.RenderStepped.Connect((dt) => {
+				const spd = hachiBody.AssemblyLinearVelocity.Magnitude;
+				const freq = math.max(1, spd / 15) * 3;
+				bobTime += dt * freq;
+				// Ramp amplitude from 0 to max based on speed
+				const t = math.clamp((spd - BOB_SPEED_THRESHOLD) / 30, 0, 1);
+				const offset = math.sin(bobTime * 2) * BOB_MAX_AMPLITUDE * t;
+				rootMotor.C0 = this.bobRootC0!.mul(new CFrame(0, offset, 0));
+			});
+		}
 	}
 
 	// Called when player stands up (or deactivate is called)
@@ -128,6 +158,19 @@ export class HachiRideController implements OnStart {
 		ContextActionService.UnbindAction(ACTION_HACHI_EJECT);
 		this.jumpConn?.Disconnect();
 		this.jumpConn = undefined;
+
+		// Restore original root Motor6D and stop bob
+		this.bobConn?.Disconnect();
+		this.bobConn = undefined;
+		if (this.bobRootC0) {
+			const character = Players.LocalPlayer.Character;
+			const hrp = character?.FindFirstChild("HumanoidRootPart") as
+				| BasePart
+				| undefined;
+			const rootMotor = hrp?.FindFirstChild("RootJoint") as Motor6D | undefined;
+			if (rootMotor) rootMotor.C0 = this.bobRootC0;
+			this.bobRootC0 = undefined;
+		}
 	}
 
 	private jumpSE?: Sound;
