@@ -18,6 +18,7 @@ export class HachiRideController implements OnStart {
 	private wasSeated = false;
 
 	private heartbeatConn?: RBXScriptConnection;
+	private jumpConn?: RBXScriptConnection;
 
 	onStart() {
 		clientEvents.roleAssigned.connect((role, minigameId) => {
@@ -104,12 +105,29 @@ export class HachiRideController implements OnStart {
 			false,
 			Enum.KeyCode.E,
 		);
+
+		// Mobile: the touch jump button bypasses ContextActionService and
+		// directly sets Humanoid.Jump = true, which unseats the player.
+		// Intercept that property change, cancel the unseat, and fire Hachi jump.
+		const character = Players.LocalPlayer.Character;
+		const humanoid = character?.FindFirstChildOfClass("Humanoid");
+		if (humanoid) {
+			this.jumpConn = humanoid.GetPropertyChangedSignal("Jump").Connect(() => {
+				if (humanoid.Jump) {
+					humanoid.Jump = false;
+					clientEvents.hachiJump.fire();
+					this.playJumpSE();
+				}
+			});
+		}
 	}
 
 	// Called when player stands up (or deactivate is called)
 	private onStoodUp() {
 		ContextActionService.UnbindAction(ACTION_HACHI_JUMP);
 		ContextActionService.UnbindAction(ACTION_HACHI_EJECT);
+		this.jumpConn?.Disconnect();
+		this.jumpConn = undefined;
 	}
 
 	private jumpSE?: Sound;
