@@ -258,6 +258,13 @@ export const SCRAMBLE_SLIDE_SPEED = 800;
 export const SCRAMBLE_SLIDE_COOLDOWN = 8;
 export const SCRAMBLE_TAG_BONUS_PER_TAG = 5;
 
+// Hachi anti-cheat
+export const HACHI_MAX_SPEED_TOLERANCE = 1.5; // multiplier over max expected speed
+export const HACHI_ANTICHEAT_GRACE_STUDS = 20; // extra tolerance per check interval
+export const HACHI_ANTICHEAT_STRIKE_LIMIT = 3; // strikes before snapback
+export const HACHI_ANTICHEAT_CHECK_INTERVAL = 1; // seconds between position checks
+export const HACHI_ANTICHEAT_STRIKE_DECAY = 30; // seconds clean before strikes reset
+
 // Audio — verified IDs that load successfully in Studio
 export const BGM_TRACK_ID = "rbxassetid://7024340270"; // Tokyo Machine "Moshi" (215s chiptune)
 export const SE_ITEM_PICKUP = "rbxassetid://4590662766"; // collect chime (1.9s)
