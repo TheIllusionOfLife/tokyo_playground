@@ -27,7 +27,7 @@ export function HachiHud() {
 		<frame
 			key="HachiHud"
 			Size={new UDim2(0, 200, 0, 70)}
-			Position={new UDim2(0.5, -100, 0, 12)}
+			Position={new UDim2(0.5, -100, 0.09, 4)}
 			BackgroundColor3={Color3.fromRGB(15, 15, 30)}
 			BackgroundTransparency={0.2}
 			BorderSizePixel={0}
