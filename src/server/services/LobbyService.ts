@@ -163,7 +163,7 @@ export class LobbyService implements OnStart {
 				if (player) {
 					this.serverEvents.hintTextChanged.fire(
 						player,
-						"WASD / arrow keys to drive ハチ公!",
+						"WASD / arrow keys to drive Hachi!",
 					);
 				}
 			});

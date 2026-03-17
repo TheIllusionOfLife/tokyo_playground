@@ -12,7 +12,7 @@ export class BGMController implements OnStart {
 		this.bgm = new Instance("Sound");
 		this.bgm.SoundId = BGM_TRACK_ID;
 		this.bgm.Looped = true;
-		this.bgm.Volume = 0.4;
+		this.bgm.Volume = 0.2;
 		this.bgm.Parent = SoundService;
 		this.bgm.Play();
 
