@@ -96,14 +96,18 @@ export class HachiRideController implements OnStart {
 			Enum.KeyCode.E,
 		);
 
-		// Mobile: the touch jump button bypasses ContextActionService and
-		// directly sets Humanoid.Jump = true, which unseats the player.
-		// Intercept that property change, cancel the unseat, and fire Hachi jump.
-		// The contextJumpActive guard prevents double-fire when ContextActionService
-		// Sink doesn't fully suppress the default jump handler.
+		// Prevent the Jumping state entirely while seated. This stops the
+		// mobile touch jump button from unseating the player — the engine
+		// processes the state transition in C++ before any Lua listener fires,
+		// so GetPropertyChangedSignal("Jump") alone cannot prevent it.
 		const character = Players.LocalPlayer.Character;
 		const humanoid = character?.FindFirstChildOfClass("Humanoid");
 		if (humanoid) {
+			humanoid.SetStateEnabled(Enum.HumanoidStateType.Jumping, false);
+
+			// Detect jump intent (mobile touch button still sets Jump = true even
+			// though the state transition is blocked) and fire Hachi jump instead.
+			// The contextJumpActive guard prevents double-fire from ContextActionService.
 			this.jumpConn = humanoid.GetPropertyChangedSignal("Jump").Connect(() => {
 				if (humanoid.Jump) {
 					humanoid.Jump = false;
@@ -151,11 +155,17 @@ export class HachiRideController implements OnStart {
 		this.jumpConn?.Disconnect();
 		this.jumpConn = undefined;
 
+		// Re-enable the Jumping state so the character can jump normally on foot
+		const character = Players.LocalPlayer.Character;
+		const humanoid = character?.FindFirstChildOfClass("Humanoid");
+		if (humanoid) {
+			humanoid.SetStateEnabled(Enum.HumanoidStateType.Jumping, true);
+		}
+
 		// Restore original root Motor6D and stop bob
 		this.bobConn?.Disconnect();
 		this.bobConn = undefined;
 		if (this.bobRootC0) {
-			const character = Players.LocalPlayer.Character;
 			const lowerTorso = character?.FindFirstChild("LowerTorso") as
 				| BasePart
 				| undefined;
