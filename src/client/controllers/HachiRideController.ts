@@ -132,7 +132,9 @@ export class HachiRideController implements OnStart {
 		const hrp = character?.FindFirstChild("HumanoidRootPart") as
 			| BasePart
 			| undefined;
-		const rootMotor = hrp?.FindFirstChild("RootJoint") as Motor6D | undefined;
+		const rootMotor = hrp?.FindFirstChildOfClass("Motor6D") as
+			| Motor6D
+			| undefined;
 		const seatPart = humanoid?.SeatPart;
 		const hachiBody = seatPart?.Parent?.FindFirstChild("Body") as
 			| BasePart
@@ -167,7 +169,9 @@ export class HachiRideController implements OnStart {
 			const hrp = character?.FindFirstChild("HumanoidRootPart") as
 				| BasePart
 				| undefined;
-			const rootMotor = hrp?.FindFirstChild("RootJoint") as Motor6D | undefined;
+			const rootMotor = hrp?.FindFirstChildOfClass("Motor6D") as
+				| Motor6D
+				| undefined;
 			if (rootMotor) rootMotor.C0 = this.bobRootC0;
 			this.bobRootC0 = undefined;
 		}
