@@ -111,15 +111,22 @@ export class ShopService implements OnStart {
 
 	private buildCatalogForPlayer(player: Player): ShopItemData[] {
 		const ownedItems = this.playerDataService.getOwnedItems(player);
+		const equippedItems = this.playerDataService.getEquippedItems(player);
+		const equippedSet = new Set<ItemId>();
+		for (const [, itemId] of pairs(equippedItems)) {
+			if (itemId !== undefined) equippedSet.add(itemId as ItemId);
+		}
 		const result: ShopItemData[] = [];
 		for (const item of SHOP_CATALOG) {
+			const owned = ownedItems.includes(item.id);
 			result.push({
 				id: item.id,
 				name: item.name,
 				category: item.category,
 				price: item.price,
 				levelRequired: item.levelRequired,
-				owned: ownedItems.includes(item.id),
+				owned,
+				equipped: owned && equippedSet.has(item.id),
 			});
 		}
 		return result;

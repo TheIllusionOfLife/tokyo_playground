@@ -139,7 +139,7 @@ export const ALL_MISSION_IDS: MissionId[] = [
 	MissionId.WinHachiRide,
 ];
 
-export const SHOP_CATALOG: Omit<ShopItemData, "owned">[] = [
+export const SHOP_CATALOG: Omit<ShopItemData, "owned" | "equipped">[] = [
 	{
 		id: ItemId.HatCone,
 		name: "Cone Hat",
@@ -231,17 +231,17 @@ export const HACHI_SPAWN_TAG = "HachiRideSpawn";
 // Hachi Ride tuning
 export const HACHI_ROUND_DURATION = 180;
 export const HACHI_EVOLUTION_THRESHOLDS = [0, 10, 25, 40, 60];
-export const HACHI_WALK_SPEEDS = [48, 54, 60, 72, 90];
+export const HACHI_WALK_SPEEDS = [144, 162, 180, 216, 270];
 export const HACHI_ITEMS_TO_SPAWN = 200;
 export const HACHI_COLLECTION_RADIUS = 8;
 export const HACHI_BIG_SCALE = 1.5;
-export const HACHI_DOUBLE_JUMP_IMPULSE = 139; // old 80 × √3 — yields ~3× jump height
-export const HACHI_WALL_RUN_SPEED = 84; // 28 × 3
+export const HACHI_DOUBLE_JUMP_IMPULSE = 240; // 139 × √3 — yields ~3× jump height
+export const HACHI_WALL_RUN_SPEED = 252; // 84 × 3
 export const HACHI_WALL_RUN_RAYCAST = 3;
 export const HACHI_WALL_RUN_MAX_DUR = 3;
 export const HACHI_ITEM_POINT_VALUE = 1;
 export const HACHI_WIN_ITEM_BONUS = 20;
-export const HACHI_JUMP_VELOCITY = 87; // old 50 × √3 — yields ~3× jump height
+export const HACHI_JUMP_VELOCITY = 150; // 87 × √3 — yields ~3× jump height
 export const HACHI_JUMP_COOLDOWN = 0.4; // seconds between jump requests
 export const HACHI_EJECT_COOLDOWN = 1.0; // seconds between eject requests
 export const HACHI_SLIDE_FORCE_RESTORE_DELAY = 0.5; // seconds to hold MaxForce=0 after impulse

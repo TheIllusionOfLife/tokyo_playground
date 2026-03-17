@@ -20,10 +20,14 @@ function ShopCard({
 	let buttonColor: Color3;
 	let active: boolean;
 
-	if (item.owned) {
-		buttonText = "OWNED";
-		buttonColor = Color3.fromRGB(60, 60, 60);
-		active = false;
+	if (item.owned && item.equipped) {
+		buttonText = "UNEQUIP";
+		buttonColor = Color3.fromRGB(80, 160, 200);
+		active = true;
+	} else if (item.owned) {
+		buttonText = "EQUIP";
+		buttonColor = Color3.fromRGB(80, 200, 180);
+		active = true;
 	} else if (!levelMet) {
 		buttonText = `Lv.${item.levelRequired}`;
 		buttonColor = Color3.fromRGB(80, 50, 50);
@@ -76,7 +80,10 @@ function ShopCard({
 				Active={active}
 				Event={{
 					Activated: () => {
-						if (active) {
+						if (!active) return;
+						if (item.owned) {
+							clientEvents.requestEquip.fire(item.id);
+						} else {
 							clientEvents.requestPurchase.fire(item.id);
 						}
 					},

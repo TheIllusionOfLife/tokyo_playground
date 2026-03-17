@@ -5,6 +5,7 @@ import { Players } from "@rbxts/services";
 import { LEVEL_THRESHOLDS, MISSION_DEFS } from "shared/constants";
 import {
 	DEFAULT_PLAYER_DATA,
+	ItemCategory,
 	ItemId,
 	MissionId,
 	PlayerData,
@@ -249,5 +250,25 @@ export class PlayerDataService implements OnStart {
 
 	getShopBalance(player: Player): number {
 		return this.profiles.get(player)?.Data.shopBalance ?? 0;
+	}
+
+	// ── Equip methods ────────────────────────────────────────────────────────
+
+	getEquippedItems(player: Player): Partial<Record<ItemCategory, ItemId>> {
+		return this.profiles.get(player)?.Data.equippedItems ?? {};
+	}
+
+	equipItem(player: Player, category: ItemCategory, itemId: ItemId) {
+		const profile = this.profiles.get(player);
+		if (profile) {
+			profile.Data.equippedItems[category] = itemId;
+		}
+	}
+
+	unequipItem(player: Player, category: ItemCategory) {
+		const profile = this.profiles.get(player);
+		if (profile) {
+			delete profile.Data.equippedItems[category];
+		}
 	}
 }

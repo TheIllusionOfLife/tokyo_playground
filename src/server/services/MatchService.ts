@@ -134,13 +134,6 @@ export class MatchService implements OnStart {
 			if (this.startRequested && players.size() >= config.minPlayers) {
 				break;
 			}
-			if (
-				!this.startRequested &&
-				players.size() >= config.minPlayers &&
-				waited >= 5
-			) {
-				break;
-			}
 		}
 		this.startRequested = false;
 

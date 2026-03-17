@@ -153,6 +153,7 @@ export interface ShopItemData {
 	price: number;
 	levelRequired: number;
 	owned: boolean;
+	equipped: boolean;
 }
 
 export interface PlayerData {
@@ -163,6 +164,7 @@ export interface PlayerData {
 	gamesWon: number;
 	missions: PlayerMissions;
 	ownedItems: ItemId[];
+	equippedItems: Partial<Record<ItemCategory, ItemId>>;
 	shopBalance: number;
 }
 
@@ -174,5 +176,6 @@ export const DEFAULT_PLAYER_DATA: PlayerData = {
 	gamesWon: 0,
 	missions: { slots: [], lastResetDay: 0 },
 	ownedItems: [],
+	equippedItems: {},
 	shopBalance: 0,
 };
