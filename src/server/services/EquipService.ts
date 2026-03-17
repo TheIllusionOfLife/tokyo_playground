@@ -9,6 +9,7 @@ import { PlayerDataService } from "./PlayerDataService";
 const COSMETICS_FOLDER = "Cosmetics";
 const EQUIPPED_HAT_TAG = "EquippedHat";
 const EQUIPPED_TRAIL_TAG = "EquippedTrail";
+const EQUIP_COOLDOWN = 0.5; // seconds between equip requests
 
 // Trail colors per item
 const TRAIL_COLORS: Partial<Record<ItemId, ColorSequence>> = {
@@ -34,6 +35,7 @@ const TRAIL_COLORS: Partial<Record<ItemId, ColorSequence>> = {
 export class EquipService implements OnStart {
 	private readonly serverEvents = GlobalEvents.createServer({});
 	private readonly charAddedConns = new Map<number, RBXScriptConnection>();
+	private readonly equipCooldowns = new Map<number, number>();
 
 	constructor(private readonly playerDataService: PlayerDataService) {}
 
@@ -41,6 +43,10 @@ export class EquipService implements OnStart {
 		print("[EquipService] Started");
 
 		this.serverEvents.requestEquip.connect((player, itemId) => {
+			const now = os.clock();
+			if (now - (this.equipCooldowns.get(player.UserId) ?? 0) < EQUIP_COOLDOWN)
+				return;
+			this.equipCooldowns.set(player.UserId, now);
 			this.handleEquipRequest(player, itemId);
 		});
 
@@ -52,7 +58,13 @@ export class EquipService implements OnStart {
 			}
 			// Apply on future respawns
 			const conn = player.CharacterAdded.Connect((character) => {
-				character.WaitForChild("HumanoidRootPart", 5);
+				const hrp = character.WaitForChild("HumanoidRootPart", 5);
+				if (!hrp) {
+					warn(
+						`[EquipService] HumanoidRootPart timeout for ${player.Name}, skipping cosmetics`,
+					);
+					return;
+				}
 				this.applyCosmetics(player);
 			});
 			this.charAddedConns.set(player.UserId, conn);
@@ -64,6 +76,7 @@ export class EquipService implements OnStart {
 				conn.Disconnect();
 				this.charAddedConns.delete(player.UserId);
 			}
+			this.equipCooldowns.delete(player.UserId);
 		});
 	}
 

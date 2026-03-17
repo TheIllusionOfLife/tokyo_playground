@@ -38,7 +38,7 @@ import {
 	PlayerRole,
 	RoundResult,
 } from "shared/types";
-import { animateHachi } from "../../utils/animateHachi";
+import { animateHachi, HachiAnimState } from "../../utils/animateHachi";
 import { IMinigame } from "./MinigameBase";
 
 type ServerEvents = ReturnType<typeof GlobalEvents.createServer>;
@@ -67,7 +67,7 @@ export class HachiRideMinigame implements IMinigame {
 	private playerStates = new Map<number, HachiRidePlayerState>();
 	private playerObjects = new Map<number, Player>();
 	private hachiModels = new Map<number, Model>();
-	private hachiAnimTimes = new Map<number, number>();
+	private hachiAnimStates = new Map<number, HachiAnimState>();
 	private activeItems: BasePart[] = [];
 	private keyItems: BasePart[] = [];
 	private spawnParts: BasePart[] = [];
@@ -230,6 +230,16 @@ export class HachiRideMinigame implements IMinigame {
 		matchJanitor.Add(
 			this.serverEvents.requestHachiSlide.connect((player) => {
 				if (!this.playerStates.has(player.UserId)) return;
+
+				// Verify player is seated in their own Hachi
+				const hachiModel = this.hachiModels.get(player.UserId);
+				if (!hachiModel) return;
+				const humanoid = player.Character?.FindFirstChildOfClass("Humanoid");
+				const seat = hachiModel.FindFirstChildOfClass("VehicleSeat") as
+					| VehicleSeat
+					| undefined;
+				if (!seat || !humanoid || seat.Occupant !== humanoid) return;
+
 				const now = os.clock();
 				if (
 					now - (this.slideCooldowns.get(player.UserId) ?? 0) <
@@ -329,7 +339,7 @@ export class HachiRideMinigame implements IMinigame {
 		this.playerStates.clear();
 		this.playerObjects.clear();
 		this.hachiModels.clear();
-		this.hachiAnimTimes.clear();
+		this.hachiAnimStates.clear();
 		this.wallRunStates.clear();
 		this.jumpCooldowns.clear();
 		this.ejectCooldowns.clear();
@@ -364,7 +374,7 @@ export class HachiRideMinigame implements IMinigame {
 		}
 		this.playerStates.delete(userId);
 		this.playerObjects.delete(userId);
-		this.hachiAnimTimes.delete(userId);
+		this.hachiAnimStates.delete(userId);
 		this.wallRunStates.delete(userId);
 		this.jumpCooldowns.delete(userId);
 		this.ejectCooldowns.delete(userId);
@@ -590,8 +600,11 @@ export class HachiRideMinigame implements IMinigame {
 			if (!hachiModel) continue;
 			const body = hachiModel.FindFirstChild("Body") as BasePart | undefined;
 			if (!body) continue;
-			const t = this.hachiAnimTimes.get(userId) ?? 0;
-			this.hachiAnimTimes.set(userId, animateHachi(body, dt, t));
+			const state = this.hachiAnimStates.get(userId) ?? {
+				animTime: 0,
+				airborne: false,
+			};
+			this.hachiAnimStates.set(userId, animateHachi(body, dt, state));
 		}
 	}
 
@@ -624,7 +637,15 @@ export class HachiRideMinigame implements IMinigame {
 
 		for (const [userId] of this.playerStates) {
 			// Skip players currently in a slide impulse (speed far exceeds walk threshold)
-			if (this.hachiSlideActive.has(userId)) continue;
+			// but refresh their baseline so there's no stale delta when exemption ends
+			if (this.hachiSlideActive.has(userId)) {
+				const p = this.playerObjects.get(userId);
+				const h = p?.Character?.FindFirstChild("HumanoidRootPart") as
+					| BasePart
+					| undefined;
+				if (h) this.lastPositions.set(userId, h.Position);
+				continue;
+			}
 
 			const player = this.playerObjects.get(userId);
 			if (!player?.Character) continue;

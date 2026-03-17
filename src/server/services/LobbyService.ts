@@ -22,7 +22,7 @@ import {
 } from "shared/constants";
 import { GlobalEvents } from "shared/network";
 import { MinigameId } from "shared/types";
-import { animateHachi } from "../utils/animateHachi";
+import { animateHachi, HachiAnimState } from "../utils/animateHachi";
 
 const LOBBY_SPAWN_TAG = "LobbySpawn";
 
@@ -33,7 +33,7 @@ export class LobbyService implements OnStart {
 	private readonly slideCooldowns = new Map<number, number>();
 	private readonly tpCooldowns = new Map<number, number>();
 	private readonly hachiSlideActive = new Set<number>();
-	private readonly hachiAnimTimes = new Map<Model, number>();
+	private readonly hachiAnimStates = new Map<Model, HachiAnimState>();
 	private slideRamps: BasePart[] = [];
 	private matchActive = false;
 	private onStartRequested?: (minigameId: MinigameId) => void;
@@ -289,17 +289,17 @@ export class LobbyService implements OnStart {
 			(i): i is Model => i.IsA("Model"),
 		);
 		for (const hachi of lobbyHachis) {
-			this.hachiAnimTimes.set(hachi, 0);
+			this.hachiAnimStates.set(hachi, { animTime: 0, airborne: false });
 		}
 		RunService.Heartbeat.Connect((dt) => {
-			for (const [hachi, t] of this.hachiAnimTimes) {
+			for (const [hachi, state] of this.hachiAnimStates) {
 				if (!hachi.Parent) {
-					this.hachiAnimTimes.delete(hachi);
+					this.hachiAnimStates.delete(hachi);
 					continue;
 				}
 				const body = hachi.FindFirstChild("Body") as BasePart | undefined;
 				if (!body) continue;
-				this.hachiAnimTimes.set(hachi, animateHachi(body, dt, t));
+				this.hachiAnimStates.set(hachi, animateHachi(body, dt, state));
 			}
 		});
 	}
