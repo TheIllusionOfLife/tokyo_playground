@@ -52,23 +52,16 @@ export class EquipService implements OnStart {
 
 		// Apply cosmetics on character spawn (after profile is loaded)
 		this.playerDataService.registerOnProfileLoaded((player) => {
-			// Apply for current character if already loaded
-			if (player.Character) {
-				this.applyCosmetics(player);
-			}
-			// Apply on future respawns
-			const conn = player.CharacterAdded.Connect((character) => {
-				const hrp = character.WaitForChild("HumanoidRootPart", 5);
-				if (!hrp) {
-					warn(
-						`[EquipService] HumanoidRootPart timeout for ${player.Name}, skipping cosmetics`,
-					);
-					return;
-				}
-				this.applyCosmetics(player);
-			});
-			this.charAddedConns.set(player.UserId, conn);
+			this.bindPlayerCosmetics(player);
 		});
+
+		// Bootstrap players whose profiles loaded before this service started
+		for (const player of Players.GetPlayers()) {
+			const data = this.playerDataService.getPlayerData(player);
+			if (data && !this.charAddedConns.has(player.UserId)) {
+				this.bindPlayerCosmetics(player);
+			}
+		}
 
 		Players.PlayerRemoving.Connect((player) => {
 			const conn = this.charAddedConns.get(player.UserId);
@@ -80,16 +73,37 @@ export class EquipService implements OnStart {
 		});
 	}
 
-	private handleEquipRequest(player: Player, itemId: ItemId) {
-		const ownedItems = this.playerDataService.getOwnedItems(player);
-		if (!ownedItems.includes(itemId)) {
-			return; // Not owned
+	private bindPlayerCosmetics(player: Player) {
+		// Apply for current character if already loaded
+		if (player.Character) {
+			this.applyCosmetics(player);
 		}
+		// Apply on future respawns
+		const conn = player.CharacterAdded.Connect((character) => {
+			const hrp = character.WaitForChild("HumanoidRootPart", 5);
+			const head = character.WaitForChild("Head", 5);
+			if (!hrp || !head) {
+				warn(
+					`[EquipService] Character parts timeout for ${player.Name}, skipping cosmetics`,
+				);
+				return;
+			}
+			this.applyCosmetics(player);
+		});
+		this.charAddedConns.set(player.UserId, conn);
+	}
 
+	private handleEquipRequest(player: Player, itemId: ItemId) {
 		const catalogItem = SHOP_CATALOG.find((item) => item.id === itemId);
 		if (!catalogItem) return;
 
 		const category = catalogItem.category;
+
+		const ownedItems = this.playerDataService.getOwnedItems(player);
+		if (!ownedItems.includes(itemId)) {
+			this.serverEvents.equipResult.fire(player, false, category, undefined);
+			return;
+		}
 		const equippedItems = this.playerDataService.getEquippedItems(player);
 
 		// Toggle: if already equipped, unequip

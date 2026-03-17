@@ -229,6 +229,7 @@ export class HachiRideMinigame implements IMinigame {
 		// Track slide state for anti-cheat exemption (rate-limited to prevent bypass)
 		matchJanitor.Add(
 			this.serverEvents.requestHachiSlide.connect((player) => {
+				if (!this.roundStarted) return;
 				if (!this.playerStates.has(player.UserId)) return;
 
 				// Verify player is seated in their own Hachi
