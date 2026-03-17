@@ -6,8 +6,7 @@ import {
 	SoundService,
 } from "@rbxts/services";
 import { clientEvents } from "client/network";
-import { DEFAULT_WALK_SPEED, SE_JUMP } from "shared/constants";
-import { MinigameId, PlayerRole, RoundResult } from "shared/types";
+import { SE_JUMP } from "shared/constants";
 
 const ACTION_HACHI_JUMP = "HachiJump";
 const ACTION_HACHI_EJECT = "HachiEject";
@@ -17,47 +16,35 @@ const BOB_MAX_AMPLITUDE = 0.3; // studs at full speed
 const BOB_SPEED_THRESHOLD = 5; // studs/s below which bob is zero
 const BOB_FREQ_SCALE = 1.5; // multiplier on base frequency (spd / 25)
 
+/** Returns true when the seat belongs to a Hachi model (has a sibling "Body" BasePart). */
+function isHachiSeat(seat: BasePart): boolean {
+	const body = seat.Parent?.FindFirstChild("Body");
+	return body !== undefined && classIs(body, "BasePart");
+}
+
 @Controller()
 export class HachiRideController implements OnStart {
-	private active = false;
-	private wasSeated = false;
+	private seatedInHachi = false;
 
-	private heartbeatConn?: RBXScriptConnection;
 	private jumpConn?: RBXScriptConnection;
 	private bobConn?: RBXScriptConnection;
 	private bobRootC0?: CFrame; // original Motor6D.C0 to restore on dismount
 
 	onStart() {
-		clientEvents.roleAssigned.connect((role, minigameId) => {
-			if (minigameId === MinigameId.HachiRide && role === PlayerRole.None) {
-				this.activate();
-			} else {
-				this.deactivate();
-			}
-		});
-
-		clientEvents.roundResultAnnounced.connect((_result: RoundResult) => {
-			this.deactivate();
-		});
-	}
-
-	private activate() {
-		if (this.active) return;
-		this.active = true;
-		this.wasSeated = false;
-
-		// Heartbeat: seated state transitions
-		this.heartbeatConn = RunService.Heartbeat.Connect(() => {
-			if (!this.active) return;
+		// Always-on: detect seating in any Hachi (lobby or minigame).
+		RunService.Heartbeat.Connect(() => {
 			const character = Players.LocalPlayer.Character;
 			if (!character) return;
 			const humanoid = character.FindFirstChildOfClass("Humanoid");
 			if (!humanoid) return;
 
-			const seated = humanoid.Sit;
-			if (seated !== this.wasSeated) {
-				this.wasSeated = seated;
-				if (seated) {
+			const seatPart = humanoid.SeatPart;
+			const inHachi =
+				humanoid.Sit && seatPart !== undefined && isHachiSeat(seatPart);
+
+			if (inHachi !== this.seatedInHachi) {
+				this.seatedInHachi = inHachi;
+				if (inHachi) {
 					this.onSeated();
 				} else {
 					this.onStoodUp();
@@ -66,26 +53,9 @@ export class HachiRideController implements OnStart {
 		});
 	}
 
-	private deactivate() {
-		if (!this.active) return;
-		this.onStoodUp();
-		this.active = false;
-		this.wasSeated = false;
-
-		this.heartbeatConn?.Disconnect();
-		this.heartbeatConn = undefined;
-
-		// Restore WalkSpeed
-		const character = Players.LocalPlayer.Character;
-		if (character) {
-			const humanoid = character.FindFirstChildOfClass("Humanoid");
-			if (humanoid) humanoid.WalkSpeed = DEFAULT_WALK_SPEED;
-		}
-	}
-
-	// Called when player sits in Hachi's VehicleSeat
+	// Called when player sits in any Hachi's VehicleSeat
 	private onSeated() {
-		// Space: fire hachiJump every press. Server decides regular vs double jump.
+		// Space/ButtonA: fire hachiJump. Server decides regular vs double jump.
 		ContextActionService.BindAction(
 			ACTION_HACHI_JUMP,
 			(_name, inputState, _input) => {
