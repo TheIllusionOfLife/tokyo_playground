@@ -8,6 +8,10 @@ import {
 import {
 	CAN_KICK_PORTAL_TAG,
 	DEFAULT_WALK_SPEED,
+	HACHI_EJECT_COOLDOWN,
+	HACHI_EJECT_SEAT_DISABLE_DURATION,
+	HACHI_JUMP_COOLDOWN,
+	HACHI_JUMP_VELOCITY,
 	HACHI_RIDE_PORTAL_TAG,
 	HACHI_RIDE_TAG,
 	HACHI_SLIDE_FORCE_RESTORE_DELAY,
@@ -24,6 +28,7 @@ import {
 import { GlobalEvents } from "shared/network";
 import { MinigameId } from "shared/types";
 import { animateHachi, HachiAnimState } from "../utils/animateHachi";
+import { applyHachiJumpImpulse } from "../utils/hachiPhysics";
 
 const LOBBY_SPAWN_TAG = "LobbySpawn";
 
@@ -34,6 +39,8 @@ export class LobbyService implements OnStart {
 	private readonly slideCooldowns = new Map<number, number>();
 	private readonly tpCooldowns = new Map<number, number>();
 	private readonly hachiSlideActive = new Set<number>();
+	private readonly hachiJumpCooldowns = new Map<number, number>();
+	private readonly hachiEjectCooldowns = new Map<number, number>();
 	private readonly hachiAnimStates = new Map<Model, HachiAnimState>();
 	private slideRamps: BasePart[] = [];
 	private matchActive = false;
@@ -75,6 +82,8 @@ export class LobbyService implements OnStart {
 			this.slideCooldowns.delete(player.UserId);
 			this.tpCooldowns.delete(player.UserId);
 			this.hachiSlideActive.delete(player.UserId);
+			this.hachiJumpCooldowns.delete(player.UserId);
+			this.hachiEjectCooldowns.delete(player.UserId);
 		});
 
 		// Cache slide ramps with live add/remove tracking
@@ -98,6 +107,8 @@ export class LobbyService implements OnStart {
 		this.setupRooftopTPs();
 		this.setupHachiSlideHandler();
 		this.setupHachiAnimation();
+		this.setupLobbyHachiJump();
+		this.setupLobbyHachiEject();
 	}
 
 	private setupRooftopTPs() {
@@ -317,6 +328,76 @@ export class LobbyService implements OnStart {
 				if (!body) continue;
 				this.hachiAnimStates.set(hachi, animateHachi(body, dt, state));
 			}
+		});
+	}
+
+	private setupLobbyHachiJump() {
+		this.serverEvents.hachiJump.connect((player) => {
+			if (this.matchActive) return;
+
+			const character = player.Character;
+			if (!character) return;
+			const humanoid = character.FindFirstChildOfClass("Humanoid");
+			const seatPart = humanoid?.SeatPart;
+			if (!seatPart) return;
+			const hachiModel = seatPart.Parent;
+			if (!hachiModel || !CollectionService.HasTag(hachiModel, HACHI_RIDE_TAG))
+				return;
+
+			// Verify player actually occupies this seat
+			const seat = hachiModel.FindFirstChildOfClass("VehicleSeat") as
+				| VehicleSeat
+				| undefined;
+			if (!seat || seat.Occupant !== humanoid) return;
+
+			const now = os.clock();
+			if (
+				now - (this.hachiJumpCooldowns.get(player.UserId) ?? 0) <
+				HACHI_JUMP_COOLDOWN
+			)
+				return;
+
+			const body = hachiModel.FindFirstChild("Body") as BasePart | undefined;
+			if (!body) return;
+			// Only allow jump from near-ground
+			if (math.abs(body.AssemblyLinearVelocity.Y) > 15) return;
+
+			this.hachiJumpCooldowns.set(player.UserId, now);
+			applyHachiJumpImpulse(body, HACHI_JUMP_VELOCITY);
+		});
+	}
+
+	private setupLobbyHachiEject() {
+		this.serverEvents.hachiEject.connect((player) => {
+			if (this.matchActive) return;
+
+			const character = player.Character;
+			if (!character) return;
+			const humanoid = character.FindFirstChildOfClass("Humanoid");
+			const seatPart = humanoid?.SeatPart;
+			if (!seatPart) return;
+			const hachiModel = seatPart.Parent;
+			if (!hachiModel || !CollectionService.HasTag(hachiModel, HACHI_RIDE_TAG))
+				return;
+
+			// Verify player actually occupies this seat
+			const seat = hachiModel.FindFirstChildOfClass("VehicleSeat") as
+				| VehicleSeat
+				| undefined;
+			if (!seat || seat.Occupant !== humanoid) return;
+
+			const now = os.clock();
+			if (
+				now - (this.hachiEjectCooldowns.get(player.UserId) ?? 0) <
+				HACHI_EJECT_COOLDOWN
+			)
+				return;
+			this.hachiEjectCooldowns.set(player.UserId, now);
+
+			seat.Disabled = true;
+			task.delay(HACHI_EJECT_SEAT_DISABLE_DURATION, () => {
+				if (seat.Parent) seat.Disabled = false;
+			});
 		});
 	}
 

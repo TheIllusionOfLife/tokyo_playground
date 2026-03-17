@@ -42,6 +42,7 @@ import {
 	RoundResult,
 } from "shared/types";
 import { animateHachi, HachiAnimState } from "../../utils/animateHachi";
+import { applyHachiJumpImpulse } from "../../utils/hachiPhysics";
 import { IMinigame } from "./MinigameBase";
 
 type ServerEvents = ReturnType<typeof GlobalEvents.createServer>;
@@ -550,27 +551,8 @@ export class HachiRideMinigame implements IMinigame {
 		}
 	}
 
-	/** Zero BodyVelocity briefly then apply Y impulse to Hachi body. */
 	private applyJumpImpulse(body: BasePart, velocity: number) {
-		const bv = body.FindFirstChildOfClass("BodyVelocity");
-		if (bv) {
-			const origForce = bv.MaxForce;
-			bv.MaxForce = Vector3.zero;
-			body.AssemblyLinearVelocity = new Vector3(
-				body.AssemblyLinearVelocity.X,
-				velocity,
-				body.AssemblyLinearVelocity.Z,
-			);
-			task.delay(HACHI_SLIDE_FORCE_RESTORE_DELAY, () => {
-				if (this.roundStarted && bv.Parent) bv.MaxForce = origForce;
-			});
-		} else {
-			body.AssemblyLinearVelocity = new Vector3(
-				body.AssemblyLinearVelocity.X,
-				velocity,
-				body.AssemblyLinearVelocity.Z,
-			);
-		}
+		applyHachiJumpImpulse(body, velocity, () => this.roundStarted);
 	}
 
 	private handleEjectRequest(player: Player) {
