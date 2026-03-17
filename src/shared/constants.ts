@@ -209,6 +209,9 @@ export const SHOP_CATALOG: Omit<ShopItemData, "owned">[] = [
 	},
 ];
 
+// Shop
+export const SHOP_CATALOG_COOLDOWN = 2; // seconds between catalog requests
+
 export const SLIDE_RAMP_TAG = "ShibuyaSlideRamp";
 export const SLIDE_DIR_Y_OFFSET = -0.4; // downward bias added to ramp LookVector
 export const SLIDE_TRIGGER_RADIUS = 6; // studs from ramp surface to trigger (OBB closest-point)

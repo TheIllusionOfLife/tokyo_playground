@@ -180,7 +180,10 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 			}
 		}
 
-		if (hiderCount === 0 || taggedCount >= hiderCount) {
+		if (hiderCount === 0) {
+			return RoundResult.TimerExpired;
+		}
+		if (taggedCount >= hiderCount) {
 			return RoundResult.OniWins;
 		}
 		return undefined;
@@ -337,7 +340,13 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 		if (!player) return;
 
 		const state = this.playerStates.get(player.UserId);
-		if (!state || state.isTagged || this.oniCounting) return;
+		if (
+			!state ||
+			state.isTagged ||
+			state.role === PlayerRole.Oni ||
+			this.oniCounting
+		)
+			return;
 
 		const now = os.clock();
 		if (

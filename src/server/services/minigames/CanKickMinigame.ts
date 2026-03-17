@@ -260,7 +260,10 @@ export class CanKickMinigame implements IMinigame {
 			}
 		}
 
-		if (hiderCount === 0 || caughtCount >= hiderCount) {
+		if (hiderCount === 0) {
+			return RoundResult.TimerExpired;
+		}
+		if (caughtCount >= hiderCount) {
 			return RoundResult.OniWins;
 		}
 

@@ -358,7 +358,7 @@ export class MatchService implements OnStart {
 			});
 		}
 
-		entries.sort((a, b) => a.points > b.points);
+		entries.sort((a, b) => b.points > a.points);
 		this.serverEvents.scoreboard.broadcast(entries);
 
 		task.wait(RESULTS_DISPLAY_DURATION);

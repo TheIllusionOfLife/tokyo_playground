@@ -1,5 +1,6 @@
 import { OnStart, Service } from "@flamework/core";
-import { SHOP_CATALOG } from "shared/constants";
+import { Players } from "@rbxts/services";
+import { SHOP_CATALOG, SHOP_CATALOG_COOLDOWN } from "shared/constants";
 import { GlobalEvents } from "shared/network";
 import { ItemId, ShopItemData } from "shared/types";
 import { PlayerDataService } from "./PlayerDataService";
@@ -7,6 +8,7 @@ import { PlayerDataService } from "./PlayerDataService";
 @Service()
 export class ShopService implements OnStart {
 	private readonly serverEvents = GlobalEvents.createServer({});
+	private readonly catalogCooldowns = new Map<number, number>();
 
 	constructor(private readonly playerDataService: PlayerDataService) {}
 
@@ -20,11 +22,22 @@ export class ShopService implements OnStart {
 		});
 
 		this.serverEvents.requestShopCatalog.connect((player) => {
+			const now = os.clock();
+			if (
+				now - (this.catalogCooldowns.get(player.UserId) ?? 0) <
+				SHOP_CATALOG_COOLDOWN
+			)
+				return;
+			this.catalogCooldowns.set(player.UserId, now);
 			this.handleRequestCatalog(player);
 		});
 
 		this.serverEvents.requestPurchase.connect((player, itemId) => {
 			this.handleRequestPurchase(player, itemId);
+		});
+
+		Players.PlayerRemoving.Connect((player) => {
+			this.catalogCooldowns.delete(player.UserId);
 		});
 	}
 
