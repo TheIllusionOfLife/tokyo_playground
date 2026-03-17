@@ -12,6 +12,8 @@ import {
 	HACHI_ANTICHEAT_STRIKE_DECAY,
 	HACHI_ANTICHEAT_STRIKE_LIMIT,
 	HACHI_BIG_SCALE,
+	HACHI_BONUS_ITEM_COUNT,
+	HACHI_BONUS_ITEM_VALUE,
 	HACHI_COLLECTION_RADIUS,
 	HACHI_DOUBLE_JUMP_IMPULSE,
 	HACHI_EJECT_COOLDOWN,
@@ -73,6 +75,7 @@ export class HachiRideMinigame implements IMinigame {
 	private hachiModels = new Map<number, Model>();
 	private hachiAnimStates = new Map<number, HachiAnimState>();
 	private activeItems: BasePart[] = [];
+	private bonusItems = new Set<BasePart>();
 	private keyItems: BasePart[] = [];
 	private spawnParts: BasePart[] = [];
 	private wallRunStates = new Map<number, WallRunState>();
@@ -128,11 +131,24 @@ export class HachiRideMinigame implements IMinigame {
 			part.CanQuery = false;
 		}
 		// Show chosen items (CanCollide=false so they don't block Hachi)
-		for (const part of chosen) {
-			part.Transparency = 0;
+		// First HACHI_BONUS_ITEM_COUNT items are bonus (shuffled = random)
+		const originalColors = new Map<BasePart, Color3>();
+		const originalSizes = new Map<BasePart, Vector3>();
+		for (let i = 0; i < chosen.size(); i++) {
+			const part = chosen[i];
+			part.Transparency = 1; // Hidden until startRound
 			part.CanCollide = false;
-			part.CanQuery = true;
+			part.CanQuery = false;
 			this.activeItems.push(part);
+			if (i < HACHI_BONUS_ITEM_COUNT) {
+				// Mark as bonus: bigger, gold color
+				this.bonusItems.add(part);
+				originalColors.set(part, part.Color);
+				originalSizes.set(part, part.Size);
+				part.Size = part.Size.mul(2.5);
+				part.Color = Color3.fromRGB(255, 215, 0);
+				part.Material = Enum.Material.Neon;
+			}
 		}
 
 		// Register cleanup: restore all anchors to hidden state
@@ -141,8 +157,14 @@ export class HachiRideMinigame implements IMinigame {
 				part.Transparency = 1;
 				part.CanCollide = false;
 				part.CanQuery = false;
+				// Restore original size/color for bonus items
+				const origColor = originalColors.get(part);
+				if (origColor) part.Color = origColor;
+				const origSize = originalSizes.get(part);
+				if (origSize) part.Size = origSize;
 			}
 			this.activeItems = [];
+			this.bonusItems.clear();
 		});
 
 		// Key items — always visible
@@ -152,10 +174,12 @@ export class HachiRideMinigame implements IMinigame {
 		if (this.keyItems.size() === 0) {
 			warn("[HachiRide] Missing Studio asset: HachiKeyItem — check map setup");
 		}
-		for (const item of this.keyItems) {
-			item.Transparency = 0;
+		for (let i = 0; i < this.keyItems.size(); i++) {
+			const item = this.keyItems[i];
+			item.Transparency = 1; // Hidden until round starts
 			item.CanCollide = false;
-			item.CanQuery = true;
+			item.CanQuery = false;
+			if (i === 0) this.bonusItems.add(item); // Only first key item is bonus
 		}
 
 		// Spawn points (cached for reuse in assignRoles)
@@ -298,6 +322,15 @@ export class HachiRideMinigame implements IMinigame {
 
 	startRound() {
 		this.roundStarted = true;
+		// Reveal all items now
+		for (const item of this.activeItems) {
+			item.Transparency = 0;
+			item.CanQuery = true;
+		}
+		for (const item of this.keyItems) {
+			item.Transparency = 0;
+			item.CanQuery = true;
+		}
 		this.serverEvents.hintTextChanged.broadcast(
 			"Go! Collect as much trash as you can!",
 		);
@@ -620,7 +653,7 @@ export class HachiRideMinigame implements IMinigame {
 					item.CanCollide = false;
 					item.CanQuery = false;
 					toRemove.push(item);
-					this.onItemCollected(userId, state, player);
+					this.onItemCollected(userId, state, player, item);
 				}
 			}
 			for (const item of toRemove) {
@@ -636,7 +669,7 @@ export class HachiRideMinigame implements IMinigame {
 					item.Transparency = 1;
 					item.CanCollide = false;
 					item.CanQuery = false;
-					this.onItemCollected(userId, state, player);
+					this.onItemCollected(userId, state, player, item);
 				}
 			}
 		}
@@ -646,10 +679,20 @@ export class HachiRideMinigame implements IMinigame {
 		userId: number,
 		state: HachiRidePlayerState,
 		player: Player,
+		item: BasePart,
 	) {
-		state.itemCount += 1;
+		const isBonus = this.bonusItems.has(item);
+		const value = isBonus ? HACHI_BONUS_ITEM_VALUE : 1;
+		state.itemCount += value;
 		state.catchCount = state.itemCount; // mirror for scoreboard
 		this.serverEvents.hachiItemCollected.fire(player, state.itemCount);
+		if (isBonus) {
+			this.serverEvents.hachiBonusCollected.fire(player);
+			this.serverEvents.hintTextChanged.fire(
+				player,
+				`BONUS! +${HACHI_BONUS_ITEM_VALUE} points!`,
+			);
+		}
 		this.tryEvolve(userId, state, player);
 	}
 

@@ -57,6 +57,7 @@ interface ServerToClientEvents {
 	hachiWallRunStart(wallNormal: Vector3): void;
 	hachiWallRunStop(): void;
 	hachiDoubleJumpGranted(): void;
+	hachiBonusCollected(): void;
 }
 
 interface ClientToServerEvents {

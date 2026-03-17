@@ -261,9 +261,21 @@ export class LobbyService implements OnStart {
 			if (!nearestRamp) return; // not near any ramp — reject spoofed request
 
 			this.slideCooldowns.set(player.UserId, now);
-			const serverDir = nearestRamp.CFrame.LookVector.add(
-				new Vector3(0, SLIDE_DIR_Y_OFFSET, 0),
-			).Unit;
+			const usePlayerDir = nearestRamp.GetAttribute("UsePlayerDirection");
+			let serverDir: Vector3;
+			if (typeIs(usePlayerDir, "boolean") && usePlayerDir && body) {
+				// Use player/Hachi's current horizontal velocity as boost direction
+				const vel = body.AssemblyLinearVelocity;
+				const horizontal = new Vector3(vel.X, 0, vel.Z);
+				serverDir =
+					horizontal.Magnitude > 1
+						? horizontal.Unit
+						: nearestRamp.CFrame.LookVector.Unit;
+			} else {
+				serverDir = nearestRamp.CFrame.LookVector.add(
+					new Vector3(0, SLIDE_DIR_Y_OFFSET, 0),
+				).Unit;
+			}
 			const rawSpeed = nearestRamp.GetAttribute("SlideSpeed");
 			const speed =
 				typeIs(rawSpeed, "number") && rawSpeed > 0

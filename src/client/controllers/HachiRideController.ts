@@ -114,11 +114,16 @@ export class HachiRideController implements OnStart {
 
 	private jumpSE?: Sound;
 
+	private lastJumpSETime = 0;
+
 	private playJumpSE() {
+		const now = os.clock();
+		if (now - this.lastJumpSETime < 0.3) return;
+		this.lastJumpSETime = now;
 		if (!this.jumpSE) {
 			this.jumpSE = new Instance("Sound");
 			this.jumpSE.SoundId = SE_JUMP;
-			this.jumpSE.Volume = 0.6;
+			this.jumpSE.Volume = 0.4;
 			this.jumpSE.Parent = SoundService;
 		}
 		this.jumpSE.Play();
