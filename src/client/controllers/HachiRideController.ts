@@ -129,12 +129,11 @@ export class HachiRideController implements OnStart {
 
 		// Body bob: sinusoidal vertical offset on the character's root Motor6D,
 		// synced with Hachi's leg animation frequency so the rider bounces in rhythm.
-		const hrp = character?.FindFirstChild("HumanoidRootPart") as
+		// R15: Motor6D "Root" lives in LowerTorso (Part1), not HumanoidRootPart (Part0).
+		const lowerTorso = character?.FindFirstChild("LowerTorso") as
 			| BasePart
 			| undefined;
-		const rootMotor = hrp?.FindFirstChildOfClass("Motor6D") as
-			| Motor6D
-			| undefined;
+		const rootMotor = lowerTorso?.FindFirstChild("Root") as Motor6D | undefined;
 		const seatPart = humanoid?.SeatPart;
 		const hachiBody = seatPart?.Parent?.FindFirstChild("Body") as
 			| BasePart
@@ -166,10 +165,10 @@ export class HachiRideController implements OnStart {
 		this.bobConn = undefined;
 		if (this.bobRootC0) {
 			const character = Players.LocalPlayer.Character;
-			const hrp = character?.FindFirstChild("HumanoidRootPart") as
+			const lowerTorso = character?.FindFirstChild("LowerTorso") as
 				| BasePart
 				| undefined;
-			const rootMotor = hrp?.FindFirstChildOfClass("Motor6D") as
+			const rootMotor = lowerTorso?.FindFirstChild("Root") as
 				| Motor6D
 				| undefined;
 			if (rootMotor) rootMotor.C0 = this.bobRootC0;
