@@ -262,6 +262,12 @@ export class HachiRideMinigame implements IMinigame {
 		this.checkSpeedViolations(dt);
 	}
 
+	handleCatchRequest(_player: Player): void {}
+	handleKickCanRequest(_player: Player): boolean {
+		return false;
+	}
+	stopCountdown(): void {}
+
 	checkWinCondition(): RoundResult | undefined {
 		// Timer-based — MatchService handles expiry
 		return undefined;

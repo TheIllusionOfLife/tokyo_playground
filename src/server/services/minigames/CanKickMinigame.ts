@@ -2,6 +2,7 @@ import { Janitor } from "@rbxts/janitor";
 import { ServerStorage, Workspace } from "@rbxts/services";
 import {
 	CAN_KICK_RADIUS,
+	DEFAULT_WALK_SPEED,
 	ONI_CATCH_RADIUS,
 	ONI_COUNT_DURATION,
 } from "shared/constants";
@@ -13,6 +14,11 @@ import {
 	PlayerRole,
 	RoundResult,
 } from "shared/types";
+import {
+	fireHintText,
+	startOniCountdown,
+	stopOniCountdown,
+} from "../../utils/oni-helpers";
 import { IMinigame } from "./MinigameBase";
 
 type ServerEvents = ReturnType<typeof GlobalEvents.createServer>;
@@ -40,7 +46,7 @@ export class CanKickMinigame implements IMinigame {
 			this.canModel.Parent = Workspace;
 			matchJanitor.Add(this.canModel);
 		} else {
-			print("[CanKick] Warning: GiantCan not found in ServerStorage");
+			warn("[CanKick] GiantCan not found in ServerStorage");
 		}
 
 		// Clone JailZone from ServerStorage
@@ -52,7 +58,7 @@ export class CanKickMinigame implements IMinigame {
 			this.jailZone.Parent = Workspace;
 			matchJanitor.Add(this.jailZone);
 		} else {
-			print("[CanKick] Warning: JailZone not found in ServerStorage");
+			warn("[CanKick] JailZone not found in ServerStorage");
 		}
 
 		// Initialize player states
@@ -110,37 +116,32 @@ export class CanKickMinigame implements IMinigame {
 			}
 		}
 
-		this.fireHintText("Oni is counting... Hide!");
+		this.lastHintText = fireHintText(
+			this.serverEvents,
+			"Oni is counting... Hide!",
+			this.lastHintText,
+		);
 
-		// Countdown during counting
-		this.countdownThread = task.spawn(() => {
-			for (let i = ONI_COUNT_DURATION; i >= 1; i--) {
-				if (!this.oniCounting) break;
-				this.serverEvents.countdownTick.broadcast(i);
-				task.wait(1);
-			}
-
-			// Clear countdown overlay now that counting is done
-			this.serverEvents.countdownTick.broadcast(0);
-
-			// Guard: if round ended during counting, do not run the tail
-			if (!this.oniCounting) return;
-
-			// Unfreeze Oni
-			this.oniCounting = false;
-			for (const [userId, state] of this.playerStates) {
-				if (state.role === PlayerRole.Oni) {
-					const player = this.playerObjects.get(userId);
-					if (player?.Character) {
-						const humanoid = player.Character.FindFirstChildOfClass("Humanoid");
-						if (humanoid) {
-							humanoid.WalkSpeed = 16;
-						}
-					}
-				}
-			}
-			this.fireHintText("Oni is hunting! Run and hide!");
-		});
+		this.countdownThread = startOniCountdown(
+			this.serverEvents,
+			ONI_COUNT_DURATION,
+			() => {
+				if (!this.oniCounting) return;
+				this.oniCounting = false;
+				stopOniCountdown(
+					undefined,
+					this.serverEvents,
+					this.playerStates,
+					this.playerObjects,
+					DEFAULT_WALK_SPEED,
+				);
+				this.lastHintText = fireHintText(
+					this.serverEvents,
+					"Oni is hunting! Run and hide!",
+					this.lastHintText,
+				);
+			},
+		);
 	}
 
 	tick(_dt: number) {
@@ -191,7 +192,11 @@ export class CanKickMinigame implements IMinigame {
 		}
 
 		this.serverEvents.playerCaught.broadcast(closestHider.UserId);
-		this.fireHintText(`${closestHider.Name} was caught!`);
+		this.lastHintText = fireHintText(
+			this.serverEvents,
+			`${closestHider.Name} was caught!`,
+			this.lastHintText,
+		);
 		print(
 			`[CanKick] ${closestHider.Name} caught by ${player.Name} (${oniState.catchCount} catches)`,
 		);
@@ -237,8 +242,10 @@ export class CanKickMinigame implements IMinigame {
 			this.serverEvents.playerFreed.broadcast(freedIds);
 		}
 
-		this.fireHintText(
+		this.lastHintText = fireHintText(
+			this.serverEvents,
 			`${player.Name} kicked the can! ${freedIds.size()} freed!`,
+			this.lastHintText,
 		);
 		print(
 			`[CanKick] ${player.Name} kicked the can, freed ${freedIds.size()} players`,
@@ -281,24 +288,14 @@ export class CanKickMinigame implements IMinigame {
 
 	stopCountdown() {
 		this.oniCounting = false;
-		// Clear countdown overlay on all clients immediately
-		this.serverEvents.countdownTick.broadcast(0);
-		if (this.countdownThread) {
-			task.cancel(this.countdownThread);
-			this.countdownThread = undefined;
-		}
-		// Unfreeze Oni — the coroutine tail is now skipped, so restore WalkSpeed here
-		for (const [userId, state] of this.playerStates) {
-			if (state.role === PlayerRole.Oni) {
-				const player = this.playerObjects.get(userId);
-				if (player?.Character) {
-					const humanoid = player.Character.FindFirstChildOfClass("Humanoid");
-					if (humanoid) {
-						humanoid.WalkSpeed = 16;
-					}
-				}
-			}
-		}
+		stopOniCountdown(
+			this.countdownThread,
+			this.serverEvents,
+			this.playerStates,
+			this.playerObjects,
+			DEFAULT_WALK_SPEED,
+		);
+		this.countdownThread = undefined;
 	}
 
 	cleanup() {
@@ -339,11 +336,5 @@ export class CanKickMinigame implements IMinigame {
 				player.Character.PivotTo(new CFrame(basePos.add(offset)));
 			}
 		}
-	}
-
-	private fireHintText(text: string) {
-		if (text === this.lastHintText) return;
-		this.lastHintText = text;
-		this.serverEvents.hintTextChanged.broadcast(text);
 	}
 }

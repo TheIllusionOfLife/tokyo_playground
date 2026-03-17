@@ -6,6 +6,9 @@ import {
 	ShopItemData,
 } from "shared/types";
 
+// Defaults
+export const DEFAULT_WALK_SPEED = 16;
+
 // Lobby & Match Flow
 export const LOBBY_INTERMISSION = 15;
 export const RESULTS_DISPLAY_DURATION = 8;

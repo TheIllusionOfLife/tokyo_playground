@@ -310,7 +310,7 @@ export class LobbyService implements OnStart {
 					`[LobbyService] ${player.Name} teleported to lobby (fallback spawn)`,
 				);
 			} else {
-				print(`[LobbyService] Warning: no spawn found for ${player.Name}`);
+				warn(`[LobbyService] No spawn found for ${player.Name}`);
 			}
 		}
 	}

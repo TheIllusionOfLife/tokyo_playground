@@ -6,6 +6,7 @@ import {
 	Workspace,
 } from "@rbxts/services";
 import {
+	DEFAULT_WALK_SPEED,
 	SCRAMBLE_CROWD_NPC_COUNT,
 	SCRAMBLE_CROWD_WAVE_DURATION,
 	SCRAMBLE_CROWD_WAVE_INTERVAL,
@@ -26,6 +27,11 @@ import {
 	RoundResult,
 	ShibuyaScramblePlayerState,
 } from "shared/types";
+import {
+	fireHintText,
+	startOniCountdown,
+	stopOniCountdown,
+} from "../../utils/oni-helpers";
 import { MissionService } from "../MissionService";
 import { IMinigame } from "./MinigameBase";
 
@@ -148,22 +154,27 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 	startRound() {
 		this.oniCounting = true;
 		this.setOniWalkSpeed(0);
-		this.fireHintText("Oni is counting... Hide!");
+		this.lastHintText = fireHintText(
+			this.serverEvents,
+			"Oni is counting... Hide!",
+			this.lastHintText,
+		);
 
-		this.countdownThread = task.spawn(() => {
-			for (let i = SCRAMBLE_ONI_COUNT_DURATION; i >= 1; i--) {
-				if (!this.oniCounting) break;
-				this.serverEvents.countdownTick.broadcast(i);
-				task.wait(1);
-			}
-			this.serverEvents.countdownTick.broadcast(0);
-			if (!this.oniCounting) return;
-
-			this.oniCounting = false;
-			this.setOniWalkSpeed(16);
-			this.fireHintText("Oni is hunting! Run and hide!");
-			this.crowdThread = task.spawn(() => this.runCrowdLoop());
-		});
+		this.countdownThread = startOniCountdown(
+			this.serverEvents,
+			SCRAMBLE_ONI_COUNT_DURATION,
+			() => {
+				if (!this.oniCounting) return;
+				this.oniCounting = false;
+				this.setOniWalkSpeed(DEFAULT_WALK_SPEED);
+				this.lastHintText = fireHintText(
+					this.serverEvents,
+					"Oni is hunting! Run and hide!",
+					this.lastHintText,
+				);
+				this.crowdThread = task.spawn(() => this.runCrowdLoop());
+			},
+		);
 	}
 
 	tick(_dt: number) {}
@@ -191,6 +202,10 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 
 	getPlayerStates(): Map<number, AnyPlayerState> {
 		return this.playerStates as Map<number, AnyPlayerState>;
+	}
+
+	handleKickCanRequest(_player: Player): boolean {
+		return false;
 	}
 
 	handleCatchRequest(player: Player) {
@@ -226,7 +241,11 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 		oniState.catchCount += 1;
 
 		this.serverEvents.playerCaught.broadcast(closestHider.UserId);
-		this.fireHintText(`${closestHider.Name} was tagged!`);
+		this.lastHintText = fireHintText(
+			this.serverEvents,
+			`${closestHider.Name} was tagged!`,
+			this.lastHintText,
+		);
 		print(
 			`[ShibuyaScramble] ${closestHider.Name} tagged by ${player.Name} (${oniState.catchCount} tags)`,
 		);
@@ -241,11 +260,14 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 
 	stopCountdown() {
 		this.oniCounting = false;
-		this.serverEvents.countdownTick.broadcast(0);
-		if (this.countdownThread) {
-			task.cancel(this.countdownThread);
-			this.countdownThread = undefined;
-		}
+		stopOniCountdown(
+			this.countdownThread,
+			this.serverEvents,
+			this.playerStates,
+			this.playerObjects,
+			DEFAULT_WALK_SPEED,
+		);
+		this.countdownThread = undefined;
 		// Stop crowd wave loop immediately (called before cleanup during results display)
 		this.crowdLoopRunning = false;
 		if (this.crowdThread) {
@@ -253,7 +275,6 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 			this.crowdThread = undefined;
 		}
 		this.despawnCrowdNPCs();
-		this.setOniWalkSpeed(16);
 	}
 
 	cleanup() {
@@ -285,7 +306,11 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 
 	private spawnCrowdWave() {
 		this.serverEvents.crowdWaveStarted.broadcast(4);
-		this.fireHintText("Crowd crossing — use them!");
+		this.lastHintText = fireHintText(
+			this.serverEvents,
+			"Crowd crossing — use them!",
+			this.lastHintText,
+		);
 
 		const waypointsFolder = Workspace.FindFirstChild("CrowdWaypoints");
 		if (!waypointsFolder) return;
@@ -437,11 +462,5 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 			const humanoid = player.Character.FindFirstChildOfClass("Humanoid");
 			if (humanoid) humanoid.WalkSpeed = speed;
 		}
-	}
-
-	private fireHintText(text: string) {
-		if (text === this.lastHintText) return;
-		this.lastHintText = text;
-		this.serverEvents.hintTextChanged.broadcast(text);
 	}
 }
