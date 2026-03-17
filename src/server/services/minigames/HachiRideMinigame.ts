@@ -197,6 +197,7 @@ export class HachiRideMinigame implements IMinigame {
 					player.Character.PivotTo(
 						new CFrame(spawnPart.Position.add(new Vector3(0, 3, 0))),
 					);
+					this.resetAnticheatBaseline(player.UserId, spawnPart.Position);
 				}
 			});
 			matchJanitor.Add(conn);
@@ -238,6 +239,7 @@ export class HachiRideMinigame implements IMinigame {
 				player.Character.PivotTo(
 					new CFrame(spawnPart.Position.add(new Vector3(0, 3, 0))),
 				);
+				this.resetAnticheatBaseline(player.UserId, spawnPart.Position);
 			}
 		}
 
@@ -567,6 +569,12 @@ export class HachiRideMinigame implements IMinigame {
 		}
 	}
 
+	private resetAnticheatBaseline(userId: number, position: Vector3) {
+		this.lastPositions.set(userId, position);
+		this.strikes.set(userId, 0);
+		this.lastStrikeTime.delete(userId);
+	}
+
 	private handleDoubleJumpEvent(player: Player) {
 		const state = this.playerStates.get(player.UserId);
 		if (!state) return;
@@ -630,6 +638,7 @@ export class HachiRideMinigame implements IMinigame {
 					`[HachiRide] Snapback for ${player.Name}: ${math.floor(dist)} studs in ${string.format("%.1f", elapsed)}s (strike ${currentStrikes})`,
 				);
 				player.Character?.PivotTo(new CFrame(lastPos));
+				if (hrp) hrp.AssemblyLinearVelocity = Vector3.zero;
 				this.lastPositions.set(userId, lastPos);
 			}
 		}
@@ -637,7 +646,6 @@ export class HachiRideMinigame implements IMinigame {
 
 	private detectWallRun(dt: number) {
 		for (const [userId, state] of this.playerStates) {
-			if (state.evolutionLevel < 2) continue;
 			const player = this.playerObjects.get(userId);
 			if (!player?.Character) continue;
 			const hrp = player.Character.FindFirstChild("HumanoidRootPart") as
@@ -647,18 +655,20 @@ export class HachiRideMinigame implements IMinigame {
 			const humanoid = player.Character.FindFirstChildOfClass("Humanoid");
 			if (!humanoid) continue;
 
-			// Only wall-run when airborne
+			// Reset double-jump on landing (must run for level >= 1, before wall-run gate)
 			if (humanoid.FloorMaterial !== Enum.Material.Air) {
+				this.doubleJumpUsed.set(userId, false);
 				const wallState = this.wallRunStates.get(userId);
 				if (wallState?.running) {
 					wallState.running = false;
 					this.serverEvents.hachiWallRunStop.fire(player);
 					humanoid.PlatformStand = false;
 				}
-				// Reset double-jump on landing
-				this.doubleJumpUsed.set(userId, false);
 				continue;
 			}
+
+			// Wall-run requires evolution >= 2
+			if (state.evolutionLevel < 2) continue;
 
 			const rayParams = new RaycastParams();
 			rayParams.FilterDescendantsInstances = [player.Character];

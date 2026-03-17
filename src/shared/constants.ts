@@ -263,7 +263,7 @@ export const SCRAMBLE_TAG_BONUS_PER_TAG = 5;
 
 // Hachi anti-cheat
 export const HACHI_MAX_SPEED_TOLERANCE = 1.5; // multiplier over max expected speed
-export const HACHI_ANTICHEAT_GRACE_STUDS = 20; // extra tolerance per check interval
+export const HACHI_ANTICHEAT_GRACE_STUDS = 10; // extra tolerance per check interval
 export const HACHI_ANTICHEAT_STRIKE_LIMIT = 3; // strikes before snapback
 export const HACHI_ANTICHEAT_CHECK_INTERVAL = 1; // seconds between position checks
 export const HACHI_ANTICHEAT_STRIKE_DECAY = 30; // seconds clean before strikes reset

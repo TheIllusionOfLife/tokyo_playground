@@ -82,7 +82,8 @@ export class LobbyService implements OnStart {
 		});
 		CollectionService.GetInstanceRemovedSignal(SLIDE_RAMP_TAG).Connect(
 			(inst) => {
-				const idx = this.slideRamps.indexOf(inst as BasePart);
+				if (!inst.IsA("BasePart")) return;
+				const idx = this.slideRamps.indexOf(inst);
 				if (idx !== -1) this.slideRamps.remove(idx);
 			},
 		);

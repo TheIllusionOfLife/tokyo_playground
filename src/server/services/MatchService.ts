@@ -344,7 +344,6 @@ export class MatchService implements OnStart {
 			this.missionService.recordGameResult(
 				player,
 				state.role,
-				result,
 				state,
 				breakdown.totalPoints,
 				won,

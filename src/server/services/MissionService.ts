@@ -8,7 +8,6 @@ import {
 	MissionProgressData,
 	MissionSlot,
 	PlayerRole,
-	RoundResult,
 } from "shared/types";
 import { PlayerDataService } from "./PlayerDataService";
 
@@ -67,7 +66,6 @@ export class MissionService implements OnStart {
 	recordGameResult(
 		player: Player,
 		role: PlayerRole,
-		_result: RoundResult,
 		state: AnyPlayerState,
 		pointsEarned: number,
 		isWinner: boolean,

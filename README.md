@@ -43,7 +43,7 @@ npx biome check --write src/ # lint + auto-fix
 
 ## Project Structure
 
-```
+```text
 src/
   server/           Server scripts
     services/       Flamework @Service() classes
