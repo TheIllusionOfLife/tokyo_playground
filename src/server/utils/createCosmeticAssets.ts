@@ -36,10 +36,11 @@ const HAT_DEFS: HatDef[] = [
 
 /** Creates placeholder hat Accessory models in ServerStorage.Cosmetics if missing. */
 export function createCosmeticAssets() {
-	let folder = ServerStorage.FindFirstChild(COSMETICS_FOLDER) as
-		| Folder
-		| undefined;
-	if (!folder) {
+	const existing = ServerStorage.FindFirstChild(COSMETICS_FOLDER);
+	let folder: Folder;
+	if (existing?.IsA("Folder")) {
+		folder = existing;
+	} else {
 		folder = new Instance("Folder");
 		folder.Name = COSMETICS_FOLDER;
 		folder.Parent = ServerStorage;

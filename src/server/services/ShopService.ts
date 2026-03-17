@@ -118,14 +118,15 @@ export class ShopService implements OnStart {
 		}
 		const result: ShopItemData[] = [];
 		for (const item of SHOP_CATALOG) {
+			const owned = ownedItems.includes(item.id);
 			result.push({
 				id: item.id,
 				name: item.name,
 				category: item.category,
 				price: item.price,
 				levelRequired: item.levelRequired,
-				owned: ownedItems.includes(item.id),
-				equipped: equippedSet.has(item.id),
+				owned,
+				equipped: owned && equippedSet.has(item.id),
 			});
 		}
 		return result;

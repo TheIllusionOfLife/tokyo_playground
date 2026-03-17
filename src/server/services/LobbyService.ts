@@ -176,13 +176,14 @@ export class LobbyService implements OnStart {
 			if (!portal.IsA("BasePart")) continue;
 			const prompt = portal.FindFirstChildOfClass("ProximityPrompt");
 			if (!prompt) continue;
-			prompt.Triggered.Connect((_player: Player) => {
+			prompt.Triggered.Connect((player: Player) => {
 				if (!this.onStartRequested) {
 					warn(
 						"[LobbyService] CanKick portal triggered before onStartRequested registered",
 					);
 					return;
 				}
+				this.serverEvents.hintTextChanged.fire(player, "Starting Can Kick...");
 				this.onStartRequested(MinigameId.CanKick);
 			});
 		}
@@ -193,13 +194,17 @@ export class LobbyService implements OnStart {
 			if (!portal.IsA("BasePart")) continue;
 			portal
 				.FindFirstChildOfClass("ProximityPrompt")
-				?.Triggered.Connect((_player: Player) => {
+				?.Triggered.Connect((player: Player) => {
 					if (!this.onStartRequested) {
 						warn(
 							"[LobbyService] Scramble portal triggered before onStartRequested registered",
 						);
 						return;
 					}
+					this.serverEvents.hintTextChanged.fire(
+						player,
+						"Starting Shibuya Scramble...",
+					);
 					this.onStartRequested(MinigameId.ShibuyaScramble);
 				});
 		}

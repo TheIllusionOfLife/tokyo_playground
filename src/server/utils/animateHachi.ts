@@ -14,7 +14,7 @@ export function animateHachi(
 	};
 
 	// Detect airborne: vertical velocity well above ground noise
-	const airborne = body.AssemblyLinearVelocity.Y > 30;
+	const airborne = math.abs(body.AssemblyLinearVelocity.Y) > 30;
 
 	if (airborne) {
 		// Jump pose: tuck front legs forward, back legs backward

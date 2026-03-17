@@ -102,10 +102,8 @@ export class HudController implements OnStart {
 			}
 		});
 
-		clientEvents.equipResult.connect((ok) => {
-			if (ok) {
-				clientEvents.requestShopCatalog.fire(); // refresh equipped flags
-			}
+		clientEvents.equipResult.connect(() => {
+			clientEvents.requestShopCatalog.fire(); // refresh equipped flags
 		});
 
 		clientEvents.levelUp.connect((lv) => {

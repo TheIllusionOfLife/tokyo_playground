@@ -21,7 +21,7 @@ function ShopCard({
 	let active: boolean;
 
 	if (item.owned && item.equipped) {
-		buttonText = "EQUIPPED";
+		buttonText = "UNEQUIP";
 		buttonColor = Color3.fromRGB(80, 160, 200);
 		active = true;
 	} else if (item.owned) {

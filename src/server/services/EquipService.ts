@@ -1,6 +1,7 @@
 import { OnStart, Service } from "@flamework/core";
 import { Players, ServerStorage } from "@rbxts/services";
 import { SHOP_CATALOG } from "shared/constants";
+
 import { GlobalEvents } from "shared/network";
 import { ItemCategory, ItemId } from "shared/types";
 import { PlayerDataService } from "./PlayerDataService";
@@ -32,6 +33,7 @@ const TRAIL_COLORS: Partial<Record<ItemId, ColorSequence>> = {
 @Service()
 export class EquipService implements OnStart {
 	private readonly serverEvents = GlobalEvents.createServer({});
+	private readonly charAddedConns = new Map<number, RBXScriptConnection>();
 
 	constructor(private readonly playerDataService: PlayerDataService) {}
 
@@ -49,10 +51,19 @@ export class EquipService implements OnStart {
 				this.applyCosmetics(player);
 			}
 			// Apply on future respawns
-			player.CharacterAdded.Connect(() => {
-				task.wait(0.5); // Wait for character to fully load
+			const conn = player.CharacterAdded.Connect((character) => {
+				character.WaitForChild("HumanoidRootPart", 5);
 				this.applyCosmetics(player);
 			});
+			this.charAddedConns.set(player.UserId, conn);
+		});
+
+		Players.PlayerRemoving.Connect((player) => {
+			const conn = this.charAddedConns.get(player.UserId);
+			if (conn) {
+				conn.Disconnect();
+				this.charAddedConns.delete(player.UserId);
+			}
 		});
 	}
 
@@ -129,13 +140,6 @@ export class EquipService implements OnStart {
 	}
 
 	private applyHat(character: Model, itemId: ItemId) {
-		// Remove existing equipped hat first
-		for (const child of character.GetChildren()) {
-			if (child.IsA("Accessory") && child.FindFirstChild(EQUIPPED_HAT_TAG)) {
-				child.Destroy();
-			}
-		}
-
 		// Clone from ServerStorage.Cosmetics
 		const cosmeticsFolder = ServerStorage.FindFirstChild(COSMETICS_FOLDER);
 		if (!cosmeticsFolder) {
@@ -157,13 +161,6 @@ export class EquipService implements OnStart {
 	}
 
 	private applyTrail(character: Model, itemId: ItemId) {
-		// Remove existing equipped trail first
-		for (const child of character.GetDescendants()) {
-			if (child.IsA("Trail") && child.Name === EQUIPPED_TRAIL_TAG) {
-				child.Destroy();
-			}
-		}
-
 		const hrp = character.FindFirstChild("HumanoidRootPart") as
 			| BasePart
 			| undefined;

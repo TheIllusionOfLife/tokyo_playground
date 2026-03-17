@@ -28,6 +28,7 @@ import {
 	HACHI_WALL_RUN_MAX_DUR,
 	HACHI_WALL_RUN_RAYCAST,
 	HACHI_WALL_RUN_SPEED,
+	SCRAMBLE_SLIDE_COOLDOWN,
 } from "shared/constants";
 import { GlobalEvents } from "shared/network";
 import {
@@ -79,6 +80,7 @@ export class HachiRideMinigame implements IMinigame {
 	private strikes = new Map<number, number>();
 	private lastStrikeTime = new Map<number, number>();
 	private hachiSlideActive = new Set<number>();
+	private slideCooldowns = new Map<number, number>();
 	private roundStarted = false;
 
 	constructor(private readonly serverEvents: ServerEvents) {}
@@ -224,10 +226,17 @@ export class HachiRideMinigame implements IMinigame {
 			}),
 		);
 
-		// Track slide state for anti-cheat exemption
+		// Track slide state for anti-cheat exemption (rate-limited to prevent bypass)
 		matchJanitor.Add(
 			this.serverEvents.requestHachiSlide.connect((player) => {
 				if (!this.playerStates.has(player.UserId)) return;
+				const now = os.clock();
+				if (
+					now - (this.slideCooldowns.get(player.UserId) ?? 0) <
+					SCRAMBLE_SLIDE_COOLDOWN
+				)
+					return;
+				this.slideCooldowns.set(player.UserId, now);
 				this.hachiSlideActive.add(player.UserId);
 				task.delay(HACHI_SLIDE_FORCE_RESTORE_DELAY, () => {
 					this.hachiSlideActive.delete(player.UserId);
@@ -330,6 +339,7 @@ export class HachiRideMinigame implements IMinigame {
 		this.strikes.clear();
 		this.lastStrikeTime.clear();
 		this.hachiSlideActive.clear();
+		this.slideCooldowns.clear();
 		this.keyItems = [];
 		this.spawnParts = [];
 	}
@@ -363,6 +373,7 @@ export class HachiRideMinigame implements IMinigame {
 		this.strikes.delete(userId);
 		this.lastStrikeTime.delete(userId);
 		this.hachiSlideActive.delete(userId);
+		this.slideCooldowns.delete(userId);
 	}
 
 	private handleJumpRequest(player: Player) {
