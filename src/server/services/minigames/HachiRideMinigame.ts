@@ -291,7 +291,6 @@ export class HachiRideMinigame implements IMinigame {
 				});
 			}),
 		);
-
 	}
 
 	assignRoles(players: Player[]): Map<Player, PlayerRole> {
@@ -371,11 +370,9 @@ export class HachiRideMinigame implements IMinigame {
 		if (level >= 3 && state.evolutionLevel < 3 && hachiModel) {
 			for (const part of hachiModel.GetDescendants()) {
 				if (part.IsA("BasePart") && !part.IsA("UnionOperation")) {
-					TweenService.Create(
-						part,
-						new TweenInfo(0.5, Enum.EasingStyle.Quad),
-						{ Size: part.Size.mul(HACHI_BIG_SCALE) },
-					).Play();
+					TweenService.Create(part, new TweenInfo(0.5, Enum.EasingStyle.Quad), {
+						Size: part.Size.mul(HACHI_BIG_SCALE),
+					}).Play();
 				}
 			}
 		}
@@ -383,11 +380,9 @@ export class HachiRideMinigame implements IMinigame {
 			const fluffyColor = Color3.fromRGB(255, 182, 193);
 			for (const part of hachiModel.GetDescendants()) {
 				if (part.IsA("BasePart")) {
-					TweenService.Create(
-						part,
-						new TweenInfo(1, Enum.EasingStyle.Quad),
-						{ Color: fluffyColor },
-					).Play();
+					TweenService.Create(part, new TweenInfo(1, Enum.EasingStyle.Quad), {
+						Color: fluffyColor,
+					}).Play();
 				}
 			}
 		}
@@ -406,10 +401,7 @@ export class HachiRideMinigame implements IMinigame {
 		if (level >= 1) {
 			this.serverEvents.hachiDoubleJumpGranted.fire(player);
 		}
-		this.serverEvents.hintTextChanged.fire(
-			player,
-			this.getAbilityText(level),
-		);
+		this.serverEvents.hintTextChanged.fire(player, this.getAbilityText(level));
 	}
 
 	cleanup() {
@@ -538,9 +530,7 @@ export class HachiRideMinigame implements IMinigame {
 			const jumpT = this.jumpTime.get(userId) ?? 0;
 			if (now - jumpT < 1.0) continue; // Too soon after jump (avoid apex false positive)
 			const hachiModel = this.hachiModels.get(userId);
-			const body = hachiModel?.FindFirstChild("Body") as
-				| BasePart
-				| undefined;
+			const body = hachiModel?.FindFirstChild("Body") as BasePart | undefined;
 			if (!body) continue;
 			if (math.abs(body.AssemblyLinearVelocity.Y) < 5) {
 				this.jumpPhase.set(userId, 0);
@@ -767,18 +757,12 @@ export class HachiRideMinigame implements IMinigame {
 
 		// Show ability description
 		const abilityText = this.getAbilityText(newLevel);
-		this.serverEvents.hintTextChanged.fire(
-			player,
-			abilityText,
-		);
+		this.serverEvents.hintTextChanged.fire(player, abilityText);
 
 		// Also show level-up in generic hint after a delay
 		task.delay(3, () => {
 			if (!this.roundStarted) return;
-			this.serverEvents.hintTextChanged.fire(
-				player,
-				"Keep collecting!",
-			);
+			this.serverEvents.hintTextChanged.fire(player, "Keep collecting!");
 		});
 
 		print(

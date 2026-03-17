@@ -115,10 +115,7 @@ export function MissionPanel() {
 					Activated: () => setOpen(!open),
 				}}
 			>
-				<uipadding
-					PaddingLeft={new UDim(0, 8)}
-					PaddingRight={new UDim(0, 8)}
-				/>
+				<uipadding PaddingLeft={new UDim(0, 8)} PaddingRight={new UDim(0, 8)} />
 			</textbutton>
 			{open ? (
 				<frame
