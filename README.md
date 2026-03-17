@@ -55,6 +55,40 @@ src/
 out/                Compiled Luau output (git-ignored)
 ```
 
+## Releasing
+
+Each release is tracked in two places: Git tags and Roblox Studio Version History.
+
+### Steps
+
+1. **Decide version number**: follow `v0.MAJOR.0` (e.g., v0.6.0). Check the latest tag with `git tag -l`.
+2. **Write version notes**: Roblox Studio limits to 1000 characters and 25 lines. Keep it concise.
+3. **Publish in Studio**: File > Publish to Roblox. Paste the version name and notes in the Version History dialog.
+4. **Tag in Git**: create an annotated tag matching the version name.
+
+```sh
+git tag -a v0.6.0 -m "v0.6.0 — Short description"
+git push origin v0.6.0
+```
+
+### What goes where
+
+| Tracked in | What |
+|------------|------|
+| Git (code) | TypeScript source (`src/`), compiled Luau (`out/`, git-ignored) |
+| Studio (.rbxl) | Part positions, sizes, colors, tags, attributes, models, audio refs |
+| Git tags | Release version markers, synced with Studio Version History |
+
+### Version History
+
+| Version | Date | Summary |
+|---------|------|---------|
+| v0.1.0 | 2026-03-12 | PLATEAU spike: Shibuya buildings, Flamework, persistence |
+| v0.3.0 | 2026-03-14 | Shibuya Scramble minigame |
+| v0.4.0 | 2026-03-15 | Hachi Polish: speed, animation, slides, audio |
+| v0.5.0 | 2026-03-17 | Equip system, portal-only matches, mobile landscape |
+| v0.6.0 | 2026-03-17 | Bonus items, Hachi mechanics rewrite, skills panel |
+
 ## Mini-games
 
 - **Can Kick** (缶蹴り): Oni vs. Hiders. Oni counts, then hunts. Hiders can kick the can to free jailed teammates.
