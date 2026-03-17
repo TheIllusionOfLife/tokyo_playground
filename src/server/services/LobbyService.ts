@@ -263,7 +263,7 @@ export class LobbyService implements OnStart {
 			this.slideCooldowns.set(player.UserId, now);
 			const usePlayerDir = nearestRamp.GetAttribute("UsePlayerDirection");
 			let serverDir: Vector3;
-			if (typeIs(usePlayerDir, "boolean") && usePlayerDir && body) {
+			if (typeIs(usePlayerDir, "boolean") && usePlayerDir) {
 				// Use player/Hachi's current horizontal velocity as boost direction
 				const vel = body.AssemblyLinearVelocity;
 				const horizontal = new Vector3(vel.X, 0, vel.Z);

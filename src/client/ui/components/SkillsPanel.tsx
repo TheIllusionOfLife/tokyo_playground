@@ -5,11 +5,36 @@ import { GameStoreState } from "shared/store/game-store";
 import { MatchPhase, MinigameId } from "shared/types";
 
 const SKILLS = [
-	{ level: 0, name: "Jump", desc: "Press Space to jump", items: 0 },
-	{ level: 1, name: "Double Jump", desc: "Press Space mid-air", items: 10 },
-	{ level: 2, name: "Wall Run", desc: "Jump near walls", items: 25 },
-	{ level: 3, name: "Big Hachi", desc: "Bigger and faster", items: 40 },
-	{ level: 4, name: "Fluffy Hachi", desc: "Maximum cuteness", items: 60 },
+	{
+		level: 0,
+		name: "Jump",
+		desc: "Press Space to jump",
+		items: HACHI_EVOLUTION_THRESHOLDS[0],
+	},
+	{
+		level: 1,
+		name: "Double Jump",
+		desc: "Press Space mid-air",
+		items: HACHI_EVOLUTION_THRESHOLDS[1],
+	},
+	{
+		level: 2,
+		name: "Wall Run",
+		desc: "Jump near walls",
+		items: HACHI_EVOLUTION_THRESHOLDS[2],
+	},
+	{
+		level: 3,
+		name: "Big Hachi",
+		desc: "Bigger and faster",
+		items: HACHI_EVOLUTION_THRESHOLDS[3],
+	},
+	{
+		level: 4,
+		name: "Fluffy Hachi",
+		desc: "Maximum cuteness",
+		items: HACHI_EVOLUTION_THRESHOLDS[4],
+	},
 ];
 
 const UNLOCKED_COLOR = Color3.fromRGB(80, 200, 120);

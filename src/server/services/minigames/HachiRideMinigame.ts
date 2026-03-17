@@ -404,6 +404,16 @@ export class HachiRideMinigame implements IMinigame {
 		this.serverEvents.hintTextChanged.fire(player, this.getAbilityText(level));
 	}
 
+	/** Admin debug: set item count and trigger evolution checks. */
+	adminSetItems(player: Player, count: number) {
+		const state = this.playerStates.get(player.UserId);
+		if (!state) return;
+		state.itemCount = count;
+		state.catchCount = count;
+		this.serverEvents.hachiItemCollected.fire(player, count);
+		this.tryEvolve(player.UserId, state, player);
+	}
+
 	cleanup() {
 		// Eject players from VehicleSeats before janitor destroys Hachi models
 		for (const [, model] of this.hachiModels) {
@@ -527,6 +537,8 @@ export class HachiRideMinigame implements IMinigame {
 		for (const [userId] of this.playerStates) {
 			const phase = this.jumpPhase.get(userId) ?? 0;
 			if (phase === 0) continue; // Already ready
+			const wallState = this.wallRunStates.get(userId);
+			if (wallState?.running) continue; // Don't reset during wall-run
 			const jumpT = this.jumpTime.get(userId) ?? 0;
 			if (now - jumpT < 1.0) continue; // Too soon after jump (avoid apex false positive)
 			const hachiModel = this.hachiModels.get(userId);
@@ -550,7 +562,7 @@ export class HachiRideMinigame implements IMinigame {
 				body.AssemblyLinearVelocity.Z,
 			);
 			task.delay(HACHI_SLIDE_FORCE_RESTORE_DELAY, () => {
-				if (bv.Parent) bv.MaxForce = origForce;
+				if (this.roundStarted && bv.Parent) bv.MaxForce = origForce;
 			});
 		} else {
 			body.AssemblyLinearVelocity = new Vector3(
@@ -559,26 +571,6 @@ export class HachiRideMinigame implements IMinigame {
 				body.AssemblyLinearVelocity.Z,
 			);
 		}
-	}
-
-	private isHachiGrounded(
-		hachiModel: Model,
-		body: BasePart,
-		player: Player,
-	): boolean {
-		const rayParams = new RaycastParams();
-		rayParams.FilterDescendantsInstances = [
-			hachiModel,
-			...(player.Character ? [player.Character] : []),
-		];
-		rayParams.FilterType = Enum.RaycastFilterType.Exclude;
-		const halfHeight = body.Size.Y * 0.5;
-		const result = Workspace.Raycast(
-			body.Position,
-			new Vector3(0, -(halfHeight + 1), 0),
-			rayParams,
-		);
-		return result !== undefined;
 	}
 
 	private handleEjectRequest(player: Player) {

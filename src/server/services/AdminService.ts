@@ -78,7 +78,12 @@ export class AdminService implements OnStart {
 	}
 
 	private giveItems(player: Player, count: number) {
-		this.serverEvents.hachiItemCollected.fire(player, count);
+		const minigame = HachiRideMinigame.activeInstance;
+		if (minigame) {
+			minigame.adminSetItems(player, count);
+		} else {
+			this.serverEvents.hachiItemCollected.fire(player, count);
+		}
 		this.serverEvents.hintTextChanged.fire(player, `Items → ${count}`);
 	}
 }
