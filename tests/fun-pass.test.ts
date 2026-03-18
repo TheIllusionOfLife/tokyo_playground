@@ -3,11 +3,14 @@ import {
 	type HachiRidePlayerState,
 	ItemCategory,
 	ItemId,
+	MatchPhase,
 	type QueueStatusData,
 	type ShopItemData,
 } from "../src/shared/types";
+import { getAmbientVolumeForPhase } from "../src/shared/utils/ambientAudio";
 import { isInsideJailRattleZone } from "../src/shared/utils/canKickRattle";
 import { getFeaturedUnlock } from "../src/shared/utils/featuredUnlock";
+import { getHachiRoundOutcome } from "../src/shared/utils/hachiOutcome";
 import { buildHachiRaceSnapshot } from "../src/shared/utils/hachiRace";
 import { formatQueueStatusDetail } from "../src/shared/utils/queueStatus";
 import { canTriggerSpiritWave } from "../src/shared/utils/scrambleCrowd";
@@ -248,6 +251,105 @@ describe("buildHachiRaceSnapshot", () => {
 			leaderName: "Solo",
 			leaderScore: 80,
 			nextThreshold: 0,
+		});
+	});
+});
+
+describe("getAmbientVolumeForPhase", () => {
+	test("uses the quieter ambience during active rounds", () => {
+		expect(getAmbientVolumeForPhase(MatchPhase.InProgress)).toBe(0.01);
+	});
+
+	test("uses the lobby ambience outside active rounds", () => {
+		expect(getAmbientVolumeForPhase(MatchPhase.WaitingForPlayers)).toBe(0.03);
+		expect(getAmbientVolumeForPhase(MatchPhase.Rewarding)).toBe(0.03);
+	});
+});
+
+describe("getHachiRoundOutcome", () => {
+	test("selects the highest item collector without depending on point sorting", () => {
+		const states = new Map<number, HachiRidePlayerState>([
+			[
+				11,
+				{
+					minigameId: "HachiRide" as never,
+					playerId: 11,
+					role: "None" as never,
+					itemCount: 18,
+					evolutionLevel: 2,
+					catchCount: 200,
+					rescueCount: 0,
+				},
+			],
+			[
+				22,
+				{
+					minigameId: "HachiRide" as never,
+					playerId: 22,
+					role: "None" as never,
+					itemCount: 24,
+					evolutionLevel: 3,
+					catchCount: 10,
+					rescueCount: 0,
+				},
+			],
+		]);
+
+		expect(
+			getHachiRoundOutcome(
+				states,
+				new Map([
+					[11, "Akira"],
+					[22, "Mika"],
+				]),
+			),
+		).toEqual({
+			topItemCount: 24,
+			winnerName: "Mika",
+			winningPlayerIds: [22],
+		});
+	});
+
+	test("marks ties as shared Hachi winners", () => {
+		const states = new Map<number, HachiRidePlayerState>([
+			[
+				11,
+				{
+					minigameId: "HachiRide" as never,
+					playerId: 11,
+					role: "None" as never,
+					itemCount: 30,
+					evolutionLevel: 4,
+					catchCount: 0,
+					rescueCount: 0,
+				},
+			],
+			[
+				22,
+				{
+					minigameId: "HachiRide" as never,
+					playerId: 22,
+					role: "None" as never,
+					itemCount: 30,
+					evolutionLevel: 4,
+					catchCount: 0,
+					rescueCount: 0,
+				},
+			],
+		]);
+
+		expect(
+			getHachiRoundOutcome(
+				states,
+				new Map([
+					[11, "Akira"],
+					[22, "Mika"],
+				]),
+			),
+		).toEqual({
+			topItemCount: 30,
+			winnerName: "Akira",
+			winningPlayerIds: [11, 22],
 		});
 	});
 });
