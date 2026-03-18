@@ -227,13 +227,15 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 		)
 			return;
 
-		this.spiritCharges.set(player.UserId, 0);
-		this.serverEvents.spiritChargeChanged.fire(player, 0);
-		this.activeSpiritWaveCount += 1;
 		const wave = this.spawnCrowdWave(
 			SCRAMBLE_SPIRIT_WAVE_DURATION,
 			"Crowd Spirit! Extra cover for the hiders!",
 		);
+		if (wave.size() === 0) return;
+
+		this.spiritCharges.set(player.UserId, 0);
+		this.serverEvents.spiritChargeChanged.fire(player, 0);
+		this.activeSpiritWaveCount += 1;
 		task.delay(SCRAMBLE_SPIRIT_WAVE_DURATION + 1, () => {
 			this.despawnCrowdNPCs(wave);
 			this.activeSpiritWaveCount = math.max(0, this.activeSpiritWaveCount - 1);

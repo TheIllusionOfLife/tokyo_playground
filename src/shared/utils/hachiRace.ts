@@ -14,10 +14,15 @@ export function buildHachiRaceSnapshot(
 	thresholds: number[],
 ): HachiRaceSnapshot {
 	const localState = states.get(localUserId);
-	let stateCount = 0;
-	for (const _ of states) {
-		stateCount += 1;
-	}
+	const sizeMember = (
+		states as unknown as {
+			size: number | (() => number);
+		}
+	).size;
+	const stateCount =
+		typeOf(sizeMember) === "function"
+			? (sizeMember as () => number)()
+			: sizeMember;
 
 	if (!localState || stateCount === 0) {
 		return {

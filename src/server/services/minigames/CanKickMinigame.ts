@@ -18,6 +18,7 @@ import {
 	PlayerRole,
 	RoundResult,
 } from "shared/types";
+import { isInsideJailRattleZone } from "shared/utils/canKickRattle";
 import {
 	fireHintText,
 	startOniCountdown,
@@ -238,6 +239,14 @@ export class CanKickMinigame implements IMinigame {
 		if (!kickerState || kickerState.role !== PlayerRole.Hider) return false;
 		if (this.oniCounting) return false;
 		if (kickerState.isCaught) {
+			const kickerChar = player.Character;
+			if (!kickerState.isInJail || !kickerChar || !this.jailZone) return false;
+			const localPos = this.jailZone.CFrame.PointToObjectSpace(
+				kickerChar.GetPivot().Position,
+			);
+			const halfSize = this.jailZone.Size.mul(0.5);
+			if (!isInsideJailRattleZone(localPos, halfSize)) return false;
+
 			this.rattleProgress = math.min(
 				this.rattleProgress + 1,
 				CAN_RATTLE_TARGET,

@@ -150,10 +150,6 @@ export class MatchService implements OnStart {
 				break;
 			}
 		}
-		const wasRequested = this.startRequested;
-		if (!wasRequested) {
-			this.startRequested = true;
-		}
 		this.startRequested = false;
 
 		const config = MINIGAME_CONFIGS[this.nextMinigameId];

@@ -20,7 +20,6 @@ import { GameHud } from "../ui/GameHud";
 @Controller()
 export class HudController implements OnStart {
 	private root?: ReactRoblox.Root;
-	private activeMinigameId?: MinigameId;
 	private latestShopItems = gameStore.getState().shopItems;
 	private latestLevel = gameStore.getState().playgroundLevel;
 	private latestShopBalance = gameStore.getState().shopBalance;
@@ -43,7 +42,6 @@ export class HudController implements OnStart {
 		});
 
 		clientEvents.roleAssigned.connect((role, minigameId) => {
-			this.activeMinigameId = minigameId;
 			gameStore.setRole(role);
 			gameStore.setActiveMinigameId(minigameId);
 		});
@@ -173,18 +171,17 @@ export class HudController implements OnStart {
 
 		clientEvents.playerCaught.connect((caughtPlayerId) => {
 			const caughtPlayer = Players.GetPlayerByUserId(caughtPlayerId);
+			const activeMinigameId = gameStore.getState().activeMinigameId;
 			const verb =
-				this.activeMinigameId === MinigameId.ShibuyaScramble
-					? "tagged"
-					: "caught";
+				activeMinigameId === MinigameId.ShibuyaScramble ? "tagged" : "caught";
 			if (caughtPlayer) {
 				gameStore.pushFeedMessage(`${caughtPlayer.Name} was ${verb}!`);
 			}
 			if (Players.LocalPlayer.UserId !== caughtPlayerId) return;
-			if (this.activeMinigameId === MinigameId.CanKick) {
+			if (activeMinigameId === MinigameId.CanKick) {
 				gameStore.setLocalCaught(true);
 			}
-			if (this.activeMinigameId === MinigameId.ShibuyaScramble) {
+			if (activeMinigameId === MinigameId.ShibuyaScramble) {
 				gameStore.setLocalTagged(true);
 				gameStore.setSpiritCharges(1);
 			}

@@ -1,10 +1,8 @@
 import { describe, expect, test } from "bun:test";
-import { HACHI_ROUND_DURATION, MINIGAME_CONFIGS } from "../src/shared/constants";
 import {
 	type HachiRidePlayerState,
 	ItemCategory,
 	ItemId,
-	MinigameId,
 	type QueueStatusData,
 	type ShopItemData,
 } from "../src/shared/types";
@@ -16,6 +14,9 @@ import { canTriggerSpiritWave } from "../src/shared/utils/scrambleCrowd";
 
 const TEST_HACHI_THRESHOLDS = [0, 10, 25, 40, 60];
 (globalThis as unknown as { math: typeof Math }).math = Math;
+(globalThis as unknown as { typeOf: (value: unknown) => string }).typeOf = (
+	value,
+) => typeof value;
 
 describe("getFeaturedUnlock", () => {
 	test("prefers curated unlock order instead of raw catalog order", () => {
@@ -154,10 +155,7 @@ describe("isInsideJailRattleZone", () => {
 
 	test("rejects players outside the expanded jail bounds", () => {
 		expect(
-			isInsideJailRattleZone(
-				{ X: 13, Y: 0, Z: 0 },
-				{ X: 10, Y: 10, Z: 10 },
-			),
+			isInsideJailRattleZone({ X: 13, Y: 0, Z: 0 }, { X: 10, Y: 10, Z: 10 }),
 		).toBe(false);
 	});
 });
@@ -251,13 +249,5 @@ describe("buildHachiRaceSnapshot", () => {
 			leaderScore: 80,
 			nextThreshold: 0,
 		});
-	});
-});
-
-describe("HACHI_ROUND_DURATION", () => {
-	test("stays aligned with the authoritative Hachi config duration", () => {
-		expect(HACHI_ROUND_DURATION).toBe(
-			MINIGAME_CONFIGS[MinigameId.HachiRide].roundDuration,
-		);
 	});
 });

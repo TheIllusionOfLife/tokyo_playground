@@ -254,7 +254,8 @@ export const HACHI_KEY_ITEM_TAG = "HachiKeyItem";
 export const HACHI_SPAWN_TAG = "HachiRideSpawn";
 
 // Hachi Ride tuning
-export const HACHI_ROUND_DURATION = 105;
+export const HACHI_ROUND_DURATION =
+	MINIGAME_CONFIGS[MinigameId.HachiRide].roundDuration;
 export const HACHI_EVOLUTION_THRESHOLDS = [0, 10, 25, 40, 60];
 export const HACHI_WALK_SPEEDS = [100, 120, 140, 170, 210];
 export const HACHI_ITEMS_TO_SPAWN = 200;
