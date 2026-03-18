@@ -1,11 +1,10 @@
-import { ItemId, type ShopItemData } from "shared/types";
+import {
+	type FeaturedUnlockData,
+	ItemId,
+	type ShopItemData,
+} from "shared/types";
 
-export interface FeaturedUnlock {
-	name: string;
-	description: string;
-	progressCurrent: number;
-	progressTarget: number;
-}
+export type FeaturedUnlock = FeaturedUnlockData;
 
 const FEATURED_UNLOCK_ORDER: ItemId[] = [
 	ItemId.HatCone,
@@ -24,7 +23,7 @@ export function getFeaturedUnlock(
 	items: ShopItemData[],
 	level: number,
 	shopBalance: number,
-): FeaturedUnlock | undefined {
+): FeaturedUnlockData | undefined {
 	let target = items.find((item) => !item.owned);
 	for (const itemId of FEATURED_UNLOCK_ORDER) {
 		const featuredItem = items.find(

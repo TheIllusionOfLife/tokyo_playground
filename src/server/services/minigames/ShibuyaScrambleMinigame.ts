@@ -347,13 +347,6 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 		duration = SCRAMBLE_CROWD_WAVE_DURATION,
 		hintText = "Crowd crossing — use them!",
 	) {
-		this.serverEvents.crowdWaveStarted.broadcast(4);
-		this.lastHintText = fireHintText(
-			this.serverEvents,
-			hintText,
-			this.lastHintText,
-		);
-
 		const waypointsFolder = Workspace.FindFirstChild("CrowdWaypoints");
 		if (!waypointsFolder) return [];
 		const waveNpcs: Part[] = [];
@@ -395,6 +388,15 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 				).Play();
 			}
 		}
+
+		if (waveNpcs.size() === 0) return [];
+
+		this.serverEvents.crowdWaveStarted.broadcast(4);
+		this.lastHintText = fireHintText(
+			this.serverEvents,
+			hintText,
+			this.lastHintText,
+		);
 
 		return waveNpcs;
 	}

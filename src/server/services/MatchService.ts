@@ -20,6 +20,10 @@ import {
 	RoundResult,
 	ScoreboardEntry,
 } from "shared/types";
+import {
+	getHachiRoundOutcome,
+	type HachiRoundOutcome,
+} from "shared/utils/hachiOutcome";
 import { GameStateService } from "./GameStateService";
 import { LobbyService } from "./LobbyService";
 import { MinigameService } from "./MinigameService";
@@ -53,6 +57,7 @@ export class MatchService implements OnStart {
 	private currentMinigameId: MinigameId = MinigameId.CanKick;
 	private startRequested = false;
 	private matchTimeRemaining = 0;
+	private intermissionSecondsRemaining = LOBBY_INTERMISSION;
 
 	constructor(
 		private readonly gameStateService: GameStateService,
@@ -128,7 +133,7 @@ export class MatchService implements OnStart {
 	requestStart(minigameId: MinigameId) {
 		this.nextMinigameId = minigameId;
 		this.startRequested = true;
-		this.broadcastQueueStatus(0, true);
+		this.broadcastQueueStatus(this.intermissionSecondsRemaining, false);
 	}
 
 	private runIntermission() {
@@ -136,9 +141,14 @@ export class MatchService implements OnStart {
 		this.transitionPhase(MatchPhase.WaitingForPlayers);
 
 		let waited = 0;
+		this.intermissionSecondsRemaining = LOBBY_INTERMISSION;
 		while (waited < LOBBY_INTERMISSION) {
+			this.intermissionSecondsRemaining = math.max(
+				0,
+				LOBBY_INTERMISSION - waited,
+			);
 			this.broadcastQueueStatus(
-				math.max(0, LOBBY_INTERMISSION - waited),
+				this.intermissionSecondsRemaining,
 				!this.startRequested,
 			);
 			const dt = task.wait(1);
@@ -150,6 +160,7 @@ export class MatchService implements OnStart {
 				break;
 			}
 		}
+		this.intermissionSecondsRemaining = 0;
 		this.startRequested = false;
 
 		const config = MINIGAME_CONFIGS[this.nextMinigameId];
@@ -293,15 +304,22 @@ export class MatchService implements OnStart {
 		const minigame = this.activeMinigame!;
 		const playerStates = minigame.getPlayerStates();
 
-		// Pre-compute HachiRide winner threshold (highest itemCount wins)
-		let maxHachiItems = 0;
+		let hachiRoundOutcome: HachiRoundOutcome | undefined;
+		const hachiWinningPlayerIds = new Set<number>();
 		if (this.currentMinigameId === MinigameId.HachiRide) {
-			for (const [, state] of playerStates) {
-				if (state.minigameId === MinigameId.HachiRide) {
-					if ((state as HachiRidePlayerState).itemCount > maxHachiItems) {
-						maxHachiItems = (state as HachiRidePlayerState).itemCount;
-					}
+			const hachiStates = new Map<number, HachiRidePlayerState>();
+			const hachiPlayerNames = new Map<number, string>();
+			for (const [userId, state] of playerStates) {
+				if (state.minigameId !== MinigameId.HachiRide) continue;
+				hachiStates.set(userId, state as HachiRidePlayerState);
+				const player = Players.GetPlayerByUserId(userId);
+				if (player) {
+					hachiPlayerNames.set(userId, player.Name);
 				}
+			}
+			hachiRoundOutcome = getHachiRoundOutcome(hachiStates, hachiPlayerNames);
+			for (const userId of hachiRoundOutcome.winningPlayerIds) {
+				hachiWinningPlayerIds.add(userId);
 			}
 		}
 
@@ -318,8 +336,7 @@ export class MatchService implements OnStart {
 
 			const won =
 				state.minigameId === MinigameId.HachiRide
-					? maxHachiItems > 0 &&
-						(state as HachiRidePlayerState).itemCount === maxHachiItems
+					? hachiWinningPlayerIds.has(userId)
 					: (state.role === PlayerRole.Oni && result === RoundResult.OniWins) ||
 						(state.role === PlayerRole.Hider &&
 							(result === RoundResult.HidersWin ||
@@ -395,13 +412,19 @@ export class MatchService implements OnStart {
 		entries.sort((a, b) => b.points > a.points);
 
 		// Compute funny round summary
-		const winnerName = entries.size() > 0 ? entries[0].playerName : "";
+		const winnerName =
+			this.currentMinigameId === MinigameId.HachiRide
+				? (hachiRoundOutcome?.winnerName ?? "")
+				: entries.size() > 0
+					? entries[0].playerName
+					: "";
 		const roundDuration =
 			MINIGAME_CONFIGS[this.currentMinigameId].roundDuration;
 		const summaryText = this.computeRoundSummary(
 			result,
 			entries,
 			roundDuration,
+			hachiRoundOutcome,
 		);
 		this.serverEvents.roundSummary.broadcast(summaryText, winnerName);
 
@@ -453,6 +476,7 @@ export class MatchService implements OnStart {
 		result: RoundResult,
 		entries: ScoreboardEntry[],
 		roundDuration: number,
+		hachiRoundOutcome?: HachiRoundOutcome,
 	): string {
 		const elapsed = math.floor(
 			roundDuration - math.max(0, this.matchTimeRemaining),
@@ -461,9 +485,10 @@ export class MatchService implements OnStart {
 		const totalRescues = entries.reduce((sum, e) => sum + e.rescues, 0);
 
 		if (this.currentMinigameId === MinigameId.HachiRide) {
-			const topItems = entries.size() > 0 ? entries[0].catches : 0;
+			const topItems = hachiRoundOutcome?.topItemCount ?? 0;
 			if (topItems > 0) {
-				return `${entries[0].playerName} collected ${topItems} items!`;
+				const winnerName = hachiRoundOutcome?.winnerName ?? "A rider";
+				return `${winnerName} collected ${topItems} items!`;
 			}
 			return "What a ride!";
 		}
@@ -523,9 +548,6 @@ export class MatchService implements OnStart {
 		this.matchPlayers.delete(player);
 		this.playerCooldowns.delete(player);
 
-		// Reset streak on early leave
-		this.playerDataService.resetStreak(player);
-
 		if (!this.activeMinigame) return;
 
 		const states = this.activeMinigame.getPlayerStates();
@@ -535,6 +557,9 @@ export class MatchService implements OnStart {
 		this.activeMinigame.removePlayer(player.UserId);
 
 		if ((this.currentPhase as MatchPhase) !== MatchPhase.InProgress) return;
+
+		// Reset streak on early leave
+		this.playerDataService.resetStreak(player);
 
 		if (playerState?.role === PlayerRole.Oni) {
 			print("[MatchService] Oni left — Hiders win!");

@@ -14,6 +14,7 @@ import {
 	ScoreboardEntry,
 	ShopItemData,
 } from "shared/types";
+import { FEED_MESSAGE_TTL_SECONDS } from "shared/utils/feed";
 
 export interface FeedMessage {
 	text: string;
@@ -177,7 +178,9 @@ export const gameStore = createProducer(initialState, {
 	pushFeedMessage: (state, text: string) => ({
 		...state,
 		feedMessages: [
-			...state.feedMessages.filter((m) => os.clock() - m.timestamp < 5),
+			...state.feedMessages.filter(
+				(m) => os.clock() - m.timestamp < FEED_MESSAGE_TTL_SECONDS,
+			),
 			{ text, timestamp: os.clock() },
 		],
 	}),

@@ -1,9 +1,12 @@
 import React, { useEffect, useState } from "@rbxts/react";
 import { useSelector } from "@rbxts/react-reflex";
 import { FeedMessage, GameStoreState } from "shared/store/game-store";
+import {
+	FEED_MESSAGE_TTL_SECONDS,
+	FEED_UPDATE_INTERVAL_SECONDS,
+} from "shared/utils/feed";
 
 const MAX_VISIBLE = 4;
-const FADE_DURATION = 5;
 
 export function EventFeed() {
 	const feedMessages = useSelector(
@@ -13,14 +16,18 @@ export function EventFeed() {
 
 	// Tick every 0.5s to drive fade-out
 	useEffect(() => {
+		let lastUpdate = os.clock();
 		const conn = game.GetService("RunService").Heartbeat.Connect(() => {
-			setNow(os.clock());
+			const current = os.clock();
+			if (current - lastUpdate < FEED_UPDATE_INTERVAL_SECONDS) return;
+			lastUpdate = current;
+			setNow(current);
 		});
 		return () => conn.Disconnect();
 	}, []);
 
 	const visible = feedMessages
-		.filter((m) => now - m.timestamp < FADE_DURATION)
+		.filter((m) => now - m.timestamp < FEED_MESSAGE_TTL_SECONDS)
 		.filter((_, i, arr) => i >= arr.size() - MAX_VISIBLE);
 
 	if (visible.size() === 0) return undefined;
@@ -50,7 +57,9 @@ function FeedEntry(props: {
 }) {
 	const age = props.now - props.message.timestamp;
 	const alpha =
-		age > FADE_DURATION - 1 ? math.clamp(FADE_DURATION - age, 0, 1) : 1;
+		age > FEED_MESSAGE_TTL_SECONDS - 1
+			? math.clamp(FEED_MESSAGE_TTL_SECONDS - age, 0, 1)
+			: 1;
 
 	return (
 		<textlabel

@@ -27,6 +27,11 @@ import {
 import { IMinigame } from "./MinigameBase";
 
 type ServerEvents = ReturnType<typeof GlobalEvents.createServer>;
+const CAN_SOCKET_OFFSETS = [
+	new Vector3(0, 0, 0),
+	new Vector3(18, 0, 12),
+	new Vector3(-16, 0, -10),
+];
 
 export class CanKickMinigame implements IMinigame {
 	readonly id = MinigameId.CanKick;
@@ -165,13 +170,10 @@ export class CanKickMinigame implements IMinigame {
 		if (this.canRelocateElapsed < CAN_RELOCATE_INTERVAL) return;
 		this.canRelocateElapsed = 0;
 
-		const sockets = [
-			new Vector3(0, 0, 0),
-			new Vector3(18, 0, 12),
-			new Vector3(-16, 0, -10),
-		];
-		this.canSocketIndex = (this.canSocketIndex + 1) % sockets.size();
-		const nextPosition = this.canOrigin.add(sockets[this.canSocketIndex]);
+		this.canSocketIndex = (this.canSocketIndex + 1) % CAN_SOCKET_OFFSETS.size();
+		const nextPosition = this.canOrigin.add(
+			CAN_SOCKET_OFFSETS[this.canSocketIndex],
+		);
 		this.canModel.PivotTo(new CFrame(nextPosition));
 		this.lastHintText = fireHintText(
 			this.serverEvents,

@@ -16,6 +16,9 @@ export function HachiHud() {
 		(s: GameStoreState) => s.hachiEvolutionLevel,
 	);
 	const raceState = useSelector((s: GameStoreState) => s.hachiRaceState);
+	const hotspotSeconds = raceState
+		? math.max(0, math.floor(raceState.hotspotTimeLeft))
+		: 0;
 
 	if (
 		activeMinigameId !== MinigameId.HachiRide ||
@@ -102,7 +105,7 @@ export function HachiHud() {
 						TextColor3={Color3.fromRGB(255, 196, 92)}
 						TextScaled={true}
 						Font={Enum.Font.Gotham}
-						Text={`Hotspot: ${raceState.hotspotLabel} (${raceState.hotspotTimeLeft}s) • Next evo ${raceState.nextThreshold}`}
+						Text={`Hotspot: ${raceState.hotspotLabel} (${hotspotSeconds}s) • Next evo ${raceState.nextThreshold}`}
 					/>
 				</>
 			)}

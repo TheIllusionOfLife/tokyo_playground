@@ -23,6 +23,8 @@ export class HudController implements OnStart {
 	private latestShopItems = gameStore.getState().shopItems;
 	private latestLevel = gameStore.getState().playgroundLevel;
 	private latestShopBalance = gameStore.getState().shopBalance;
+	private roundIntroSequence = 0;
+	private oniRevealSequence = 0;
 
 	onStart() {
 		print("[HudController] Client initialized");
@@ -160,10 +162,11 @@ export class HudController implements OnStart {
 		});
 
 		clientEvents.roundIntroShown.connect((intro) => {
+			this.roundIntroSequence += 1;
+			const roundIntroSequence = this.roundIntroSequence;
 			gameStore.setRoundIntro(intro);
 			task.delay(intro.durationSeconds, () => {
-				const current = gameStore.getState().roundIntro;
-				if (current?.title === intro.title) {
+				if (this.roundIntroSequence === roundIntroSequence) {
 					gameStore.setRoundIntro(undefined);
 				}
 			});
@@ -213,9 +216,13 @@ export class HudController implements OnStart {
 		clientEvents.oniReveal.connect((oniUserId, durationSeconds) => {
 			const oniPlayer = Players.GetPlayerByUserId(oniUserId);
 			if (oniPlayer) {
+				this.oniRevealSequence += 1;
+				const oniRevealSequence = this.oniRevealSequence;
 				gameStore.setOniRevealName(oniPlayer.Name);
 				task.delay(durationSeconds, () => {
-					gameStore.setOniRevealName(undefined);
+					if (this.oniRevealSequence === oniRevealSequence) {
+						gameStore.setOniRevealName(undefined);
+					}
 				});
 			}
 		});

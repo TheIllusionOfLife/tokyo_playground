@@ -13,6 +13,7 @@ import {
 	SE_TICK,
 } from "shared/constants";
 import { MatchPhase } from "shared/types";
+import { getAmbientVolumeForPhase } from "shared/utils/ambientAudio";
 
 @Controller()
 export class BGMController implements OnStart {
@@ -39,7 +40,10 @@ export class BGMController implements OnStart {
 
 		// Fade ambient during active matches
 		clientEvents.matchPhaseChanged.connect((phase) => {
-			this.ambient.Volume = phase === MatchPhase.InProgress ? 0.01 : 0.03;
+			this.ambient.Volume = getAmbientVolumeForPhase(phase);
+		});
+		clientEvents.matchSnapshot.connect((phase) => {
+			this.ambient.Volume = getAmbientVolumeForPhase(phase);
 		});
 
 		clientEvents.hachiItemCollected.connect(() => {
