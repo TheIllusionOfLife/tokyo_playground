@@ -12,7 +12,7 @@ import {
 export class BGMController implements OnStart {
 	private bgm!: Sound;
 	private readonly seCache = new Map<string, Sound>();
-	private lastBonusTime = 0;
+	private bonusThisFrame = false;
 
 	onStart() {
 		this.bgm = new Instance("Sound");
@@ -23,13 +23,17 @@ export class BGMController implements OnStart {
 		this.bgm.Play();
 
 		clientEvents.hachiItemCollected.connect(() => {
-			// Skip regular SE if bonus just played (same frame)
-			if (os.clock() - this.lastBonusTime < 0.1) return;
+			// Skip regular SE if bonus just played (both events arrive same frame)
+			if (this.bonusThisFrame) return;
 			this.playSE(SE_ITEM_PICKUP, 0.6);
 		});
 		clientEvents.hachiBonusCollected.connect(() => {
-			this.lastBonusTime = os.clock();
+			this.bonusThisFrame = true;
 			this.playSE(SE_BONUS_PICKUP, 1.0);
+			// Reset flag after deferred callback (next frame)
+			task.defer(() => {
+				this.bonusThisFrame = false;
+			});
 		});
 		clientEvents.hachiEvolved.connect(() => this.playSE(SE_EVOLVE, 0.8));
 	}

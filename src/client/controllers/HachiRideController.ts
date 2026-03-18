@@ -4,11 +4,11 @@ import {
 	Players,
 	RunService,
 	SoundService,
+	UserInputService,
 } from "@rbxts/services";
 import { clientEvents } from "client/network";
 import { SE_JUMP } from "shared/constants";
 
-const ACTION_HACHI_JUMP = "HachiJump";
 const ACTION_HACHI_EJECT = "HachiEject";
 
 // Body bob tuning — slower than Hachi's leg freq for a gentle gallop sway
@@ -25,11 +25,9 @@ function isHachiSeat(seat: BasePart): boolean {
 @Controller()
 export class HachiRideController implements OnStart {
 	private seatedInHachi = false;
-	// Guard: true while the ContextActionService callback is handling a jump,
-	// so the Jump property listener doesn't double-fire the event.
-	private contextJumpActive = false;
 
-	private jumpConn?: RBXScriptConnection;
+	private steppedConn?: RBXScriptConnection;
+	private jumpRequestConn?: RBXScriptConnection;
 	private bobConn?: RBXScriptConnection;
 	private bobRootC0?: CFrame; // original Motor6D.C0 to restore on dismount
 
@@ -66,22 +64,28 @@ export class HachiRideController implements OnStart {
 
 	// Called when player sits in any Hachi's VehicleSeat
 	private onSeated() {
-		// Space/ButtonA: fire hachiJump. Server decides regular vs double jump.
-		ContextActionService.BindAction(
-			ACTION_HACHI_JUMP,
-			(_name, inputState, _input) => {
-				if (inputState === Enum.UserInputState.Begin) {
-					this.contextJumpActive = true;
-					clientEvents.hachiJump.fire();
-					this.playJumpSE();
-					this.contextJumpActive = false;
+		const character = Players.LocalPlayer.Character;
+		const humanoid = character?.FindFirstChildOfClass("Humanoid");
+
+		// Stepped runs BEFORE physics each frame. Force Jump=false so the
+		// engine's seat-exit logic never sees a true value. This is the only
+		// reliable way to prevent the mobile touch jump button from unseating.
+		// JumpRequest fires on all platforms (keyboard Space, gamepad A,
+		// mobile touch button) even when Jump is forced false above.
+		if (humanoid) {
+			this.steppedConn = RunService.Stepped.Connect(() => {
+				// Guard: humanoid may be destroyed before Heartbeat cleans up
+				if (humanoid.Parent && humanoid.Jump) {
+					humanoid.Jump = false;
 				}
-				return Enum.ContextActionResult.Sink;
-			},
-			false,
-			Enum.KeyCode.Space,
-			Enum.KeyCode.ButtonA,
-		);
+			});
+
+			this.jumpRequestConn = UserInputService.JumpRequest.Connect(() => {
+				if (!this.seatedInHachi) return;
+				clientEvents.hachiJump.fire();
+				this.playJumpSE();
+			});
+		}
 
 		// E key to dismount
 		ContextActionService.BindAction(
@@ -95,29 +99,6 @@ export class HachiRideController implements OnStart {
 			false,
 			Enum.KeyCode.E,
 		);
-
-		// Prevent the Jumping state entirely while seated. This stops the
-		// mobile touch jump button from unseating the player — the engine
-		// processes the state transition in C++ before any Lua listener fires,
-		// so GetPropertyChangedSignal("Jump") alone cannot prevent it.
-		const character = Players.LocalPlayer.Character;
-		const humanoid = character?.FindFirstChildOfClass("Humanoid");
-		if (humanoid) {
-			humanoid.SetStateEnabled(Enum.HumanoidStateType.Jumping, false);
-
-			// Detect jump intent (mobile touch button still sets Jump = true even
-			// though the state transition is blocked) and fire Hachi jump instead.
-			// The contextJumpActive guard prevents double-fire from ContextActionService.
-			this.jumpConn = humanoid.GetPropertyChangedSignal("Jump").Connect(() => {
-				if (humanoid.Jump) {
-					humanoid.Jump = false;
-					if (!this.contextJumpActive) {
-						clientEvents.hachiJump.fire();
-						this.playJumpSE();
-					}
-				}
-			});
-		}
 
 		// Body bob: sinusoidal vertical offset on the character's root Motor6D,
 		// synced with Hachi's leg animation frequency so the rider bounces in rhythm.
@@ -150,22 +131,17 @@ export class HachiRideController implements OnStart {
 
 	// Called when player stands up (or deactivate is called)
 	private onStoodUp() {
-		ContextActionService.UnbindAction(ACTION_HACHI_JUMP);
+		this.steppedConn?.Disconnect();
+		this.steppedConn = undefined;
+		this.jumpRequestConn?.Disconnect();
+		this.jumpRequestConn = undefined;
 		ContextActionService.UnbindAction(ACTION_HACHI_EJECT);
-		this.jumpConn?.Disconnect();
-		this.jumpConn = undefined;
-
-		// Re-enable the Jumping state so the character can jump normally on foot
-		const character = Players.LocalPlayer.Character;
-		const humanoid = character?.FindFirstChildOfClass("Humanoid");
-		if (humanoid) {
-			humanoid.SetStateEnabled(Enum.HumanoidStateType.Jumping, true);
-		}
 
 		// Restore original root Motor6D and stop bob
 		this.bobConn?.Disconnect();
 		this.bobConn = undefined;
 		if (this.bobRootC0) {
+			const character = Players.LocalPlayer.Character;
 			const lowerTorso = character?.FindFirstChild("LowerTorso") as
 				| BasePart
 				| undefined;

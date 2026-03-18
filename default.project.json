@@ -42,6 +42,12 @@
 		"Workspace": {
 			"$className": "Workspace"
 		},
+		"StarterGui": {
+			"$className": "StarterGui",
+			"$properties": {
+				"ScreenOrientation": "LandscapeSensor"
+			}
+		},
 		"HttpService": {
 			"$className": "HttpService",
 			"$properties": {
