@@ -1,9 +1,13 @@
 import { describe, expect, test } from "bun:test";
 import {
 	type HachiRidePlayerState,
+	ItemId,
 	ItemCategory,
+	type QueueStatusData,
 	type ShopItemData,
 } from "../src/shared/types";
+import { formatQueueStatusDetail } from "../src/shared/utils/queueStatus";
+import { canTriggerSpiritWave } from "../src/shared/utils/scrambleCrowd";
 import { getFeaturedUnlock } from "../src/shared/utils/featuredUnlock";
 import { buildHachiRaceSnapshot } from "../src/shared/utils/hachiRace";
 
@@ -11,6 +15,36 @@ const TEST_HACHI_THRESHOLDS = [0, 10, 25, 40, 60];
 (globalThis as unknown as { math: typeof Math }).math = Math;
 
 describe("getFeaturedUnlock", () => {
+	test("prefers curated unlock order instead of raw catalog order", () => {
+		const items: ShopItemData[] = [
+			{
+				id: ItemId.EmoteFlip,
+				name: "Rooftop Flip",
+				category: ItemCategory.Emote,
+				price: 250,
+				levelRequired: 5,
+				owned: false,
+				equipped: false,
+			},
+			{
+				id: ItemId.HatCone,
+				name: "Alley Cone Cap",
+				category: ItemCategory.Hat,
+				price: 50,
+				levelRequired: 1,
+				owned: false,
+				equipped: false,
+			},
+		];
+
+		expect(getFeaturedUnlock(items, 1, 10)).toEqual({
+			name: "Alley Cone Cap",
+			description: "Earn 40 more points to buy this reward.",
+			progressCurrent: 10,
+			progressTarget: 50,
+		});
+	});
+
 	test("prefers the first unowned item and reports level progress when locked", () => {
 		const items: ShopItemData[] = [
 			{
@@ -60,6 +94,48 @@ describe("getFeaturedUnlock", () => {
 			progressCurrent: 45,
 			progressTarget: 120,
 		});
+	});
+});
+
+describe("formatQueueStatusDetail", () => {
+	test("describes the auto-start countdown without implying opt-in readiness", () => {
+		const status: QueueStatusData = {
+			featuredMinigameId: "CanKick" as never,
+			secondsUntilStart: 8,
+			joinedPlayerCount: 5,
+			autoStartEnabled: true,
+		};
+
+		expect(formatQueueStatusDetail(status)).toBe(
+			"Starting in 8s • 5 in server",
+		);
+	});
+
+	test("shows when a portal pick overrides the automatic rotation", () => {
+		const status: QueueStatusData = {
+			featuredMinigameId: "HachiRide" as never,
+			secondsUntilStart: 0,
+			joinedPlayerCount: 3,
+			autoStartEnabled: false,
+		};
+
+		expect(formatQueueStatusDetail(status)).toBe(
+			"Portal selected • 3 in server",
+		);
+	});
+});
+
+describe("canTriggerSpiritWave", () => {
+	test("rejects waves when there are no charges left", () => {
+		expect(canTriggerSpiritWave(0, 0, 1)).toBe(false);
+	});
+
+	test("rejects waves once the concurrent cap is reached", () => {
+		expect(canTriggerSpiritWave(1, 1, 1)).toBe(false);
+	});
+
+	test("allows a wave when the player has a charge and the lane is free", () => {
+		expect(canTriggerSpiritWave(1, 0, 1)).toBe(true);
 	});
 });
 
