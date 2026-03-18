@@ -38,9 +38,12 @@ export class BGMController implements OnStart {
 		this.ambient.Parent = SoundService;
 		this.ambient.Play();
 
-		// Fade ambient during active matches
+		// Fade ambient during active matches and stop all SFX on return to lobby
 		clientEvents.matchPhaseChanged.connect((phase) => {
 			this.ambient.Volume = getAmbientVolumeForPhase(phase);
+			if (phase === MatchPhase.WaitingForPlayers) {
+				this.stopAllSE();
+			}
 		});
 		clientEvents.matchSnapshot.connect((phase) => {
 			this.ambient.Volume = getAmbientVolumeForPhase(phase);
@@ -85,6 +88,14 @@ export class BGMController implements OnStart {
 			this.seCache.set(id, s);
 		}
 		s.Volume = volume;
+		// Stop any in-progress playback before restarting (prevents long-asset overlap)
+		if (s.IsPlaying) s.Stop();
 		s.Play();
+	}
+
+	private stopAllSE() {
+		for (const [, s] of this.seCache) {
+			if (s.IsPlaying) s.Stop();
+		}
 	}
 }
