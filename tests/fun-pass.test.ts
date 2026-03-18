@@ -1,15 +1,15 @@
 import { describe, expect, test } from "bun:test";
 import {
 	type HachiRidePlayerState,
-	ItemId,
 	ItemCategory,
+	ItemId,
 	type QueueStatusData,
 	type ShopItemData,
 } from "../src/shared/types";
-import { formatQueueStatusDetail } from "../src/shared/utils/queueStatus";
-import { canTriggerSpiritWave } from "../src/shared/utils/scrambleCrowd";
 import { getFeaturedUnlock } from "../src/shared/utils/featuredUnlock";
 import { buildHachiRaceSnapshot } from "../src/shared/utils/hachiRace";
+import { formatQueueStatusDetail } from "../src/shared/utils/queueStatus";
+import { canTriggerSpiritWave } from "../src/shared/utils/scrambleCrowd";
 
 const TEST_HACHI_THRESHOLDS = [0, 10, 25, 40, 60];
 (globalThis as unknown as { math: typeof Math }).math = Math;

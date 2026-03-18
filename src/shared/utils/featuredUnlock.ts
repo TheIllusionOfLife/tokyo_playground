@@ -25,11 +25,16 @@ export function getFeaturedUnlock(
 	level: number,
 	shopBalance: number,
 ): FeaturedUnlock | undefined {
-	const target =
-		FEATURED_UNLOCK_ORDER.map((itemId) =>
-			items.find((item) => item.id === itemId && !item.owned),
-		).find((item): item is ShopItemData => item !== undefined) ??
-		items.find((item) => !item.owned);
+	let target = items.find((item) => !item.owned);
+	for (const itemId of FEATURED_UNLOCK_ORDER) {
+		const featuredItem = items.find(
+			(item) => item.id === itemId && !item.owned,
+		);
+		if (featuredItem) {
+			target = featuredItem;
+			break;
+		}
+	}
 	if (!target) return undefined;
 
 	if (level < target.levelRequired) {

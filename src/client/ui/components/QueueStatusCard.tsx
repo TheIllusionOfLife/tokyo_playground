@@ -46,15 +46,15 @@ export function QueueStatusCard() {
 				Font={Enum.Font.GothamBold}
 				Text={MINIGAME_LABELS[queueStatus.featuredMinigameId]}
 			/>
-				<textlabel
-					Size={new UDim2(1, -16, 0, 16)}
-					Position={new UDim2(0, 8, 0, 56)}
-					BackgroundTransparency={1}
-					TextColor3={Color3.fromRGB(180, 200, 255)}
-					TextScaled={true}
-					Font={Enum.Font.Gotham}
-					Text={formatQueueStatusDetail(queueStatus)}
-				/>
-			</frame>
-		);
-	}
+			<textlabel
+				Size={new UDim2(1, -16, 0, 16)}
+				Position={new UDim2(0, 8, 0, 56)}
+				BackgroundTransparency={1}
+				TextColor3={Color3.fromRGB(180, 200, 255)}
+				TextScaled={true}
+				Font={Enum.Font.Gotham}
+				Text={formatQueueStatusDetail(queueStatus)}
+			/>
+		</frame>
+	);
+}

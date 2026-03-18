@@ -373,15 +373,15 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 					(math.random() - 0.5) * 4,
 				);
 
-					const npcPart = new Instance("Part");
-					npcPart.Size = new Vector3(1, 3, 1);
-					npcPart.Anchored = true;
-					npcPart.CanCollide = false;
-					npcPart.CanTouch = false;
-					npcPart.CanQuery = false;
-					npcPart.Color = Color3.fromRGB(150, 150, 150);
-					npcPart.Position = startPart.Position.add(offset);
-					npcPart.Parent = Workspace;
+				const npcPart = new Instance("Part");
+				npcPart.Size = new Vector3(1, 3, 1);
+				npcPart.Anchored = true;
+				npcPart.CanCollide = false;
+				npcPart.CanTouch = false;
+				npcPart.CanQuery = false;
+				npcPart.Color = Color3.fromRGB(150, 150, 150);
+				npcPart.Position = startPart.Position.add(offset);
+				npcPart.Parent = Workspace;
 
 				this.activeCrowdNPCs.push(npcPart);
 				waveNpcs.push(npcPart);
