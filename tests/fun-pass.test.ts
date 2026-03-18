@@ -1,11 +1,14 @@
 import { describe, expect, test } from "bun:test";
+import { HACHI_ROUND_DURATION, MINIGAME_CONFIGS } from "../src/shared/constants";
 import {
 	type HachiRidePlayerState,
 	ItemCategory,
 	ItemId,
+	MinigameId,
 	type QueueStatusData,
 	type ShopItemData,
 } from "../src/shared/types";
+import { isInsideJailRattleZone } from "../src/shared/utils/canKickRattle";
 import { getFeaturedUnlock } from "../src/shared/utils/featuredUnlock";
 import { buildHachiRaceSnapshot } from "../src/shared/utils/hachiRace";
 import { formatQueueStatusDetail } from "../src/shared/utils/queueStatus";
@@ -139,6 +142,26 @@ describe("canTriggerSpiritWave", () => {
 	});
 });
 
+describe("isInsideJailRattleZone", () => {
+	test("accepts players inside the expanded jail bounds", () => {
+		expect(
+			isInsideJailRattleZone(
+				{ X: 6.5, Y: 9, Z: -4.5 },
+				{ X: 10, Y: 10, Z: 10 },
+			),
+		).toBe(true);
+	});
+
+	test("rejects players outside the expanded jail bounds", () => {
+		expect(
+			isInsideJailRattleZone(
+				{ X: 13, Y: 0, Z: 0 },
+				{ X: 10, Y: 10, Z: 10 },
+			),
+		).toBe(false);
+	});
+});
+
 describe("buildHachiRaceSnapshot", () => {
 	test("builds local rank, leader info, and next evolution threshold", () => {
 		const states = new Map<number, HachiRidePlayerState>([
@@ -228,5 +251,13 @@ describe("buildHachiRaceSnapshot", () => {
 			leaderScore: 80,
 			nextThreshold: 0,
 		});
+	});
+});
+
+describe("HACHI_ROUND_DURATION", () => {
+	test("stays aligned with the authoritative Hachi config duration", () => {
+		expect(HACHI_ROUND_DURATION).toBe(
+			MINIGAME_CONFIGS[MinigameId.HachiRide].roundDuration,
+		);
 	});
 });
