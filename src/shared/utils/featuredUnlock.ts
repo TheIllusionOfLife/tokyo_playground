@@ -1,4 +1,4 @@
-import { type ShopItemData } from "shared/types";
+import { ItemId, type ShopItemData } from "shared/types";
 
 export interface FeaturedUnlock {
 	name: string;
@@ -7,12 +7,29 @@ export interface FeaturedUnlock {
 	progressTarget: number;
 }
 
+const FEATURED_UNLOCK_ORDER: ItemId[] = [
+	ItemId.HatCone,
+	ItemId.TrailStar,
+	ItemId.EmoteDance,
+	ItemId.HatBucket,
+	ItemId.EmoteCheer,
+	ItemId.HatCrown,
+	ItemId.TrailFlame,
+	ItemId.TrailRainbow,
+	ItemId.EmoteWave,
+	ItemId.EmoteFlip,
+];
+
 export function getFeaturedUnlock(
 	items: ShopItemData[],
 	level: number,
 	shopBalance: number,
 ): FeaturedUnlock | undefined {
-	const target = items.find((item) => !item.owned);
+	const target =
+		FEATURED_UNLOCK_ORDER.map((itemId) =>
+			items.find((item) => item.id === itemId && !item.owned),
+		).find((item): item is ShopItemData => item !== undefined) ??
+		items.find((item) => !item.owned);
 	if (!target) return undefined;
 
 	if (level < target.levelRequired) {

@@ -2,6 +2,7 @@ import React from "@rbxts/react";
 import { useSelector } from "@rbxts/react-reflex";
 import { GameStoreState } from "shared/store/game-store";
 import { MatchPhase, MinigameId } from "shared/types";
+import { formatQueueStatusDetail } from "shared/utils/queueStatus";
 
 const MINIGAME_LABELS: Record<MinigameId, string> = {
 	[MinigameId.CanKick]: "Can Kick",
@@ -45,15 +46,15 @@ export function QueueStatusCard() {
 				Font={Enum.Font.GothamBold}
 				Text={MINIGAME_LABELS[queueStatus.featuredMinigameId]}
 			/>
-			<textlabel
-				Size={new UDim2(1, -16, 0, 16)}
-				Position={new UDim2(0, 8, 0, 56)}
-				BackgroundTransparency={1}
-				TextColor3={Color3.fromRGB(180, 200, 255)}
-				TextScaled={true}
-				Font={Enum.Font.Gotham}
-				Text={`Starting in ${queueStatus.secondsUntilStart}s • ${queueStatus.joinedPlayerCount} ready`}
-			/>
-		</frame>
-	);
-}
+				<textlabel
+					Size={new UDim2(1, -16, 0, 16)}
+					Position={new UDim2(0, 8, 0, 56)}
+					BackgroundTransparency={1}
+					TextColor3={Color3.fromRGB(180, 200, 255)}
+					TextScaled={true}
+					Font={Enum.Font.Gotham}
+					Text={formatQueueStatusDetail(queueStatus)}
+				/>
+			</frame>
+		);
+	}

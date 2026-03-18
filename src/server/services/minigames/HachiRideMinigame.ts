@@ -813,7 +813,7 @@ export class HachiRideMinigame implements IMinigame {
 
 	private buildHotspots(items: BasePart[]): Hotspot[] {
 		if (items.size() === 0) return [];
-		const labels = ["Station Plaza", "Crosswalk Line", "Rooftop Alley"];
+		const labels = ["City Loop 1", "City Loop 2", "City Loop 3"];
 		const samples = [
 			items[0],
 			items[math.floor(items.size() / 2)],

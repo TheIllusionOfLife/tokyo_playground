@@ -10,6 +10,7 @@ import {
 	SCRAMBLE_CROWD_NPC_COUNT,
 	SCRAMBLE_CROWD_WAVE_DURATION,
 	SCRAMBLE_CROWD_WAVE_INTERVAL,
+	SCRAMBLE_MAX_ACTIVE_SPIRIT_WAVES,
 	SCRAMBLE_ONI_COUNT_DURATION,
 	SCRAMBLE_ROOFTOP_TP_COOLDOWN,
 	SCRAMBLE_ROOFTOP_TP_DEST,
@@ -28,6 +29,7 @@ import {
 	RoundResult,
 	ShibuyaScramblePlayerState,
 } from "shared/types";
+import { canTriggerSpiritWave } from "shared/utils/scrambleCrowd";
 import {
 	fireHintText,
 	startOniCountdown,
@@ -56,6 +58,7 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 	private rooftopTpCooldowns = new Map<number, number>();
 	private lastHintText = "";
 	private spiritCharges = new Map<number, number>();
+	private activeSpiritWaveCount = 0;
 
 	constructor(
 		private readonly serverEvents: ServerEvents,
@@ -215,16 +218,25 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 		const state = this.playerStates.get(player.UserId);
 		if (!state || state.role !== PlayerRole.Hider || !state.isTagged) return;
 		const charges = this.spiritCharges.get(player.UserId) ?? 0;
-		if (charges <= 0) return;
+		if (
+			!canTriggerSpiritWave(
+				charges,
+				this.activeSpiritWaveCount,
+				SCRAMBLE_MAX_ACTIVE_SPIRIT_WAVES,
+			)
+		)
+			return;
 
 		this.spiritCharges.set(player.UserId, 0);
 		this.serverEvents.spiritChargeChanged.fire(player, 0);
+		this.activeSpiritWaveCount += 1;
 		const wave = this.spawnCrowdWave(
 			SCRAMBLE_SPIRIT_WAVE_DURATION,
 			"Crowd Spirit! Extra cover for the hiders!",
 		);
 		task.delay(SCRAMBLE_SPIRIT_WAVE_DURATION + 1, () => {
 			this.despawnCrowdNPCs(wave);
+			this.activeSpiritWaveCount = math.max(0, this.activeSpiritWaveCount - 1);
 		});
 	}
 
@@ -314,6 +326,7 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 		this.slideCooldowns.clear();
 		this.rooftopTpCooldowns.clear();
 		this.spiritCharges.clear();
+		this.activeSpiritWaveCount = 0;
 	}
 
 	private runCrowdLoop() {
@@ -360,13 +373,15 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 					(math.random() - 0.5) * 4,
 				);
 
-				const npcPart = new Instance("Part");
-				npcPart.Size = new Vector3(1, 3, 1);
-				npcPart.Anchored = true;
-				npcPart.CanCollide = true;
-				npcPart.Color = Color3.fromRGB(150, 150, 150);
-				npcPart.Position = startPart.Position.add(offset);
-				npcPart.Parent = Workspace;
+					const npcPart = new Instance("Part");
+					npcPart.Size = new Vector3(1, 3, 1);
+					npcPart.Anchored = true;
+					npcPart.CanCollide = false;
+					npcPart.CanTouch = false;
+					npcPart.CanQuery = false;
+					npcPart.Color = Color3.fromRGB(150, 150, 150);
+					npcPart.Position = startPart.Position.add(offset);
+					npcPart.Parent = Workspace;
 
 				this.activeCrowdNPCs.push(npcPart);
 				waveNpcs.push(npcPart);
