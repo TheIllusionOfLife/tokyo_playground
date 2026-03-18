@@ -146,13 +146,18 @@ export class PlayerDataService implements OnStart {
 		const profile = this.profiles.get(player);
 		if (!profile) return { leveledUp: false, newLevel: 1 };
 
+		// Track win streak
+		if (won) {
+			profile.Data.streakCount += 1;
+			profile.Data.gamesWon += 1;
+		} else {
+			profile.Data.streakCount = 0;
+		}
+
 		const oldLevel = this.getPlaygroundLevel(player);
 		profile.Data.totalPlayPoints += breakdown.totalPoints;
 		profile.Data.shopBalance += breakdown.totalPoints;
 		profile.Data.gamesPlayed += 1;
-		if (won) {
-			profile.Data.gamesWon += 1;
-		}
 
 		const newLevel = this.getPlaygroundLevel(player);
 		if (newLevel > oldLevel) {
@@ -162,6 +167,17 @@ export class PlayerDataService implements OnStart {
 		}
 
 		return { leveledUp: newLevel > oldLevel, newLevel };
+	}
+
+	getStreakCount(player: Player): number {
+		return this.profiles.get(player)?.Data.streakCount ?? 0;
+	}
+
+	resetStreak(player: Player) {
+		const profile = this.profiles.get(player);
+		if (profile) {
+			profile.Data.streakCount = 0;
+		}
 	}
 
 	incrementGamesPlayed(player: Player) {

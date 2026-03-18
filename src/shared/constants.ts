@@ -308,3 +308,12 @@ export const SE_BONUS_PICKUP = "rbxassetid://6518811702"; // magic pickup (1.2s)
 export const SE_EVOLVE = "rbxassetid://6647877129"; // magic level-up sparkle (3.1s)
 export const SE_SLIDE = "rbxassetid://151284431"; // brief swoosh (2.0s)
 export const SE_JUMP = "rbxassetid://5682262154"; // cartoon bounce (0.5s)
+export const SE_CATCH = "rbxassetid://3398628966"; // cartoon bonk (0.5s)
+export const SE_CAN_KICK = "rbxassetid://2865227271"; // triumphant chime (1.0s)
+export const SE_TICK = "rbxassetid://5765960598"; // clock tick (0.3s)
+export const SE_HEARTBEAT = "rbxassetid://1086552862"; // heartbeat (0.8s)
+export const SE_CHEER = "rbxassetid://3085904673"; // crowd cheer (2.0s)
+export const SE_AMBIENT_CITY = "rbxassetid://1845756206"; // city hum loop (30s)
+
+// Streak bonuses — multiplier by consecutive games played (index = streak count, capped)
+export const STREAK_MULTIPLIERS = [1.0, 1.0, 1.1, 1.2, 1.2, 1.35];

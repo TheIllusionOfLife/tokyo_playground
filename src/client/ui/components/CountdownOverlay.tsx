@@ -6,6 +6,44 @@ export function CountdownOverlay() {
 	const countdownSeconds = useSelector(
 		(state: GameStoreState) => state.countdownSeconds,
 	);
+	const oniRevealName = useSelector(
+		(state: GameStoreState) => state.oniRevealName,
+	);
+
+	// Oni reveal takes priority over countdown numbers
+	if (oniRevealName !== undefined) {
+		return (
+			<frame
+				key="OniReveal"
+				Size={new UDim2(0.6, 0, 0.25, 0)}
+				Position={new UDim2(0.2, 0, 0.3, 0)}
+				BackgroundTransparency={1}
+			>
+				<textlabel
+					Size={new UDim2(1, 0, 0.4, 0)}
+					Position={new UDim2(0, 0, 0, 0)}
+					BackgroundTransparency={1}
+					TextColor3={Color3.fromRGB(255, 200, 100)}
+					TextStrokeColor3={Color3.fromRGB(0, 0, 0)}
+					TextStrokeTransparency={0.3}
+					TextScaled={true}
+					Font={Enum.Font.GothamBold}
+					Text="The Oni is..."
+				/>
+				<textlabel
+					Size={new UDim2(1, 0, 0.6, 0)}
+					Position={new UDim2(0, 0, 0.4, 0)}
+					BackgroundTransparency={1}
+					TextColor3={Color3.fromRGB(220, 80, 80)}
+					TextStrokeColor3={Color3.fromRGB(0, 0, 0)}
+					TextStrokeTransparency={0.2}
+					TextScaled={true}
+					Font={Enum.Font.GothamBlack}
+					Text={oniRevealName.upper()}
+				/>
+			</frame>
+		);
+	}
 
 	if (countdownSeconds <= 0) {
 		return undefined;

@@ -8,6 +8,7 @@ import {
 	MINIGAME_CONFIGS,
 	MINIGAME_INTROS,
 	RESULTS_DISPLAY_DURATION,
+	STREAK_MULTIPLIERS,
 } from "shared/constants";
 import { GlobalEvents } from "shared/network";
 import {
@@ -51,6 +52,7 @@ export class MatchService implements OnStart {
 	private nextMinigameId: MinigameId = MinigameId.CanKick;
 	private currentMinigameId: MinigameId = MinigameId.CanKick;
 	private startRequested = false;
+	private matchTimeRemaining = 0;
 
 	constructor(
 		private readonly gameStateService: GameStateService,
@@ -221,12 +223,22 @@ export class MatchService implements OnStart {
 		minigame.prepare(players, this.matchJanitor);
 
 		const roles = minigame.assignRoles(players);
+		let oniPlayer: Player | undefined;
 		for (const [player, role] of roles) {
 			this.serverEvents.roleAssigned.fire(player, role, minigameId);
 			this.serverEvents.roundIntroShown.fire(
 				player,
 				MINIGAME_INTROS[minigameId],
 			);
+			if (role === PlayerRole.Oni) {
+				oniPlayer = player;
+			}
+		}
+
+		// Dramatic Oni reveal — runs during Preparing phase (no round time lost)
+		if (oniPlayer) {
+			this.serverEvents.oniReveal.broadcast(oniPlayer.UserId, 2);
+			task.wait(2);
 		}
 
 		// In Progress
@@ -234,6 +246,7 @@ export class MatchService implements OnStart {
 
 		const config = MINIGAME_CONFIGS[minigameId];
 		let timeRemaining = config.roundDuration;
+		this.matchTimeRemaining = timeRemaining;
 		let lastTimerBroadcast = timeRemaining;
 
 		minigame.startRound();
@@ -244,6 +257,7 @@ export class MatchService implements OnStart {
 		) {
 			const dt = task.wait(0.1);
 			timeRemaining -= dt;
+			this.matchTimeRemaining = timeRemaining;
 			minigame.tick(dt);
 
 			// Broadcast timer at 1 Hz
@@ -333,6 +347,16 @@ export class MatchService implements OnStart {
 								won,
 							);
 
+			// Apply streak multiplier to totalPoints only (not per-pickup events)
+			const streakCount = this.playerDataService.getStreakCount(player);
+			const streakIndex = math.min(streakCount, STREAK_MULTIPLIERS.size() - 1);
+			const streakMultiplier = STREAK_MULTIPLIERS[streakIndex];
+			if (streakMultiplier > 1) {
+				breakdown.totalPoints = math.floor(
+					breakdown.totalPoints * streakMultiplier,
+				);
+			}
+
 			const levelResult = this.playerDataService.recordGameResult(
 				player,
 				breakdown,
@@ -373,6 +397,18 @@ export class MatchService implements OnStart {
 		}
 
 		entries.sort((a, b) => b.points > a.points);
+
+		// Compute funny round summary
+		const winnerName = entries.size() > 0 ? entries[0].playerName : "";
+		const roundDuration =
+			MINIGAME_CONFIGS[this.currentMinigameId].roundDuration;
+		const summaryText = this.computeRoundSummary(
+			result,
+			entries,
+			roundDuration,
+		);
+		this.serverEvents.roundSummary.broadcast(summaryText, winnerName);
+
 		this.serverEvents.scoreboard.broadcast(entries);
 
 		task.wait(RESULTS_DISPLAY_DURATION);
@@ -417,6 +453,37 @@ export class MatchService implements OnStart {
 		this.serverEvents.matchPhaseChanged.broadcast(newPhase);
 	}
 
+	private computeRoundSummary(
+		result: RoundResult,
+		entries: ScoreboardEntry[],
+		roundDuration: number,
+	): string {
+		const elapsed = math.floor(
+			roundDuration - math.max(0, this.matchTimeRemaining),
+		);
+		const totalCatches = entries.reduce((sum, e) => sum + e.catches, 0);
+		const totalRescues = entries.reduce((sum, e) => sum + e.rescues, 0);
+
+		if (this.currentMinigameId === MinigameId.HachiRide) {
+			const topItems = entries.size() > 0 ? entries[0].catches : 0;
+			if (topItems > 0) {
+				return `${entries[0].playerName} collected ${topItems} items!`;
+			}
+			return "What a ride!";
+		}
+
+		if (result === RoundResult.OniWins) {
+			return `Oni caught everyone in ${elapsed} seconds!`;
+		}
+		if (totalRescues > 0 && this.currentMinigameId === MinigameId.CanKick) {
+			return `The can was kicked ${totalRescues} times!`;
+		}
+		if (totalCatches === 0) {
+			return "Nobody got caught! Incredible hiding!";
+		}
+		return `${totalCatches} players caught in ${elapsed}s!`;
+	}
+
 	private handleActionRequest(player: Player, action: "catch" | "kickCan") {
 		if (this.currentPhase !== MatchPhase.InProgress) return;
 		if (!this.activeMinigame) return;
@@ -459,6 +526,9 @@ export class MatchService implements OnStart {
 		if (!this.matchPlayers.has(player)) return;
 		this.matchPlayers.delete(player);
 		this.playerCooldowns.delete(player);
+
+		// Reset streak on early leave
+		this.playerDataService.resetStreak(player);
 
 		if (!this.activeMinigame) return;
 

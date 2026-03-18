@@ -15,6 +15,11 @@ import {
 	ShopItemData,
 } from "shared/types";
 
+export interface FeedMessage {
+	text: string;
+	timestamp: number;
+}
+
 export interface GameStoreState {
 	matchPhase: MatchPhase;
 	role: PlayerRole;
@@ -43,6 +48,10 @@ export interface GameStoreState {
 	spiritCharges: number;
 	featuredUnlock?: FeaturedUnlockData;
 	hachiRaceState?: HachiRaceStateData;
+	feedMessages: FeedMessage[];
+	oniRevealName?: string;
+	summaryText?: string;
+	winnerName?: string;
 }
 
 const initialState: GameStoreState = {
@@ -66,6 +75,7 @@ const initialState: GameStoreState = {
 	localCaught: false,
 	localTagged: false,
 	spiritCharges: 0,
+	feedMessages: [],
 };
 
 export const gameStore = createProducer(initialState, {
@@ -164,6 +174,29 @@ export const gameStore = createProducer(initialState, {
 		...state,
 		hachiRaceState,
 	}),
+	pushFeedMessage: (state, text: string) => ({
+		...state,
+		feedMessages: [
+			...state.feedMessages.filter((m) => os.clock() - m.timestamp < 5),
+			{ text, timestamp: os.clock() },
+		],
+	}),
+	clearFeed: (state) => ({
+		...state,
+		feedMessages: [],
+	}),
+	setOniRevealName: (state, oniRevealName: string | undefined) => ({
+		...state,
+		oniRevealName,
+	}),
+	setSummaryText: (state, summaryText: string | undefined) => ({
+		...state,
+		summaryText,
+	}),
+	setWinnerName: (state, winnerName: string | undefined) => ({
+		...state,
+		winnerName,
+	}),
 	resetForNewMatch: (state) => ({
 		...state,
 		role: PlayerRole.None,
@@ -185,6 +218,10 @@ export const gameStore = createProducer(initialState, {
 		localTagged: false,
 		spiritCharges: 0,
 		hachiRaceState: undefined,
+		feedMessages: [],
+		oniRevealName: undefined,
+		summaryText: undefined,
+		winnerName: undefined,
 	}),
 	setMissions: (state, missions: MissionProgressData[]) => ({
 		...state,
