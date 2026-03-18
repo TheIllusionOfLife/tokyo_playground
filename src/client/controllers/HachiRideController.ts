@@ -70,22 +70,22 @@ export class HachiRideController implements OnStart {
 		// Stepped runs BEFORE physics each frame. Force Jump=false so the
 		// engine's seat-exit logic never sees a true value. This is the only
 		// reliable way to prevent the mobile touch jump button from unseating.
+		// JumpRequest fires on all platforms (keyboard Space, gamepad A,
+		// mobile touch button) even when Jump is forced false above.
 		if (humanoid) {
 			this.steppedConn = RunService.Stepped.Connect(() => {
-				if (humanoid.Jump) {
+				// Guard: humanoid may be destroyed before Heartbeat cleans up
+				if (humanoid.Parent && humanoid.Jump) {
 					humanoid.Jump = false;
 				}
 			});
-		}
 
-		// JumpRequest fires on all platforms (keyboard Space, gamepad A,
-		// mobile touch button) even when Jump is forced false above.
-		// Use it as the single source of jump intent for Hachi.
-		this.jumpRequestConn = UserInputService.JumpRequest.Connect(() => {
-			if (!this.seatedInHachi) return;
-			clientEvents.hachiJump.fire();
-			this.playJumpSE();
-		});
+			this.jumpRequestConn = UserInputService.JumpRequest.Connect(() => {
+				if (!this.seatedInHachi) return;
+				clientEvents.hachiJump.fire();
+				this.playJumpSE();
+			});
+		}
 
 		// E key to dismount
 		ContextActionService.BindAction(

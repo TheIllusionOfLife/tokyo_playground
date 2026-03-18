@@ -649,14 +649,17 @@ export class HachiRideMinigame implements IMinigame {
 		const value = isBonus ? HACHI_BONUS_ITEM_VALUE : 1;
 		state.itemCount += value;
 		state.catchCount = state.itemCount; // mirror for scoreboard
-		this.serverEvents.hachiItemCollected.fire(player, state.itemCount);
 		if (isBonus) {
+			// Fire bonus BEFORE item so the client's bonusThisFrame flag
+			// is set when the item handler runs (both arrive same frame).
 			this.serverEvents.hachiBonusCollected.fire(player);
 			this.serverEvents.hintTextChanged.fire(
 				player,
 				`BONUS! +${HACHI_BONUS_ITEM_VALUE} points!`,
 			);
 		}
+		// Always fire item event — HUD needs the count update.
+		this.serverEvents.hachiItemCollected.fire(player, state.itemCount);
 		this.tryEvolve(userId, state, player);
 	}
 
