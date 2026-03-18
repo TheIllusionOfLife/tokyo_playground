@@ -1,6 +1,7 @@
 import React from "@rbxts/react";
 import { ActionButton } from "./components/ActionButton";
 import { CountdownOverlay } from "./components/CountdownOverlay";
+import { EventFeed } from "./components/EventFeed";
 import { FeaturedUnlockBanner } from "./components/FeaturedUnlockBanner";
 import { HachiHud } from "./components/HachiHud";
 import { HintText } from "./components/HintText";
@@ -33,6 +34,7 @@ export function GameHud() {
 			<HintText />
 			<TodayGoalChip />
 			<FeaturedUnlockBanner />
+			<EventFeed />
 			<CountdownOverlay />
 			<RewardPopup />
 			<Scoreboard />

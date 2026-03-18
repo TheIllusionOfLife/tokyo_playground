@@ -66,6 +66,7 @@ interface ServerToClientEvents {
 	oniReveal(oniUserId: number, durationSeconds: number): void;
 	spiritChargeChanged(charges: number): void;
 	hachiRaceState(state: HachiRaceStateData): void;
+	roundSummary(summaryText: string, winnerName: string): void;
 }
 
 interface ClientToServerEvents {

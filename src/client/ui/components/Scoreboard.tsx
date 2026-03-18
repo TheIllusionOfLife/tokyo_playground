@@ -12,6 +12,8 @@ const ROLE_COLORS: Record<string, Color3> = {
 export function Scoreboard() {
 	const scoreboard = useSelector((state: GameStoreState) => state.scoreboard);
 	const matchPhase = useSelector((state: GameStoreState) => state.matchPhase);
+	const summaryText = useSelector((state: GameStoreState) => state.summaryText);
+	const winnerName = useSelector((state: GameStoreState) => state.winnerName);
 
 	if (
 		scoreboard.size() === 0 ||
@@ -23,8 +25,8 @@ export function Scoreboard() {
 	return (
 		<frame
 			key="Scoreboard"
-			Size={new UDim2(0.5, 0, 0.45, 0)}
-			Position={new UDim2(0.25, 0, 0.25, 0)}
+			Size={new UDim2(0.5, 0, 0.5, 0)}
+			Position={new UDim2(0.25, 0, 0.2, 0)}
 			BackgroundColor3={Color3.fromRGB(15, 15, 30)}
 			BackgroundTransparency={0.1}
 			BorderSizePixel={0}
@@ -34,6 +36,34 @@ export function Scoreboard() {
 				SortOrder={Enum.SortOrder.LayoutOrder}
 				Padding={new UDim(0, 2)}
 			/>
+			{winnerName !== undefined && (
+				<textlabel
+					key="WinnerName"
+					Size={new UDim2(1, 0, 0, 36)}
+					BackgroundTransparency={1}
+					TextColor3={Color3.fromRGB(255, 215, 0)}
+					TextStrokeColor3={Color3.fromRGB(0, 0, 0)}
+					TextStrokeTransparency={0.2}
+					TextScaled={true}
+					Font={Enum.Font.GothamBlack}
+					Text={`${winnerName} WINS!`}
+					LayoutOrder={-2}
+				/>
+			)}
+			{summaryText !== undefined && (
+				<textlabel
+					key="SummaryText"
+					Size={new UDim2(1, 0, 0, 28)}
+					BackgroundTransparency={1}
+					TextColor3={Color3.fromRGB(255, 220, 100)}
+					TextStrokeColor3={Color3.fromRGB(0, 0, 0)}
+					TextStrokeTransparency={0.4}
+					TextScaled={true}
+					Font={Enum.Font.GothamBold}
+					Text={summaryText}
+					LayoutOrder={-1}
+				/>
+			)}
 			<ScoreRow
 				rank="#"
 				playerName="Player"

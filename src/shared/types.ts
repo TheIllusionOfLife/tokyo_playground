@@ -195,6 +195,7 @@ export interface PlayerData {
 	ownedItems: ItemId[];
 	equippedItems: Partial<Record<ItemCategory, ItemId>>;
 	shopBalance: number;
+	streakCount: number;
 }
 
 export const DEFAULT_PLAYER_DATA: PlayerData = {
@@ -207,4 +208,5 @@ export const DEFAULT_PLAYER_DATA: PlayerData = {
 	ownedItems: [],
 	equippedItems: {},
 	shopBalance: 0,
+	streakCount: 0,
 };
