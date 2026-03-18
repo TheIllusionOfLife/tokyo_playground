@@ -6,6 +6,7 @@ import {
 	CLEANUP_DURATION,
 	LOBBY_INTERMISSION,
 	MINIGAME_CONFIGS,
+	MINIGAME_INTROS,
 	RESULTS_DISPLAY_DURATION,
 } from "shared/constants";
 import { GlobalEvents } from "shared/network";
@@ -88,6 +89,13 @@ export class MatchService implements OnStart {
 			this.handleActionRequest(player, "kickCan");
 		});
 
+		this.serverEvents.requestSpiritWave.connect((player) => {
+			if (this.currentPhase !== MatchPhase.InProgress) return;
+			if (!this.activeMinigame) return;
+			if (!this.matchPlayers.has(player)) return;
+			this.activeMinigame.handleSpiritWaveRequest(player);
+		});
+
 		Players.PlayerAdded.Connect((player) => {
 			if ((this.currentPhase as MatchPhase) !== MatchPhase.WaitingForPlayers) {
 				this.handlePlayerJoinMidMatch(player);
@@ -118,6 +126,7 @@ export class MatchService implements OnStart {
 	requestStart(minigameId: MinigameId) {
 		this.nextMinigameId = minigameId;
 		this.startRequested = true;
+		this.broadcastQueueStatus(0, true);
 	}
 
 	private runIntermission() {
@@ -126,6 +135,10 @@ export class MatchService implements OnStart {
 
 		let waited = 0;
 		while (waited < LOBBY_INTERMISSION) {
+			this.broadcastQueueStatus(
+				math.max(0, LOBBY_INTERMISSION - waited),
+				!this.startRequested,
+			);
 			const dt = task.wait(1);
 			waited += dt;
 
@@ -136,11 +149,10 @@ export class MatchService implements OnStart {
 			}
 		}
 		const wasRequested = this.startRequested;
-		this.startRequested = false;
 		if (!wasRequested) {
-			// No portal triggered during intermission — restart
-			return;
+			this.startRequested = true;
 		}
+		this.startRequested = false;
 
 		const config = MINIGAME_CONFIGS[this.nextMinigameId];
 		if (Players.GetPlayers().size() < config.minPlayers) {
@@ -211,6 +223,10 @@ export class MatchService implements OnStart {
 		const roles = minigame.assignRoles(players);
 		for (const [player, role] of roles) {
 			this.serverEvents.roleAssigned.fire(player, role, minigameId);
+			this.serverEvents.roundIntroShown.fire(
+				player,
+				MINIGAME_INTROS[minigameId],
+			);
 		}
 
 		// In Progress
@@ -474,5 +490,17 @@ export class MatchService implements OnStart {
 		this.minigameIndex = (this.minigameIndex + 1) % available.size();
 		this.nextMinigameId = available[this.minigameIndex];
 		return this.nextMinigameId;
+	}
+
+	private broadcastQueueStatus(
+		secondsUntilStart: number,
+		autoStartEnabled: boolean,
+	) {
+		this.serverEvents.queueStatusChanged.broadcast({
+			featuredMinigameId: this.nextMinigameId,
+			secondsUntilStart: math.max(0, math.ceil(secondsUntilStart)),
+			joinedPlayerCount: Players.GetPlayers().size(),
+			autoStartEnabled,
+		});
 	}
 }

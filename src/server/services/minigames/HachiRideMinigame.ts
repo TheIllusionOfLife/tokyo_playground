@@ -19,12 +19,18 @@ import {
 	HACHI_EJECT_COOLDOWN,
 	HACHI_EJECT_SEAT_DISABLE_DURATION,
 	HACHI_EVOLUTION_THRESHOLDS,
+	HACHI_FINAL_SPRINT_MULTIPLIER,
+	HACHI_FINAL_SPRINT_WINDOW,
+	HACHI_HOTSPOT_MULTIPLIER,
+	HACHI_HOTSPOT_RADIUS,
+	HACHI_HOTSPOT_ROTATION_INTERVAL,
 	HACHI_ITEM_TAG,
 	HACHI_ITEMS_TO_SPAWN,
 	HACHI_JUMP_COOLDOWN,
 	HACHI_JUMP_VELOCITY,
 	HACHI_KEY_ITEM_TAG,
 	HACHI_MAX_SPEED_TOLERANCE,
+	HACHI_ROUND_DURATION,
 	HACHI_SLIDE_FORCE_RESTORE_DELAY,
 	HACHI_SPAWN_TAG,
 	HACHI_WALK_SPEEDS,
@@ -41,6 +47,7 @@ import {
 	PlayerRole,
 	RoundResult,
 } from "shared/types";
+import { buildHachiRaceSnapshot } from "shared/utils/hachiRace";
 import { animateHachi, HachiAnimState } from "../../utils/animateHachi";
 import { applyHachiJumpImpulse } from "../../utils/hachiPhysics";
 import { IMinigame } from "./MinigameBase";
@@ -53,6 +60,11 @@ interface WallRunState {
 	normal: Vector3;
 	wallDir: Vector3;
 	origMaxForce: Vector3;
+}
+
+interface Hotspot {
+	center: Vector3;
+	label: string;
 }
 
 // Fisher-Yates shuffle for BasePart arrays
@@ -92,6 +104,12 @@ export class HachiRideMinigame implements IMinigame {
 	private hachiSlideActive = new Set<number>();
 	private slideCooldowns = new Map<number, number>();
 	private roundStarted = false;
+	private hotspots: Hotspot[] = [];
+	private activeHotspotIndex = 0;
+	private hotspotElapsed = 0;
+	private roundElapsed = 0;
+	private raceUpdateElapsed = 0;
+	private finalSprintStarted = false;
 
 	constructor(private readonly serverEvents: ServerEvents) {
 		HachiRideMinigame.activeInstance = this;
@@ -151,6 +169,7 @@ export class HachiRideMinigame implements IMinigame {
 				part.Material = Enum.Material.Neon;
 			}
 		}
+		this.hotspots = this.buildHotspots(chosen);
 
 		// Register cleanup: restore all anchors to hidden state
 		matchJanitor.Add(() => {
@@ -322,6 +341,10 @@ export class HachiRideMinigame implements IMinigame {
 
 	startRound() {
 		this.roundStarted = true;
+		this.roundElapsed = 0;
+		this.hotspotElapsed = 0;
+		this.raceUpdateElapsed = 0;
+		this.finalSprintStarted = false;
 		// Reveal all items now
 		for (const item of this.activeItems) {
 			item.Transparency = 0;
@@ -334,21 +357,31 @@ export class HachiRideMinigame implements IMinigame {
 		this.serverEvents.hintTextChanged.broadcast(
 			"Go! Collect as much trash as you can!",
 		);
+		this.broadcastRaceState();
 	}
 
 	tick(dt: number) {
 		if (!this.roundStarted) return;
+		this.roundElapsed += dt;
+		this.hotspotElapsed += dt;
+		this.raceUpdateElapsed += dt;
 		this.checkItemCollection();
 		this.resetLandedJumps();
 		this.detectWallRun(dt);
 		this.tickHachiAnimation(dt);
 		this.checkSpeedViolations(dt);
+		this.updateHotspotState();
+		if (this.raceUpdateElapsed >= 1) {
+			this.raceUpdateElapsed = 0;
+			this.broadcastRaceState();
+		}
 	}
 
 	handleCatchRequest(_player: Player): void {}
 	handleKickCanRequest(_player: Player): boolean {
 		return false;
 	}
+	handleSpiritWaveRequest(_player: Player): void {}
 	stopCountdown(): void {}
 
 	checkWinCondition(): RoundResult | undefined {
@@ -457,6 +490,12 @@ export class HachiRideMinigame implements IMinigame {
 		this.slideCooldowns.clear();
 		this.keyItems = [];
 		this.spawnParts = [];
+		this.hotspots = [];
+		this.activeHotspotIndex = 0;
+		this.hotspotElapsed = 0;
+		this.roundElapsed = 0;
+		this.raceUpdateElapsed = 0;
+		this.finalSprintStarted = false;
 	}
 
 	removePlayer(userId: number) {
@@ -646,7 +685,17 @@ export class HachiRideMinigame implements IMinigame {
 		item: BasePart,
 	) {
 		const isBonus = this.bonusItems.has(item);
-		const value = isBonus ? HACHI_BONUS_ITEM_VALUE : 1;
+		const hotspotMultiplier = this.isInActiveHotspot(item.Position)
+			? HACHI_HOTSPOT_MULTIPLIER
+			: 1;
+		const finalSprintMultiplier =
+			this.finalSprintStarted && this.keyItems.includes(item)
+				? HACHI_FINAL_SPRINT_MULTIPLIER
+				: 1;
+		const value =
+			(isBonus ? HACHI_BONUS_ITEM_VALUE : 1) *
+			hotspotMultiplier *
+			finalSprintMultiplier;
 		state.itemCount += value;
 		state.catchCount = state.itemCount; // mirror for scoreboard
 		if (isBonus) {
@@ -655,7 +704,7 @@ export class HachiRideMinigame implements IMinigame {
 			this.serverEvents.hachiBonusCollected.fire(player);
 			this.serverEvents.hintTextChanged.fire(
 				player,
-				`BONUS! +${HACHI_BONUS_ITEM_VALUE} points!`,
+				`BONUS! +${value} points!`,
 			);
 		}
 		// Always fire item event — HUD needs the count update.
@@ -759,6 +808,80 @@ export class HachiRideMinigame implements IMinigame {
 				return "Level 4: FLUFFY HACHI! Maximum cuteness!";
 			default:
 				return `Hachi evolved to level ${level}!`;
+		}
+	}
+
+	private buildHotspots(items: BasePart[]): Hotspot[] {
+		if (items.size() === 0) return [];
+		const labels = ["Station Plaza", "Crosswalk Line", "Rooftop Alley"];
+		const samples = [
+			items[0],
+			items[math.floor(items.size() / 2)],
+			items[items.size() - 1],
+		];
+		return samples.map((item, index) => ({
+			center: item.Position,
+			label: labels[index] ?? `Hotspot ${index + 1}`,
+		}));
+	}
+
+	private updateHotspotState() {
+		if (
+			this.hotspots.size() > 0 &&
+			this.hotspotElapsed >= HACHI_HOTSPOT_ROTATION_INTERVAL
+		) {
+			this.hotspotElapsed = 0;
+			this.activeHotspotIndex =
+				(this.activeHotspotIndex + 1) % this.hotspots.size();
+			this.serverEvents.hintTextChanged.broadcast(
+				`Hotspot moved to ${this.hotspots[this.activeHotspotIndex].label}!`,
+			);
+		}
+
+		const timeRemaining = HACHI_ROUND_DURATION - this.roundElapsed;
+		if (
+			!this.finalSprintStarted &&
+			timeRemaining <= HACHI_FINAL_SPRINT_WINDOW
+		) {
+			this.finalSprintStarted = true;
+			this.serverEvents.hintTextChanged.broadcast(
+				"Final sprint! Key items are worth triple now!",
+			);
+		}
+	}
+
+	private isInActiveHotspot(position: Vector3) {
+		const hotspot = this.hotspots[this.activeHotspotIndex];
+		if (!hotspot) return false;
+		return position.sub(hotspot.center).Magnitude <= HACHI_HOTSPOT_RADIUS;
+	}
+
+	private broadcastRaceState() {
+		if (!this.roundStarted) return;
+
+		const names = new Map<number, string>();
+		for (const [userId, player] of this.playerObjects) {
+			names.set(userId, player.Name);
+		}
+
+		const hotspot = this.hotspots[this.activeHotspotIndex];
+		const hotspotTimeLeft = math.max(
+			0,
+			math.ceil(HACHI_HOTSPOT_ROTATION_INTERVAL - this.hotspotElapsed),
+		);
+
+		for (const [userId, player] of this.playerObjects) {
+			const snapshot = buildHachiRaceSnapshot(
+				this.playerStates,
+				names,
+				userId,
+				HACHI_EVOLUTION_THRESHOLDS,
+			);
+			this.serverEvents.hachiRaceState.fire(player, {
+				...snapshot,
+				hotspotLabel: hotspot?.label ?? "City Loop",
+				hotspotTimeLeft,
+			});
 		}
 	}
 

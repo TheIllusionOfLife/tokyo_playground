@@ -1,10 +1,15 @@
 import { createProducer } from "@rbxts/reflex";
 import {
+	FeaturedUnlockData,
+	HachiRaceStateData,
 	MatchPhase,
 	MinigameId,
+	MissionId,
 	MissionProgressData,
 	PlayerRole,
+	QueueStatusData,
 	RewardBreakdown,
+	RoundIntroData,
 	RoundResult,
 	ScoreboardEntry,
 	ShopItemData,
@@ -30,6 +35,14 @@ export interface GameStoreState {
 	levelUpNewLevel: number;
 	hachiItemCount: number;
 	hachiEvolutionLevel: number;
+	queueStatus?: QueueStatusData;
+	roundIntro?: RoundIntroData;
+	missionClaimReady?: { id: MissionId; pointsReward: number };
+	localCaught: boolean;
+	localTagged: boolean;
+	spiritCharges: number;
+	featuredUnlock?: FeaturedUnlockData;
+	hachiRaceState?: HachiRaceStateData;
 }
 
 const initialState: GameStoreState = {
@@ -50,6 +63,9 @@ const initialState: GameStoreState = {
 	levelUpNewLevel: 1,
 	hachiItemCount: 0,
 	hachiEvolutionLevel: 0,
+	localCaught: false,
+	localTagged: false,
+	spiritCharges: 0,
 };
 
 export const gameStore = createProducer(initialState, {
@@ -107,6 +123,47 @@ export const gameStore = createProducer(initialState, {
 		...state,
 		hachiEvolutionLevel,
 	}),
+	setQueueStatus: (state, queueStatus: QueueStatusData | undefined) => ({
+		...state,
+		queueStatus,
+	}),
+	setRoundIntro: (state, roundIntro: RoundIntroData | undefined) => ({
+		...state,
+		roundIntro,
+	}),
+	setMissionClaimReady: (
+		state,
+		missionClaimReady: GameStoreState["missionClaimReady"] | undefined,
+	) => ({
+		...state,
+		missionClaimReady,
+	}),
+	setLocalCaught: (state, localCaught: boolean) => ({
+		...state,
+		localCaught,
+	}),
+	setLocalTagged: (state, localTagged: boolean) => ({
+		...state,
+		localTagged,
+	}),
+	setSpiritCharges: (state, spiritCharges: number) => ({
+		...state,
+		spiritCharges,
+	}),
+	setFeaturedUnlock: (
+		state,
+		featuredUnlock: FeaturedUnlockData | undefined,
+	) => ({
+		...state,
+		featuredUnlock,
+	}),
+	setHachiRaceState: (
+		state,
+		hachiRaceState: HachiRaceStateData | undefined,
+	) => ({
+		...state,
+		hachiRaceState,
+	}),
 	resetForNewMatch: (state) => ({
 		...state,
 		role: PlayerRole.None,
@@ -121,6 +178,13 @@ export const gameStore = createProducer(initialState, {
 		showLevelUp: false,
 		hachiItemCount: 0,
 		hachiEvolutionLevel: 0,
+		queueStatus: state.queueStatus,
+		roundIntro: undefined,
+		missionClaimReady: undefined,
+		localCaught: false,
+		localTagged: false,
+		spiritCharges: 0,
+		hachiRaceState: undefined,
 	}),
 	setMissions: (state, missions: MissionProgressData[]) => ({
 		...state,

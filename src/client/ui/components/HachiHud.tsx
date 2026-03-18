@@ -15,6 +15,7 @@ export function HachiHud() {
 	const evolutionLevel = useSelector(
 		(s: GameStoreState) => s.hachiEvolutionLevel,
 	);
+	const raceState = useSelector((s: GameStoreState) => s.hachiRaceState);
 
 	if (
 		activeMinigameId !== MinigameId.HachiRide ||
@@ -26,7 +27,7 @@ export function HachiHud() {
 	return (
 		<frame
 			key="HachiHud"
-			Size={new UDim2(0, 200, 0, 70)}
+			Size={new UDim2(0, 240, 0, 112)}
 			Position={new UDim2(0.5, -100, 0.09, 4)}
 			BackgroundColor3={Color3.fromRGB(15, 15, 30)}
 			BackgroundTransparency={0.2}
@@ -81,6 +82,34 @@ export function HachiHud() {
 					</frame>
 				))}
 			</frame>
+			{raceState ? (
+				<textlabel
+					key="RaceState"
+					LayoutOrder={3}
+					Size={new UDim2(1, 0, 0, 18)}
+					BackgroundTransparency={1}
+					TextColor3={Color3.fromRGB(210, 230, 255)}
+					TextScaled={true}
+					Font={Enum.Font.Gotham}
+					Text={`Rank #${raceState.playerRank} • Leader ${raceState.leaderName} (${raceState.leaderScore})`}
+				/>
+			) : (
+				undefined!
+			)}
+			{raceState ? (
+				<textlabel
+					key="HotspotState"
+					LayoutOrder={4}
+					Size={new UDim2(1, 0, 0, 18)}
+					BackgroundTransparency={1}
+					TextColor3={Color3.fromRGB(255, 196, 92)}
+					TextScaled={true}
+					Font={Enum.Font.Gotham}
+					Text={`Hotspot: ${raceState.hotspotLabel} (${raceState.hotspotTimeLeft}s) • Next evo ${raceState.nextThreshold}`}
+				/>
+			) : (
+				undefined!
+			)}
 		</frame>
 	);
 }

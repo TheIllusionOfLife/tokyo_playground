@@ -16,6 +16,7 @@ import {
 	SCRAMBLE_ROOFTOP_TP_TAG,
 	SCRAMBLE_SLIDE_COOLDOWN,
 	SCRAMBLE_SLIDE_SPEED,
+	SCRAMBLE_SPIRIT_WAVE_DURATION,
 	SCRAMBLE_TAG_RADIUS,
 	SLIDE_DIR_Y_OFFSET,
 } from "shared/constants";
@@ -54,6 +55,7 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 	private slideCooldowns = new Map<number, number>();
 	private rooftopTpCooldowns = new Map<number, number>();
 	private lastHintText = "";
+	private spiritCharges = new Map<number, number>();
 
 	constructor(
 		private readonly serverEvents: ServerEvents,
@@ -71,6 +73,7 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 				rescueCount: 0,
 			});
 			this.playerObjects.set(player.UserId, player);
+			this.spiritCharges.set(player.UserId, 0);
 		}
 
 		// Connect slide ramp touch handlers
@@ -208,6 +211,23 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 		return false;
 	}
 
+	handleSpiritWaveRequest(player: Player) {
+		const state = this.playerStates.get(player.UserId);
+		if (!state || state.role !== PlayerRole.Hider || !state.isTagged) return;
+		const charges = this.spiritCharges.get(player.UserId) ?? 0;
+		if (charges <= 0) return;
+
+		this.spiritCharges.set(player.UserId, 0);
+		this.serverEvents.spiritChargeChanged.fire(player, 0);
+		const wave = this.spawnCrowdWave(
+			SCRAMBLE_SPIRIT_WAVE_DURATION,
+			"Crowd Spirit! Extra cover for the hiders!",
+		);
+		task.delay(SCRAMBLE_SPIRIT_WAVE_DURATION + 1, () => {
+			this.despawnCrowdNPCs(wave);
+		});
+	}
+
 	handleCatchRequest(player: Player) {
 		const oniState = this.playerStates.get(player.UserId);
 		if (!oniState || oniState.role !== PlayerRole.Oni) return;
@@ -239,8 +259,10 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 
 		hiderState.isTagged = true;
 		oniState.catchCount += 1;
+		this.spiritCharges.set(closestHider.UserId, 1);
 
 		this.serverEvents.playerCaught.broadcast(closestHider.UserId);
+		this.serverEvents.spiritChargeChanged.fire(closestHider, 1);
 		this.lastHintText = fireHintText(
 			this.serverEvents,
 			`${closestHider.Name} was tagged!`,
@@ -256,6 +278,7 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 		this.playerObjects.delete(userId);
 		this.slideCooldowns.delete(userId);
 		this.rooftopTpCooldowns.delete(userId);
+		this.spiritCharges.delete(userId);
 	}
 
 	stopCountdown() {
@@ -290,6 +313,7 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 		this.playerObjects.clear();
 		this.slideCooldowns.clear();
 		this.rooftopTpCooldowns.clear();
+		this.spiritCharges.clear();
 	}
 
 	private runCrowdLoop() {
@@ -297,23 +321,27 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 		while (this.crowdLoopRunning) {
 			task.wait(SCRAMBLE_CROWD_WAVE_INTERVAL);
 			if (!this.crowdLoopRunning) break;
-			this.spawnCrowdWave();
+			const wave = this.spawnCrowdWave();
 			task.wait(SCRAMBLE_CROWD_WAVE_DURATION + 2);
 			if (!this.crowdLoopRunning) break;
-			this.despawnCrowdNPCs();
+			this.despawnCrowdNPCs(wave);
 		}
 	}
 
-	private spawnCrowdWave() {
+	private spawnCrowdWave(
+		duration = SCRAMBLE_CROWD_WAVE_DURATION,
+		hintText = "Crowd crossing — use them!",
+	) {
 		this.serverEvents.crowdWaveStarted.broadcast(4);
 		this.lastHintText = fireHintText(
 			this.serverEvents,
-			"Crowd crossing — use them!",
+			hintText,
 			this.lastHintText,
 		);
 
 		const waypointsFolder = Workspace.FindFirstChild("CrowdWaypoints");
-		if (!waypointsFolder) return;
+		if (!waypointsFolder) return [];
+		const waveNpcs: Part[] = [];
 
 		const npcsPerPath = math.floor(SCRAMBLE_CROWD_NPC_COUNT / 4);
 		for (let i = 1; i <= 4; i++) {
@@ -341,21 +369,26 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 				npcPart.Parent = Workspace;
 
 				this.activeCrowdNPCs.push(npcPart);
+				waveNpcs.push(npcPart);
 
 				TweenService.Create(
 					npcPart,
-					new TweenInfo(SCRAMBLE_CROWD_WAVE_DURATION, Enum.EasingStyle.Linear),
+					new TweenInfo(duration, Enum.EasingStyle.Linear),
 					{ Position: endPart.Position.add(offset) },
 				).Play();
 			}
 		}
+
+		return waveNpcs;
 	}
 
-	private despawnCrowdNPCs() {
-		for (const npc of this.activeCrowdNPCs) {
+	private despawnCrowdNPCs(npcs = this.activeCrowdNPCs) {
+		for (const npc of npcs) {
 			npc.Destroy();
 		}
-		this.activeCrowdNPCs = [];
+		this.activeCrowdNPCs = this.activeCrowdNPCs.filter(
+			(npc) => !npcs.includes(npc),
+		);
 	}
 
 	private handleRooftopTpTouch(touching: BasePart) {

@@ -10,8 +10,8 @@ import {
 export const DEFAULT_WALK_SPEED = 32;
 
 // Lobby & Match Flow
-export const LOBBY_INTERMISSION = 15;
-export const RESULTS_DISPLAY_DURATION = 8;
+export const LOBBY_INTERMISSION = 8;
+export const RESULTS_DISPLAY_DURATION = 5;
 export const CLEANUP_DURATION = 3;
 
 // Economy
@@ -26,6 +26,10 @@ export const LOSS_MULTIPLIER = 0.6;
 export const ONI_CATCH_RADIUS = 8;
 export const CAN_KICK_RADIUS = 10;
 export const ONI_COUNT_DURATION = 10;
+export const CAN_RELOCATE_INTERVAL = 35;
+export const CAN_RATTLE_TARGET = 3;
+export const CAN_FREED_SPEED_BOOST = 48;
+export const CAN_FREED_SPEED_BOOST_DURATION = 3;
 
 // Cooldowns
 export const ACTION_COOLDOWN = 0.5;
@@ -45,17 +49,38 @@ export const MINIGAME_CONFIGS: Record<MinigameId, MinigameConfig> = {
 	[MinigameId.CanKick]: {
 		minPlayers: 2,
 		maxPlayers: 10,
-		roundDuration: 180,
+		roundDuration: 120,
 	},
 	[MinigameId.ShibuyaScramble]: {
 		minPlayers: 2,
 		maxPlayers: 10,
-		roundDuration: 150,
+		roundDuration: 120,
 	},
 	[MinigameId.HachiRide]: {
 		minPlayers: 1,
 		maxPlayers: 8,
-		roundDuration: 180,
+		roundDuration: 105,
+	},
+};
+
+export const MINIGAME_INTROS: Record<
+	MinigameId,
+	{ title: string; subtitle: string; durationSeconds: number }
+> = {
+	[MinigameId.CanKick]: {
+		title: "Street Hide-and-Seek",
+		subtitle: "Avoid the Oni and free your team with the can.",
+		durationSeconds: 5,
+	},
+	[MinigameId.ShibuyaScramble]: {
+		title: "Shibuya Chaos",
+		subtitle: "Blend into the crowd, survive, and use the crossing.",
+		durationSeconds: 5,
+	},
+	[MinigameId.HachiRide]: {
+		title: "Ride Hachi",
+		subtitle: "Collect trash, evolve fast, and steal the lead.",
+		durationSeconds: 5,
 	},
 };
 
@@ -142,70 +167,70 @@ export const ALL_MISSION_IDS: MissionId[] = [
 export const SHOP_CATALOG: Omit<ShopItemData, "owned" | "equipped">[] = [
 	{
 		id: ItemId.HatCone,
-		name: "Cone Hat",
+		name: "Alley Cone Cap",
 		category: ItemCategory.Hat,
 		price: 50,
 		levelRequired: 1,
 	},
 	{
 		id: ItemId.HatCrown,
-		name: "Crown",
+		name: "Scramble Crown",
 		category: ItemCategory.Hat,
 		price: 150,
 		levelRequired: 3,
 	},
 	{
 		id: ItemId.HatBucket,
-		name: "Bucket Hat",
+		name: "Station Bucket Hat",
 		category: ItemCategory.Hat,
 		price: 80,
 		levelRequired: 2,
 	},
 	{
 		id: ItemId.TrailStar,
-		name: "Star Trail",
+		name: "Neon Paw Trail",
 		category: ItemCategory.Trail,
 		price: 100,
 		levelRequired: 2,
 	},
 	{
 		id: ItemId.TrailRainbow,
-		name: "Rainbow Trail",
+		name: "Crossing Lights Trail",
 		category: ItemCategory.Trail,
 		price: 200,
 		levelRequired: 4,
 	},
 	{
 		id: ItemId.TrailFlame,
-		name: "Flame Trail",
+		name: "Lantern Flame Trail",
 		category: ItemCategory.Trail,
 		price: 120,
 		levelRequired: 3,
 	},
 	{
 		id: ItemId.EmoteDance,
-		name: "Dance",
+		name: "Festival Dance",
 		category: ItemCategory.Emote,
 		price: 60,
 		levelRequired: 1,
 	},
 	{
 		id: ItemId.EmoteCheer,
-		name: "Cheer",
+		name: "Conductor Cheer",
 		category: ItemCategory.Emote,
 		price: 70,
 		levelRequired: 1,
 	},
 	{
 		id: ItemId.EmoteWave,
-		name: "Wave",
+		name: "Tourist Wave",
 		category: ItemCategory.Emote,
 		price: 40,
 		levelRequired: 1,
 	},
 	{
 		id: ItemId.EmoteFlip,
-		name: "Flip",
+		name: "Rooftop Flip",
 		category: ItemCategory.Emote,
 		price: 250,
 		levelRequired: 5,
@@ -229,7 +254,7 @@ export const HACHI_KEY_ITEM_TAG = "HachiKeyItem";
 export const HACHI_SPAWN_TAG = "HachiRideSpawn";
 
 // Hachi Ride tuning
-export const HACHI_ROUND_DURATION = 180;
+export const HACHI_ROUND_DURATION = 105;
 export const HACHI_EVOLUTION_THRESHOLDS = [0, 10, 25, 40, 60];
 export const HACHI_WALK_SPEEDS = [100, 120, 140, 170, 210];
 export const HACHI_ITEMS_TO_SPAWN = 200;
@@ -248,6 +273,11 @@ export const HACHI_JUMP_COOLDOWN = 0.1; // seconds between jump requests
 export const HACHI_EJECT_COOLDOWN = 1.0; // seconds between eject requests
 export const HACHI_SLIDE_FORCE_RESTORE_DELAY = 0.5; // seconds to hold MaxForce=0 after impulse
 export const HACHI_EJECT_SEAT_DISABLE_DURATION = 0.1; // seconds VehicleSeat stays disabled on eject
+export const HACHI_HOTSPOT_RADIUS = 18;
+export const HACHI_HOTSPOT_ROTATION_INTERVAL = 20;
+export const HACHI_HOTSPOT_MULTIPLIER = 2;
+export const HACHI_FINAL_SPRINT_WINDOW = 30;
+export const HACHI_FINAL_SPRINT_MULTIPLIER = 3;
 
 // Shibuya Scramble
 export const SCRAMBLE_ROOFTOP_TP_TAG = "ShibuyaRooftopTP";
@@ -262,6 +292,7 @@ export const SCRAMBLE_CROWD_NPC_COUNT = 12;
 export const SCRAMBLE_SLIDE_SPEED = 800;
 export const SCRAMBLE_SLIDE_COOLDOWN = 8;
 export const SCRAMBLE_TAG_BONUS_PER_TAG = 5;
+export const SCRAMBLE_SPIRIT_WAVE_DURATION = 5;
 
 // Hachi anti-cheat
 export const HACHI_MAX_SPEED_TOLERANCE = 1.5; // multiplier over max expected speed

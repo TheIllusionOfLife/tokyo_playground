@@ -6,12 +6,17 @@ import { Players, SoundService } from "@rbxts/services";
 import { clientEvents } from "client/network";
 import { SCRAMBLE_SLIDE_COOLDOWN, SE_SLIDE } from "shared/constants";
 import { gameStore } from "shared/store/game-store";
-import { MatchPhase } from "shared/types";
+import { MatchPhase, MinigameId, MissionId } from "shared/types";
+import { getFeaturedUnlock } from "shared/utils/featuredUnlock";
 import { GameHud } from "../ui/GameHud";
 
 @Controller()
 export class HudController implements OnStart {
 	private root?: ReactRoblox.Root;
+	private activeMinigameId?: MinigameId;
+	private latestShopItems = gameStore.getState().shopItems;
+	private latestLevel = gameStore.getState().playgroundLevel;
+	private latestShopBalance = gameStore.getState().shopBalance;
 
 	onStart() {
 		print("[HudController] Client initialized");
@@ -31,6 +36,7 @@ export class HudController implements OnStart {
 		});
 
 		clientEvents.roleAssigned.connect((role, minigameId) => {
+			this.activeMinigameId = minigameId;
 			gameStore.setRole(role);
 			gameStore.setActiveMinigameId(minigameId);
 		});
@@ -69,8 +75,11 @@ export class HudController implements OnStart {
 		);
 
 		clientEvents.playPointsUpdate.connect((points, level, shopBalance) => {
+			this.latestLevel = level;
+			this.latestShopBalance = shopBalance;
 			gameStore.setPlayPoints(points, level);
 			gameStore.setShopBalance(shopBalance);
+			this.refreshFeaturedUnlock();
 		});
 
 		clientEvents.scoreUpdated.connect((_coins) => {
@@ -85,20 +94,42 @@ export class HudController implements OnStart {
 
 		clientEvents.missionUpdate.connect((missions) => {
 			gameStore.setMissions(missions);
+			const claimReady = gameStore.getState().missionClaimReady;
+			if (
+				claimReady &&
+				missions.some(
+					(mission) => mission.id === claimReady.id && mission.rewardCollected,
+				)
+			) {
+				gameStore.setMissionClaimReady(undefined);
+			}
 		});
 
 		clientEvents.missionCompleted.connect((_id, _pts) => {
-			// missionUpdate handles the state refresh; this fires for future toast notifications
+			gameStore.setMissionClaimReady({
+				id: _id as MissionId,
+				pointsReward: _pts,
+			});
+			task.delay(5, () => {
+				const current = gameStore.getState().missionClaimReady;
+				if (current?.id === _id) {
+					gameStore.setMissionClaimReady(undefined);
+				}
+			});
 		});
 
 		clientEvents.shopCatalog.connect((items) => {
+			this.latestShopItems = items;
 			gameStore.setShopItems(items);
+			this.refreshFeaturedUnlock();
 		});
 
 		clientEvents.purchaseResult.connect((ok, _id, newShopBal, _err) => {
 			if (ok) {
 				clientEvents.requestShopCatalog.fire(); // refresh owned flags
 				gameStore.setShopBalance(newShopBal); // shop balance only — NOT setPlayPoints
+				this.latestShopBalance = newShopBal;
+				this.refreshFeaturedUnlock();
 			}
 		});
 
@@ -117,6 +148,44 @@ export class HudController implements OnStart {
 
 		clientEvents.hachiEvolved.connect((level) => {
 			gameStore.setHachiEvolutionLevel(level);
+		});
+
+		clientEvents.queueStatusChanged.connect((status) => {
+			gameStore.setQueueStatus(status);
+		});
+
+		clientEvents.roundIntroShown.connect((intro) => {
+			gameStore.setRoundIntro(intro);
+			task.delay(intro.durationSeconds, () => {
+				const current = gameStore.getState().roundIntro;
+				if (current?.title === intro.title) {
+					gameStore.setRoundIntro(undefined);
+				}
+			});
+		});
+
+		clientEvents.playerCaught.connect((caughtPlayerId) => {
+			if (Players.LocalPlayer.UserId !== caughtPlayerId) return;
+			if (this.activeMinigameId === MinigameId.CanKick) {
+				gameStore.setLocalCaught(true);
+			}
+			if (this.activeMinigameId === MinigameId.ShibuyaScramble) {
+				gameStore.setLocalTagged(true);
+				gameStore.setSpiritCharges(1);
+			}
+		});
+
+		clientEvents.playerFreed.connect((freedPlayerIds) => {
+			if (!freedPlayerIds.includes(Players.LocalPlayer.UserId)) return;
+			gameStore.setLocalCaught(false);
+		});
+
+		clientEvents.spiritChargeChanged.connect((charges) => {
+			gameStore.setSpiritCharges(charges);
+		});
+
+		clientEvents.hachiRaceState.connect((state) => {
+			gameStore.setHachiRaceState(state);
 		});
 
 		// Server-side slide impulse fired by ShibuyaScrambleMinigame during matches.
@@ -150,6 +219,16 @@ export class HudController implements OnStart {
 			}
 			slideSE.Play();
 		});
+	}
+
+	private refreshFeaturedUnlock() {
+		gameStore.setFeaturedUnlock(
+			getFeaturedUnlock(
+				this.latestShopItems,
+				this.latestLevel,
+				this.latestShopBalance,
+			),
+		);
 	}
 
 	private mountReactUi() {

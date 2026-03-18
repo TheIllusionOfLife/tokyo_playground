@@ -1,8 +1,14 @@
 import { describe, expect, test } from "bun:test";
-import { HACHI_EVOLUTION_THRESHOLDS } from "../src/shared/constants";
-import { ItemCategory, type HachiRidePlayerState, type ShopItemData } from "../src/shared/types";
-import { buildHachiRaceSnapshot } from "../src/shared/utils/hachiRace";
+import {
+	type HachiRidePlayerState,
+	ItemCategory,
+	type ShopItemData,
+} from "../src/shared/types";
 import { getFeaturedUnlock } from "../src/shared/utils/featuredUnlock";
+import { buildHachiRaceSnapshot } from "../src/shared/utils/hachiRace";
+
+const TEST_HACHI_THRESHOLDS = [0, 10, 25, 40, 60];
+(globalThis as unknown as { math: typeof Math }).math = Math;
 
 describe("getFeaturedUnlock", () => {
 	test("prefers the first unowned item and reports level progress when locked", () => {
@@ -106,7 +112,7 @@ describe("buildHachiRaceSnapshot", () => {
 				[33, "Ren"],
 			]),
 			11,
-			HACHI_EVOLUTION_THRESHOLDS,
+			TEST_HACHI_THRESHOLDS,
 		);
 
 		expect(snapshot).toEqual({
@@ -138,7 +144,7 @@ describe("buildHachiRaceSnapshot", () => {
 				states,
 				new Map([[99, "Solo"]]),
 				99,
-				HACHI_EVOLUTION_THRESHOLDS,
+				TEST_HACHI_THRESHOLDS,
 			),
 		).toEqual({
 			playerRank: 1,
