@@ -8,6 +8,7 @@ import { MinigameId, PlayerRole } from "shared/types";
 export class CanKickController implements OnStart {
 	private billboard?: BillboardGui;
 	private heartbeatConn?: RBXScriptConnection;
+	private oniRevealHighlight?: Highlight;
 	// Incremented on every role assignment — lets spawned async work self-cancel
 	// if a second roleAssigned fires before WaitForChild resolves.
 	private assignVersion = 0;
@@ -50,6 +51,10 @@ export class CanKickController implements OnStart {
 
 		clientEvents.roundResultAnnounced.connect(() => {
 			this.cleanupProximity();
+		});
+
+		clientEvents.oniReveal.connect((oniUserId, durationSeconds) => {
+			this.showOniReveal(oniUserId, durationSeconds);
 		});
 	}
 
@@ -114,6 +119,35 @@ export class CanKickController implements OnStart {
 			this.billboard.Destroy();
 			this.billboard = undefined;
 		}
+		if (this.oniRevealHighlight) {
+			this.oniRevealHighlight.Destroy();
+			this.oniRevealHighlight = undefined;
+		}
+	}
+
+	private showOniReveal(oniUserId: number, durationSeconds: number) {
+		const oni = Players.GetPlayerByUserId(oniUserId);
+		const character = oni?.Character;
+		if (!character) return;
+
+		if (this.oniRevealHighlight) {
+			this.oniRevealHighlight.Destroy();
+		}
+
+		const highlight = new Instance("Highlight");
+		highlight.FillColor = Color3.fromRGB(255, 80, 80);
+		highlight.OutlineColor = Color3.fromRGB(255, 240, 240);
+		highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop;
+		highlight.Adornee = character;
+		highlight.Parent = character;
+		this.oniRevealHighlight = highlight;
+
+		task.delay(durationSeconds, () => {
+			if (this.oniRevealHighlight === highlight) {
+				highlight.Destroy();
+				this.oniRevealHighlight = undefined;
+			}
+		});
 	}
 
 	private showScreenFlash(color: Color3) {

@@ -1,6 +1,7 @@
 import { Networking } from "@flamework/networking";
 import {
 	GameState,
+	HachiRaceStateData,
 	ItemCategory,
 	ItemId,
 	MatchPhase,
@@ -8,7 +9,9 @@ import {
 	MissionId,
 	MissionProgressData,
 	PlayerRole,
+	QueueStatusData,
 	RewardBreakdown,
+	RoundIntroData,
 	RoundResult,
 	ScoreboardEntry,
 	ShopItemData,
@@ -58,6 +61,12 @@ interface ServerToClientEvents {
 	hachiWallRunStop(): void;
 	hachiDoubleJumpGranted(): void;
 	hachiBonusCollected(): void;
+	queueStatusChanged(status: QueueStatusData): void;
+	roundIntroShown(intro: RoundIntroData): void;
+	oniReveal(oniUserId: number, durationSeconds: number): void;
+	spiritChargeChanged(charges: number): void;
+	hachiRaceState(state: HachiRaceStateData): void;
+	roundSummary(summaryText: string, winnerName: string): void;
 }
 
 interface ClientToServerEvents {
@@ -72,6 +81,7 @@ interface ClientToServerEvents {
 	hachiEject(): void;
 	hachiDoubleJump(): void;
 	requestHachiSlide(): void;
+	requestSpiritWave(): void;
 }
 
 export const GlobalEvents = Networking.createEvent<

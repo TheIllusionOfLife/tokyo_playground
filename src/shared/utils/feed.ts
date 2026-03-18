@@ -1,0 +1,2 @@
+export const FEED_MESSAGE_TTL_SECONDS = 5;
+export const FEED_UPDATE_INTERVAL_SECONDS = 0.5;

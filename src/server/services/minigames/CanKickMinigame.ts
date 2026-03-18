@@ -1,7 +1,11 @@
 import { Janitor } from "@rbxts/janitor";
 import { ServerStorage, Workspace } from "@rbxts/services";
 import {
+	CAN_FREED_SPEED_BOOST,
+	CAN_FREED_SPEED_BOOST_DURATION,
 	CAN_KICK_RADIUS,
+	CAN_RATTLE_TARGET,
+	CAN_RELOCATE_INTERVAL,
 	DEFAULT_WALK_SPEED,
 	ONI_CATCH_RADIUS,
 	ONI_COUNT_DURATION,
@@ -14,6 +18,7 @@ import {
 	PlayerRole,
 	RoundResult,
 } from "shared/types";
+import { isInsideJailRattleZone } from "shared/utils/canKickRattle";
 import {
 	fireHintText,
 	startOniCountdown,
@@ -22,6 +27,11 @@ import {
 import { IMinigame } from "./MinigameBase";
 
 type ServerEvents = ReturnType<typeof GlobalEvents.createServer>;
+const CAN_SOCKET_OFFSETS = [
+	new Vector3(0, 0, 0),
+	new Vector3(18, 0, 12),
+	new Vector3(-16, 0, -10),
+];
 
 export class CanKickMinigame implements IMinigame {
 	readonly id = MinigameId.CanKick;
@@ -33,6 +43,12 @@ export class CanKickMinigame implements IMinigame {
 	private oniCounting = false;
 	private countdownThread?: thread;
 	private lastHintText = "";
+	private oniUserId?: number;
+	private canRelocateElapsed = 0;
+	private canSocketIndex = 0;
+	private canOrigin?: Vector3;
+	private rattleProgress = 0;
+	private readonly boostEligible = new Set<number>();
 
 	constructor(private readonly serverEvents: ServerEvents) {}
 
@@ -45,6 +61,7 @@ export class CanKickMinigame implements IMinigame {
 			this.canModel = canTemplate.Clone();
 			this.canModel.Parent = Workspace;
 			matchJanitor.Add(this.canModel);
+			this.canOrigin = this.canModel.GetPivot().Position;
 		} else {
 			warn("[CanKick] GiantCan not found in ServerStorage");
 		}
@@ -90,6 +107,9 @@ export class CanKickMinigame implements IMinigame {
 			const state = this.playerStates.get(player.UserId);
 			if (state) {
 				state.role = role;
+			}
+			if (role === PlayerRole.Oni) {
+				this.oniUserId = player.UserId;
 			}
 		}
 
@@ -145,7 +165,21 @@ export class CanKickMinigame implements IMinigame {
 	}
 
 	tick(_dt: number) {
-		// Oni counting handled in startRound coroutine
+		if (this.oniCounting || !this.canModel || !this.canOrigin) return;
+		this.canRelocateElapsed += _dt;
+		if (this.canRelocateElapsed < CAN_RELOCATE_INTERVAL) return;
+		this.canRelocateElapsed = 0;
+
+		this.canSocketIndex = (this.canSocketIndex + 1) % CAN_SOCKET_OFFSETS.size();
+		const nextPosition = this.canOrigin.add(
+			CAN_SOCKET_OFFSETS[this.canSocketIndex],
+		);
+		this.canModel.PivotTo(new CFrame(nextPosition));
+		this.lastHintText = fireHintText(
+			this.serverEvents,
+			"The can rolled to a new alley!",
+			this.lastHintText,
+		);
 	}
 
 	handleCatchRequest(player: Player) {
@@ -205,8 +239,43 @@ export class CanKickMinigame implements IMinigame {
 	handleKickCanRequest(player: Player): boolean {
 		const kickerState = this.playerStates.get(player.UserId);
 		if (!kickerState || kickerState.role !== PlayerRole.Hider) return false;
-		if (kickerState.isCaught) return false;
 		if (this.oniCounting) return false;
+		if (kickerState.isCaught) {
+			const kickerChar = player.Character;
+			if (!kickerState.isInJail || !kickerChar || !this.jailZone) return false;
+			const localPos = this.jailZone.CFrame.PointToObjectSpace(
+				kickerChar.GetPivot().Position,
+			);
+			const halfSize = this.jailZone.Size.mul(0.5);
+			if (!isInsideJailRattleZone(localPos, halfSize)) return false;
+
+			this.rattleProgress = math.min(
+				this.rattleProgress + 1,
+				CAN_RATTLE_TARGET,
+			);
+			this.serverEvents.hintTextChanged.fire(
+				player,
+				`RATTLE ${this.rattleProgress}/${CAN_RATTLE_TARGET}`,
+			);
+			if (this.rattleProgress >= CAN_RATTLE_TARGET) {
+				this.rattleProgress = 0;
+				for (const [userId, state] of this.playerStates) {
+					if (state.isInJail) this.boostEligible.add(userId);
+					if (state.role !== PlayerRole.Hider) continue;
+					const hider = this.playerObjects.get(userId);
+					if (hider) {
+						this.serverEvents.hintTextChanged.fire(
+							hider,
+							"Jail rattled! Oni revealed for 2 seconds!",
+						);
+					}
+				}
+				if (this.oniUserId !== undefined) {
+					this.serverEvents.oniReveal.broadcast(this.oniUserId, 2);
+				}
+			}
+			return false;
+		}
 
 		// Check proximity to can
 		const kickerChar = player.Character;
@@ -236,10 +305,23 @@ export class CanKickMinigame implements IMinigame {
 		}
 
 		kickerState.rescueCount += freedIds.size();
+		this.canRelocateElapsed = 0;
 
 		this.serverEvents.canKicked.broadcast(player.UserId);
 		if (freedIds.size() > 0) {
 			this.serverEvents.playerFreed.broadcast(freedIds);
+		}
+		for (const freedId of freedIds) {
+			if (!this.boostEligible.has(freedId)) continue;
+			this.boostEligible.delete(freedId);
+			const freedPlayer = this.playerObjects.get(freedId);
+			const humanoid =
+				freedPlayer?.Character?.FindFirstChildOfClass("Humanoid");
+			if (!humanoid) continue;
+			humanoid.WalkSpeed = CAN_FREED_SPEED_BOOST;
+			task.delay(CAN_FREED_SPEED_BOOST_DURATION, () => {
+				if (humanoid.Parent) humanoid.WalkSpeed = DEFAULT_WALK_SPEED;
+			});
 		}
 
 		this.lastHintText = fireHintText(
@@ -253,6 +335,8 @@ export class CanKickMinigame implements IMinigame {
 
 		return true;
 	}
+
+	handleSpiritWaveRequest(_player: Player): void {}
 
 	checkWinCondition(): RoundResult | undefined {
 		if (this.oniCounting) return undefined;
@@ -302,6 +386,12 @@ export class CanKickMinigame implements IMinigame {
 		// stopCountdown unfreezes Oni and cancels the thread — must run before clearing playerStates
 		this.stopCountdown();
 		this.lastHintText = "";
+		this.oniUserId = undefined;
+		this.canRelocateElapsed = 0;
+		this.canSocketIndex = 0;
+		this.canOrigin = undefined;
+		this.rattleProgress = 0;
+		this.boostEligible.clear();
 		this.playerStates.clear();
 		this.playerObjects.clear();
 		this.canModel = undefined;

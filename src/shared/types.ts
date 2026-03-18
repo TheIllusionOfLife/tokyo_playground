@@ -126,6 +126,35 @@ export interface ScoreboardEntry {
 	points: number;
 }
 
+export interface QueueStatusData {
+	featuredMinigameId: MinigameId;
+	secondsUntilStart: number;
+	joinedPlayerCount: number;
+	autoStartEnabled: boolean;
+}
+
+export interface RoundIntroData {
+	title: string;
+	subtitle: string;
+	durationSeconds: number;
+}
+
+export interface FeaturedUnlockData {
+	name: string;
+	description: string;
+	progressCurrent: number;
+	progressTarget: number;
+}
+
+export interface HachiRaceStateData {
+	playerRank: number;
+	leaderName: string;
+	leaderScore: number;
+	nextThreshold: number;
+	hotspotLabel: string;
+	hotspotTimeLeft: number;
+}
+
 export interface MissionProgressData {
 	id: MissionId;
 	label: string;
@@ -166,6 +195,7 @@ export interface PlayerData {
 	ownedItems: ItemId[];
 	equippedItems: Partial<Record<ItemCategory, ItemId>>;
 	shopBalance: number;
+	streakCount: number;
 }
 
 export const DEFAULT_PLAYER_DATA: PlayerData = {
@@ -178,4 +208,5 @@ export const DEFAULT_PLAYER_DATA: PlayerData = {
 	ownedItems: [],
 	equippedItems: {},
 	shopBalance: 0,
+	streakCount: 0,
 };

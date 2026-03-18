@@ -1,14 +1,25 @@
 import { createProducer } from "@rbxts/reflex";
 import {
+	FeaturedUnlockData,
+	HachiRaceStateData,
 	MatchPhase,
 	MinigameId,
+	MissionId,
 	MissionProgressData,
 	PlayerRole,
+	QueueStatusData,
 	RewardBreakdown,
+	RoundIntroData,
 	RoundResult,
 	ScoreboardEntry,
 	ShopItemData,
 } from "shared/types";
+import { FEED_MESSAGE_TTL_SECONDS } from "shared/utils/feed";
+
+export interface FeedMessage {
+	text: string;
+	timestamp: number;
+}
 
 export interface GameStoreState {
 	matchPhase: MatchPhase;
@@ -30,6 +41,18 @@ export interface GameStoreState {
 	levelUpNewLevel: number;
 	hachiItemCount: number;
 	hachiEvolutionLevel: number;
+	queueStatus?: QueueStatusData;
+	roundIntro?: RoundIntroData;
+	missionClaimReady?: { id: MissionId; pointsReward: number };
+	localCaught: boolean;
+	localTagged: boolean;
+	spiritCharges: number;
+	featuredUnlock?: FeaturedUnlockData;
+	hachiRaceState?: HachiRaceStateData;
+	feedMessages: FeedMessage[];
+	oniRevealName?: string;
+	summaryText?: string;
+	winnerName?: string;
 }
 
 const initialState: GameStoreState = {
@@ -50,6 +73,10 @@ const initialState: GameStoreState = {
 	levelUpNewLevel: 1,
 	hachiItemCount: 0,
 	hachiEvolutionLevel: 0,
+	localCaught: false,
+	localTagged: false,
+	spiritCharges: 0,
+	feedMessages: [],
 };
 
 export const gameStore = createProducer(initialState, {
@@ -107,6 +134,72 @@ export const gameStore = createProducer(initialState, {
 		...state,
 		hachiEvolutionLevel,
 	}),
+	setQueueStatus: (state, queueStatus: QueueStatusData | undefined) => ({
+		...state,
+		queueStatus,
+	}),
+	setRoundIntro: (state, roundIntro: RoundIntroData | undefined) => ({
+		...state,
+		roundIntro,
+	}),
+	setMissionClaimReady: (
+		state,
+		missionClaimReady: GameStoreState["missionClaimReady"] | undefined,
+	) => ({
+		...state,
+		missionClaimReady,
+	}),
+	setLocalCaught: (state, localCaught: boolean) => ({
+		...state,
+		localCaught,
+	}),
+	setLocalTagged: (state, localTagged: boolean) => ({
+		...state,
+		localTagged,
+	}),
+	setSpiritCharges: (state, spiritCharges: number) => ({
+		...state,
+		spiritCharges,
+	}),
+	setFeaturedUnlock: (
+		state,
+		featuredUnlock: FeaturedUnlockData | undefined,
+	) => ({
+		...state,
+		featuredUnlock,
+	}),
+	setHachiRaceState: (
+		state,
+		hachiRaceState: HachiRaceStateData | undefined,
+	) => ({
+		...state,
+		hachiRaceState,
+	}),
+	pushFeedMessage: (state, text: string) => ({
+		...state,
+		feedMessages: [
+			...state.feedMessages.filter(
+				(m) => os.clock() - m.timestamp < FEED_MESSAGE_TTL_SECONDS,
+			),
+			{ text, timestamp: os.clock() },
+		],
+	}),
+	clearFeed: (state) => ({
+		...state,
+		feedMessages: [],
+	}),
+	setOniRevealName: (state, oniRevealName: string | undefined) => ({
+		...state,
+		oniRevealName,
+	}),
+	setSummaryText: (state, summaryText: string | undefined) => ({
+		...state,
+		summaryText,
+	}),
+	setWinnerName: (state, winnerName: string | undefined) => ({
+		...state,
+		winnerName,
+	}),
 	resetForNewMatch: (state) => ({
 		...state,
 		role: PlayerRole.None,
@@ -121,6 +214,17 @@ export const gameStore = createProducer(initialState, {
 		showLevelUp: false,
 		hachiItemCount: 0,
 		hachiEvolutionLevel: 0,
+		queueStatus: state.queueStatus,
+		roundIntro: undefined,
+		missionClaimReady: undefined,
+		localCaught: false,
+		localTagged: false,
+		spiritCharges: 0,
+		hachiRaceState: undefined,
+		feedMessages: [],
+		oniRevealName: undefined,
+		summaryText: undefined,
+		winnerName: undefined,
 	}),
 	setMissions: (state, missions: MissionProgressData[]) => ({
 		...state,
