@@ -47,6 +47,11 @@ export class HachiRideController implements OnStart {
 	// 0 = grounded/ready, 1 = jumped once (double available), 2 = fully used
 	private jumpPhase = 0;
 	private lastJumpTime = 0;
+	// Wall-run state from server events. Used to guard checkLanded()
+	// so jump phase isn't reset while wall-running (Y velocity can settle < 5).
+	private wallRunning = false;
+	private wallRunStartConn?: RBXScriptConnection;
+	private wallRunStopConn?: RBXScriptConnection;
 	// Cached original BodyVelocity.MaxForce to avoid stale capture on double jump.
 	// Without caching, the second applyImpulse captures MaxForce while it's still
 	// Vector3.zero from the first call, permanently zeroing it after both restores.
@@ -97,6 +102,15 @@ export class HachiRideController implements OnStart {
 		this.jumpPhase = 0;
 		this.lastJumpTime = 0;
 		this.cachedBodyVelocityForce = undefined;
+		this.wallRunning = false;
+
+		// Listen for wall-run events to guard checkLanded()
+		this.wallRunStartConn = clientEvents.hachiWallRunStart.connect(() => {
+			this.wallRunning = true;
+		});
+		this.wallRunStopConn = clientEvents.hachiWallRunStop.connect(() => {
+			this.wallRunning = false;
+		});
 
 		if (humanoid) {
 			// Layer 1: Disable the Jumping HumanoidStateType entirely.
@@ -198,6 +212,11 @@ export class HachiRideController implements OnStart {
 	private onStoodUp() {
 		this.steppedConn?.Disconnect();
 		this.steppedConn = undefined;
+		this.wallRunStartConn?.Disconnect();
+		this.wallRunStartConn = undefined;
+		this.wallRunStopConn?.Disconnect();
+		this.wallRunStopConn = undefined;
+		this.wallRunning = false;
 		ContextActionService.UnbindAction(ACTION_HACHI_JUMP);
 		ContextActionService.UnbindAction(ACTION_HACHI_EJECT);
 
@@ -282,6 +301,7 @@ export class HachiRideController implements OnStart {
 	/** Reset jump phase when Hachi has landed (called from Heartbeat). */
 	private checkLanded() {
 		if (this.jumpPhase === 0) return;
+		if (this.wallRunning) return; // Don't reset during wall-run (mirrors server)
 		if (os.clock() - this.lastJumpTime < 1.0) return; // Too soon after jump
 		const humanoid =
 			Players.LocalPlayer.Character?.FindFirstChildOfClass("Humanoid");
