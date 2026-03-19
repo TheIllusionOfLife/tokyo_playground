@@ -496,13 +496,15 @@ export class HachiRideMinigame implements IMinigame {
 		}
 		this.seatOccupantConns = [];
 
-		// Eject players from VehicleSeats before janitor destroys Hachi models
+		// Eject players from VehicleSeats before janitor destroys Hachi models.
+		// Use seat.Disabled=true (server-authoritative) instead of Jump=true,
+		// because the client unconditionally suppresses Jump while seated.
 		for (const [, model] of this.hachiModels) {
 			const seat = model.FindFirstChildOfClass("VehicleSeat") as
 				| VehicleSeat
 				| undefined;
 			if (seat?.Occupant) {
-				seat.Occupant.Jump = true;
+				seat.Disabled = true;
 			}
 		}
 

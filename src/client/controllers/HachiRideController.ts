@@ -9,7 +9,7 @@ import {
 import { clientEvents } from "client/network";
 import { SE_JUMP } from "shared/constants";
 import { gameStore } from "shared/store/game-store";
-import { MatchPhase, MinigameId } from "shared/types";
+import { MinigameId } from "shared/types";
 
 const ACTION_HACHI_EJECT = "HachiEject";
 
@@ -77,19 +77,11 @@ export class HachiRideController implements OnStart {
 		if (humanoid) {
 			this.steppedConn = RunService.Stepped.Connect(() => {
 				// Guard: humanoid may be destroyed before Heartbeat cleans up
+				// Unconditionally suppress Jump while seated in Hachi.
+				// Server uses seat.Disabled=true for round-end eject, which
+				// bypasses Jump entirely, so no phase gating needed here.
 				if (humanoid.Parent && humanoid.Jump) {
-					const { matchPhase, activeMinigameId } = gameStore.getState();
-					// Suppress Jump for all Hachi phases (Preparing, Countdown,
-					// InProgress) but allow it at round end so the server's
-					// seat eject (Jump=true) can work.
-					if (
-						activeMinigameId === MinigameId.HachiRide &&
-						matchPhase !== MatchPhase.RoundOver &&
-						matchPhase !== MatchPhase.Rewarding &&
-						matchPhase !== MatchPhase.WaitingForPlayers
-					) {
-						humanoid.Jump = false;
-					}
+					humanoid.Jump = false;
 				}
 			});
 
@@ -105,13 +97,8 @@ export class HachiRideController implements OnStart {
 			ACTION_HACHI_EJECT,
 			(_name, inputState, _input) => {
 				if (inputState === Enum.UserInputState.Begin) {
-					const { matchPhase, activeMinigameId } = gameStore.getState();
-					if (
-						activeMinigameId === MinigameId.HachiRide &&
-						matchPhase !== MatchPhase.RoundOver &&
-						matchPhase !== MatchPhase.Rewarding &&
-						matchPhase !== MatchPhase.WaitingForPlayers
-					) {
+					const { activeMinigameId } = gameStore.getState();
+					if (activeMinigameId === MinigameId.HachiRide) {
 						return Enum.ContextActionResult.Sink;
 					}
 					clientEvents.hachiEject.fire();
