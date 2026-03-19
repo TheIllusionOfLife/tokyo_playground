@@ -79,9 +79,14 @@ export class HachiRideController implements OnStart {
 				// Guard: humanoid may be destroyed before Heartbeat cleans up
 				if (humanoid.Parent && humanoid.Jump) {
 					const { matchPhase, activeMinigameId } = gameStore.getState();
+					// Suppress Jump for all Hachi phases (Preparing, Countdown,
+					// InProgress) but allow it at round end so the server's
+					// seat eject (Jump=true) can work.
 					if (
 						activeMinigameId === MinigameId.HachiRide &&
-						matchPhase === MatchPhase.InProgress
+						matchPhase !== MatchPhase.RoundOver &&
+						matchPhase !== MatchPhase.Rewarding &&
+						matchPhase !== MatchPhase.WaitingForPlayers
 					) {
 						humanoid.Jump = false;
 					}
@@ -103,7 +108,9 @@ export class HachiRideController implements OnStart {
 					const { matchPhase, activeMinigameId } = gameStore.getState();
 					if (
 						activeMinigameId === MinigameId.HachiRide &&
-						matchPhase === MatchPhase.InProgress
+						matchPhase !== MatchPhase.RoundOver &&
+						matchPhase !== MatchPhase.Rewarding &&
+						matchPhase !== MatchPhase.WaitingForPlayers
 					) {
 						return Enum.ContextActionResult.Sink;
 					}
