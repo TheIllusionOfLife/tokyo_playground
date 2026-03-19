@@ -49,7 +49,6 @@ import {
 } from "shared/types";
 import { buildHachiRaceSnapshot } from "shared/utils/hachiRace";
 import { animateHachi, HachiAnimState } from "../../utils/animateHachi";
-import { applyHachiJumpImpulse } from "../../utils/hachiPhysics";
 import { IMinigame } from "./MinigameBase";
 
 type ServerEvents = ReturnType<typeof GlobalEvents.createServer>;
@@ -604,7 +603,8 @@ export class HachiRideMinigame implements IMinigame {
 			// First jump: only from near-ground (low Y velocity)
 			if (math.abs(body.AssemblyLinearVelocity.Y) > 15) return;
 			this.jumpCooldowns.set(player.UserId, now);
-			this.applyJumpImpulse(body, HACHI_JUMP_VELOCITY);
+			// Impulse is applied client-side for instant feel (client has
+			// network ownership of the Hachi while seated in VehicleSeat).
 			const state = this.playerStates.get(player.UserId);
 			this.jumpPhase.set(
 				player.UserId,
@@ -614,7 +614,6 @@ export class HachiRideMinigame implements IMinigame {
 		} else if (phase === 1) {
 			// Double jump (midair, evolution >= 1)
 			this.jumpCooldowns.set(player.UserId, now);
-			this.applyJumpImpulse(body, HACHI_DOUBLE_JUMP_IMPULSE);
 			this.jumpPhase.set(player.UserId, 2);
 		}
 		// phase 2: reject
@@ -637,10 +636,6 @@ export class HachiRideMinigame implements IMinigame {
 				this.jumpPhase.set(userId, 0);
 			}
 		}
-	}
-
-	private applyJumpImpulse(body: BasePart, velocity: number) {
-		applyHachiJumpImpulse(body, velocity, () => this.roundStarted);
 	}
 
 	private handleEjectRequest(player: Player) {
