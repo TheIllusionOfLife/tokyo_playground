@@ -21,7 +21,7 @@ const BOB_FREQ_SCALE = 1.5; // multiplier on base frequency (spd / 25)
 /** Returns true when the seat belongs to a Hachi model (has a sibling "Body" BasePart). */
 function isHachiSeat(seat: BasePart): boolean {
 	const body = seat.Parent?.FindFirstChild("Body");
-	return body !== undefined && classIs(body, "BasePart");
+	return body !== undefined && body.IsA("BasePart");
 }
 
 @Controller()
