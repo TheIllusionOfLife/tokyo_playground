@@ -47,6 +47,10 @@ export class HachiRideController implements OnStart {
 	// 0 = grounded/ready, 1 = jumped once (double available), 2 = fully used
 	private jumpPhase = 0;
 	private lastJumpTime = 0;
+	// Cached original BodyVelocity.MaxForce to avoid stale capture on double jump.
+	// Without caching, the second applyImpulse captures MaxForce while it's still
+	// Vector3.zero from the first call, permanently zeroing it after both restores.
+	private cachedBodyVelocityForce?: Vector3;
 
 	onStart() {
 		// Always-on: detect seating in any Hachi (lobby or minigame).
@@ -92,6 +96,7 @@ export class HachiRideController implements OnStart {
 		// Reset jump state for fresh mount
 		this.jumpPhase = 0;
 		this.lastJumpTime = 0;
+		this.cachedBodyVelocityForce = undefined;
 
 		if (humanoid) {
 			// Layer 1: Disable the Jumping HumanoidStateType entirely.
@@ -292,15 +297,21 @@ export class HachiRideController implements OnStart {
 	private applyImpulse(body: BasePart, velocity: number) {
 		const bv = body.FindFirstChildOfClass("BodyVelocity");
 		if (bv) {
-			const origForce = bv.MaxForce;
+			// Cache the original MaxForce on first call. Subsequent calls
+			// (double jump) would capture Vector3.zero since the first call
+			// hasn't restored yet (0.5s delay vs 0.1s cooldown).
+			if (this.cachedBodyVelocityForce === undefined) {
+				this.cachedBodyVelocityForce = bv.MaxForce;
+			}
 			bv.MaxForce = Vector3.zero;
 			body.AssemblyLinearVelocity = new Vector3(
 				body.AssemblyLinearVelocity.X,
 				velocity,
 				body.AssemblyLinearVelocity.Z,
 			);
+			const restoreForce = this.cachedBodyVelocityForce;
 			task.delay(HACHI_SLIDE_FORCE_RESTORE_DELAY, () => {
-				if (bv.Parent) bv.MaxForce = origForce;
+				if (bv.Parent) bv.MaxForce = restoreForce;
 			});
 		} else {
 			body.AssemblyLinearVelocity = new Vector3(
