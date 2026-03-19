@@ -15,7 +15,6 @@ import {
 	HACHI_BONUS_ITEM_COUNT,
 	HACHI_BONUS_ITEM_VALUE,
 	HACHI_COLLECTION_RADIUS,
-	HACHI_DOUBLE_JUMP_IMPULSE,
 	HACHI_EJECT_COOLDOWN,
 	HACHI_EJECT_SEAT_DISABLE_DURATION,
 	HACHI_EVOLUTION_THRESHOLDS,
@@ -27,7 +26,6 @@ import {
 	HACHI_ITEM_TAG,
 	HACHI_ITEMS_TO_SPAWN,
 	HACHI_JUMP_COOLDOWN,
-	HACHI_JUMP_VELOCITY,
 	HACHI_KEY_ITEM_TAG,
 	HACHI_MAX_SPEED_TOLERANCE,
 	HACHI_ROUND_DURATION,
@@ -49,7 +47,6 @@ import {
 } from "shared/types";
 import { buildHachiRaceSnapshot } from "shared/utils/hachiRace";
 import { animateHachi, HachiAnimState } from "../../utils/animateHachi";
-import { applyHachiJumpImpulse } from "../../utils/hachiPhysics";
 import { IMinigame } from "./MinigameBase";
 
 type ServerEvents = ReturnType<typeof GlobalEvents.createServer>;
@@ -104,6 +101,8 @@ export class HachiRideMinigame implements IMinigame {
 	private hachiSlideActive = new Set<number>();
 	private slideCooldowns = new Map<number, number>();
 	private roundStarted = false;
+	private respawnGrace = new Map<number, number>();
+	private seatOccupantConns: RBXScriptConnection[] = [];
 	private hotspots: Hotspot[] = [];
 	private activeHotspotIndex = 0;
 	private hotspotElapsed = 0;
@@ -252,6 +251,7 @@ export class HachiRideMinigame implements IMinigame {
 		for (const player of players) {
 			const conn = player.CharacterAdded.Connect(() => {
 				if (!this.roundStarted) return;
+				this.respawnGrace.set(player.UserId, os.clock());
 				task.wait(0.5);
 				const spawnPart = spawnParts[0];
 				if (spawnPart && player.Character) {
@@ -261,6 +261,44 @@ export class HachiRideMinigame implements IMinigame {
 					this.resetAnticheatBaseline(player.UserId, spawnPart.Position);
 				}
 			});
+			matchJanitor.Add(conn);
+		}
+
+		// Force-reseat: if a player pops out of their Hachi during the round,
+		// snap them back in using the authoritative Seat:Sit() API.
+		for (const [userId, hachiModel] of this.hachiModels) {
+			const seat = hachiModel.FindFirstChildOfClass("VehicleSeat") as
+				| VehicleSeat
+				| undefined;
+			if (!seat) continue;
+			const conn = seat.GetPropertyChangedSignal("Occupant").Connect(() => {
+				if (seat.Occupant !== undefined) return; // Someone sat down, ignore
+				if (!this.roundStarted) return;
+				const player = this.playerObjects.get(userId);
+				if (!player) return;
+				// Skip during respawn grace period to avoid fighting the spawn system
+				const graceTime = this.respawnGrace.get(userId) ?? 0;
+				if (os.clock() - graceTime < 1.5) return;
+				// Wait 1 frame to avoid single-frame physics glitches
+				task.defer(() => {
+					if (!this.roundStarted) return;
+					if (seat.Occupant !== undefined) return; // Re-seated naturally
+					const humanoid = player.Character?.FindFirstChildOfClass("Humanoid");
+					if (!humanoid) {
+						warn(
+							`[HachiRide] Force-reseat skipped for userId ${userId}: humanoid nil (roundStarted=${this.roundStarted}, graceTime=${this.respawnGrace.get(userId) ?? 0})`,
+						);
+						return;
+					}
+					const hrp = player.Character?.FindFirstChild("HumanoidRootPart") as
+						| BasePart
+						| undefined;
+					if (hrp) hrp.CFrame = seat.CFrame.add(new Vector3(0, 2, 0));
+					seat.Sit(humanoid);
+					humanoid.Jump = false;
+				});
+			});
+			this.seatOccupantConns.push(conn);
 			matchJanitor.Add(conn);
 		}
 
@@ -449,13 +487,26 @@ export class HachiRideMinigame implements IMinigame {
 	}
 
 	cleanup() {
-		// Eject players from VehicleSeats before janitor destroys Hachi models
+		// Stop the round FIRST so the force-reseat Occupant.Changed handler
+		// becomes a no-op and won't fight the eject loop below.
+		this.roundStarted = false;
+		HachiRideMinigame.activeInstance = undefined;
+
+		// Disconnect seat occupant watchers before ejecting
+		for (const conn of this.seatOccupantConns) {
+			conn.Disconnect();
+		}
+		this.seatOccupantConns = [];
+
+		// Eject players from VehicleSeats before janitor destroys Hachi models.
+		// Use seat.Disabled=true (server-authoritative) instead of Jump=true,
+		// because the client unconditionally suppresses Jump while seated.
 		for (const [, model] of this.hachiModels) {
 			const seat = model.FindFirstChildOfClass("VehicleSeat") as
 				| VehicleSeat
 				| undefined;
 			if (seat?.Occupant) {
-				seat.Occupant.Jump = true;
+				seat.Disabled = true;
 			}
 		}
 
@@ -470,8 +521,6 @@ export class HachiRideMinigame implements IMinigame {
 			if (player) this.stopWallRun(userId, player);
 		}
 
-		HachiRideMinigame.activeInstance = undefined;
-		this.roundStarted = false;
 		this.playerStates.clear();
 		this.playerObjects.clear();
 		this.hachiModels.clear();
@@ -488,6 +537,7 @@ export class HachiRideMinigame implements IMinigame {
 		this.lastStrikeTime.clear();
 		this.hachiSlideActive.clear();
 		this.slideCooldowns.clear();
+		this.respawnGrace.clear();
 		this.keyItems = [];
 		this.spawnParts = [];
 		this.hotspots = [];
@@ -524,6 +574,7 @@ export class HachiRideMinigame implements IMinigame {
 		this.lastStrikeTime.delete(userId);
 		this.hachiSlideActive.delete(userId);
 		this.slideCooldowns.delete(userId);
+		this.respawnGrace.delete(userId);
 	}
 
 	private handleJumpRequest(player: Player) {
@@ -552,10 +603,12 @@ export class HachiRideMinigame implements IMinigame {
 		const phase = this.jumpPhase.get(player.UserId) ?? 0;
 
 		if (phase === 0) {
-			// First jump: only from near-ground (low Y velocity)
-			if (math.abs(body.AssemblyLinearVelocity.Y) > 15) return;
+			// Ground check is done client-side (tryLocalJump). Server skips
+			// the Y-velocity guard because the client applies impulse before
+			// firing this event, so body.Y may already be high.
 			this.jumpCooldowns.set(player.UserId, now);
-			this.applyJumpImpulse(body, HACHI_JUMP_VELOCITY);
+			// Impulse is applied client-side for instant feel (client has
+			// network ownership of the Hachi while seated in VehicleSeat).
 			const state = this.playerStates.get(player.UserId);
 			this.jumpPhase.set(
 				player.UserId,
@@ -565,7 +618,6 @@ export class HachiRideMinigame implements IMinigame {
 		} else if (phase === 1) {
 			// Double jump (midair, evolution >= 1)
 			this.jumpCooldowns.set(player.UserId, now);
-			this.applyJumpImpulse(body, HACHI_DOUBLE_JUMP_IMPULSE);
 			this.jumpPhase.set(player.UserId, 2);
 		}
 		// phase 2: reject
@@ -590,11 +642,10 @@ export class HachiRideMinigame implements IMinigame {
 		}
 	}
 
-	private applyJumpImpulse(body: BasePart, velocity: number) {
-		applyHachiJumpImpulse(body, velocity, () => this.roundStarted);
-	}
-
 	private handleEjectRequest(player: Player) {
+		// Block voluntary eject during the round
+		if (this.roundStarted) return;
+
 		const hachiModel = this.hachiModels.get(player.UserId);
 		if (!hachiModel) return;
 

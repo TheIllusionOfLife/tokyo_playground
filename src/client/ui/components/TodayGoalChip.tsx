@@ -2,50 +2,84 @@ import React from "@rbxts/react";
 import { useSelector } from "@rbxts/react-reflex";
 import { clientEvents } from "client/network";
 import { GameStoreState } from "shared/store/game-store";
+import { MatchPhase } from "shared/types";
 
 export function TodayGoalChip() {
 	const missions = useSelector((state: GameStoreState) => state.missions);
 	const claimReady = useSelector(
 		(state: GameStoreState) => state.missionClaimReady,
 	);
+	const activeOverlay = useSelector(
+		(state: GameStoreState) => state.activeOverlay,
+	);
+	const matchPhase = useSelector((state: GameStoreState) => state.matchPhase);
 
 	const nextMission = missions.find(
 		(mission) => !mission.rewardCollected && mission.progress < mission.target,
 	);
 
+	// Hide chip when an overlay is open (claim toast stays visible always)
+	const overlayOpen = activeOverlay !== "none";
+	const inProgress = matchPhase === MatchPhase.InProgress;
+
 	return (
 		<>
-			{nextMission ? (
-				<frame
-					key="TodayGoalChip"
-					Size={new UDim2(0, 260, 0, 52)}
-					Position={new UDim2(0, 14, 0, 62)}
-					BackgroundColor3={Color3.fromRGB(24, 34, 48)}
-					BackgroundTransparency={0.12}
-					BorderSizePixel={0}
-				>
-					<uicorner CornerRadius={new UDim(0, 10)} />
-					<textlabel
-						Size={new UDim2(1, -18, 0, 18)}
-						Position={new UDim2(0, 9, 0, 6)}
-						BackgroundTransparency={1}
-						TextColor3={Color3.fromRGB(255, 229, 126)}
-						TextScaled={true}
-						Font={Enum.Font.GothamBold}
-						Text="Today's Goal"
-						TextXAlignment={Enum.TextXAlignment.Left}
-					/>
-					<textlabel
-						Size={new UDim2(1, -18, 0, 16)}
-						Position={new UDim2(0, 9, 0, 24)}
-						BackgroundTransparency={1}
-						TextColor3={Color3.fromRGB(240, 240, 255)}
-						TextScaled={true}
-						Font={Enum.Font.Gotham}
-						Text={`${nextMission.label} (${nextMission.progress}/${nextMission.target})`}
-						TextXAlignment={Enum.TextXAlignment.Left}
-					/>
-				</frame>
+			{nextMission && !overlayOpen ? (
+				inProgress ? (
+					// Minimized compact chip during gameplay
+					<frame
+						key="TodayGoalChip"
+						Size={new UDim2(0, 180, 0, 28)}
+						Position={new UDim2(0, 14, 0, 62)}
+						BackgroundColor3={Color3.fromRGB(24, 34, 48)}
+						BackgroundTransparency={0.4}
+						BorderSizePixel={0}
+					>
+						<uicorner CornerRadius={new UDim(0, 8)} />
+						<textlabel
+							Size={new UDim2(1, -12, 1, 0)}
+							Position={new UDim2(0, 6, 0, 0)}
+							BackgroundTransparency={1}
+							TextColor3={Color3.fromRGB(240, 240, 255)}
+							TextScaled={true}
+							Font={Enum.Font.Gotham}
+							Text={`Goal: ${nextMission.label} ${nextMission.progress}/${nextMission.target}`}
+							TextXAlignment={Enum.TextXAlignment.Left}
+						/>
+					</frame>
+				) : (
+					// Full chip in lobby
+					<frame
+						key="TodayGoalChip"
+						Size={new UDim2(0, 260, 0, 52)}
+						Position={new UDim2(0, 14, 0, 62)}
+						BackgroundColor3={Color3.fromRGB(24, 34, 48)}
+						BackgroundTransparency={0.12}
+						BorderSizePixel={0}
+					>
+						<uicorner CornerRadius={new UDim(0, 10)} />
+						<textlabel
+							Size={new UDim2(1, -18, 0, 18)}
+							Position={new UDim2(0, 9, 0, 6)}
+							BackgroundTransparency={1}
+							TextColor3={Color3.fromRGB(255, 229, 126)}
+							TextScaled={true}
+							Font={Enum.Font.GothamBold}
+							Text="Today's Goal"
+							TextXAlignment={Enum.TextXAlignment.Left}
+						/>
+						<textlabel
+							Size={new UDim2(1, -18, 0, 16)}
+							Position={new UDim2(0, 9, 0, 24)}
+							BackgroundTransparency={1}
+							TextColor3={Color3.fromRGB(240, 240, 255)}
+							TextScaled={true}
+							Font={Enum.Font.Gotham}
+							Text={`${nextMission.label} (${nextMission.progress}/${nextMission.target})`}
+							TextXAlignment={Enum.TextXAlignment.Left}
+						/>
+					</frame>
+				)
 			) : (
 				undefined!
 			)}

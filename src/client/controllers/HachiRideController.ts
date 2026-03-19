@@ -4,12 +4,20 @@ import {
 	Players,
 	RunService,
 	SoundService,
-	UserInputService,
 } from "@rbxts/services";
 import { clientEvents } from "client/network";
-import { SE_JUMP } from "shared/constants";
+import {
+	HACHI_DOUBLE_JUMP_IMPULSE,
+	HACHI_JUMP_COOLDOWN,
+	HACHI_JUMP_VELOCITY,
+	HACHI_SLIDE_FORCE_RESTORE_DELAY,
+	SE_JUMP,
+} from "shared/constants";
+import { gameStore } from "shared/store/game-store";
+import { MinigameId } from "shared/types";
 
 const ACTION_HACHI_EJECT = "HachiEject";
+const ACTION_HACHI_JUMP = "HachiJumpSink";
 
 // Body bob tuning — slower than Hachi's leg freq for a gentle gallop sway
 const BOB_MAX_AMPLITUDE = 0.3; // studs at full speed
@@ -19,7 +27,7 @@ const BOB_FREQ_SCALE = 1.5; // multiplier on base frequency (spd / 25)
 /** Returns true when the seat belongs to a Hachi model (has a sibling "Body" BasePart). */
 function isHachiSeat(seat: BasePart): boolean {
 	const body = seat.Parent?.FindFirstChild("Body");
-	return body !== undefined && classIs(body, "BasePart");
+	return body !== undefined && body.IsA("BasePart");
 }
 
 @Controller()
@@ -27,9 +35,27 @@ export class HachiRideController implements OnStart {
 	private seatedInHachi = false;
 
 	private steppedConn?: RBXScriptConnection;
-	private jumpRequestConn?: RBXScriptConnection;
 	private bobConn?: RBXScriptConnection;
 	private bobRootC0?: CFrame; // original Motor6D.C0 to restore on dismount
+
+	// Original humanoid jump values, restored on dismount
+	private origJumpPower = 0;
+	private origJumpHeight = 0;
+	private jumpLocked = false;
+
+	// Client-side jump phase tracking (mirrors server logic)
+	// 0 = grounded/ready, 1 = jumped once (double available), 2 = fully used
+	private jumpPhase = 0;
+	private lastJumpTime = 0;
+	// Wall-run state from server events. Used to guard checkLanded()
+	// so jump phase isn't reset while wall-running (Y velocity can settle < 5).
+	private wallRunning = false;
+	private wallRunStartConn?: RBXScriptConnection;
+	private wallRunStopConn?: RBXScriptConnection;
+	// Cached original BodyVelocity.MaxForce to avoid stale capture on double jump.
+	// Without caching, the second applyImpulse captures MaxForce while it's still
+	// Vector3.zero from the first call, permanently zeroing it after both restores.
+	private cachedBodyVelocityForce?: Vector3;
 
 	onStart() {
 		// Always-on: detect seating in any Hachi (lobby or minigame).
@@ -59,6 +85,11 @@ export class HachiRideController implements OnStart {
 					this.onStoodUp();
 				}
 			}
+
+			// Reset jump phase when Hachi has landed
+			if (this.seatedInHachi) {
+				this.checkLanded();
+			}
 		});
 	}
 
@@ -67,31 +98,79 @@ export class HachiRideController implements OnStart {
 		const character = Players.LocalPlayer.Character;
 		const humanoid = character?.FindFirstChildOfClass("Humanoid");
 
-		// Stepped runs BEFORE physics each frame. Force Jump=false so the
-		// engine's seat-exit logic never sees a true value. This is the only
-		// reliable way to prevent the mobile touch jump button from unseating.
-		// JumpRequest fires on all platforms (keyboard Space, gamepad A,
-		// mobile touch button) even when Jump is forced false above.
+		// Reset jump state for fresh mount
+		this.jumpPhase = 0;
+		this.lastJumpTime = 0;
+		this.cachedBodyVelocityForce = undefined;
+		this.wallRunning = false;
+
+		// Listen for wall-run events to guard checkLanded()
+		this.wallRunStartConn = clientEvents.hachiWallRunStart.connect(() => {
+			this.wallRunning = true;
+		});
+		this.wallRunStopConn = clientEvents.hachiWallRunStop.connect(() => {
+			this.wallRunning = false;
+		});
+
 		if (humanoid) {
+			// Layer 1: Disable the Jumping HumanoidStateType entirely.
+			// Not fully reliable for seat eject, but reduces frequency.
+			humanoid.SetStateEnabled(Enum.HumanoidStateType.Jumping, false);
+
+			// Layer 2: Set JumpPower/JumpHeight to 0. This hides the
+			// mobile jump button automatically, preventing touch-based eject.
+			this.origJumpPower = humanoid.JumpPower;
+			this.origJumpHeight = humanoid.JumpHeight;
+			humanoid.JumpPower = 0;
+			humanoid.JumpHeight = 0;
+			this.jumpLocked = true;
+
+			// Layer 3: Stepped loop as additional safety net. Even though
+			// it can't always win the write-write race with the engine's
+			// ControlModule, it catches some frames.
 			this.steppedConn = RunService.Stepped.Connect(() => {
-				// Guard: humanoid may be destroyed before Heartbeat cleans up
 				if (humanoid.Parent && humanoid.Jump) {
 					humanoid.Jump = false;
 				}
 			});
-
-			this.jumpRequestConn = UserInputService.JumpRequest.Connect(() => {
-				if (!this.seatedInHachi) return;
-				clientEvents.hachiJump.fire();
-				this.playJumpSE();
-			});
 		}
 
-		// E key to dismount
+		// Layer 4: ContextActionService sink for Space/ButtonA.
+		// CAS intercepts input BEFORE it reaches the seat eject codepath
+		// on desktop and gamepad. createTouchButton=true provides a
+		// replacement jump button on mobile (since JumpPower=0 hides
+		// the default one).
+		ContextActionService.BindAction(
+			ACTION_HACHI_JUMP,
+			(_name, inputState, _input) => {
+				if (inputState === Enum.UserInputState.Begin) {
+					if (!this.seatedInHachi) return Enum.ContextActionResult.Sink;
+					const inMinigame =
+						gameStore.getState().activeMinigameId === MinigameId.HachiRide;
+					if (inMinigame) {
+						// Client-side prediction: apply impulse locally for
+						// instant feel. Server still receives event for bookkeeping.
+						if (!this.tryLocalJump()) return Enum.ContextActionResult.Sink;
+					}
+					clientEvents.hachiJump.fire();
+					this.playJumpSE();
+				}
+				return Enum.ContextActionResult.Sink;
+			},
+			true, // createTouchButton for mobile
+			Enum.KeyCode.Space,
+			Enum.KeyCode.ButtonA,
+		);
+
+		// E key to dismount (blocked during active Hachi minigame)
 		ContextActionService.BindAction(
 			ACTION_HACHI_EJECT,
 			(_name, inputState, _input) => {
 				if (inputState === Enum.UserInputState.Begin) {
+					const { activeMinigameId } = gameStore.getState();
+					if (activeMinigameId === MinigameId.HachiRide) {
+						return Enum.ContextActionResult.Sink;
+					}
 					clientEvents.hachiEject.fire();
 				}
 				return Enum.ContextActionResult.Sink;
@@ -133,9 +212,25 @@ export class HachiRideController implements OnStart {
 	private onStoodUp() {
 		this.steppedConn?.Disconnect();
 		this.steppedConn = undefined;
-		this.jumpRequestConn?.Disconnect();
-		this.jumpRequestConn = undefined;
+		this.wallRunStartConn?.Disconnect();
+		this.wallRunStartConn = undefined;
+		this.wallRunStopConn?.Disconnect();
+		this.wallRunStopConn = undefined;
+		this.wallRunning = false;
+		ContextActionService.UnbindAction(ACTION_HACHI_JUMP);
 		ContextActionService.UnbindAction(ACTION_HACHI_EJECT);
+
+		// Restore humanoid jump properties
+		if (this.jumpLocked) {
+			const character = Players.LocalPlayer.Character;
+			const humanoid = character?.FindFirstChildOfClass("Humanoid");
+			if (humanoid) {
+				humanoid.SetStateEnabled(Enum.HumanoidStateType.Jumping, true);
+				humanoid.JumpPower = this.origJumpPower;
+				humanoid.JumpHeight = this.origJumpHeight;
+			}
+			this.jumpLocked = false;
+		}
 
 		// Restore original root Motor6D and stop bob
 		this.bobConn?.Disconnect();
@@ -168,5 +263,82 @@ export class HachiRideController implements OnStart {
 			this.jumpSE.Parent = SoundService;
 		}
 		this.jumpSE.Play();
+	}
+
+	/** Client-side jump with phase tracking. Returns true if jump was applied.
+	 *  Mirrors the server's phase logic so we don't apply impulses the
+	 *  server would reject. Phase 0=grounded, 1=double available, 2=used. */
+	private tryLocalJump(): boolean {
+		const humanoid =
+			Players.LocalPlayer.Character?.FindFirstChildOfClass("Humanoid");
+		const body = humanoid?.SeatPart?.Parent?.FindFirstChild("Body") as
+			| BasePart
+			| undefined;
+		if (!body) return false;
+
+		const now = os.clock();
+		if (now - this.lastJumpTime < HACHI_JUMP_COOLDOWN) return false;
+
+		if (this.jumpPhase === 0) {
+			// First jump: only from near-ground
+			if (math.abs(body.AssemblyLinearVelocity.Y) > 15) return false;
+			this.lastJumpTime = now;
+			this.applyImpulse(body, HACHI_JUMP_VELOCITY);
+			const evoLevel = gameStore.getState().hachiEvolutionLevel;
+			this.jumpPhase = evoLevel >= 1 ? 1 : 2;
+			return true;
+		} else if (this.jumpPhase === 1) {
+			// Double jump (midair, evolution >= 1)
+			this.lastJumpTime = now;
+			this.applyImpulse(body, HACHI_DOUBLE_JUMP_IMPULSE);
+			this.jumpPhase = 2;
+			return true;
+		}
+		// Phase 2: reject
+		return false;
+	}
+
+	/** Reset jump phase when Hachi has landed (called from Heartbeat). */
+	private checkLanded() {
+		if (this.jumpPhase === 0) return;
+		if (this.wallRunning) return; // Don't reset during wall-run (mirrors server)
+		if (os.clock() - this.lastJumpTime < 1.0) return; // Too soon after jump
+		const humanoid =
+			Players.LocalPlayer.Character?.FindFirstChildOfClass("Humanoid");
+		const body = humanoid?.SeatPart?.Parent?.FindFirstChild("Body") as
+			| BasePart
+			| undefined;
+		if (!body) return;
+		if (math.abs(body.AssemblyLinearVelocity.Y) < 5) {
+			this.jumpPhase = 0;
+		}
+	}
+
+	private applyImpulse(body: BasePart, velocity: number) {
+		const bv = body.FindFirstChildOfClass("BodyVelocity");
+		if (bv) {
+			// Cache the original MaxForce on first call. Subsequent calls
+			// (double jump) would capture Vector3.zero since the first call
+			// hasn't restored yet (0.5s delay vs 0.1s cooldown).
+			if (this.cachedBodyVelocityForce === undefined) {
+				this.cachedBodyVelocityForce = bv.MaxForce;
+			}
+			bv.MaxForce = Vector3.zero;
+			body.AssemblyLinearVelocity = new Vector3(
+				body.AssemblyLinearVelocity.X,
+				velocity,
+				body.AssemblyLinearVelocity.Z,
+			);
+			const restoreForce = this.cachedBodyVelocityForce;
+			task.delay(HACHI_SLIDE_FORCE_RESTORE_DELAY, () => {
+				if (bv.Parent) bv.MaxForce = restoreForce;
+			});
+		} else {
+			body.AssemblyLinearVelocity = new Vector3(
+				body.AssemblyLinearVelocity.X,
+				velocity,
+				body.AssemblyLinearVelocity.Z,
+			);
+		}
 	}
 }

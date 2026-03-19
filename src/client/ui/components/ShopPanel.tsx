@@ -1,7 +1,7 @@
 import React from "@rbxts/react";
 import { useSelector } from "@rbxts/react-reflex";
 import { clientEvents } from "client/network";
-import { GameStoreState } from "shared/store/game-store";
+import { GameStoreState, gameStore } from "shared/store/game-store";
 import { ShopItemData } from "shared/types";
 
 function ShopCard({
@@ -96,82 +96,132 @@ function ShopCard({
 }
 
 export function ShopPanel() {
-	const [open, setOpen] = React.useState(false);
+	const activeOverlay = useSelector(
+		(state: GameStoreState) => state.activeOverlay,
+	);
+	const open = activeOverlay === "shop";
 	const shopItems = useSelector((state: GameStoreState) => state.shopItems);
 	const shopBalance = useSelector((state: GameStoreState) => state.shopBalance);
 	const level = useSelector((state: GameStoreState) => state.playgroundLevel);
 
 	return (
-		<frame
-			key="ShopPanel"
-			Size={new UDim2(0, 100, 0, 30)}
-			Position={new UDim2(1, -10, 0, 48)}
-			AnchorPoint={new Vector2(1, 0)}
-			BackgroundColor3={Color3.fromRGB(70, 45, 25)}
-			BackgroundTransparency={0.3}
-			BorderSizePixel={0}
-			ZIndex={10}
-		>
-			<uicorner CornerRadius={new UDim(0, 15)} />
-			<textbutton
-				Size={new UDim2(1, 0, 1, 0)}
-				BackgroundTransparency={1}
-				TextColor3={Color3.fromRGB(255, 210, 100)}
-				TextScaled={true}
-				Font={Enum.Font.GothamBold}
-				Text="$ Shop"
-				Event={{
-					Activated: () => setOpen(!open),
-				}}
+		<>
+			{/* Toggle button (stays at top-right) */}
+			<frame
+				key="ShopPanel"
+				Size={new UDim2(0, 100, 0, 30)}
+				Position={new UDim2(1, -10, 0, 48)}
+				AnchorPoint={new Vector2(1, 0)}
+				BackgroundColor3={Color3.fromRGB(70, 45, 25)}
+				BackgroundTransparency={0.3}
+				BorderSizePixel={0}
+				ZIndex={10}
 			>
-				<uipadding PaddingLeft={new UDim(0, 8)} PaddingRight={new UDim(0, 8)} />
-			</textbutton>
-			{open ? (
-				<frame
-					Size={new UDim2(0, 420, 0, 260)}
-					Position={new UDim2(1, 0, 1, 4)}
-					AnchorPoint={new Vector2(1, 0)}
-					BackgroundColor3={Color3.fromRGB(20, 20, 40)}
-					BackgroundTransparency={0.1}
-					BorderSizePixel={0}
-					ZIndex={11}
+				<uicorner CornerRadius={new UDim(0, 15)} />
+				<textbutton
+					Size={new UDim2(1, 0, 1, 0)}
+					BackgroundTransparency={1}
+					TextColor3={Color3.fromRGB(255, 210, 100)}
+					TextScaled={true}
+					Font={Enum.Font.GothamBold}
+					Text="$ Shop"
+					Event={{
+						Activated: () => gameStore.setActiveOverlay(open ? "none" : "shop"),
+					}}
 				>
-					<uicorner CornerRadius={new UDim(0, 8)} />
-					<textlabel
-						Size={new UDim2(1, 0, 0, 24)}
-						BackgroundTransparency={1}
-						TextColor3={Color3.fromRGB(255, 200, 80)}
-						TextScaled={true}
-						Font={Enum.Font.GothamBold}
-						Text={`Balance: ${shopBalance} pts`}
+					<uipadding
+						PaddingLeft={new UDim(0, 8)}
+						PaddingRight={new UDim(0, 8)}
 					/>
-					<scrollingframe
-						Size={new UDim2(1, -8, 1, -32)}
-						Position={new UDim2(0, 4, 0, 28)}
-						BackgroundTransparency={1}
+				</textbutton>
+			</frame>
+			{/* Full-screen overlay when open */}
+			{open ? (
+				<>
+					{/* Semi-transparent backdrop */}
+					<textbutton
+						key="ShopBackdrop"
+						Size={new UDim2(1, 0, 1, 0)}
+						Position={new UDim2(0, 0, 0, 0)}
+						BackgroundColor3={Color3.fromRGB(0, 0, 0)}
+						BackgroundTransparency={0.5}
 						BorderSizePixel={0}
-						CanvasSize={new UDim2(0, 0, 0, 0)}
-						AutomaticCanvasSize={Enum.AutomaticSize.Y}
-						ScrollBarThickness={6}
-						ScrollBarImageColor3={Color3.fromRGB(100, 100, 150)}
+						Text=""
+						ZIndex={18}
+						Event={{
+							Activated: () => gameStore.setActiveOverlay("none"),
+						}}
+					/>
+					{/* Centered shop card */}
+					<frame
+						key="ShopOverlay"
+						Size={new UDim2(0.75, 0, 0.65, 0)}
+						Position={new UDim2(0.5, 0, 0.5, 0)}
+						AnchorPoint={new Vector2(0.5, 0.5)}
+						BackgroundColor3={Color3.fromRGB(20, 20, 40)}
+						BackgroundTransparency={0.05}
+						BorderSizePixel={0}
+						ZIndex={19}
 					>
-						<uigridlayout
-							CellSize={new UDim2(0, 128, 0, 96)}
-							CellPadding={new UDim2(0, 4, 0, 4)}
+						<uicorner CornerRadius={new UDim(0, 12)} />
+						{/* Close button */}
+						<textbutton
+							Size={new UDim2(0, 32, 0, 32)}
+							Position={new UDim2(1, -8, 0, 8)}
+							AnchorPoint={new Vector2(1, 0)}
+							BackgroundColor3={Color3.fromRGB(60, 40, 40)}
+							BackgroundTransparency={0.3}
+							TextColor3={Color3.fromRGB(255, 255, 255)}
+							TextScaled={true}
+							Font={Enum.Font.GothamBold}
+							Text="X"
+							ZIndex={20}
+							Event={{
+								Activated: () => gameStore.setActiveOverlay("none"),
+							}}
+						>
+							<uicorner CornerRadius={new UDim(1, 0)} />
+						</textbutton>
+						<textlabel
+							Size={new UDim2(1, -48, 0, 28)}
+							Position={new UDim2(0, 12, 0, 12)}
+							BackgroundTransparency={1}
+							TextColor3={Color3.fromRGB(255, 200, 80)}
+							TextScaled={true}
+							Font={Enum.Font.GothamBold}
+							Text={`Balance: ${shopBalance} pts`}
+							TextXAlignment={Enum.TextXAlignment.Left}
+							ZIndex={19}
 						/>
-						{shopItems.map((item) => (
-							<ShopCard
-								key={item.id}
-								item={item}
-								balance={shopBalance}
-								level={level}
+						<scrollingframe
+							Size={new UDim2(1, -24, 1, -52)}
+							Position={new UDim2(0, 12, 0, 44)}
+							BackgroundTransparency={1}
+							BorderSizePixel={0}
+							CanvasSize={new UDim2(0, 0, 0, 0)}
+							AutomaticCanvasSize={Enum.AutomaticSize.Y}
+							ScrollBarThickness={6}
+							ScrollBarImageColor3={Color3.fromRGB(100, 100, 150)}
+							ZIndex={19}
+						>
+							<uigridlayout
+								CellSize={new UDim2(0, 128, 0, 96)}
+								CellPadding={new UDim2(0, 6, 0, 6)}
 							/>
-						))}
-					</scrollingframe>
-				</frame>
+							{shopItems.map((item) => (
+								<ShopCard
+									key={item.id}
+									item={item}
+									balance={shopBalance}
+									level={level}
+								/>
+							))}
+						</scrollingframe>
+					</frame>
+				</>
 			) : (
 				undefined!
 			)}
-		</frame>
+		</>
 	);
 }

@@ -16,9 +16,6 @@ export function HachiHud() {
 		(s: GameStoreState) => s.hachiEvolutionLevel,
 	);
 	const raceState = useSelector((s: GameStoreState) => s.hachiRaceState);
-	const hotspotSeconds = raceState
-		? math.max(0, math.floor(raceState.hotspotTimeLeft))
-		: 0;
 
 	if (
 		activeMinigameId !== MinigameId.HachiRide ||
@@ -27,11 +24,20 @@ export function HachiHud() {
 		return undefined!;
 	}
 
+	// Compact single-line with rank, points, and next evo threshold
+	const evoText =
+		raceState && raceState.nextThreshold > 0
+			? `Next evo ${raceState.nextThreshold}`
+			: "MAX";
+	const mainText = raceState
+		? `#${raceState.playerRank} | ${itemCount} pts | ${evoText}`
+		: `${itemCount} pts`;
+
 	return (
 		<frame
 			key="HachiHud"
-			Size={new UDim2(0, 240, 0, 112)}
-			Position={new UDim2(0.5, -120, 0.09, 4)}
+			Size={new UDim2(0, 220, 0, 80)}
+			Position={new UDim2(0.5, -110, 0.09, 4)}
 			BackgroundColor3={Color3.fromRGB(15, 15, 30)}
 			BackgroundTransparency={0.2}
 			BorderSizePixel={0}
@@ -40,22 +46,22 @@ export function HachiHud() {
 			<uilistlayout
 				SortOrder={Enum.SortOrder.LayoutOrder}
 				FillDirection={Enum.FillDirection.Vertical}
-				Padding={new UDim(0, 4)}
+				Padding={new UDim(0, 3)}
 				HorizontalAlignment={Enum.HorizontalAlignment.Center}
 				VerticalAlignment={Enum.VerticalAlignment.Center}
 			/>
 			<uipadding
-				PaddingTop={new UDim(0, 6)}
-				PaddingBottom={new UDim(0, 6)}
+				PaddingTop={new UDim(0, 4)}
+				PaddingBottom={new UDim(0, 4)}
 				PaddingLeft={new UDim(0, 8)}
 				PaddingRight={new UDim(0, 8)}
 			/>
 			<textlabel
-				key="ItemCount"
+				key="MainLine"
 				LayoutOrder={1}
-				Size={new UDim2(1, 0, 0, 28)}
+				Size={new UDim2(1, 0, 0, 22)}
 				BackgroundTransparency={1}
-				Text={`Points: ${itemCount}`}
+				Text={mainText}
 				TextColor3={Color3.fromRGB(255, 220, 80)}
 				TextScaled={true}
 				Font={Enum.Font.GothamBold}
@@ -63,7 +69,7 @@ export function HachiHud() {
 			<frame
 				key="EvolutionDots"
 				LayoutOrder={2}
-				Size={new UDim2(0, 120, 0, 16)}
+				Size={new UDim2(0, 110, 0, 14)}
 				BackgroundTransparency={1}
 			>
 				<uilistlayout
@@ -77,7 +83,7 @@ export function HachiHud() {
 					<frame
 						key={`dot-${level}`}
 						LayoutOrder={level}
-						Size={new UDim2(0, 14, 0, 14)}
+						Size={new UDim2(0, 12, 0, 12)}
 						BackgroundColor3={evolutionLevel >= level ? DOT_ON : DOT_OFF}
 						BorderSizePixel={0}
 					>
@@ -86,28 +92,16 @@ export function HachiHud() {
 				))}
 			</frame>
 			{raceState && (
-				<>
-					<textlabel
-						key="RaceState"
-						LayoutOrder={3}
-						Size={new UDim2(1, 0, 0, 18)}
-						BackgroundTransparency={1}
-						TextColor3={Color3.fromRGB(210, 230, 255)}
-						TextScaled={true}
-						Font={Enum.Font.Gotham}
-						Text={`Rank #${raceState.playerRank} • Leader ${raceState.leaderName} (${raceState.leaderScore})`}
-					/>
-					<textlabel
-						key="HotspotState"
-						LayoutOrder={4}
-						Size={new UDim2(1, 0, 0, 18)}
-						BackgroundTransparency={1}
-						TextColor3={Color3.fromRGB(255, 196, 92)}
-						TextScaled={true}
-						Font={Enum.Font.Gotham}
-						Text={`Hotspot: ${raceState.hotspotLabel} (${hotspotSeconds}s) • Next evo ${raceState.nextThreshold}`}
-					/>
-				</>
+				<textlabel
+					key="RaceState"
+					LayoutOrder={3}
+					Size={new UDim2(1, 0, 0, 16)}
+					BackgroundTransparency={1}
+					TextColor3={Color3.fromRGB(210, 230, 255)}
+					TextScaled={true}
+					Font={Enum.Font.Gotham}
+					Text={`Leader: ${raceState.leaderName} (${raceState.leaderScore})`}
+				/>
 			)}
 		</frame>
 	);

@@ -28,5 +28,5 @@ Roblox party mini-game platform set in Tokyo (Shibuya). roblox-ts + Flamework + 
 
 ## Physics Ownership Rules
 - **Character HRP** physics are client-owned. Apply `AssemblyLinearVelocity` from the client. Use `Humanoid.PlatformStand=true` first to disable the ground controller (otherwise it dampens the impulse within one step).
-- **Hachi Body** physics are server-owned. Client must fire a `ClientToServerEvent`; server zeros `BodyVelocity.MaxForce` for ~0.5s then applies `AssemblyLinearVelocity` (MaxForce re-asserts velocity every Heartbeat frame and cancels any impulse).
+- **Hachi Body** physics are server-owned by default. Client must fire a `ClientToServerEvent`; server zeros `BodyVelocity.MaxForce` for ~0.5s then applies `AssemblyLinearVelocity` (MaxForce re-asserts velocity every Heartbeat frame and cancels any impulse). **Exception: Hachi jump during minigame** uses client-side prediction for instant feel. VehicleSeat grants the seated client network ownership of the assembly, so the client applies jump impulse directly while the server tracks state (cooldown, phase, evolution). Lobby Hachi jumps still use the server path.
 - **`BasePart.Touched`** is unreliable for thin/tilted parts. Use a client-side Heartbeat OBB proximity check instead: `CFrame.PointToObjectSpace` → clamp to `±halfSize` → `PointToWorldSpace` → distance.
