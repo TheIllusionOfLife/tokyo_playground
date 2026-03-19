@@ -6,7 +6,11 @@ import {
 	SoundService,
 } from "@rbxts/services";
 import { clientEvents } from "client/network";
-import { SE_JUMP } from "shared/constants";
+import {
+	HACHI_JUMP_VELOCITY,
+	HACHI_SLIDE_FORCE_RESTORE_DELAY,
+	SE_JUMP,
+} from "shared/constants";
 import { gameStore } from "shared/store/game-store";
 import { MinigameId } from "shared/types";
 
@@ -108,6 +112,7 @@ export class HachiRideController implements OnStart {
 					if (this.seatedInHachi) {
 						clientEvents.hachiJump.fire();
 						this.playJumpSE();
+						this.applyLocalJumpImpulse();
 					}
 				}
 				return Enum.ContextActionResult.Sink;
@@ -213,5 +218,36 @@ export class HachiRideController implements OnStart {
 			this.jumpSE.Parent = SoundService;
 		}
 		this.jumpSE.Play();
+	}
+
+	/** Client-side prediction: apply jump impulse locally for instant feel.
+	 *  The client has network ownership of the Hachi while seated in the
+	 *  VehicleSeat, so physics changes apply immediately without a round trip. */
+	private applyLocalJumpImpulse() {
+		const humanoid =
+			Players.LocalPlayer.Character?.FindFirstChildOfClass("Humanoid");
+		const body = humanoid?.SeatPart?.Parent?.FindFirstChild("Body") as
+			| BasePart
+			| undefined;
+		if (!body) return;
+		const bv = body.FindFirstChildOfClass("BodyVelocity");
+		if (bv) {
+			const origForce = bv.MaxForce;
+			bv.MaxForce = Vector3.zero;
+			body.AssemblyLinearVelocity = new Vector3(
+				body.AssemblyLinearVelocity.X,
+				HACHI_JUMP_VELOCITY,
+				body.AssemblyLinearVelocity.Z,
+			);
+			task.delay(HACHI_SLIDE_FORCE_RESTORE_DELAY, () => {
+				if (bv.Parent) bv.MaxForce = origForce;
+			});
+		} else {
+			body.AssemblyLinearVelocity = new Vector3(
+				body.AssemblyLinearVelocity.X,
+				HACHI_JUMP_VELOCITY,
+				body.AssemblyLinearVelocity.Z,
+			);
+		}
 	}
 }
