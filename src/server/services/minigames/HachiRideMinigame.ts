@@ -600,8 +600,9 @@ export class HachiRideMinigame implements IMinigame {
 		const phase = this.jumpPhase.get(player.UserId) ?? 0;
 
 		if (phase === 0) {
-			// First jump: only from near-ground (low Y velocity)
-			if (math.abs(body.AssemblyLinearVelocity.Y) > 15) return;
+			// Ground check is done client-side (tryLocalJump). Server skips
+			// the Y-velocity guard because the client applies impulse before
+			// firing this event, so body.Y may already be high.
 			this.jumpCooldowns.set(player.UserId, now);
 			// Impulse is applied client-side for instant feel (client has
 			// network ownership of the Hachi while seated in VehicleSeat).

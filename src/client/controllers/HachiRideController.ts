@@ -125,10 +125,16 @@ export class HachiRideController implements OnStart {
 			ACTION_HACHI_JUMP,
 			(_name, inputState, _input) => {
 				if (inputState === Enum.UserInputState.Begin) {
-					if (this.seatedInHachi && this.tryLocalJump()) {
-						clientEvents.hachiJump.fire();
-						this.playJumpSE();
+					if (!this.seatedInHachi) return Enum.ContextActionResult.Sink;
+					const inMinigame =
+						gameStore.getState().activeMinigameId === MinigameId.HachiRide;
+					if (inMinigame) {
+						// Client-side prediction: apply impulse locally for
+						// instant feel. Server still receives event for bookkeeping.
+						if (!this.tryLocalJump()) return Enum.ContextActionResult.Sink;
 					}
+					clientEvents.hachiJump.fire();
+					this.playJumpSE();
 				}
 				return Enum.ContextActionResult.Sink;
 			},

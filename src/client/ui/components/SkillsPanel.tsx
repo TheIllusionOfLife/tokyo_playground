@@ -52,11 +52,15 @@ export function SkillsPanel() {
 		(s: GameStoreState) => s.hachiEvolutionLevel,
 	);
 
-	// Only show during Hachi Ride
-	if (
-		activeMinigameId !== MinigameId.HachiRide ||
-		matchPhase !== MatchPhase.InProgress
-	) {
+	// Only show during Hachi Ride. Reset stale overlay when hidden so
+	// TodayGoalChip/FeaturedUnlockBanner don't stay suppressed.
+	const visible =
+		activeMinigameId === MinigameId.HachiRide &&
+		matchPhase === MatchPhase.InProgress;
+	if (!visible) {
+		if (activeOverlay === "skills") {
+			gameStore.setActiveOverlay("none");
+		}
 		return undefined!;
 	}
 

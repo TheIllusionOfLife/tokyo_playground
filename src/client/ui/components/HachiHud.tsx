@@ -25,8 +25,12 @@ export function HachiHud() {
 	}
 
 	// Compact single-line with rank, points, and next evo threshold
+	const evoText =
+		raceState && raceState.nextThreshold > 0
+			? `Next evo ${raceState.nextThreshold}`
+			: "MAX";
 	const mainText = raceState
-		? `#${raceState.playerRank} | ${itemCount} pts | Next evo ${raceState.nextThreshold}`
+		? `#${raceState.playerRank} | ${itemCount} pts | ${evoText}`
 		: `${itemCount} pts`;
 
 	return (
