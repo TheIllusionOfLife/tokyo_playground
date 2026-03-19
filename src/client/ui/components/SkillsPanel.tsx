@@ -52,15 +52,21 @@ export function SkillsPanel() {
 		(s: GameStoreState) => s.hachiEvolutionLevel,
 	);
 
-	// Only show during Hachi Ride. Reset stale overlay when hidden so
-	// TodayGoalChip/FeaturedUnlockBanner don't stay suppressed.
+	// Only show during Hachi Ride
 	const visible =
 		activeMinigameId === MinigameId.HachiRide &&
 		matchPhase === MatchPhase.InProgress;
-	if (!visible) {
-		if (activeOverlay === "skills") {
+
+	// Reset stale overlay when panel becomes invisible so
+	// TodayGoalChip/FeaturedUnlockBanner don't stay suppressed.
+	// useEffect keeps render pure (no store dispatch during render).
+	React.useEffect(() => {
+		if (!visible && activeOverlay === "skills") {
 			gameStore.setActiveOverlay("none");
 		}
+	}, [visible, activeOverlay]);
+
+	if (!visible) {
 		return undefined!;
 	}
 

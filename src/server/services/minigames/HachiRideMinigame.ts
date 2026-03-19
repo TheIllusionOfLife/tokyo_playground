@@ -15,7 +15,6 @@ import {
 	HACHI_BONUS_ITEM_COUNT,
 	HACHI_BONUS_ITEM_VALUE,
 	HACHI_COLLECTION_RADIUS,
-	HACHI_DOUBLE_JUMP_IMPULSE,
 	HACHI_EJECT_COOLDOWN,
 	HACHI_EJECT_SEAT_DISABLE_DURATION,
 	HACHI_EVOLUTION_THRESHOLDS,
@@ -27,7 +26,6 @@ import {
 	HACHI_ITEM_TAG,
 	HACHI_ITEMS_TO_SPAWN,
 	HACHI_JUMP_COOLDOWN,
-	HACHI_JUMP_VELOCITY,
 	HACHI_KEY_ITEM_TAG,
 	HACHI_MAX_SPEED_TOLERANCE,
 	HACHI_ROUND_DURATION,
@@ -286,7 +284,12 @@ export class HachiRideMinigame implements IMinigame {
 					if (!this.roundStarted) return;
 					if (seat.Occupant !== undefined) return; // Re-seated naturally
 					const humanoid = player.Character?.FindFirstChildOfClass("Humanoid");
-					if (!humanoid) return;
+					if (!humanoid) {
+						warn(
+							`[HachiRide] Force-reseat skipped for userId ${userId}: humanoid nil (roundStarted=${this.roundStarted}, graceTime=${this.respawnGrace.get(userId) ?? 0})`,
+						);
+						return;
+					}
 					const hrp = player.Character?.FindFirstChild("HumanoidRootPart") as
 						| BasePart
 						| undefined;
