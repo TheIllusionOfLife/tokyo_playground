@@ -7,6 +7,8 @@ import {
 } from "@rbxts/services";
 import { clientEvents } from "client/network";
 import {
+	HACHI_DOUBLE_JUMP_IMPULSE,
+	HACHI_JUMP_COOLDOWN,
 	HACHI_JUMP_VELOCITY,
 	HACHI_SLIDE_FORCE_RESTORE_DELAY,
 	SE_JUMP,
@@ -41,6 +43,11 @@ export class HachiRideController implements OnStart {
 	private origJumpHeight = 0;
 	private jumpLocked = false;
 
+	// Client-side jump phase tracking (mirrors server logic)
+	// 0 = grounded/ready, 1 = jumped once (double available), 2 = fully used
+	private jumpPhase = 0;
+	private lastJumpTime = 0;
+
 	onStart() {
 		// Always-on: detect seating in any Hachi (lobby or minigame).
 		RunService.Heartbeat.Connect(() => {
@@ -69,6 +76,11 @@ export class HachiRideController implements OnStart {
 					this.onStoodUp();
 				}
 			}
+
+			// Reset jump phase when Hachi has landed
+			if (this.seatedInHachi) {
+				this.checkLanded();
+			}
 		});
 	}
 
@@ -76,6 +88,10 @@ export class HachiRideController implements OnStart {
 	private onSeated() {
 		const character = Players.LocalPlayer.Character;
 		const humanoid = character?.FindFirstChildOfClass("Humanoid");
+
+		// Reset jump state for fresh mount
+		this.jumpPhase = 0;
+		this.lastJumpTime = 0;
 
 		if (humanoid) {
 			// Layer 1: Disable the Jumping HumanoidStateType entirely.
@@ -109,10 +125,9 @@ export class HachiRideController implements OnStart {
 			ACTION_HACHI_JUMP,
 			(_name, inputState, _input) => {
 				if (inputState === Enum.UserInputState.Begin) {
-					if (this.seatedInHachi) {
+					if (this.seatedInHachi && this.tryLocalJump()) {
 						clientEvents.hachiJump.fire();
 						this.playJumpSE();
-						this.applyLocalJumpImpulse();
 					}
 				}
 				return Enum.ContextActionResult.Sink;
@@ -220,23 +235,62 @@ export class HachiRideController implements OnStart {
 		this.jumpSE.Play();
 	}
 
-	/** Client-side prediction: apply jump impulse locally for instant feel.
-	 *  The client has network ownership of the Hachi while seated in the
-	 *  VehicleSeat, so physics changes apply immediately without a round trip. */
-	private applyLocalJumpImpulse() {
+	/** Client-side jump with phase tracking. Returns true if jump was applied.
+	 *  Mirrors the server's phase logic so we don't apply impulses the
+	 *  server would reject. Phase 0=grounded, 1=double available, 2=used. */
+	private tryLocalJump(): boolean {
+		const humanoid =
+			Players.LocalPlayer.Character?.FindFirstChildOfClass("Humanoid");
+		const body = humanoid?.SeatPart?.Parent?.FindFirstChild("Body") as
+			| BasePart
+			| undefined;
+		if (!body) return false;
+
+		const now = os.clock();
+		if (now - this.lastJumpTime < HACHI_JUMP_COOLDOWN) return false;
+
+		if (this.jumpPhase === 0) {
+			// First jump: only from near-ground
+			if (math.abs(body.AssemblyLinearVelocity.Y) > 15) return false;
+			this.lastJumpTime = now;
+			this.applyImpulse(body, HACHI_JUMP_VELOCITY);
+			const evoLevel = gameStore.getState().hachiEvolutionLevel;
+			this.jumpPhase = evoLevel >= 1 ? 1 : 2;
+			return true;
+		} else if (this.jumpPhase === 1) {
+			// Double jump (midair, evolution >= 1)
+			this.lastJumpTime = now;
+			this.applyImpulse(body, HACHI_DOUBLE_JUMP_IMPULSE);
+			this.jumpPhase = 2;
+			return true;
+		}
+		// Phase 2: reject
+		return false;
+	}
+
+	/** Reset jump phase when Hachi has landed (called from Heartbeat). */
+	private checkLanded() {
+		if (this.jumpPhase === 0) return;
+		if (os.clock() - this.lastJumpTime < 1.0) return; // Too soon after jump
 		const humanoid =
 			Players.LocalPlayer.Character?.FindFirstChildOfClass("Humanoid");
 		const body = humanoid?.SeatPart?.Parent?.FindFirstChild("Body") as
 			| BasePart
 			| undefined;
 		if (!body) return;
+		if (math.abs(body.AssemblyLinearVelocity.Y) < 5) {
+			this.jumpPhase = 0;
+		}
+	}
+
+	private applyImpulse(body: BasePart, velocity: number) {
 		const bv = body.FindFirstChildOfClass("BodyVelocity");
 		if (bv) {
 			const origForce = bv.MaxForce;
 			bv.MaxForce = Vector3.zero;
 			body.AssemblyLinearVelocity = new Vector3(
 				body.AssemblyLinearVelocity.X,
-				HACHI_JUMP_VELOCITY,
+				velocity,
 				body.AssemblyLinearVelocity.Z,
 			);
 			task.delay(HACHI_SLIDE_FORCE_RESTORE_DELAY, () => {
@@ -245,7 +299,7 @@ export class HachiRideController implements OnStart {
 		} else {
 			body.AssemblyLinearVelocity = new Vector3(
 				body.AssemblyLinearVelocity.X,
-				HACHI_JUMP_VELOCITY,
+				velocity,
 				body.AssemblyLinearVelocity.Z,
 			);
 		}
