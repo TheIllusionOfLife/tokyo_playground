@@ -1,7 +1,7 @@
 import React from "@rbxts/react";
 import { useSelector } from "@rbxts/react-reflex";
 import { clientEvents } from "client/network";
-import { GameStoreState } from "shared/store/game-store";
+import { GameStoreState, gameStore } from "shared/store/game-store";
 import { MissionProgressData } from "shared/types";
 
 function MissionRow({ mission }: { mission: MissionProgressData }) {
@@ -89,7 +89,10 @@ function MissionRow({ mission }: { mission: MissionProgressData }) {
 }
 
 export function MissionPanel() {
-	const [open, setOpen] = React.useState(false);
+	const activeOverlay = useSelector(
+		(state: GameStoreState) => state.activeOverlay,
+	);
+	const open = activeOverlay === "missions";
 	const missions = useSelector((state: GameStoreState) => state.missions);
 
 	return (
@@ -112,7 +115,8 @@ export function MissionPanel() {
 				Font={Enum.Font.GothamBold}
 				Text="★ Missions"
 				Event={{
-					Activated: () => setOpen(!open),
+					Activated: () =>
+						gameStore.setActiveOverlay(open ? "none" : "missions"),
 				}}
 			>
 				<uipadding PaddingLeft={new UDim(0, 8)} PaddingRight={new UDim(0, 8)} />

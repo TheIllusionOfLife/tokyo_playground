@@ -104,6 +104,8 @@ export class HachiRideMinigame implements IMinigame {
 	private hachiSlideActive = new Set<number>();
 	private slideCooldowns = new Map<number, number>();
 	private roundStarted = false;
+	private respawnGrace = new Map<number, number>();
+	private seatOccupantConns: RBXScriptConnection[] = [];
 	private hotspots: Hotspot[] = [];
 	private activeHotspotIndex = 0;
 	private hotspotElapsed = 0;
@@ -252,6 +254,7 @@ export class HachiRideMinigame implements IMinigame {
 		for (const player of players) {
 			const conn = player.CharacterAdded.Connect(() => {
 				if (!this.roundStarted) return;
+				this.respawnGrace.set(player.UserId, os.clock());
 				task.wait(0.5);
 				const spawnPart = spawnParts[0];
 				if (spawnPart && player.Character) {
@@ -261,6 +264,39 @@ export class HachiRideMinigame implements IMinigame {
 					this.resetAnticheatBaseline(player.UserId, spawnPart.Position);
 				}
 			});
+			matchJanitor.Add(conn);
+		}
+
+		// Force-reseat: if a player pops out of their Hachi during the round,
+		// snap them back in using the authoritative Seat:Sit() API.
+		for (const [userId, hachiModel] of this.hachiModels) {
+			const seat = hachiModel.FindFirstChildOfClass("VehicleSeat") as
+				| VehicleSeat
+				| undefined;
+			if (!seat) continue;
+			const conn = seat.GetPropertyChangedSignal("Occupant").Connect(() => {
+				if (seat.Occupant !== undefined) return; // Someone sat down, ignore
+				if (!this.roundStarted) return;
+				const player = this.playerObjects.get(userId);
+				if (!player) return;
+				// Skip during respawn grace period to avoid fighting the spawn system
+				const graceTime = this.respawnGrace.get(userId) ?? 0;
+				if (os.clock() - graceTime < 1.5) return;
+				// Wait 1 frame to avoid single-frame physics glitches
+				task.defer(() => {
+					if (!this.roundStarted) return;
+					if (seat.Occupant !== undefined) return; // Re-seated naturally
+					const humanoid = player.Character?.FindFirstChildOfClass("Humanoid");
+					if (!humanoid) return;
+					const hrp = player.Character?.FindFirstChild("HumanoidRootPart") as
+						| BasePart
+						| undefined;
+					if (hrp) hrp.CFrame = seat.CFrame.add(new Vector3(0, 2, 0));
+					seat.Sit(humanoid);
+					humanoid.Jump = false;
+				});
+			});
+			this.seatOccupantConns.push(conn);
 			matchJanitor.Add(conn);
 		}
 
@@ -449,6 +485,17 @@ export class HachiRideMinigame implements IMinigame {
 	}
 
 	cleanup() {
+		// Stop the round FIRST so the force-reseat Occupant.Changed handler
+		// becomes a no-op and won't fight the eject loop below.
+		this.roundStarted = false;
+		HachiRideMinigame.activeInstance = undefined;
+
+		// Disconnect seat occupant watchers before ejecting
+		for (const conn of this.seatOccupantConns) {
+			conn.Disconnect();
+		}
+		this.seatOccupantConns = [];
+
 		// Eject players from VehicleSeats before janitor destroys Hachi models
 		for (const [, model] of this.hachiModels) {
 			const seat = model.FindFirstChildOfClass("VehicleSeat") as
@@ -470,8 +517,6 @@ export class HachiRideMinigame implements IMinigame {
 			if (player) this.stopWallRun(userId, player);
 		}
 
-		HachiRideMinigame.activeInstance = undefined;
-		this.roundStarted = false;
 		this.playerStates.clear();
 		this.playerObjects.clear();
 		this.hachiModels.clear();
@@ -488,6 +533,7 @@ export class HachiRideMinigame implements IMinigame {
 		this.lastStrikeTime.clear();
 		this.hachiSlideActive.clear();
 		this.slideCooldowns.clear();
+		this.respawnGrace.clear();
 		this.keyItems = [];
 		this.spawnParts = [];
 		this.hotspots = [];
@@ -524,6 +570,7 @@ export class HachiRideMinigame implements IMinigame {
 		this.lastStrikeTime.delete(userId);
 		this.hachiSlideActive.delete(userId);
 		this.slideCooldowns.delete(userId);
+		this.respawnGrace.delete(userId);
 	}
 
 	private handleJumpRequest(player: Player) {
@@ -595,6 +642,9 @@ export class HachiRideMinigame implements IMinigame {
 	}
 
 	private handleEjectRequest(player: Player) {
+		// Block voluntary eject during the round
+		if (this.roundStarted) return;
+
 		const hachiModel = this.hachiModels.get(player.UserId);
 		if (!hachiModel) return;
 

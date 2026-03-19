@@ -8,6 +8,8 @@ import {
 } from "@rbxts/services";
 import { clientEvents } from "client/network";
 import { SE_JUMP } from "shared/constants";
+import { gameStore } from "shared/store/game-store";
+import { MatchPhase, MinigameId } from "shared/types";
 
 const ACTION_HACHI_EJECT = "HachiEject";
 
@@ -76,7 +78,13 @@ export class HachiRideController implements OnStart {
 			this.steppedConn = RunService.Stepped.Connect(() => {
 				// Guard: humanoid may be destroyed before Heartbeat cleans up
 				if (humanoid.Parent && humanoid.Jump) {
-					humanoid.Jump = false;
+					const { matchPhase, activeMinigameId } = gameStore.getState();
+					if (
+						activeMinigameId === MinigameId.HachiRide &&
+						matchPhase === MatchPhase.InProgress
+					) {
+						humanoid.Jump = false;
+					}
 				}
 			});
 
@@ -87,11 +95,18 @@ export class HachiRideController implements OnStart {
 			});
 		}
 
-		// E key to dismount
+		// E key to dismount (blocked during active Hachi minigame round)
 		ContextActionService.BindAction(
 			ACTION_HACHI_EJECT,
 			(_name, inputState, _input) => {
 				if (inputState === Enum.UserInputState.Begin) {
+					const { matchPhase, activeMinigameId } = gameStore.getState();
+					if (
+						activeMinigameId === MinigameId.HachiRide &&
+						matchPhase === MatchPhase.InProgress
+					) {
+						return Enum.ContextActionResult.Sink;
+					}
 					clientEvents.hachiEject.fire();
 				}
 				return Enum.ContextActionResult.Sink;

@@ -49,6 +49,7 @@ export interface GameStoreState {
 	spiritCharges: number;
 	featuredUnlock?: FeaturedUnlockData;
 	hachiRaceState?: HachiRaceStateData;
+	activeOverlay: "none" | "missions" | "shop" | "skills";
 	feedMessages: FeedMessage[];
 	oniRevealName?: string;
 	summaryText?: string;
@@ -76,6 +77,7 @@ const initialState: GameStoreState = {
 	localCaught: false,
 	localTagged: false,
 	spiritCharges: 0,
+	activeOverlay: "none" as const,
 	feedMessages: [],
 };
 
@@ -175,6 +177,13 @@ export const gameStore = createProducer(initialState, {
 		...state,
 		hachiRaceState,
 	}),
+	setActiveOverlay: (
+		state,
+		activeOverlay: GameStoreState["activeOverlay"],
+	) => ({
+		...state,
+		activeOverlay,
+	}),
 	pushFeedMessage: (state, text: string) => ({
 		...state,
 		feedMessages: [
@@ -220,6 +229,7 @@ export const gameStore = createProducer(initialState, {
 		localCaught: false,
 		localTagged: false,
 		spiritCharges: 0,
+		activeOverlay: "none" as const,
 		hachiRaceState: undefined,
 		feedMessages: [],
 		oniRevealName: undefined,

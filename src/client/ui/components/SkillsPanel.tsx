@@ -1,7 +1,7 @@
 import React from "@rbxts/react";
 import { useSelector } from "@rbxts/react-reflex";
 import { HACHI_EVOLUTION_THRESHOLDS } from "shared/constants";
-import { GameStoreState } from "shared/store/game-store";
+import { GameStoreState, gameStore } from "shared/store/game-store";
 import { MatchPhase, MinigameId } from "shared/types";
 
 const SKILLS = [
@@ -42,7 +42,8 @@ const LOCKED_COLOR = Color3.fromRGB(60, 60, 70);
 const CURRENT_COLOR = Color3.fromRGB(255, 200, 50);
 
 export function SkillsPanel() {
-	const [open, setOpen] = React.useState(false);
+	const activeOverlay = useSelector((s: GameStoreState) => s.activeOverlay);
+	const open = activeOverlay === "skills";
 	const matchPhase = useSelector((s: GameStoreState) => s.matchPhase);
 	const activeMinigameId = useSelector(
 		(s: GameStoreState) => s.activeMinigameId,
@@ -79,7 +80,7 @@ export function SkillsPanel() {
 				Font={Enum.Font.GothamBold}
 				Text="Skills"
 				Event={{
-					Activated: () => setOpen(!open),
+					Activated: () => gameStore.setActiveOverlay(open ? "none" : "skills"),
 				}}
 			>
 				<uipadding PaddingLeft={new UDim(0, 8)} PaddingRight={new UDim(0, 8)} />

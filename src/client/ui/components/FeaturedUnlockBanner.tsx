@@ -1,13 +1,23 @@
 import React from "@rbxts/react";
 import { useSelector } from "@rbxts/react-reflex";
 import { GameStoreState } from "shared/store/game-store";
+import { MatchPhase } from "shared/types";
 
 export function FeaturedUnlockBanner() {
 	const featuredUnlock = useSelector(
 		(state: GameStoreState) => state.featuredUnlock,
 	);
+	const activeOverlay = useSelector(
+		(state: GameStoreState) => state.activeOverlay,
+	);
+	const matchPhase = useSelector((state: GameStoreState) => state.matchPhase);
 
-	if (!featuredUnlock) {
+	// Hide during gameplay or when an overlay is open
+	if (
+		!featuredUnlock ||
+		activeOverlay !== "none" ||
+		matchPhase === MatchPhase.InProgress
+	) {
 		return undefined!;
 	}
 
