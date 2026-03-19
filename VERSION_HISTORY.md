@@ -13,3 +13,4 @@ Roblox Studio Version History + git tags:
 | v0.5.3 | v181 | 2026-03-18 | Rojo landscape property, Stepped jump prevention, bonus SE dedup |
 | v0.6.0 | v167 | 2026-03-17 | Bonus items + Hachi mechanics |
 | v0.7.0 | v184 | 2026-03-19 | Fun Pass & Game Feel: SFX, haptics, event feed, Oni reveal, streak bonuses, faster sessions, minigame depth |
+| v0.8.0 | TBD | 2026-03-20 | Dismount fix: 5-layer defense prevents Hachi eject on all platforms. Instant jump via client prediction. HUD redesign: compact scoreboard, fullscreen shop, panel exclusivity |
