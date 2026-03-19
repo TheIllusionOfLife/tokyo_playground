@@ -5,6 +5,62 @@ export enum GameState {
 	Cleanup = "Cleanup",
 }
 
+// ── Living Shibuya Enums ─────────────────────────────────────────────────
+
+export enum TimePhase {
+	Morning = "Morning",
+	Daytime = "Daytime",
+	GoldenHour = "GoldenHour",
+	Evening = "Evening",
+	Night = "Night",
+	Dawn = "Dawn",
+}
+
+export enum Season {
+	Spring = "Spring",
+	Summer = "Summer",
+	Autumn = "Autumn",
+	Winter = "Winter",
+}
+
+export enum NpcId {
+	RamenChef = "RamenChef",
+	StreetMusician = "StreetMusician",
+	CatColony = "CatColony",
+	Shopkeeper = "Shopkeeper",
+	Photographer = "Photographer",
+	DeliveryCyclist = "DeliveryCyclist",
+	ShrineKeeper = "ShrineKeeper",
+	Busker = "Busker",
+}
+
+export enum MicroEventId {
+	BonOdori = "BonOdori",
+	FoodTruck = "FoodTruck",
+	Fireworks = "Fireworks",
+	StreetArt = "StreetArt",
+	ObstacleCourse = "ObstacleCourse",
+	GoldenHour = "GoldenHour",
+}
+
+export enum HachiMood {
+	Happy = "Happy",
+	Relaxed = "Relaxed",
+	Excited = "Excited",
+	Sleepy = "Sleepy",
+}
+
+export enum StampSetId {
+	BackAlley = "BackAlley",
+	Rooftop = "Rooftop",
+	NightShibuya = "NightShibuya",
+	ShrinePath = "ShrinePath",
+	Station = "Station",
+	GoldenMoments = "GoldenMoments",
+	Seasonal = "Seasonal",
+	CompleteRally = "CompleteRally",
+}
+
 export enum MinigameId {
 	CanKick = "CanKick",
 	ShibuyaScramble = "ShibuyaScramble",
@@ -47,6 +103,17 @@ export enum MissionId {
 	CollectHachiItems = "CollectHachiItems",
 	ReachHachiLevel3 = "ReachHachiLevel3",
 	WinHachiRide = "WinHachiRide",
+	// Living Shibuya missions
+	DiscoverStamps = "DiscoverStamps",
+	CompleteStampSet = "CompleteStampSet",
+	VisitFoodTruck = "VisitFoodTruck",
+	WatchFireworks = "WatchFireworks",
+	AttendBonOdori = "AttendBonOdori",
+	GetPhotographed = "GetPhotographed",
+	DrawOmikuji = "DrawOmikuji",
+	CompleteObstacleCourse = "CompleteObstacleCourse",
+	VisitCatColony = "VisitCatColony",
+	WatchStreetArt = "WatchStreetArt",
 }
 
 export enum ItemId {
@@ -60,6 +127,15 @@ export enum ItemId {
 	EmoteCheer = "EmoteCheer",
 	EmoteWave = "EmoteWave",
 	EmoteFlip = "EmoteFlip",
+	// Living Shibuya stamp set rewards
+	HatAlleyCatEars = "HatAlleyCatEars",
+	TrailCloudWalk = "TrailCloudWalk",
+	HatNeonVisor = "HatNeonVisor",
+	EmoteOmamoriPrayer = "EmoteOmamoriPrayer",
+	TrailTrainSpark = "TrailTrainSpark",
+	HatSunsetCrown = "HatSunsetCrown",
+	TitleShibuyaExplorer = "TitleShibuyaExplorer",
+	SkinGoldenHachi = "SkinGoldenHachi",
 }
 
 export enum ItemCategory {
@@ -185,6 +261,38 @@ export interface ShopItemData {
 	equipped: boolean;
 }
 
+// ── Living Shibuya Interfaces ────────────────────────────────────────────
+
+export interface StampSpotData {
+	stampId: string;
+	stampSet: StampSetId;
+	displayName: string;
+	displayNameJP: string;
+	difficulty: number;
+	requiredHachiLevel: number;
+	seasonOnly?: Season;
+	timeOnly?: TimePhase;
+}
+
+export interface StampSetData {
+	setId: StampSetId;
+	stampIds: string[];
+	rewardItemId: ItemId;
+	displayName: string;
+}
+
+export interface MicroEventData {
+	eventId: string;
+	location?: Vector3;
+	extraData?: unknown;
+}
+
+export interface NpcInteractionData {
+	npcId: string;
+	interactionType: string;
+	rewardPoints: number;
+}
+
 export interface PlayerData {
 	coins: number;
 	level: number;
@@ -196,6 +304,16 @@ export interface PlayerData {
 	equippedItems: Partial<Record<ItemCategory, ItemId>>;
 	shopBalance: number;
 	streakCount: number;
+	// Living Shibuya: Stamp Rally
+	discoveredStamps: string[];
+	maxHachiLevel: number;
+	// Living Shibuya: NPC Interactions
+	lastOmikujiDay: number;
+	npcFirstInteractions: string[];
+	lastNpcInteractionDay: number;
+	// Living Shibuya: Micro-Events
+	badges: string[];
+	obstacleBestTime: number;
 }
 
 export const DEFAULT_PLAYER_DATA: PlayerData = {
@@ -209,4 +327,12 @@ export const DEFAULT_PLAYER_DATA: PlayerData = {
 	equippedItems: {},
 	shopBalance: 0,
 	streakCount: 0,
+	// Living Shibuya defaults
+	discoveredStamps: [],
+	maxHachiLevel: 0,
+	lastOmikujiDay: 0,
+	npcFirstInteractions: [],
+	lastNpcInteractionDay: 0,
+	badges: [],
+	obstacleBestTime: 0,
 };

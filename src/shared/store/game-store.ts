@@ -3,6 +3,7 @@ import {
 	FeaturedUnlockData,
 	HachiRaceStateData,
 	MatchPhase,
+	MicroEventData,
 	MinigameId,
 	MissionId,
 	MissionProgressData,
@@ -13,6 +14,7 @@ import {
 	RoundResult,
 	ScoreboardEntry,
 	ShopItemData,
+	TimePhase,
 } from "shared/types";
 import { FEED_MESSAGE_TTL_SECONDS } from "shared/utils/feed";
 
@@ -54,6 +56,20 @@ export interface GameStoreState {
 	oniRevealName?: string;
 	summaryText?: string;
 	winnerName?: string;
+	// Living Shibuya
+	timePhase: TimePhase;
+	serverClock: number;
+	stampCard: { discovered: string[]; totalCount: number };
+	stampCardVisible: boolean;
+	stampDiscoveryPopup?: { stampId: string; displayName: string };
+	currentMicroEvent?: {
+		eventId: string;
+		duration: number;
+		data: MicroEventData;
+	};
+	bonOdoriState?: { score: number; combo: number };
+	maxHachiLevel: number;
+	badges: string[];
 }
 
 const initialState: GameStoreState = {
@@ -79,6 +95,16 @@ const initialState: GameStoreState = {
 	spiritCharges: 0,
 	activeOverlay: "none" as const,
 	feedMessages: [],
+	// Living Shibuya
+	timePhase: TimePhase.Daytime,
+	serverClock: 0,
+	stampCard: { discovered: [], totalCount: 0 },
+	stampCardVisible: false,
+	stampDiscoveryPopup: undefined,
+	currentMicroEvent: undefined,
+	bonOdoriState: undefined,
+	maxHachiLevel: 0,
+	badges: [],
 };
 
 export const gameStore = createProducer(initialState, {
@@ -256,5 +282,55 @@ export const gameStore = createProducer(initialState, {
 	hideLevelUp: (state) => ({
 		...state,
 		showLevelUp: false,
+	}),
+
+	// ── Living Shibuya Mutations ─────────────────────────────────────────
+	setTimePhase: (state, timePhase: TimePhase) => ({
+		...state,
+		timePhase,
+	}),
+	setServerClock: (state, serverClock: number) => ({
+		...state,
+		serverClock,
+	}),
+	setStampCard: (
+		state,
+		stampCard: { discovered: string[]; totalCount: number },
+	) => ({
+		...state,
+		stampCard,
+	}),
+	setStampCardVisible: (state, stampCardVisible: boolean) => ({
+		...state,
+		stampCardVisible,
+	}),
+	setStampDiscoveryPopup: (
+		state,
+		stampDiscoveryPopup: GameStoreState["stampDiscoveryPopup"],
+	) => ({
+		...state,
+		stampDiscoveryPopup,
+	}),
+	setCurrentMicroEvent: (
+		state,
+		currentMicroEvent: GameStoreState["currentMicroEvent"],
+	) => ({
+		...state,
+		currentMicroEvent,
+	}),
+	setBonOdoriState: (
+		state,
+		bonOdoriState: GameStoreState["bonOdoriState"],
+	) => ({
+		...state,
+		bonOdoriState,
+	}),
+	setMaxHachiLevel: (state, maxHachiLevel: number) => ({
+		...state,
+		maxHachiLevel,
+	}),
+	setBadges: (state, badges: string[]) => ({
+		...state,
+		badges,
 	}),
 });

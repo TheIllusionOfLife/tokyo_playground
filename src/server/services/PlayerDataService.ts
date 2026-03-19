@@ -61,6 +61,13 @@ export class PlayerDataService implements OnStart {
 		profile.AddUserId(player.UserId);
 		profile.Reconcile();
 
+		// fix L3: type guards for array fields after Reconcile to handle corruption
+		const data = profile.Data;
+		if (!typeIs(data.discoveredStamps, "table")) data.discoveredStamps = [];
+		if (!typeIs(data.badges, "table")) data.badges = [];
+		if (!typeIs(data.npcFirstInteractions, "table"))
+			data.npcFirstInteractions = [];
+
 		profile.ListenToRelease(() => {
 			this.profiles.delete(player);
 			if (this.expectedReleases.has(player)) {
