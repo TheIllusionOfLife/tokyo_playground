@@ -86,6 +86,7 @@ export class HachiRideMinigame implements IMinigame {
 	private hachiModels = new Map<number, Model>();
 	private hachiAnimStates = new Map<number, HachiAnimState>();
 	private activeItems: BasePart[] = [];
+	private activeTweens: Tween[] = [];
 	private bonusItems = new Set<BasePart>();
 	private keyItems: BasePart[] = [];
 	private spawnParts: BasePart[] = [];
@@ -171,8 +172,12 @@ export class HachiRideMinigame implements IMinigame {
 		}
 		this.hotspots = this.buildHotspots(chosen);
 
-		// Register cleanup: restore all anchors to hidden state
+		// Register cleanup: cancel active tweens, restore all anchors to hidden state
 		matchJanitor.Add(() => {
+			for (const tween of this.activeTweens) {
+				tween.Cancel();
+			}
+			this.activeTweens = [];
 			for (const part of allAnchors) {
 				part.Transparency = 1;
 				part.CanCollide = false;
@@ -706,9 +711,11 @@ export class HachiRideMinigame implements IMinigame {
 				if (pos.sub(item.Position).Magnitude <= HACHI_COLLECTION_RADIUS) {
 					item.CanQuery = false;
 					item.CanCollide = false;
+					item.Transparency = 1;
 					toRemove.push(item);
 					this.onItemCollected(userId, state, player, item);
-					animateItemCollect(item, this.bonusItems.has(item));
+					const tween = animateItemCollect(item, this.bonusItems.has(item));
+					this.activeTweens.push(tween);
 				}
 			}
 			for (const item of toRemove) {
@@ -723,8 +730,10 @@ export class HachiRideMinigame implements IMinigame {
 				if (pos.sub(item.Position).Magnitude <= HACHI_COLLECTION_RADIUS) {
 					item.CanQuery = false;
 					item.CanCollide = false;
+					item.Transparency = 1;
 					this.onItemCollected(userId, state, player, item);
-					animateItemCollect(item, false);
+					const tween = animateItemCollect(item, this.bonusItems.has(item));
+					this.activeTweens.push(tween);
 				}
 			}
 		}

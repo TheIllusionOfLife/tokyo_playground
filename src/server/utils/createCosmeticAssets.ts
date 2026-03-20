@@ -164,7 +164,7 @@ export function createCosmeticAssets() {
 			const weld = new Instance("Weld");
 			weld.Part0 = handle;
 			weld.Part1 = extra;
-			weld.C1 = new CFrame(primary.offset.sub(partDef.offset));
+			weld.C1 = new CFrame(partDef.offset.sub(primary.offset));
 			weld.Parent = extra;
 		}
 
