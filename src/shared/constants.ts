@@ -651,12 +651,12 @@ export const NPC_REGISTRY: Record<NpcId, NpcConfig> = {
 	[NpcId.RamenChef]: {
 		name: "Ramen Chef",
 		activePhases: [TimePhase.Morning, TimePhase.Daytime, TimePhase.Evening],
-		spawnPosition: new Vector3(50, 5, -30),
+		spawnPosition: new Vector3(-120, 4, -550),
 	},
 	[NpcId.StreetMusician]: {
 		name: "Street Musician",
 		activePhases: [TimePhase.Evening, TimePhase.Night],
-		spawnPosition: new Vector3(0, 5, 0),
+		spawnPosition: new Vector3(-60, 3, -640),
 	},
 	[NpcId.CatColony]: {
 		name: "Stray Cats",
@@ -668,32 +668,32 @@ export const NPC_REGISTRY: Record<NpcId, NpcConfig> = {
 			TimePhase.Night,
 			TimePhase.Dawn,
 		],
-		spawnPosition: new Vector3(80, 30, -60),
+		spawnPosition: new Vector3(100, 45, -300),
 	},
 	[NpcId.Shopkeeper]: {
 		name: "Konbini Clerk",
 		activePhases: [TimePhase.Daytime, TimePhase.Evening],
-		spawnPosition: new Vector3(-20, 5, 15),
+		spawnPosition: new Vector3(-150, 3, -600),
 	},
 	[NpcId.Photographer]: {
 		name: "Night Photographer",
 		activePhases: [TimePhase.Night],
-		spawnPosition: new Vector3(0, 5, -50),
+		spawnPosition: new Vector3(0, 3, -650),
 	},
 	[NpcId.DeliveryCyclist]: {
 		name: "Delivery Cyclist",
 		activePhases: [TimePhase.Daytime, TimePhase.Evening],
-		spawnPosition: new Vector3(30, 5, 20),
+		spawnPosition: new Vector3(200, 3, -500),
 	},
 	[NpcId.ShrineKeeper]: {
 		name: "Shrine Maiden",
 		activePhases: [TimePhase.Morning, TimePhase.Daytime],
-		spawnPosition: new Vector3(-60, 10, -80),
+		spawnPosition: new Vector3(-500, 5, -700),
 	},
 	[NpcId.Busker]: {
 		name: "Beatboxer",
 		activePhases: [TimePhase.Night],
-		spawnPosition: new Vector3(10, 5, 40),
+		spawnPosition: new Vector3(400, 3, -580),
 	},
 };
 
