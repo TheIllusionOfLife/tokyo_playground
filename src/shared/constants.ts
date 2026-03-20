@@ -530,7 +530,7 @@ export const LIGHTING_PROFILES: Record<
 	[TimePhase.Night]: {
 		Ambient: Color3.fromRGB(60, 60, 100),
 		OutdoorAmbient: Color3.fromRGB(50, 50, 90),
-		ClockTime: 0,
+		ClockTime: 24, // Roblox treats 24 as 0 visually; tween 19->24 goes forward through night
 		Brightness: 1,
 		ColorShift_Top: Color3.fromRGB(80, 80, 150),
 	},

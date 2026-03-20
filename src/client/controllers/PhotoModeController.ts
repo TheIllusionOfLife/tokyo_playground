@@ -10,6 +10,8 @@ import { gameStore } from "shared/store/game-store";
 export class PhotoModeController implements OnStart {
 	private active = false;
 	private originalCameraType?: Enum.CameraType;
+	private originalWalkSpeed = 0;
+	private originalJumpPower = 0;
 	private renderConn?: RBXScriptConnection;
 
 	onStart() {
@@ -34,7 +36,9 @@ export class PhotoModeController implements OnStart {
 
 		this.active = true;
 
-		// Freeze character
+		// Save and freeze character movement
+		this.originalWalkSpeed = humanoid.WalkSpeed;
+		this.originalJumpPower = humanoid.JumpPower;
 		humanoid.WalkSpeed = 0;
 		humanoid.JumpPower = 0;
 
@@ -56,10 +60,10 @@ export class PhotoModeController implements OnStart {
 
 		this.active = false;
 
-		// Restore character
+		// Restore character to saved values (preserves Hachi JumpPower=0)
 		if (humanoid) {
-			humanoid.WalkSpeed = 32;
-			humanoid.JumpPower = 50;
+			humanoid.WalkSpeed = this.originalWalkSpeed;
+			humanoid.JumpPower = this.originalJumpPower;
 		}
 
 		// Restore camera
