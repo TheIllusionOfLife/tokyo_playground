@@ -119,13 +119,21 @@ export class HachiAmbientController implements OnStart {
 		const radiusSq = radius * radius;
 		for (const inst of CollectionService.GetTagged(tag)) {
 			if (!inst.IsA("BasePart")) continue;
-			const delta = pos.sub(inst.Position);
+
+			// OBB closest-point check (handles thin/rotated parts per CLAUDE.md)
+			const localPoint = inst.CFrame.PointToObjectSpace(pos);
+			const half = inst.Size.mul(0.5);
+			const clamped = new Vector3(
+				math.clamp(localPoint.X, -half.X, half.X),
+				math.clamp(localPoint.Y, -half.Y, half.Y),
+				math.clamp(localPoint.Z, -half.Z, half.Z),
+			);
+			const closestWorld = inst.CFrame.PointToWorldSpace(clamped);
+			const delta = pos.sub(closestWorld);
 			if (delta.Dot(delta) > radiusSq) continue;
 
-			// Check cooldown
 			if (this.isOnCooldown(tag, inst)) continue;
 
-			// Trigger reaction
 			this.playReaction(tag);
 			if (cooldownSec > 0) {
 				this.setCooldown(tag, inst, cooldownSec);

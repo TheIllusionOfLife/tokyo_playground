@@ -447,7 +447,10 @@ export class LobbyService implements OnStart {
 			if (!rayResult) return;
 
 			// Apply wall-run: zero gravity + lateral velocity
-			const lateralDir = safeNormal.Cross(new Vector3(0, 1, 0)).Unit;
+			// Guard against vertical normals that produce zero cross product
+			const crossResult = safeNormal.Cross(new Vector3(0, 1, 0));
+			if (crossResult.Magnitude < 0.1) return; // near-vertical normal, reject
+			const lateralDir = crossResult.Unit;
 			const bv = body.FindFirstChildOfClass("BodyVelocity");
 			if (bv) {
 				// Fix #5: guard against concurrent wall-runs with active flag

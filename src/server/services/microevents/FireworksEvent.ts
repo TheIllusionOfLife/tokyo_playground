@@ -42,7 +42,6 @@ export class FireworksEvent implements IMicroEvent {
 			return;
 		}
 
-		// Fix #9: use accumulator instead of modulo (fires once per 3s, not every frame)
 		this.proxCheckAccum += dt;
 		if (this.proxCheckAccum < 3) return;
 		this.proxCheckAccum -= 3;
@@ -63,7 +62,6 @@ export class FireworksEvent implements IMicroEvent {
 			for (const vp of this.viewpoints) {
 				const delta = hrp.Position.sub(vp.Position);
 				if (delta.Dot(delta) < 100) {
-					// ~10 studs
 					atViewpoint = true;
 					break;
 				}
@@ -75,8 +73,9 @@ export class FireworksEvent implements IMicroEvent {
 					player,
 					FIREWORKS_VIEWPOINT_REWARD,
 				);
+				// Grant badge + mission inline so disconnected players get credit
+				this.grantBadgeAndMission(player);
 			} else {
-				// Check ground proximity to any viewpoint
 				for (const vp of this.viewpoints) {
 					const delta = hrp.Position.sub(vp.Position);
 					if (delta.Dot(delta) < groundProxSq) {
@@ -85,6 +84,7 @@ export class FireworksEvent implements IMicroEvent {
 							player,
 							FIREWORKS_GROUND_REWARD,
 						);
+						this.grantBadgeAndMission(player);
 						break;
 					}
 				}
@@ -92,24 +92,19 @@ export class FireworksEvent implements IMicroEvent {
 		}
 	}
 
+	private grantBadgeAndMission(player: Player) {
+		const data = this.playerDataService.getPlayerData(player);
+		if (data && !data.badges.includes("FirstHanabi")) {
+			data.badges.push("FirstHanabi");
+		}
+		this.missionService.incrementAndNotify(player, MissionId.WatchFireworks, 1);
+	}
+
 	isFinished(): boolean {
 		return this.finished;
 	}
 
 	cleanup() {
-		// Award "First Hanabi" badge
-		for (const player of Players.GetPlayers()) {
-			if (!this.rewarded.has(player.UserId)) continue;
-			const data = this.playerDataService.getPlayerData(player);
-			if (data && !data.badges.includes("FirstHanabi")) {
-				data.badges.push("FirstHanabi");
-			}
-			this.missionService.incrementAndNotify(
-				player,
-				MissionId.WatchFireworks,
-				1,
-			);
-		}
 		this.rewarded.clear();
 	}
 }

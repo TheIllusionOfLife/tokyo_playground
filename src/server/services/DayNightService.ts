@@ -119,6 +119,11 @@ export class DayNightService implements OnStart {
 		return this.eventLightingOverride;
 	}
 
+	/** Returns the effective lighting profile accounting for event overrides. */
+	getEffectiveLightingProfile() {
+		return this.eventLightingOverride ?? LIGHTING_PROFILES[this.currentPhase];
+	}
+
 	/** Send current state to a late-joining player. */
 	syncPlayer(player: Player) {
 		this.serverEvents.timeSync.fire(player, this.serverClock);
@@ -130,6 +135,8 @@ export class DayNightService implements OnStart {
 		);
 		if (this.paused) {
 			this.serverEvents.lightingOverride.fire(player, "match");
+		} else if (this.eventLightingOverride) {
+			this.serverEvents.lightingOverride.fire(player, "event");
 		}
 	}
 }

@@ -10,6 +10,7 @@ import {
 	NPC_DAILY_INTERACTION_BONUS,
 	NPC_INTERACTION_RADIUS,
 	NPC_REGISTRY,
+	NPC_SPAWN_FADE_DURATION,
 	NPC_TREAT_COOLDOWN,
 	OMIKUJI_POINTS,
 	PHOTOGRAPHER_POSE_REWARD,
@@ -141,9 +142,14 @@ export class NpcRoutineService implements OnStart {
 		if (!active) return;
 
 		this.serverEvents.npcDespawned.broadcast(npcId);
-		active.model.Destroy();
 		this.activeNpcs.delete(npcId);
 		print(`[NpcRoutineService] Despawned ${NPC_REGISTRY[npcId].name}`);
+
+		// Delay Destroy so client fade-out animation can play (NPC_SPAWN_FADE_DURATION)
+		const model = active.model;
+		task.delay(NPC_SPAWN_FADE_DURATION + 0.5, () => {
+			if (model.Parent) model.Destroy();
+		});
 	}
 
 	private checkPlayerProximity() {

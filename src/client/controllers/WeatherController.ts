@@ -4,9 +4,12 @@ import { SE_RAIN_AMBIENT } from "shared/constants";
 import { GlobalEvents } from "shared/network";
 import { gameStore } from "shared/store/game-store";
 
+const SUPPORTED_WEATHER = new Set(["clear", "rain"]);
+
 /**
- * Client-side weather controller (fix M4). Subscribes to weatherChanged
- * event and drives rain ambient audio crossfade.
+ * Client-side weather controller. Subscribes to weatherChanged event,
+ * guards against unknown values and duplicate emissions, drives rain
+ * ambient audio with crossfade.
  */
 @Controller()
 export class WeatherController implements OnStart {
@@ -16,6 +19,9 @@ export class WeatherController implements OnStart {
 
 	onStart() {
 		this.clientEvents.weatherChanged.connect((weather) => {
+			if (!SUPPORTED_WEATHER.has(weather)) return;
+			if (weather === this.currentWeather) return;
+
 			this.currentWeather = weather;
 			gameStore.pushFeedMessage(
 				weather === "rain"
@@ -40,7 +46,6 @@ export class WeatherController implements OnStart {
 		sound.Parent = SoundService;
 		sound.Play();
 		this.rainSound = sound;
-		// Fade in
 		TweenService.Create(sound, new TweenInfo(2, Enum.EasingStyle.Linear), {
 			Volume: 0.4,
 		}).Play();
@@ -50,7 +55,6 @@ export class WeatherController implements OnStart {
 		if (!this.rainSound) return;
 		const sound = this.rainSound;
 		this.rainSound = undefined;
-		// Fade out then destroy
 		const tween = TweenService.Create(
 			sound,
 			new TweenInfo(2, Enum.EasingStyle.Linear),

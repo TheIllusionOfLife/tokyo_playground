@@ -231,10 +231,12 @@ export const ALL_MISSION_IDS: MissionId[] = [
 	MissionId.WatchStreetArt,
 ];
 
-/** Exploration mission IDs for weighted daily selection (M8). */
+/**
+ * Exploration mission IDs for weighted daily selection (M8).
+ * Excludes DiscoverStamps and CompleteStampSet: those are permanent
+ * progression objectives tracked via stamp rally, not daily tasks.
+ */
 export const EXPLORATION_MISSION_IDS: MissionId[] = [
-	MissionId.DiscoverStamps,
-	MissionId.CompleteStampSet,
 	MissionId.VisitFoodTruck,
 	MissionId.WatchFireworks,
 	MissionId.AttendBonOdori,
