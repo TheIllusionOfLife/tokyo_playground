@@ -197,7 +197,9 @@ export class HachiRideController implements OnStart {
 					| undefined;
 				// Guard: body may be destroyed mid-ride (server cleanup).
 				if (!body || !body.IsDescendantOf(game)) return;
-				const spd = body.AssemblyLinearVelocity.Magnitude;
+				// Use horizontal speed only (exclude Y) so falling doesn't affect bob/speed
+				const vel = body.AssemblyLinearVelocity;
+				const spd = new Vector3(vel.X, 0, vel.Z).Magnitude;
 				const freq = math.max(1, spd / 25) * BOB_FREQ_SCALE;
 				bobTime += dt * freq;
 				// Ramp amplitude from 0 to max based on speed

@@ -8,6 +8,7 @@ import {
 import {
 	CAN_KICK_PORTAL_TAG,
 	DEFAULT_WALK_SPEED,
+	HACHI_DOUBLE_JUMP_IMPULSE,
 	HACHI_EJECT_COOLDOWN,
 	HACHI_EJECT_SEAT_DISABLE_DURATION,
 	HACHI_JUMP_COOLDOWN,
@@ -16,6 +17,9 @@ import {
 	HACHI_RIDE_TAG,
 	HACHI_SLIDE_FORCE_RESTORE_DELAY,
 	HACHI_SLIDE_RAMP_PROXIMITY,
+	HACHI_WALL_RUN_MAX_DUR,
+	HACHI_WALL_RUN_RAYCAST,
+	HACHI_WALL_RUN_SPEED,
 	SCRAMBLE_PORTAL_TAG,
 	SCRAMBLE_ROOFTOP_TP_COOLDOWN,
 	SCRAMBLE_ROOFTOP_TP_DEST,
@@ -29,6 +33,7 @@ import { GlobalEvents } from "shared/network";
 import { MinigameId } from "shared/types";
 import { animateHachi, HachiAnimState } from "../utils/animateHachi";
 import { applyHachiJumpImpulse } from "../utils/hachiPhysics";
+import { PlayerDataService } from "./PlayerDataService";
 
 const LOBBY_SPAWN_TAG = "LobbySpawn";
 
@@ -42,9 +47,13 @@ export class LobbyService implements OnStart {
 	private readonly hachiJumpCooldowns = new Map<number, number>();
 	private readonly hachiEjectCooldowns = new Map<number, number>();
 	private readonly hachiAnimStates = new Map<Model, HachiAnimState>();
+	/** Lobby double-jump phase: 0=grounded, 1=can double, 2=used */
+	private readonly lobbyJumpPhase = new Map<number, number>();
 	private slideRamps: BasePart[] = [];
 	private matchActive = false;
 	private onStartRequested?: (minigameId: MinigameId) => void;
+
+	constructor(private readonly playerDataService: PlayerDataService) {}
 
 	/** Registered by MatchService to avoid circular DI. */
 	setOnStartRequested(cb: (minigameId: MinigameId) => void) {
@@ -84,6 +93,7 @@ export class LobbyService implements OnStart {
 			this.hachiSlideActive.delete(player.UserId);
 			this.hachiJumpCooldowns.delete(player.UserId);
 			this.hachiEjectCooldowns.delete(player.UserId);
+			this.lobbyJumpPhase.delete(player.UserId);
 		});
 
 		// Cache slide ramps with live add/remove tracking
@@ -109,6 +119,8 @@ export class LobbyService implements OnStart {
 		this.setupHachiAnimation();
 		this.setupLobbyHachiJump();
 		this.setupLobbyHachiEject();
+		this.setupLobbyDoubleJump();
+		this.setupLobbyWallRun();
 	}
 
 	private setupRooftopTPs() {
@@ -364,6 +376,126 @@ export class LobbyService implements OnStart {
 
 			this.hachiJumpCooldowns.set(player.UserId, now);
 			applyHachiJumpImpulse(body, HACHI_JUMP_VELOCITY);
+
+			// Track jump phase for double-jump gating
+			const data = this.playerDataService.getPlayerData(player);
+			const maxLevel = data?.maxHachiLevel ?? 0;
+			this.lobbyJumpPhase.set(
+				player.UserId,
+				maxLevel >= 2 ? 1 : 2, // 1 = double available, 2 = used
+			);
+
+			// Reset phase to 0 when Hachi lands (Y velocity settles)
+			task.delay(0.3, () => {
+				const checkBody = hachiModel.FindFirstChild("Body") as
+					| BasePart
+					| undefined;
+				if (!checkBody) return;
+				let checks = 0;
+				const landConn = RunService.Heartbeat.Connect(() => {
+					checks++;
+					if (checks > 300) {
+						// 5s safety timeout
+						landConn.Disconnect();
+						this.lobbyJumpPhase.set(player.UserId, 0);
+						return;
+					}
+					if (math.abs(checkBody.AssemblyLinearVelocity.Y) < 5) {
+						landConn.Disconnect();
+						this.lobbyJumpPhase.set(player.UserId, 0);
+					}
+				});
+			});
+		});
+	}
+
+	/** Lobby double-jump: requires maxHachiLevel >= 2, must be airborne. */
+	private setupLobbyDoubleJump() {
+		this.serverEvents.hachiLobbyDoubleJump.connect((player) => {
+			if (this.matchActive) return;
+
+			const phase = this.lobbyJumpPhase.get(player.UserId) ?? 0;
+			if (phase !== 1) return; // Must be in "double available" phase
+
+			const data = this.playerDataService.getPlayerData(player);
+			if (!data || data.maxHachiLevel < 2) return;
+
+			const character = player.Character;
+			if (!character) return;
+			const humanoid = character.FindFirstChildOfClass("Humanoid");
+			const seatPart = humanoid?.SeatPart;
+			if (!seatPart) return;
+			const hachiModel = seatPart.Parent;
+			if (!hachiModel || !CollectionService.HasTag(hachiModel, HACHI_RIDE_TAG))
+				return;
+
+			const body = hachiModel.FindFirstChild("Body") as BasePart | undefined;
+			if (!body) return;
+
+			// Must be airborne (Y velocity significant)
+			if (math.abs(body.AssemblyLinearVelocity.Y) < 5) return;
+
+			this.lobbyJumpPhase.set(player.UserId, 2); // Used
+			applyHachiJumpImpulse(body, HACHI_DOUBLE_JUMP_IMPULSE);
+			this.serverEvents.hachiDoubleJumpGranted.fire(player);
+		});
+	}
+
+	/** Lobby wall-run: requires maxHachiLevel >= 3, near wall (raycast). */
+	private setupLobbyWallRun() {
+		this.serverEvents.hachiLobbyWallRun.connect((player, wallNormal) => {
+			if (this.matchActive) return;
+
+			const data = this.playerDataService.getPlayerData(player);
+			if (!data || data.maxHachiLevel < 3) return;
+
+			const character = player.Character;
+			if (!character) return;
+			const humanoid = character.FindFirstChildOfClass("Humanoid");
+			const seatPart = humanoid?.SeatPart;
+			if (!seatPart) return;
+			const hachiModel = seatPart.Parent;
+			if (!hachiModel || !CollectionService.HasTag(hachiModel, HACHI_RIDE_TAG))
+				return;
+
+			const body = hachiModel.FindFirstChild("Body") as BasePart | undefined;
+			if (!body) return;
+
+			// Use client normal only for initial ray direction hint, then
+			// derive the authoritative wall normal from the raycast result.
+			const mag = wallNormal.Magnitude;
+			if (mag < 0.5 || mag > 1.5) return;
+			const hintDir = wallNormal.Unit;
+
+			// Server raycast with RaycastParams excluding the Hachi body
+			const rayParams = new RaycastParams();
+			rayParams.FilterType = Enum.RaycastFilterType.Exclude;
+			rayParams.FilterDescendantsInstances = [hachiModel as Instance];
+			const rayDir = hintDir.mul(-HACHI_WALL_RUN_RAYCAST);
+			const rayResult = Workspace.Raycast(body.Position, rayDir, rayParams);
+			if (!rayResult) return;
+
+			// Use server-computed hit normal (not client normal)
+			const serverNormal = rayResult.Normal;
+			const crossResult = serverNormal.Cross(new Vector3(0, 1, 0));
+			if (crossResult.Magnitude < 0.1) return; // near-vertical surface, reject
+			const lateralDir = crossResult.Unit;
+			const bv = body.FindFirstChildOfClass("BodyVelocity");
+			if (bv) {
+				// Fix #5: guard against concurrent wall-runs with active flag
+				if (this.hachiSlideActive.has(player.UserId)) return;
+				this.hachiSlideActive.add(player.UserId);
+				const origForce = bv.MaxForce;
+				bv.MaxForce = Vector3.zero;
+				body.AssemblyLinearVelocity = lateralDir.mul(HACHI_WALL_RUN_SPEED);
+				this.serverEvents.hachiWallRunStart.fire(player, serverNormal);
+
+				task.delay(HACHI_WALL_RUN_MAX_DUR, () => {
+					if (bv.Parent) bv.MaxForce = origForce;
+					this.hachiSlideActive.delete(player.UserId);
+					this.serverEvents.hachiWallRunStop.fire(player);
+				});
+			}
 		});
 	}
 

@@ -1,5 +1,9 @@
 import { OnStart, Service } from "@flamework/core";
-import { ALL_MISSION_IDS, MISSION_DEFS } from "shared/constants";
+import {
+	ALL_MISSION_IDS,
+	EXPLORATION_MISSION_IDS,
+	MISSION_DEFS,
+} from "shared/constants";
 import { GlobalEvents } from "shared/network";
 import {
 	AnyPlayerState,
@@ -43,17 +47,31 @@ export class MissionService implements OnStart {
 		const data = this.playerDataService.getPlayerData(player);
 		if (!data) return;
 
-		// Assign 3 daily missions if slots were reset or never set
+		// Assign 3 daily missions: at least 1 exploration + 2 from full pool (M8)
 		if (data.missions.slots.size() === 0) {
+			const chosen = new Set<MissionId>();
+
+			// Slot 1: guaranteed exploration mission
+			const explorationPool = EXPLORATION_MISSION_IDS.filter(
+				(id) => !chosen.has(id),
+			);
+			if (explorationPool.size() > 0) {
+				const pick =
+					explorationPool[math.random(0, explorationPool.size() - 1)];
+				chosen.add(pick);
+			}
+
+			// Slots 2-3: from full pool (no duplicates)
+			const fullPool = ALL_MISSION_IDS.filter((id) => !chosen.has(id));
+			for (let i = chosen.size(); i < 3 && fullPool.size() > 0; i++) {
+				const idx = math.random(0, fullPool.size() - 1);
+				chosen.add(fullPool[idx]);
+				fullPool.remove(idx);
+			}
+
 			const slots: MissionSlot[] = [];
-			const total = ALL_MISSION_IDS.size();
-			for (let i = 0; i < math.min(3, total); i++) {
-				const idx = ((day % total) + i) % total;
-				slots.push({
-					id: ALL_MISSION_IDS[idx],
-					progress: 0,
-					rewardCollected: false,
-				});
+			for (const id of chosen) {
+				slots.push({ id, progress: 0, rewardCollected: false });
 			}
 			data.missions.slots = slots;
 			data.missions.lastResetDay = day;
@@ -185,7 +203,8 @@ export class MissionService implements OnStart {
 		return result;
 	}
 
-	private incrementAndNotify(player: Player, id: MissionId, amount: number) {
+	/** Increment mission progress and notify client if newly completed. Public for cross-service use. */
+	incrementAndNotify(player: Player, id: MissionId, amount: number) {
 		const wasNewlyCompleted = this.playerDataService.incrementMissionProgress(
 			player,
 			id,

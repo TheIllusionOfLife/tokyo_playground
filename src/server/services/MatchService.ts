@@ -400,6 +400,14 @@ export class MatchService implements OnStart {
 				won,
 			);
 
+			// M3E: track maxHachiLevel for lobby ability gating
+			if (state.minigameId === MinigameId.HachiRide) {
+				this.playerDataService.updateMaxHachiLevel(
+					player,
+					state.evolutionLevel,
+				);
+			}
+
 			entries.push({
 				playerName: player.Name,
 				role: state.role,

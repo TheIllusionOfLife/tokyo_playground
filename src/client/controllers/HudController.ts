@@ -62,6 +62,8 @@ export class HudController implements OnStart {
 
 		clientEvents.rewardGranted.connect((breakdown) => {
 			gameStore.setRewardBreakdown(breakdown);
+			// Auto-dismiss reward popup after 5s (fixes mobile stuck popup)
+			task.delay(5, () => gameStore.hideRewardAnimation());
 		});
 
 		clientEvents.roundResultAnnounced.connect((result) => {
@@ -233,6 +235,12 @@ export class HudController implements OnStart {
 
 		clientEvents.hachiRaceState.connect((state) => {
 			gameStore.setHachiRaceState(state);
+		});
+
+		// Living Shibuya: player progress sync (fix M3: dedicated event)
+		clientEvents.playerProgressSync.connect((maxHachiLevel, badges) => {
+			gameStore.setMaxHachiLevel(maxHachiLevel);
+			gameStore.setBadges(badges);
 		});
 
 		// Haptic feedback — zero network cost, graceful fallback on non-gamepad devices

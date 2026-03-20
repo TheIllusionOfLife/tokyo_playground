@@ -3,6 +3,7 @@ import ProfileService from "@rbxts/profileservice";
 import { Profile } from "@rbxts/profileservice/globals";
 import { Players } from "@rbxts/services";
 import { LEVEL_THRESHOLDS, MISSION_DEFS } from "shared/constants";
+import { GlobalEvents } from "shared/network";
 import {
 	DEFAULT_PLAYER_DATA,
 	ItemCategory,
@@ -24,6 +25,7 @@ export class PlayerDataService implements OnStart {
 	private profiles = new Map<Player, Profile<PlayerData>>();
 	private expectedReleases = new Set<Player>();
 	private profileLoadedCallbacks: Array<(player: Player) => void> = [];
+	private readonly serverEvents = GlobalEvents.createServer({});
 
 	onStart() {
 		print("[PlayerDataService] Started");
@@ -61,6 +63,13 @@ export class PlayerDataService implements OnStart {
 		profile.AddUserId(player.UserId);
 		profile.Reconcile();
 
+		// fix L3: type guards for array fields after Reconcile to handle corruption
+		const data = profile.Data;
+		if (!typeIs(data.discoveredStamps, "table")) data.discoveredStamps = [];
+		if (!typeIs(data.badges, "table")) data.badges = [];
+		if (!typeIs(data.npcFirstInteractions, "table"))
+			data.npcFirstInteractions = [];
+
 		profile.ListenToRelease(() => {
 			this.profiles.delete(player);
 			if (this.expectedReleases.has(player)) {
@@ -85,6 +94,13 @@ export class PlayerDataService implements OnStart {
 		for (const cb of this.profileLoadedCallbacks) {
 			cb(player);
 		}
+
+		// fix M3: dedicated sync for Living Shibuya progress
+		this.serverEvents.playerProgressSync.fire(
+			player,
+			data.maxHachiLevel,
+			data.badges,
+		);
 	}
 
 	private onPlayerRemoving(player: Player) {
@@ -185,6 +201,21 @@ export class PlayerDataService implements OnStart {
 		if (profile) {
 			profile.Data.gamesPlayed += 1;
 		}
+	}
+
+	// ── Living Shibuya methods ───────────────────────────────────────────────
+
+	/** Update maxHachiLevel if newLevel exceeds current, and sync to client. */
+	updateMaxHachiLevel(player: Player, newLevel: number) {
+		const profile = this.profiles.get(player);
+		if (!profile) return;
+		if (newLevel <= profile.Data.maxHachiLevel) return;
+		profile.Data.maxHachiLevel = newLevel;
+		this.serverEvents.playerProgressSync.fire(
+			player,
+			profile.Data.maxHachiLevel,
+			profile.Data.badges,
+		);
 	}
 
 	// ── Mission methods ──────────────────────────────────────────────────────
