@@ -11,6 +11,31 @@ const EQUIPPED_HAT_TAG = "EquippedHat";
 const EQUIPPED_TRAIL_TAG = "EquippedTrail";
 const EQUIP_COOLDOWN = 0.5; // seconds between equip requests
 
+interface TrailStyle {
+	lifetime?: number;
+	lightEmission?: number;
+	widthScale?: NumberSequence;
+}
+
+const TRAIL_STYLES: Partial<Record<ItemId, TrailStyle>> = {
+	[ItemId.TrailCloudWalk]: {
+		lifetime: 1.2,
+		lightEmission: 0.8,
+		widthScale: new NumberSequence([
+			new NumberSequenceKeypoint(0, 1.5),
+			new NumberSequenceKeypoint(1, 0.5),
+		]),
+	},
+	[ItemId.TrailTrainSpark]: {
+		lifetime: 0.4,
+		lightEmission: 0.9,
+		widthScale: new NumberSequence([
+			new NumberSequenceKeypoint(0, 0.5),
+			new NumberSequenceKeypoint(1, 0.05),
+		]),
+	},
+};
+
 // Trail colors per item
 const TRAIL_COLORS: Partial<Record<ItemId, ColorSequence>> = {
 	[ItemId.TrailStar]: new ColorSequence(
@@ -29,6 +54,16 @@ const TRAIL_COLORS: Partial<Record<ItemId, ColorSequence>> = {
 		Color3.fromRGB(255, 100, 0),
 		Color3.fromRGB(255, 50, 0),
 	),
+	[ItemId.TrailCloudWalk]: new ColorSequence([
+		new ColorSequenceKeypoint(0, Color3.fromRGB(240, 245, 255)),
+		new ColorSequenceKeypoint(0.5, Color3.fromRGB(200, 220, 255)),
+		new ColorSequenceKeypoint(1, Color3.fromRGB(180, 210, 255)),
+	]),
+	[ItemId.TrailTrainSpark]: new ColorSequence([
+		new ColorSequenceKeypoint(0, Color3.fromRGB(255, 200, 50)),
+		new ColorSequenceKeypoint(0.3, Color3.fromRGB(255, 150, 0)),
+		new ColorSequenceKeypoint(1, Color3.fromRGB(255, 100, 0)),
+	]),
 };
 
 @Service()
@@ -230,6 +265,14 @@ export class EquipService implements OnStart {
 		const colorSeq = TRAIL_COLORS[itemId];
 		if (colorSeq) {
 			trail.Color = colorSeq;
+		}
+
+		const style = TRAIL_STYLES[itemId];
+		if (style) {
+			if (style.lifetime !== undefined) trail.Lifetime = style.lifetime;
+			if (style.lightEmission !== undefined)
+				trail.LightEmission = style.lightEmission;
+			if (style.widthScale !== undefined) trail.WidthScale = style.widthScale;
 		}
 
 		trail.Parent = hrp;

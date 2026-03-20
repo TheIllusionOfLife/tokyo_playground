@@ -47,6 +47,7 @@ import {
 } from "shared/types";
 import { buildHachiRaceSnapshot } from "shared/utils/hachiRace";
 import { animateHachi, HachiAnimState } from "../../utils/animateHachi";
+import { animateItemCollect } from "../../utils/animateItemCollect";
 import { IMinigame } from "./MinigameBase";
 
 type ServerEvents = ReturnType<typeof GlobalEvents.createServer>;
@@ -85,6 +86,7 @@ export class HachiRideMinigame implements IMinigame {
 	private hachiModels = new Map<number, Model>();
 	private hachiAnimStates = new Map<number, HachiAnimState>();
 	private activeItems: BasePart[] = [];
+	private activeTweens: Tween[] = [];
 	private bonusItems = new Set<BasePart>();
 	private keyItems: BasePart[] = [];
 	private spawnParts: BasePart[] = [];
@@ -152,8 +154,11 @@ export class HachiRideMinigame implements IMinigame {
 		// First HACHI_BONUS_ITEM_COUNT items are bonus (shuffled = random)
 		const originalColors = new Map<BasePart, Color3>();
 		const originalSizes = new Map<BasePart, Vector3>();
+		const originalCFrames = new Map<BasePart, CFrame>();
 		for (let i = 0; i < chosen.size(); i++) {
 			const part = chosen[i];
+			originalCFrames.set(part, part.CFrame);
+			originalSizes.set(part, part.Size);
 			part.Transparency = 1; // Hidden until startRound
 			part.CanCollide = false;
 			part.CanQuery = false;
@@ -162,7 +167,6 @@ export class HachiRideMinigame implements IMinigame {
 				// Mark as bonus: bigger, gold color
 				this.bonusItems.add(part);
 				originalColors.set(part, part.Color);
-				originalSizes.set(part, part.Size);
 				part.Size = part.Size.mul(2.5);
 				part.Color = Color3.fromRGB(255, 215, 0);
 				part.Material = Enum.Material.Neon;
@@ -170,17 +174,24 @@ export class HachiRideMinigame implements IMinigame {
 		}
 		this.hotspots = this.buildHotspots(chosen);
 
-		// Register cleanup: restore all anchors to hidden state
+		// Register cleanup: cancel active tweens, restore all anchors to hidden state
 		matchJanitor.Add(() => {
+			for (const tween of this.activeTweens) {
+				tween.Cancel();
+			}
+			this.activeTweens = [];
 			for (const part of allAnchors) {
 				part.Transparency = 1;
 				part.CanCollide = false;
 				part.CanQuery = false;
-				// Restore original size/color for bonus items
-				const origColor = originalColors.get(part);
-				if (origColor) part.Color = origColor;
+				// Restore original CFrame/Size for all items (animation may have changed them)
+				const origCFrame = originalCFrames.get(part);
+				if (origCFrame) part.CFrame = origCFrame;
 				const origSize = originalSizes.get(part);
 				if (origSize) part.Size = origSize;
+				// Restore original color for bonus items
+				const origColor = originalColors.get(part);
+				if (origColor) part.Color = origColor;
 			}
 			this.activeItems = [];
 			this.bonusItems.clear();
@@ -703,11 +714,13 @@ export class HachiRideMinigame implements IMinigame {
 					continue;
 				}
 				if (pos.sub(item.Position).Magnitude <= HACHI_COLLECTION_RADIUS) {
-					item.Transparency = 1;
-					item.CanCollide = false;
 					item.CanQuery = false;
+					item.CanCollide = false;
+					item.Transparency = 1;
 					toRemove.push(item);
 					this.onItemCollected(userId, state, player, item);
+					const tween = animateItemCollect(item, this.bonusItems.has(item));
+					this.activeTweens.push(tween);
 				}
 			}
 			for (const item of toRemove) {
@@ -720,10 +733,12 @@ export class HachiRideMinigame implements IMinigame {
 				if (!item.Parent) continue;
 				if (item.Transparency === 1) continue; // already collected this session
 				if (pos.sub(item.Position).Magnitude <= HACHI_COLLECTION_RADIUS) {
-					item.Transparency = 1;
-					item.CanCollide = false;
 					item.CanQuery = false;
+					item.CanCollide = false;
+					item.Transparency = 1;
 					this.onItemCollected(userId, state, player, item);
+					const tween = animateItemCollect(item, this.bonusItems.has(item));
+					this.activeTweens.push(tween);
 				}
 			}
 		}
