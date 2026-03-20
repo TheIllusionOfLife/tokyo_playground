@@ -185,7 +185,8 @@ export class MissionService implements OnStart {
 		return result;
 	}
 
-	private incrementAndNotify(player: Player, id: MissionId, amount: number) {
+	/** Increment mission progress and notify client if newly completed. Public for cross-service use. */
+	incrementAndNotify(player: Player, id: MissionId, amount: number) {
 		const wasNewlyCompleted = this.playerDataService.incrementMissionProgress(
 			player,
 			id,

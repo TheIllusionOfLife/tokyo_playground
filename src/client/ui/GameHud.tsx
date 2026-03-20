@@ -15,6 +15,8 @@ import { RoundIntroOverlay } from "./components/RoundIntroOverlay";
 import { Scoreboard } from "./components/Scoreboard";
 import { ShopPanel } from "./components/ShopPanel";
 import { SkillsPanel } from "./components/SkillsPanel";
+import { StampCardPanel } from "./components/StampCardPanel";
+import { StampDiscoveryPopup } from "./components/StampDiscoveryPopup";
 import { TodayGoalChip } from "./components/TodayGoalChip";
 import { TopBar } from "./components/TopBar";
 
@@ -43,6 +45,9 @@ export function GameHud() {
 			<MissionPanel />
 			<ShopPanel />
 			<SkillsPanel />
+			{/* Living Shibuya */}
+			<StampCardPanel />
+			<StampDiscoveryPopup />
 		</screengui>
 	);
 }
