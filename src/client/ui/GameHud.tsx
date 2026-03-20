@@ -1,12 +1,15 @@
 import React from "@rbxts/react";
 import { ActionButton } from "./components/ActionButton";
+import { BonOdoriRhythmLane } from "./components/BonOdoriRhythmLane";
 import { CountdownOverlay } from "./components/CountdownOverlay";
 import { EventFeed } from "./components/EventFeed";
 import { FeaturedUnlockBanner } from "./components/FeaturedUnlockBanner";
 import { HachiHud } from "./components/HachiHud";
 import { HintText } from "./components/HintText";
 import { LevelUpOverlay } from "./components/LevelUpOverlay";
+import { MicroEventIndicator } from "./components/MicroEventIndicator";
 import { MissionPanel } from "./components/MissionPanel";
+import { ObstacleCourseTimer } from "./components/ObstacleCourseTimer";
 import { OmikujiCard } from "./components/OmikujiCard";
 import { PlayPointsDisplay } from "./components/PlayPointsDisplay";
 import { QueueStatusCard } from "./components/QueueStatusCard";
@@ -50,6 +53,9 @@ export function GameHud() {
 			<StampCardPanel />
 			<StampDiscoveryPopup />
 			<OmikujiCard />
+			<MicroEventIndicator />
+			<BonOdoriRhythmLane />
+			<ObstacleCourseTimer />
 		</screengui>
 	);
 }
