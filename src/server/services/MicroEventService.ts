@@ -144,11 +144,7 @@ export class MicroEventService implements OnStart {
 					this.missionService,
 				);
 			case MicroEventId.Fireworks:
-				return new FireworksEvent(
-					this.serverEvents,
-					this.playerDataService,
-					this.missionService,
-				);
+				return new FireworksEvent(this.playerDataService, this.missionService);
 			case MicroEventId.StreetArt:
 				return new StreetArtEvent(
 					this.serverEvents,

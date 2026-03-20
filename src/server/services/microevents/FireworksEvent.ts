@@ -6,13 +6,13 @@ import {
 	FIREWORKS_GROUND_REWARD,
 	FIREWORKS_VIEWPOINT_REWARD,
 } from "shared/constants";
-import { GlobalEvents } from "shared/network";
 import { MicroEventId, MissionId } from "shared/types";
 import { MissionService } from "../MissionService";
 import { PlayerDataService } from "../PlayerDataService";
 import { IMicroEvent } from "./MicroEventBase";
 
-type ServerEvents = ReturnType<typeof GlobalEvents.createServer>;
+/** 10 studs squared: proximity to be "at" a viewpoint. */
+const FIREWORKS_VIEWPOINT_PROXIMITY_SQ = 100;
 
 export class FireworksEvent implements IMicroEvent {
 	readonly id = MicroEventId.Fireworks;
@@ -24,7 +24,6 @@ export class FireworksEvent implements IMicroEvent {
 	private proxCheckAccum = 0;
 
 	constructor(
-		private readonly serverEvents: ServerEvents,
 		private readonly playerDataService: PlayerDataService,
 		private readonly missionService: MissionService,
 	) {}
@@ -61,7 +60,7 @@ export class FireworksEvent implements IMicroEvent {
 			let atViewpoint = false;
 			for (const vp of this.viewpoints) {
 				const delta = hrp.Position.sub(vp.Position);
-				if (delta.Dot(delta) < 100) {
+				if (delta.Dot(delta) < FIREWORKS_VIEWPOINT_PROXIMITY_SQ) {
 					atViewpoint = true;
 					break;
 				}
@@ -73,7 +72,6 @@ export class FireworksEvent implements IMicroEvent {
 					player,
 					FIREWORKS_VIEWPOINT_REWARD,
 				);
-				// Grant badge + mission inline so disconnected players get credit
 				this.grantBadgeAndMission(player);
 			} else {
 				for (const vp of this.viewpoints) {

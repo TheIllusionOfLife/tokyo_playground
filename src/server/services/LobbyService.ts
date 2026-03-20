@@ -384,10 +384,32 @@ export class LobbyService implements OnStart {
 				player.UserId,
 				maxLevel >= 2 ? 1 : 2, // 1 = double available, 2 = used
 			);
+
+			// Reset phase to 0 when Hachi lands (Y velocity settles)
+			task.delay(0.3, () => {
+				const checkBody = hachiModel.FindFirstChild("Body") as
+					| BasePart
+					| undefined;
+				if (!checkBody) return;
+				let checks = 0;
+				const landConn = RunService.Heartbeat.Connect(() => {
+					checks++;
+					if (checks > 300) {
+						// 5s safety timeout
+						landConn.Disconnect();
+						this.lobbyJumpPhase.set(player.UserId, 0);
+						return;
+					}
+					if (math.abs(checkBody.AssemblyLinearVelocity.Y) < 5) {
+						landConn.Disconnect();
+						this.lobbyJumpPhase.set(player.UserId, 0);
+					}
+				});
+			});
 		});
 	}
 
-	/** Lobby double-jump: requires maxHachiLevel >= 2, in-air (fix M1). */
+	/** Lobby double-jump: requires maxHachiLevel >= 2, must be airborne. */
 	private setupLobbyDoubleJump() {
 		this.serverEvents.hachiLobbyDoubleJump.connect((player) => {
 			if (this.matchActive) return;
@@ -409,6 +431,9 @@ export class LobbyService implements OnStart {
 
 			const body = hachiModel.FindFirstChild("Body") as BasePart | undefined;
 			if (!body) return;
+
+			// Must be airborne (Y velocity significant)
+			if (math.abs(body.AssemblyLinearVelocity.Y) < 5) return;
 
 			this.lobbyJumpPhase.set(player.UserId, 2); // Used
 			applyHachiJumpImpulse(body, HACHI_DOUBLE_JUMP_IMPULSE);
@@ -436,20 +461,24 @@ export class LobbyService implements OnStart {
 			const body = hachiModel.FindFirstChild("Body") as BasePart | undefined;
 			if (!body) return;
 
-			// Fix #5: normalize + sanity check client-supplied normal
+			// Use client normal only for initial ray direction hint, then
+			// derive the authoritative wall normal from the raycast result.
 			const mag = wallNormal.Magnitude;
-			if (mag < 0.5 || mag > 1.5) return; // reject bogus vectors
-			const safeNormal = wallNormal.Unit;
+			if (mag < 0.5 || mag > 1.5) return;
+			const hintDir = wallNormal.Unit;
 
-			// Verify wall proximity via server raycast (overrides client claim)
-			const rayDir = safeNormal.mul(-HACHI_WALL_RUN_RAYCAST);
-			const rayResult = Workspace.Raycast(body.Position, rayDir);
+			// Server raycast with RaycastParams excluding the Hachi body
+			const rayParams = new RaycastParams();
+			rayParams.FilterType = Enum.RaycastFilterType.Exclude;
+			rayParams.FilterDescendantsInstances = [hachiModel as Instance];
+			const rayDir = hintDir.mul(-HACHI_WALL_RUN_RAYCAST);
+			const rayResult = Workspace.Raycast(body.Position, rayDir, rayParams);
 			if (!rayResult) return;
 
-			// Apply wall-run: zero gravity + lateral velocity
-			// Guard against vertical normals that produce zero cross product
-			const crossResult = safeNormal.Cross(new Vector3(0, 1, 0));
-			if (crossResult.Magnitude < 0.1) return; // near-vertical normal, reject
+			// Use server-computed hit normal (not client normal)
+			const serverNormal = rayResult.Normal;
+			const crossResult = serverNormal.Cross(new Vector3(0, 1, 0));
+			if (crossResult.Magnitude < 0.1) return; // near-vertical surface, reject
 			const lateralDir = crossResult.Unit;
 			const bv = body.FindFirstChildOfClass("BodyVelocity");
 			if (bv) {
@@ -459,7 +488,7 @@ export class LobbyService implements OnStart {
 				const origForce = bv.MaxForce;
 				bv.MaxForce = Vector3.zero;
 				body.AssemblyLinearVelocity = lateralDir.mul(HACHI_WALL_RUN_SPEED);
-				this.serverEvents.hachiWallRunStart.fire(player, safeNormal);
+				this.serverEvents.hachiWallRunStart.fire(player, serverNormal);
 
 				task.delay(HACHI_WALL_RUN_MAX_DUR, () => {
 					if (bv.Parent) bv.MaxForce = origForce;

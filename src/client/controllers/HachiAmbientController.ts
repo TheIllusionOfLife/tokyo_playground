@@ -152,6 +152,10 @@ export class HachiAmbientController implements OnStart {
 			const body = hachi.FindFirstChild("Body") as BasePart | undefined;
 			if (!body || body === localBody) continue;
 
+			// Only react to occupied Hachis (skip parked/empty ones)
+			const seat = hachi.FindFirstChildWhichIsA("VehicleSeat");
+			if (!seat || !seat.Occupant) continue;
+
 			const delta = localPos.sub(body.Position);
 			if (delta.Dot(delta) < radiusSq) {
 				if (!this.isOnCooldown("HachiPair", hachi)) {

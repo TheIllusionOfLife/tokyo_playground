@@ -28,9 +28,13 @@ export class BonOdoriEvent implements IMicroEvent {
 	private readonly radiusSq = BON_ODORI_RADIUS * BON_ODORI_RADIUS;
 	private connections: RBXScriptConnection[] = [];
 	private centerPos = Vector3.zero;
-	/** Server-tracked beat counter for accuracy computation. */
+	private centerValid = false;
 	private beatCount = 0;
-	/** Last beat each player successfully hit (dedup one hit per beat). */
+	/** Direction of the current active note. */
+	private activeNoteDirection = -1;
+	/** Time the current note was emitted (server clock). */
+	private activeNoteTime = 0;
+	/** Tracks which beat each player last scored on (dedup). */
 	private lastHitBeat = new Map<number, number>();
 
 	constructor(
@@ -43,12 +47,21 @@ export class BonOdoriEvent implements IMicroEvent {
 		const centers = CollectionService.GetTagged(BON_ODORI_CENTER_TAG);
 		if (centers.size() > 0 && centers[0].IsA("BasePart")) {
 			this.centerPos = centers[0].Position;
+			this.centerValid = true;
+		} else {
+			// No valid center found: abort event immediately
+			warn("[BonOdoriEvent] No BonOdoriCenter tag found, aborting");
+			this.finished = true;
+			return;
 		}
 
 		this.connections.push(
 			this.serverEvents.bonOdoriHit.connect(
-				(player, _direction, _clientAccuracy) => {
+				(player, direction, _clientAccuracy) => {
 					if (this.finished) return;
+
+					// Validate direction matches the active note
+					if (direction !== this.activeNoteDirection) return;
 
 					// Server-side proximity check
 					const character = player.Character;
@@ -67,12 +80,14 @@ export class BonOdoriEvent implements IMicroEvent {
 
 					this.participated.add(player.UserId);
 
-					// Server-side accuracy: time since last beat emission
-					const timeSinceBeat =
-						this.beatTimer < this.beatInterval
-							? this.beatTimer
-							: this.beatInterval - this.beatTimer;
-					const accuracy = math.abs(timeSinceBeat);
+					// Server-side accuracy: min distance to nearest beat edge
+					// beatTimer is in [0, beatInterval). Closest beat is either
+					// the one that just fired (distance = beatTimer) or the
+					// upcoming one (distance = beatInterval - beatTimer).
+					const accuracy = math.min(
+						this.beatTimer,
+						this.beatInterval - this.beatTimer,
+					);
 
 					const score = this.playerScores.get(player.UserId) ?? 0;
 					let points = 0;
@@ -99,6 +114,9 @@ export class BonOdoriEvent implements IMicroEvent {
 			this.beatTimer -= this.beatInterval;
 			this.beatCount++;
 			const direction = math.random(0, 3);
+			this.activeNoteDirection = direction;
+			this.activeNoteTime = os.clock();
+
 			for (const player of Players.GetPlayers()) {
 				const character = player.Character;
 				if (!character) continue;
