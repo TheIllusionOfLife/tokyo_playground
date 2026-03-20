@@ -235,6 +235,12 @@ export class HudController implements OnStart {
 			gameStore.setHachiRaceState(state);
 		});
 
+		// Living Shibuya: player progress sync (fix M3: dedicated event)
+		clientEvents.playerProgressSync.connect((maxHachiLevel, badges) => {
+			gameStore.setMaxHachiLevel(maxHachiLevel);
+			gameStore.setBadges(badges);
+		});
+
 		// Haptic feedback — zero network cost, graceful fallback on non-gamepad devices
 		clientEvents.playerCaught.connect((caughtId) => {
 			if (caughtId === Players.LocalPlayer.UserId) {
