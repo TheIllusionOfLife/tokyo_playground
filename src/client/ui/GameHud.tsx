@@ -7,6 +7,7 @@ import { HachiHud } from "./components/HachiHud";
 import { HintText } from "./components/HintText";
 import { LevelUpOverlay } from "./components/LevelUpOverlay";
 import { MissionPanel } from "./components/MissionPanel";
+import { OmikujiCard } from "./components/OmikujiCard";
 import { PlayPointsDisplay } from "./components/PlayPointsDisplay";
 import { QueueStatusCard } from "./components/QueueStatusCard";
 import { RewardPopup } from "./components/RewardPopup";
@@ -48,6 +49,7 @@ export function GameHud() {
 			{/* Living Shibuya */}
 			<StampCardPanel />
 			<StampDiscoveryPopup />
+			<OmikujiCard />
 		</screengui>
 	);
 }
