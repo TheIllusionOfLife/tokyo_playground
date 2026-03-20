@@ -62,6 +62,8 @@ export class HudController implements OnStart {
 
 		clientEvents.rewardGranted.connect((breakdown) => {
 			gameStore.setRewardBreakdown(breakdown);
+			// Auto-dismiss reward popup after 5s (fixes mobile stuck popup)
+			task.delay(5, () => gameStore.hideRewardAnimation());
 		});
 
 		clientEvents.roundResultAnnounced.connect((result) => {

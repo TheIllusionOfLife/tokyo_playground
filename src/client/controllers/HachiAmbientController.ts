@@ -20,7 +20,7 @@ import {
 	WATER_FEATURE_TAG,
 } from "shared/constants";
 import { gameStore } from "shared/store/game-store";
-import { GameState, HachiMood, TimePhase } from "shared/types";
+import { HachiMood, MatchPhase, TimePhase } from "shared/types";
 
 interface AmbientCooldown {
 	tag: string;
@@ -65,7 +65,7 @@ export class HachiAmbientController implements OnStart {
 	private tick(dt: number) {
 		const storeState = gameStore.getState();
 		// Only run in lobby while riding Hachi
-		if (storeState.matchPhase !== "WaitingForPlayers") return;
+		if (storeState.matchPhase !== MatchPhase.WaitingForPlayers) return;
 
 		const hachiBody = this.getLocalHachiBody();
 		if (!hachiBody) return;

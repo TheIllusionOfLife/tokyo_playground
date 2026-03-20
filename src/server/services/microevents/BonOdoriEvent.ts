@@ -32,8 +32,6 @@ export class BonOdoriEvent implements IMicroEvent {
 	private beatCount = 0;
 	/** Direction of the current active note. */
 	private activeNoteDirection = -1;
-	/** Time the current note was emitted (server clock). */
-	private activeNoteTime = 0;
 	/** Tracks which beat each player last scored on (dedup). */
 	private lastHitBeat = new Map<number, number>();
 
@@ -115,7 +113,6 @@ export class BonOdoriEvent implements IMicroEvent {
 			this.beatCount++;
 			const direction = math.random(0, 3);
 			this.activeNoteDirection = direction;
-			this.activeNoteTime = os.clock();
 
 			for (const player of Players.GetPlayers()) {
 				const character = player.Character;
