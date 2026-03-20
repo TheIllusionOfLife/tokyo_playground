@@ -436,22 +436,31 @@ export class LobbyService implements OnStart {
 			const body = hachiModel.FindFirstChild("Body") as BasePart | undefined;
 			if (!body) return;
 
-			// Verify wall proximity via raycast
-			const rayDir = wallNormal.mul(-HACHI_WALL_RUN_RAYCAST);
+			// Fix #5: normalize + sanity check client-supplied normal
+			const mag = wallNormal.Magnitude;
+			if (mag < 0.5 || mag > 1.5) return; // reject bogus vectors
+			const safeNormal = wallNormal.Unit;
+
+			// Verify wall proximity via server raycast (overrides client claim)
+			const rayDir = safeNormal.mul(-HACHI_WALL_RUN_RAYCAST);
 			const rayResult = Workspace.Raycast(body.Position, rayDir);
 			if (!rayResult) return;
 
 			// Apply wall-run: zero gravity + lateral velocity
-			const lateralDir = wallNormal.Cross(new Vector3(0, 1, 0)).Unit;
+			const lateralDir = safeNormal.Cross(new Vector3(0, 1, 0)).Unit;
 			const bv = body.FindFirstChildOfClass("BodyVelocity");
 			if (bv) {
+				// Fix #5: guard against concurrent wall-runs with active flag
+				if (this.hachiSlideActive.has(player.UserId)) return;
+				this.hachiSlideActive.add(player.UserId);
 				const origForce = bv.MaxForce;
 				bv.MaxForce = Vector3.zero;
 				body.AssemblyLinearVelocity = lateralDir.mul(HACHI_WALL_RUN_SPEED);
-				this.serverEvents.hachiWallRunStart.fire(player, wallNormal);
+				this.serverEvents.hachiWallRunStart.fire(player, safeNormal);
 
 				task.delay(HACHI_WALL_RUN_MAX_DUR, () => {
 					if (bv.Parent) bv.MaxForce = origForce;
+					this.hachiSlideActive.delete(player.UserId);
 					this.serverEvents.hachiWallRunStop.fire(player);
 				});
 			}

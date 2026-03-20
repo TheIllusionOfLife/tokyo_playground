@@ -1,5 +1,5 @@
 import { OnStart, Service } from "@flamework/core";
-import { RunService } from "@rbxts/services";
+import { Players, RunService } from "@rbxts/services";
 import {
 	DAY_CYCLE_MINUTES,
 	LIGHTING_PROFILES,
@@ -43,6 +43,14 @@ export class DayNightService implements OnStart {
 
 		// Heartbeat drives the clock
 		RunService.Heartbeat.Connect((dt) => this.tick(dt));
+
+		// Fix #7: sync late joiners with current time state
+		Players.PlayerAdded.Connect((player) => {
+			task.defer(() => this.syncPlayer(player));
+		});
+		for (const player of Players.GetPlayers()) {
+			task.defer(() => this.syncPlayer(player));
+		}
 	}
 
 	private tick(dt: number) {

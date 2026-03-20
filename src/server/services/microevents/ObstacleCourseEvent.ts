@@ -13,11 +13,13 @@ import { IMicroEvent } from "./MicroEventBase";
 
 type ServerEvents = ReturnType<typeof GlobalEvents.createServer>;
 
+/** Minimum seconds between checkpoints to reject instant-fire cheats (#4). */
+const MIN_CHECKPOINT_INTERVAL = 0.5;
+
 interface PlayerCourseState {
-	/** Timestamp when player hit checkpoint 0 (start gate). */
 	startTime: number;
-	/** Last completed checkpoint index. */
 	lastCheckpoint: number;
+	lastCheckpointTime: number;
 }
 
 export class ObstacleCourseEvent implements IMicroEvent {
@@ -26,6 +28,7 @@ export class ObstacleCourseEvent implements IMicroEvent {
 	private elapsed = 0;
 	private finished = false;
 	private playerStates = new Map<number, PlayerCourseState>();
+	private connections: RBXScriptConnection[] = [];
 
 	constructor(
 		private readonly serverEvents: ServerEvents,
@@ -34,75 +37,85 @@ export class ObstacleCourseEvent implements IMicroEvent {
 	) {}
 
 	start() {
-		// Handle checkpoint events
-		this.serverEvents.obstacleCourseCheckpoint.connect(
-			(player, checkpointIndex) => {
+		// Fix #1: track connections for cleanup
+		this.connections.push(
+			this.serverEvents.obstacleCourseCheckpoint.connect(
+				(player, checkpointIndex) => {
+					if (this.finished) return;
+
+					const userId = player.UserId;
+					const now = os.clock();
+
+					if (checkpointIndex === 0) {
+						this.playerStates.set(userId, {
+							startTime: now,
+							lastCheckpoint: 0,
+							lastCheckpointTime: now,
+						});
+						return;
+					}
+
+					const state = this.playerStates.get(userId);
+					if (!state) return;
+
+					// Validate sequence (no skipping)
+					if (checkpointIndex !== state.lastCheckpoint + 1) return;
+
+					// Fix #4: minimum time between checkpoints rejects instant-fire
+					if (now - state.lastCheckpointTime < MIN_CHECKPOINT_INTERVAL) return;
+
+					state.lastCheckpoint = checkpointIndex;
+					state.lastCheckpointTime = now;
+				},
+			),
+		);
+
+		this.connections.push(
+			this.serverEvents.obstacleCourseFinish.connect((player) => {
 				if (this.finished) return;
 
 				const userId = player.UserId;
-				if (checkpointIndex === 0) {
-					// fix H2: server records start time
-					this.playerStates.set(userId, {
-						startTime: os.clock(),
-						lastCheckpoint: 0,
-					});
-					return;
-				}
-
 				const state = this.playerStates.get(userId);
 				if (!state) return;
 
-				// Validate checkpoint sequence (must arrive in order, no skipping)
-				if (checkpointIndex !== state.lastCheckpoint + 1) return;
-				state.lastCheckpoint = checkpointIndex;
-			},
+				if (state.lastCheckpoint < OBSTACLE_COURSE_CHECKPOINTS - 1) return;
+
+				const elapsed = os.clock() - state.startTime;
+
+				// Fix #4: reject impossibly fast completions
+				const minPossibleTime =
+					OBSTACLE_COURSE_CHECKPOINTS * MIN_CHECKPOINT_INTERVAL;
+				if (elapsed < minPossibleTime) return;
+
+				const data = this.playerDataService.getPlayerData(player);
+				if (!data) return;
+
+				const isFirstCompletion = data.obstacleBestTime === 0;
+				if (data.obstacleBestTime === 0 || elapsed < data.obstacleBestTime) {
+					data.obstacleBestTime = elapsed;
+				}
+
+				const pts = isFirstCompletion
+					? OBSTACLE_COURSE_COMPLETION_POINTS
+					: OBSTACLE_COURSE_REPEAT_POINTS;
+				this.playerDataService.addPlayPoints(player, pts);
+
+				if (isFirstCompletion && !data.badges.includes("ParkourPup")) {
+					data.badges.push("ParkourPup");
+				}
+
+				this.missionService.incrementAndNotify(
+					player,
+					MissionId.CompleteObstacleCourse,
+					1,
+				);
+
+				this.playerStates.delete(userId);
+				print(
+					`[ObstacleCourseEvent] ${player.Name} finished in ${string.format("%.1f", elapsed)}s`,
+				);
+			}),
 		);
-
-		// Handle finish events
-		this.serverEvents.obstacleCourseFinish.connect((player) => {
-			if (this.finished) return;
-
-			const userId = player.UserId;
-			const state = this.playerStates.get(userId);
-			if (!state) return;
-
-			// Validate all checkpoints completed
-			if (state.lastCheckpoint < OBSTACLE_COURSE_CHECKPOINTS - 1) return;
-
-			// fix H2: server computes elapsed time, ignores any client value
-			const elapsed = os.clock() - state.startTime;
-
-			const data = this.playerDataService.getPlayerData(player);
-			if (!data) return;
-
-			const isFirstCompletion = data.obstacleBestTime === 0;
-			if (data.obstacleBestTime === 0 || elapsed < data.obstacleBestTime) {
-				data.obstacleBestTime = elapsed;
-			}
-
-			const pts = isFirstCompletion
-				? OBSTACLE_COURSE_COMPLETION_POINTS
-				: OBSTACLE_COURSE_REPEAT_POINTS;
-			this.playerDataService.addPlayPoints(player, pts);
-
-			// "Parkour Pup" badge on first completion
-			if (isFirstCompletion && !data.badges.includes("ParkourPup")) {
-				data.badges.push("ParkourPup");
-			}
-
-			this.missionService.incrementAndNotify(
-				player,
-				MissionId.CompleteObstacleCourse,
-				1,
-			);
-
-			// Remove player state so they can restart
-			this.playerStates.delete(userId);
-
-			print(
-				`[ObstacleCourseEvent] ${player.Name} finished in ${string.format("%.1f", elapsed)}s`,
-			);
-		});
 	}
 
 	tick(dt: number) {
@@ -117,6 +130,11 @@ export class ObstacleCourseEvent implements IMicroEvent {
 	}
 
 	cleanup() {
+		// Fix #1: disconnect all listeners
+		for (const conn of this.connections) {
+			conn.Disconnect();
+		}
+		this.connections = [];
 		this.playerStates.clear();
 	}
 }

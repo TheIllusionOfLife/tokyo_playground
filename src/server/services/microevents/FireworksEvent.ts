@@ -21,6 +21,7 @@ export class FireworksEvent implements IMicroEvent {
 	private finished = false;
 	private viewpoints: BasePart[] = [];
 	private rewarded = new Set<number>();
+	private proxCheckAccum = 0;
 
 	constructor(
 		private readonly serverEvents: ServerEvents,
@@ -41,8 +42,10 @@ export class FireworksEvent implements IMicroEvent {
 			return;
 		}
 
-		// Check viewpoint proximity every few seconds
-		if (math.floor(this.elapsed) % 3 !== 0) return;
+		// Fix #9: use accumulator instead of modulo (fires once per 3s, not every frame)
+		this.proxCheckAccum += dt;
+		if (this.proxCheckAccum < 3) return;
+		this.proxCheckAccum -= 3;
 
 		const groundProxSq =
 			FIREWORKS_GROUND_PROXIMITY * FIREWORKS_GROUND_PROXIMITY;

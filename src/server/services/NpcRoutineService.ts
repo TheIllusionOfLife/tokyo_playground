@@ -52,6 +52,7 @@ export class NpcRoutineService implements OnStart {
 		print("[NpcRoutineService] Started");
 
 		// React to phase changes to spawn/despawn NPCs
+		let pruneClock = 0;
 		RunService.Heartbeat.Connect((dt) => {
 			this.checkAccumulator += dt;
 			if (this.checkAccumulator < 0.5) return;
@@ -59,6 +60,16 @@ export class NpcRoutineService implements OnStart {
 
 			this.updateNpcPresence();
 			this.checkPlayerProximity();
+
+			// Fix #10: prune expired cooldowns every 30s
+			pruneClock += 0.5;
+			if (pruneClock >= 30) {
+				pruneClock = 0;
+				const now = os.clock();
+				for (const [key, expiry] of this.treatCooldowns) {
+					if (expiry <= now) this.treatCooldowns.delete(key);
+				}
+			}
 		});
 
 		// Handle NPC interaction requests
@@ -205,7 +216,13 @@ export class NpcRoutineService implements OnStart {
 		const delta = hrp.Position.sub(active.model.GetPivot().Position);
 		if (delta.Dot(delta) > this.interactionRadiusSq) return;
 
+		// Fix #6: photographer cooldown prevents spam
+		const cooldownKey = `${npcId}_${player.UserId}`;
+		const now = os.clock();
+		if ((this.treatCooldowns.get(cooldownKey) ?? 0) > now) return;
+
 		if (npcId === NpcId.Photographer) {
+			this.treatCooldowns.set(cooldownKey, now + NPC_TREAT_COOLDOWN);
 			this.playerDataService.addPlayPoints(player, PHOTOGRAPHER_POSE_REWARD);
 			this.serverEvents.npcInteraction.fire(
 				player,

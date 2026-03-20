@@ -1,5 +1,6 @@
-import { Players } from "@rbxts/services";
+import { CollectionService, Players } from "@rbxts/services";
 import {
+	BON_ODORI_CENTER_TAG,
 	BON_ODORI_DURATION,
 	BON_ODORI_GOOD_WINDOW,
 	BON_ODORI_MAX_POINTS,
@@ -25,6 +26,8 @@ export class BonOdoriEvent implements IMicroEvent {
 	private beatTimer = 0;
 	private readonly beatInterval = 60 / 100; // 100 BPM
 	private readonly radiusSq = BON_ODORI_RADIUS * BON_ODORI_RADIUS;
+	private connections: RBXScriptConnection[] = [];
+	private centerPos = Vector3.zero;
 
 	constructor(
 		private readonly serverEvents: ServerEvents,
@@ -33,19 +36,38 @@ export class BonOdoriEvent implements IMicroEvent {
 	) {}
 
 	start() {
-		// Listen for player hits
-		this.serverEvents.bonOdoriHit.connect((player, _direction, accuracy) => {
-			if (this.finished) return;
-			this.participated.add(player.UserId);
-			const score = this.playerScores.get(player.UserId) ?? 0;
-			let points = 0;
-			if (accuracy <= BON_ODORI_PERFECT_WINDOW) points = 3;
-			else if (accuracy <= BON_ODORI_GOOD_WINDOW) points = 1;
-			this.playerScores.set(
-				player.UserId,
-				math.min(score + points, BON_ODORI_MAX_POINTS),
-			);
-		});
+		// Find event center for proximity validation
+		const centers = CollectionService.GetTagged(BON_ODORI_CENTER_TAG);
+		if (centers.size() > 0 && centers[0].IsA("BasePart")) {
+			this.centerPos = centers[0].Position;
+		}
+
+		// Listen for player hits (fix #1: track connection for cleanup)
+		this.connections.push(
+			this.serverEvents.bonOdoriHit.connect((player, _direction, accuracy) => {
+				if (this.finished) return;
+
+				// Fix #3: server-side proximity check
+				const character = player.Character;
+				if (!character) return;
+				const hrp = character.FindFirstChild("HumanoidRootPart") as
+					| BasePart
+					| undefined;
+				if (!hrp) return;
+				const delta = hrp.Position.sub(this.centerPos);
+				if (delta.Dot(delta) > this.radiusSq) return;
+
+				this.participated.add(player.UserId);
+				const score = this.playerScores.get(player.UserId) ?? 0;
+				let points = 0;
+				if (accuracy <= BON_ODORI_PERFECT_WINDOW) points = 3;
+				else if (accuracy <= BON_ODORI_GOOD_WINDOW) points = 1;
+				this.playerScores.set(
+					player.UserId,
+					math.min(score + points, BON_ODORI_MAX_POINTS),
+				);
+			}),
+		);
 	}
 
 	tick(dt: number) {
@@ -55,13 +77,22 @@ export class BonOdoriEvent implements IMicroEvent {
 			return;
 		}
 
-		// Send beat notes to nearby players
+		// Send beat notes to nearby players only
 		this.beatTimer += dt;
 		if (this.beatTimer >= this.beatInterval) {
 			this.beatTimer -= this.beatInterval;
-			const direction = math.random(0, 3); // 0=up, 1=right, 2=down, 3=left
+			const direction = math.random(0, 3);
 			for (const player of Players.GetPlayers()) {
-				this.serverEvents.bonOdoriNote.fire(player, direction, this.elapsed);
+				const character = player.Character;
+				if (!character) continue;
+				const hrp = character.FindFirstChild("HumanoidRootPart") as
+					| BasePart
+					| undefined;
+				if (!hrp) continue;
+				const delta = hrp.Position.sub(this.centerPos);
+				if (delta.Dot(delta) <= this.radiusSq) {
+					this.serverEvents.bonOdoriNote.fire(player, direction, this.elapsed);
+				}
 			}
 		}
 	}
@@ -71,6 +102,12 @@ export class BonOdoriEvent implements IMicroEvent {
 	}
 
 	cleanup() {
+		// Fix #1: disconnect all listeners
+		for (const conn of this.connections) {
+			conn.Disconnect();
+		}
+		this.connections = [];
+
 		// Distribute rewards
 		for (const player of Players.GetPlayers()) {
 			const userId = player.UserId;
