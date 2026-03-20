@@ -47,6 +47,7 @@ import {
 } from "shared/types";
 import { buildHachiRaceSnapshot } from "shared/utils/hachiRace";
 import { animateHachi, HachiAnimState } from "../../utils/animateHachi";
+import { animateItemCollect } from "../../utils/animateItemCollect";
 import { IMinigame } from "./MinigameBase";
 
 type ServerEvents = ReturnType<typeof GlobalEvents.createServer>;
@@ -703,11 +704,11 @@ export class HachiRideMinigame implements IMinigame {
 					continue;
 				}
 				if (pos.sub(item.Position).Magnitude <= HACHI_COLLECTION_RADIUS) {
-					item.Transparency = 1;
-					item.CanCollide = false;
 					item.CanQuery = false;
+					item.CanCollide = false;
 					toRemove.push(item);
 					this.onItemCollected(userId, state, player, item);
+					animateItemCollect(item, this.bonusItems.has(item));
 				}
 			}
 			for (const item of toRemove) {
@@ -720,10 +721,10 @@ export class HachiRideMinigame implements IMinigame {
 				if (!item.Parent) continue;
 				if (item.Transparency === 1) continue; // already collected this session
 				if (pos.sub(item.Position).Magnitude <= HACHI_COLLECTION_RADIUS) {
-					item.Transparency = 1;
-					item.CanCollide = false;
 					item.CanQuery = false;
+					item.CanCollide = false;
 					this.onItemCollected(userId, state, player, item);
+					animateItemCollect(item, false);
 				}
 			}
 		}
