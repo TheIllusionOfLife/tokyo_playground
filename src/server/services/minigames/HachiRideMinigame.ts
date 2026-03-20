@@ -154,8 +154,11 @@ export class HachiRideMinigame implements IMinigame {
 		// First HACHI_BONUS_ITEM_COUNT items are bonus (shuffled = random)
 		const originalColors = new Map<BasePart, Color3>();
 		const originalSizes = new Map<BasePart, Vector3>();
+		const originalCFrames = new Map<BasePart, CFrame>();
 		for (let i = 0; i < chosen.size(); i++) {
 			const part = chosen[i];
+			originalCFrames.set(part, part.CFrame);
+			originalSizes.set(part, part.Size);
 			part.Transparency = 1; // Hidden until startRound
 			part.CanCollide = false;
 			part.CanQuery = false;
@@ -164,7 +167,6 @@ export class HachiRideMinigame implements IMinigame {
 				// Mark as bonus: bigger, gold color
 				this.bonusItems.add(part);
 				originalColors.set(part, part.Color);
-				originalSizes.set(part, part.Size);
 				part.Size = part.Size.mul(2.5);
 				part.Color = Color3.fromRGB(255, 215, 0);
 				part.Material = Enum.Material.Neon;
@@ -182,11 +184,14 @@ export class HachiRideMinigame implements IMinigame {
 				part.Transparency = 1;
 				part.CanCollide = false;
 				part.CanQuery = false;
-				// Restore original size/color for bonus items
-				const origColor = originalColors.get(part);
-				if (origColor) part.Color = origColor;
+				// Restore original CFrame/Size for all items (animation may have changed them)
+				const origCFrame = originalCFrames.get(part);
+				if (origCFrame) part.CFrame = origCFrame;
 				const origSize = originalSizes.get(part);
 				if (origSize) part.Size = origSize;
+				// Restore original color for bonus items
+				const origColor = originalColors.get(part);
+				if (origColor) part.Color = origColor;
 			}
 			this.activeItems = [];
 			this.bonusItems.clear();
