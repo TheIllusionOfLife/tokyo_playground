@@ -1,6 +1,10 @@
 import { Controller, OnStart } from "@flamework/core";
 import { SoundService } from "@rbxts/services";
-import { STAMP_CARD_DISPLAY_DURATION } from "shared/constants";
+import {
+	SE_STAMP_CHIME,
+	SE_STAMP_SET_COMPLETE,
+	STAMP_CARD_DISPLAY_DURATION,
+} from "shared/constants";
 import { GlobalEvents } from "shared/network";
 import { gameStore } from "shared/store/game-store";
 
@@ -18,7 +22,7 @@ export class StampRallyController implements OnStart {
 
 			// Chime SFX
 			const chime = new Instance("Sound");
-			chime.SoundId = "rbxassetid://6518811702"; // magic pickup chime
+			chime.SoundId = SE_STAMP_CHIME;
 			chime.Volume = 0.5;
 			chime.Parent = SoundService;
 			chime.Play();
@@ -34,8 +38,13 @@ export class StampRallyController implements OnStart {
 		});
 
 		this.clientEvents.stampSetCompleted.connect((_setId, _rewardItemId) => {
-			// Set completion is shown as a feed message for now
 			gameStore.pushFeedMessage("Stamp set completed! Reward unlocked!");
+			const fanfare = new Instance("Sound");
+			fanfare.SoundId = SE_STAMP_SET_COMPLETE;
+			fanfare.Volume = 0.6;
+			fanfare.Parent = SoundService;
+			fanfare.Play();
+			fanfare.Ended.Once(() => fanfare.Destroy());
 		});
 
 		this.clientEvents.stampCardData.connect((discovered, totalCount) => {

@@ -459,6 +459,21 @@ export const SE_HEARTBEAT = "rbxassetid://6101411994"; // dramatic heartbeat (11
 export const SE_CHEER = "rbxassetid://9112766203"; // crowd celebration (79.6s)
 export const SE_AMBIENT_CITY = "rbxassetid://9112758242"; // city ambience loop (27s)
 
+// Living Shibuya Audio
+export const SE_STAMP_CHIME = "rbxassetid://6518811702"; // warm magic pickup (1.2s)
+export const SE_STAMP_SET_COMPLETE = "rbxassetid://6647877129"; // sparkle fanfare (reuses evolve)
+export const SE_OMIKUJI_DRAW = "rbxassetid://4590662766"; // gentle chime (reuses item pickup)
+export const SE_NPC_TREAT = "rbxassetid://4590662766"; // treat toss chime
+export const SE_HACHI_BARK = "rbxassetid://5682262154"; // short bark (reuses jump)
+export const SE_HACHI_YAWN = "rbxassetid://151284431"; // slow whoosh (reuses slide)
+export const SE_CAMERA_SHUTTER = "rbxassetid://12221967"; // quick click (reuses tick)
+export const SE_FIREWORK_BOOM = "rbxassetid://2865227271"; // impact boom (reuses can kick)
+export const SE_FIREWORK_WHISTLE = "rbxassetid://6101411994"; // rising whistle
+export const SE_BON_ODORI_DRUM = "rbxassetid://9112766203"; // festival drums (reuses cheer)
+export const SE_FOOD_TRUCK_JINGLE = "rbxassetid://7024340270"; // catchy jingle (reuses BGM)
+export const SE_RAIN_AMBIENT = "rbxassetid://9112758242"; // rain ambience (reuses city ambient)
+export const SE_GOLDEN_HOUR_CHIME = "rbxassetid://6518811702"; // warm shimmer
+
 // Streak bonuses — multiplier by consecutive games played (index = streak count, capped)
 export const STREAK_MULTIPLIERS = [1.0, 1.0, 1.1, 1.2, 1.2, 1.35];
 

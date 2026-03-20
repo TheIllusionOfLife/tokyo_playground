@@ -13,6 +13,8 @@ import {
 	HACHI_RIDE_TAG,
 	MOOD_DECAY_DURATION,
 	MUSICIAN_TAG,
+	SE_HACHI_BARK,
+	SE_HACHI_YAWN,
 	SLEEP_IDLE_THRESHOLD,
 	TONGUE_OUT_SPEED_THRESHOLD,
 	WATER_FEATURE_TAG,
@@ -90,6 +92,7 @@ export class HachiAmbientController implements OnStart {
 				this.mood !== HachiMood.Sleepy
 			) {
 				this.setMood(HachiMood.Sleepy);
+				this.playSfx(SE_HACHI_YAWN, 0.3);
 			}
 		} else {
 			this.idleTimer = 0;
@@ -145,6 +148,7 @@ export class HachiAmbientController implements OnStart {
 			if (delta.Dot(delta) < radiusSq) {
 				if (!this.isOnCooldown("HachiPair", hachi)) {
 					this.setMood(HachiMood.Excited);
+					this.playSfx(SE_HACHI_BARK, 0.4);
 					this.setCooldown("HachiPair", hachi, 45);
 				}
 				return;
@@ -153,16 +157,16 @@ export class HachiAmbientController implements OnStart {
 	}
 
 	private playReaction(tag: string) {
-		// Mood transitions based on trigger type
+		// Mood transitions + SFX based on trigger type
 		if (tag === FOOD_STALL_TAG) {
 			this.setMood(HachiMood.Happy);
+			// Sniff SFX: quiet bark
+			this.playSfx(SE_HACHI_BARK, 0.2);
 		} else if (tag === MUSICIAN_TAG) {
 			this.setMood(HachiMood.Relaxed);
 		} else if (tag === WATER_FEATURE_TAG) {
 			this.setMood(HachiMood.Relaxed);
 		}
-		// Animations and SFX would be played via AnimationController here.
-		// For now, mood state drives idle anim selection.
 	}
 
 	private setMood(mood: HachiMood) {
@@ -172,6 +176,15 @@ export class HachiAmbientController implements OnStart {
 
 	getMood(): HachiMood {
 		return this.mood;
+	}
+
+	private playSfx(soundId: string, volume: number) {
+		const sound = new Instance("Sound");
+		sound.SoundId = soundId;
+		sound.Volume = volume;
+		sound.Parent = SoundService;
+		sound.Play();
+		sound.Ended.Once(() => sound.Destroy());
 	}
 
 	private isOnCooldown(tag: string, inst: Instance): boolean {

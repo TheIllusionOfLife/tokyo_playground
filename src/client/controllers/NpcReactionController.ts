@@ -1,10 +1,17 @@
 import { Controller, OnStart } from "@flamework/core";
+import { SoundService, TweenService, Workspace } from "@rbxts/services";
+import {
+	NPC_SPAWN_FADE_DURATION,
+	SE_CAMERA_SHUTTER,
+	SE_NPC_TREAT,
+	SE_OMIKUJI_DRAW,
+} from "shared/constants";
 import { GlobalEvents } from "shared/network";
 import { gameStore } from "shared/store/game-store";
 
 /**
  * Client-side NPC reaction handler. Wires spawn/despawn/interaction
- * events. Animations and ambient audio per NPC would be driven here.
+ * events with fade animations, SFX, and feed messages.
  */
 @Controller()
 export class NpcReactionController implements OnStart {
@@ -14,12 +21,33 @@ export class NpcReactionController implements OnStart {
 	onStart() {
 		this.clientEvents.npcSpawned.connect((npcId, _position) => {
 			this.activeNpcs.add(npcId);
-			// Fade-in animation would be played here
+			// Fade-in: find NPC model in Workspace and tween transparency
+			const model = Workspace.FindFirstChild(npcId) as Model | undefined;
+			if (model) {
+				for (const desc of model.GetDescendants()) {
+					if (desc.IsA("BasePart")) {
+						desc.Transparency = 1;
+						TweenService.Create(desc, new TweenInfo(NPC_SPAWN_FADE_DURATION), {
+							Transparency: 0,
+						}).Play();
+					}
+				}
+			}
 		});
 
 		this.clientEvents.npcDespawned.connect((npcId) => {
 			this.activeNpcs.delete(npcId);
-			// Fade-out animation would be played here
+			// Fade-out: tween transparency to 1 before server destroys
+			const model = Workspace.FindFirstChild(npcId) as Model | undefined;
+			if (model) {
+				for (const desc of model.GetDescendants()) {
+					if (desc.IsA("BasePart")) {
+						TweenService.Create(desc, new TweenInfo(NPC_SPAWN_FADE_DURATION), {
+							Transparency: 1,
+						}).Play();
+					}
+				}
+			}
 		});
 
 		this.clientEvents.npcInteraction.connect(
@@ -29,7 +57,13 @@ export class NpcReactionController implements OnStart {
 						`${npcId}: ${interactionType} (+${rewardPoints} pts)`,
 					);
 				}
-				// Interaction animations/SFX would be triggered here
+
+				// Play SFX based on interaction type
+				if (interactionType === "treat") {
+					this.playSfx(SE_NPC_TREAT, 0.4);
+				} else if (interactionType === "photograph") {
+					this.playSfx(SE_CAMERA_SHUTTER, 0.6);
+				}
 			},
 		);
 
@@ -38,8 +72,18 @@ export class NpcReactionController implements OnStart {
 				gameStore.pushFeedMessage(
 					`Fortune: ${fortuneJP} (${fortune}) +${points} pts`,
 				);
+				this.playSfx(SE_OMIKUJI_DRAW, 0.5);
 			},
 		);
+	}
+
+	private playSfx(soundId: string, volume: number) {
+		const sound = new Instance("Sound");
+		sound.SoundId = soundId;
+		sound.Volume = volume;
+		sound.Parent = SoundService;
+		sound.Play();
+		sound.Ended.Once(() => sound.Destroy());
 	}
 
 	isNpcActive(npcId: string): boolean {
