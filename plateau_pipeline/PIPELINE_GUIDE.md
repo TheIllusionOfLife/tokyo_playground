@@ -27,23 +27,7 @@ If Unity 6 compatibility fails:
 - Try the latest release `.unitypackage` from GitHub Releases instead
 - If still failing, create a new project with Unity 2022.3 LTS as fallback
 
-### 1c. Install PLATEAU SDK Toolkits (Rendering Toolkit)
-
-1. Window > Package Manager > + > Add package from git URL
-2. Enter: `https://github.com/Project-PLATEAU/PLATEAU-SDK-Toolkits-for-Unity.git`
-
-### 1d. Install FBX Exporter
-
-1. Window > Package Manager > Unity Registry tab
-2. Search "FBX Exporter"
-3. Install
-
-### 1e. Install UnityMeshSimplifier (for decimation comparison)
-
-1. Window > Package Manager > + > Add package from git URL
-2. Enter: `https://github.com/Whinarn/UnityMeshSimplifier.git`
-
-### 1f. Copy Editor Scripts
+### 1c. Copy Editor Scripts
 
 Copy all `.cs` files from `plateau_pipeline/unity_scripts/` to the Unity project:
 
@@ -145,28 +129,7 @@ Run: **PLATEAU Pipeline > 4. Check Roblox Tri Budget**
 
 Any mesh over 20,000 triangles needs decimation before Roblox import.
 
-### 3d. Rendering Toolkit Enhancements (Exportable Only)
-
-These enhance visuals and survive FBX export:
-
-**Automatic Texture Generation** (HIGH VALUE):
-1. PLATEAU > Rendering Toolkit > Auto Texture
-2. Select buildings with poor/missing textures (especially LOD1 fallbacks)
-3. Generate window textures and facade details
-4. This bakes into the mesh textures, so it exports with FBX
-
-**Vertex Color Randomization** (MEDIUM VALUE):
-1. PLATEAU > Rendering Toolkit > Vertex Color
-2. Apply to building groups to add color variation
-3. Vertex colors travel with FBX and are supported by Roblox MeshParts
-
-**DO NOT use** (runtime-only, won't export):
-- Time of Day system
-- Weather effects
-- Post-processing
-- Atmospheric adjustments
-
-### 3e. PLATEAU Model Adjustment (モデル調整)
+### 3d. PLATEAU Model Adjustment (モデル調整)
 
 **Road Generation (道路調整 > 生成):**
 - Generates proper road networks from tran data with lanes, sidewalks, crosswalks
@@ -197,13 +160,13 @@ Tile 53393596 alone has 2,634 textures that need consolidation.
 
 ---
 
-## Step 4: Decimation (Underground Only)
+## Step 4: Split Underground Mesh
 
-All LOD2 buildings are under the 20k tri budget (max 6,768 tris). Only the underground mesh (ubld, LOD4, 62,137 tris) needs decimation.
+All LOD2 buildings are under the 20k tri budget (max 6,768 tris). Only the underground mesh (ubld, LOD4, 62,137 tris) exceeds it.
 
 1. Select the ubld mesh in Hierarchy
-2. Use UnityMeshSimplifier to decimate to <20k tris (target ratio ~0.3)
-3. Verify visual quality after decimation
+2. Use SDK モデル調整 > 分割/結合 to split into smaller chunks (<20k tris each)
+3. Verify visual quality after splitting
 
 ---
 
@@ -386,8 +349,7 @@ Check that the `_appearance` directories exist alongside GML files.
 Verify import has "Include textures" enabled.
 
 ### Underground mesh over budget (62k tris)
-Use UnityMeshSimplifier to decimate to <20k tris before export.
-If quality is poor, split into multiple chunks via SDK 分割/結合.
+Split into multiple chunks via SDK 分割/結合 to get under 20k tris per chunk.
 
 ### Origin/scale mismatch
 Measure a known building in both old and new city.
