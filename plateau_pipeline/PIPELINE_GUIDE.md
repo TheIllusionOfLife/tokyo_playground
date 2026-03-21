@@ -135,66 +135,37 @@ Any mesh over 20,000 triangles needs decimation before Roblox import.
 - Generates proper road networks from tran data with lanes, sidewalks, crosswalks
 - Settings: 車線幅 3m, 歩道幅 3m, auto-place signals, exclude expressways
 
-**Terrain Smoothing + Height Alignment (地形変換/高さ合わせ):**
-- Smooths DEM terrain mesh
-- Aligns buildings, roads, and furniture to terrain height
-- Run BEFORE merging to ensure all features sit correctly
+**Mesh Import Granularity:**
+- Import with 地域単位 (area-based) granularity for minimal mesh count
+- Import with 4096x4096 texture resolution
+- Results: ~17 meshes, 72 materials, 1.2M tris total
 
-**Mesh Merging (分割/結合/マテリアル分け):**
-- Select LOD2 bldg objects, enable 粒度を変更する
-- Set granularity to area-based to merge per-building meshes into area chunks
-- Reduces 3,064 LOD2 building meshes to ~20-40 chunks for Roblox
-- Collision uses PreciseConvexDecomposition on merged meshes
+**Road Generation (道路調整 > 生成):**
+- Generates proper road networks from tran data with lanes, sidewalks, crosswalks
+- Settings: 車線幅 3m, 歩道幅 3m, auto-place signals, exclude expressways
 
-**Save to Assets (Assetsに保存):**
-- Save processed models to Assets folder after all adjustments
-- Preserves PLATEAU attribute data alongside geometry
-- Required before FBX export
+**Note:** Terrain smoothing (地形変換/高さ合わせ) and SDK mesh splitting (分割/結合) were tested but don't work reliably with area-based merged data. Terrain smoothing skips because it can't find the DEM target. Mesh splitting only offers per-building or per-area, no intermediate option. Roblox's 3D Importer handles oversized mesh splitting automatically on import.
 
-### 3f. Material Audit
+### 3e. Material Audit
 
 Run: **PLATEAU Pipeline > 3. List Materials for Atlas Planning**
 
-Record the material catalog. Group materials by tile for atlas planning.
-Tile 53393596 alone has 2,634 textures that need consolidation.
+Record the material catalog. 72 unique materials with area-based import (down from 260 with per-building import).
 
 ---
 
-## Step 4: Split Underground Mesh
+## Step 4: Texture Handling
 
-All LOD2 buildings are under the 20k tri budget (max 6,768 tris). Only the underground mesh (ubld, LOD4, 62,137 tris) exceeds it.
+SDK export with テクスチャを含める (include textures) embeds textures into FBX.
+Roblox's 3D Importer creates SurfaceAppearance automatically from embedded textures and downscales to 1024x1024.
 
-1. Select the ubld mesh in Hierarchy
-2. Use SDK モデル調整 > 分割/結合 to split into smaller chunks (<20k tris each)
-3. Verify visual quality after splitting
+With area-based import at 4096x4096 resolution: 72 unique materials.
 
----
-
-## Step 5: Texture Atlasing
-
-PLATEAU photogrammetry uses thousands of small JPGs per tile. Must consolidate to ~1 atlas per area chunk.
-
-1. Open: **PLATEAU Pipeline > Atlas > Open Atlas Baker**
-2. Select a group of building meshes from one area
-3. Set atlas size to 1024x1024 (try 2048 if 1024 is too small)
-4. Click "Preview Atlas" to check fit
-5. Click "Bake Atlas" to create the atlas and remap UVs
-6. Repeat for each area chunk across all 4 tiles
-
-### Atlas Targets
-
-| Area | Atlas Size | Notes |
-|------|-----------|-------|
-| Building area chunks | 1024x1024 | One atlas per ~250m area |
-| Roads per tile | 1024x1024 | Generated road textures |
-| Underground | 1024x1024 | Likely fewer textures |
-| Bridges | 512x512 | Fewer unique textures |
-| Furniture (frn) | 512x512 | Signs, lights, fences |
-| Vegetation (veg) | 512x512 | Street tree textures |
+**Fallback:** If Roblox texture quality is poor after import, use `PlateauAtlasBaker.cs` in Unity to manually bake textures into atlases before export.
 
 ---
 
-## Step 6: FBX Export
+## Step 5: FBX Export + Roblox Import
 
 ### Export Structure
 
@@ -231,7 +202,7 @@ Copy the atlas PNG textures alongside their FBX files with matching names.
 
 ---
 
-## Step 7: Roblox Studio Import
+## Step 6: Roblox Configuration
 
 ### 7a. Import FBX Files
 
@@ -284,7 +255,7 @@ Sets StreamingEnabled with appropriate radii for the 4-tile area.
 
 ---
 
-## Step 8: Alignment and Migration
+## Step 7: Alignment and Migration
 
 ### 8a. Verify Alignment (BEFORE swapping)
 
