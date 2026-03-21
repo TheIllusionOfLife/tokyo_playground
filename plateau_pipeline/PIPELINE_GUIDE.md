@@ -13,9 +13,9 @@ Step-by-step guide for expanding the Tokyo Playground city from 1 tile to 4 LOD2
 
 ### 1a. Create Project
 
-If not created via CLI, open Unity Hub > New Project > 3D (Cross-Platform) template.
+Open Unity Hub > New Project > 3D (Cross-Platform) template.
 - Name: `tokyo-playground-plateau`
-- Location: `/Users/yuyamukai/dev/mini_games/`
+- Location: `/Users/yuyamukai/Unity Projects/`
 
 ### 1b. Install PLATEAU SDK for Unity
 
@@ -49,7 +49,7 @@ Copy all `.cs` files from `plateau_pipeline/unity_scripts/` to the Unity project
 
 ```
 cp plateau_pipeline/unity_scripts/*.cs \
-   /Users/yuyamukai/dev/mini_games/tokyo-playground-plateau/Assets/Editor/
+   "/Users/yuyamukai/Unity Projects/tokyo-playground-plateau/Assets/Editor/"
 ```
 
 Create the `Assets/Editor/` directory first if needed.
