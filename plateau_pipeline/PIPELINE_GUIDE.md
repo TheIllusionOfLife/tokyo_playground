@@ -166,16 +166,27 @@ These enhance visuals and survive FBX export:
 - Post-processing
 - Atmospheric adjustments
 
-### 3e. PLATEAU Utilities
+### 3e. PLATEAU Model Adjustment (モデル調整)
 
-**Vertex Flattening:**
-- PLATEAU > Utilities > Flatten vertices
-- Improves mesh topology before decimation
-- Apply to building chunks that have messy geometry
+**Road Generation (道路調整 > 生成):**
+- Generates proper road networks from tran data with lanes, sidewalks, crosswalks
+- Settings: 車線幅 3m, 歩道幅 3m, auto-place signals, exclude expressways
 
-**Object Alignment:**
-- PLATEAU > Utilities > Align to terrain
-- Ensures buildings sit flush on the DEM terrain
+**Terrain Smoothing + Height Alignment (地形変換/高さ合わせ):**
+- Smooths DEM terrain mesh
+- Aligns buildings, roads, and furniture to terrain height
+- Run BEFORE merging to ensure all features sit correctly
+
+**Mesh Merging (分割/結合/マテリアル分け):**
+- Select LOD2 bldg objects, enable 粒度を変更する
+- Set granularity to area-based to merge per-building meshes into area chunks
+- Reduces 3,064 LOD2 building meshes to ~20-40 chunks for Roblox
+- Collision uses PreciseConvexDecomposition on merged meshes
+
+**Save to Assets (Assetsに保存):**
+- Save processed models to Assets folder after all adjustments
+- Preserves PLATEAU attribute data alongside geometry
+- Required before FBX export
 
 ### 3f. Material Audit
 
@@ -186,57 +197,19 @@ Tile 53393596 alone has 2,634 textures that need consolidation.
 
 ---
 
-## Step 4: Decimation Comparison
+## Step 4: Decimation (Underground Only)
 
-Process **tile 53393596 only** through both paths to determine the best approach.
+All LOD2 buildings are under the 20k tri budget (max 6,768 tris). Only the underground mesh (ubld, LOD4, 62,137 tris) needs decimation.
 
-### Path A: Unity Decimation
-
-1. Select all 53393596 building mesh objects in Hierarchy
-2. Open: **PLATEAU Pipeline > Decimation > Open Decimator**
-3. Set target ratio to ~0.3 (30%) and max triangles to 10,000
-4. Click "Decimate Selected Objects" (creates copies)
-5. If UnityMeshSimplifier is installed, uncomment the simplification code in `PlateauDecimator.cs`
-6. Select the decimated copies
-7. Export: **PLATEAU > Export** (SDK built-in)
-8. Save to `plateau_export/comparison/unity_decimated/`
-
-### Path B: Blender Decimation
-
-1. Select all 53393596 building mesh objects (originals, not decimated copies)
-2. Export: **PLATEAU > Export** (SDK built-in) (high-poly, no decimation)
-3. Save to `plateau_export/comparison/blender_input/`
-4. Open Blender, import the FBX
-5. For each mesh object:
-   - Add Decimate modifier
-   - Mode: Collapse
-   - Ratio: adjust to hit <10,000 triangles
-   - Apply modifier
-6. Export as FBX:
-   - Selected Objects only
-   - Forward: -Z Forward
-   - Up: Y Up
-   - Check "Triangulate Faces"
-7. Save to `plateau_export/comparison/blender_decimated/`
-
-### Compare in Roblox Studio
-
-1. Import both FBX sets into Roblox Studio
-2. Place side by side in a test area
-3. Evaluate:
-   - [ ] Visual quality of photogrammetry textures
-   - [ ] Building silhouette accuracy
-   - [ ] Texture UV preservation
-   - [ ] Triangle count per mesh (Properties panel)
-4. **Choose the winner**, apply to all 4 tiles
+1. Select the ubld mesh in Hierarchy
+2. Use UnityMeshSimplifier to decimate to <20k tris (target ratio ~0.3)
+3. Verify visual quality after decimation
 
 ---
 
 ## Step 5: Texture Atlasing
 
 PLATEAU photogrammetry uses thousands of small JPGs per tile. Must consolidate to ~1 atlas per area chunk.
-
-### Using Unity Atlas Baker
 
 1. Open: **PLATEAU Pipeline > Atlas > Open Atlas Baker**
 2. Select a group of building meshes from one area
@@ -250,18 +223,11 @@ PLATEAU photogrammetry uses thousands of small JPGs per tile. Must consolidate t
 | Area | Atlas Size | Notes |
 |------|-----------|-------|
 | Building area chunks | 1024x1024 | One atlas per ~250m area |
-| Roads per tile | 1024x1024 | Asphalt, sidewalk, crosswalk |
+| Roads per tile | 1024x1024 | Generated road textures |
 | Underground | 1024x1024 | Likely fewer textures |
 | Bridges | 512x512 | Fewer unique textures |
-
-### Alternative: Blender Bake
-
-If Unity atlas quality is poor or UVs don't remap well:
-1. Export meshes from Unity as high-poly FBX
-2. Import to Blender
-3. Smart UV Project on all meshes
-4. Bake diffuse to new UV map at 1024x1024 or 2048x2048
-5. Export with baked textures
+| Furniture (frn) | 512x512 | Signs, lights, fences |
+| Vegetation (veg) | 512x512 | Street tree textures |
 
 ---
 
@@ -419,19 +385,13 @@ If still failing, create the project with Unity 2022.3 LTS.
 Check that the `_appearance` directories exist alongside GML files.
 Verify import has "Include textures" enabled.
 
-### Both decimation paths look bad
-- Reduce area-split size for finer control (smaller chunks = less detail loss)
-- Hand-edit key landmark buildings in Blender
-- Consider keeping hero buildings (Shibuya 109, station) at higher poly count
+### Underground mesh over budget (62k tris)
+Use UnityMeshSimplifier to decimate to <20k tris before export.
+If quality is poor, split into multiple chunks via SDK 分割/結合.
 
 ### Origin/scale mismatch
 Measure a known building in both old and new city.
 The PLATEAU SDK reference point (lat/lon) determines origin.
-Adjust if the reference point differs from the Blender import origin.
-
-### Underground meshes don't import via SDK
-Import `53393596_ubld_6697_op.gml` separately in Blender as fallback.
-Use the same coordinate reference point for alignment.
 
 ### Atlas textures look blurry
 Try 2048x2048 atlas size. Split area chunks into smaller groups.
