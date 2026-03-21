@@ -198,13 +198,13 @@ Process **tile 53393596 only** through both paths to determine the best approach
 4. Click "Decimate Selected Objects" (creates copies)
 5. If UnityMeshSimplifier is installed, uncomment the simplification code in `PlateauDecimator.cs`
 6. Select the decimated copies
-7. Export: **PLATEAU Pipeline > 6. Export Selected as FBX**
+7. Export: **PLATEAU > Export** (SDK built-in)
 8. Save to `plateau_export/comparison/unity_decimated/`
 
 ### Path B: Blender Decimation
 
 1. Select all 53393596 building mesh objects (originals, not decimated copies)
-2. Export: **PLATEAU Pipeline > 6. Export Selected as FBX** (high-poly, no decimation)
+2. Export: **PLATEAU > Export** (SDK built-in) (high-poly, no decimation)
 3. Save to `plateau_export/comparison/blender_input/`
 4. Open Blender, import the FBX
 5. For each mesh object:
@@ -292,12 +292,11 @@ plateau_export/
 
 ### Export Settings
 
-Use **PLATEAU Pipeline > 5. Export All as FBX** or export manually:
-- Format: FBX Binary
-- Forward: -Z
-- Up: Y
-- Triangulate: Yes
-- Include: Mesh + Materials
+Use **PLATEAU > Export** (SDK built-in exporter):
+- Format: FBX
+- Coordinate system: Roblox-compatible (-Z forward, Y up)
+- Include textures: Yes
+- Select objects per tile/feature type and export separately
 
 Copy the atlas PNG textures alongside their FBX files with matching names.
 
