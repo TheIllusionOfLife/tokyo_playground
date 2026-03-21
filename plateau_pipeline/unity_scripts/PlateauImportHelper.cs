@@ -28,11 +28,25 @@ namespace TokyoPlayground.Pipeline
         public const double RefLat = 35.6580;
         public const double RefLon = 139.7016;
 
-        // Feature types we want for Roblox export
-        private static readonly string[] ExportFeatures = { "bldg", "ubld", "tran", "dem", "brid" };
+        // Feature types we want for Roblox export (3D game geometry)
+        private static readonly string[] ExportFeatures = {
+            "bldg",  // Buildings: LOD2 (inside red boundary) + LOD1 (backdrop outside)
+            "ubld",  // Underground: LOD4 > LOD1 (no LOD2 exists)
+            "tran",  // Roads/sidewalks/crosswalks
+            "dem",   // Terrain (Digital Elevation Model) - ground surface
+            "brid",  // Bridges/overpasses
+            "frn",   // City furniture: signs, lights, subway entrances, fences, arcades
+            "veg",   // Vegetation: street trees with textures
+        };
 
-        // Feature types to skip (analytical overlays, not game geometry)
-        private static readonly string[] SkipFeatures = { "fld", "lsld", "luse", "urf", "veg", "frn" };
+        // Feature types to skip (2D overlays / hazard data, no game geometry)
+        private static readonly string[] SkipFeatures = {
+            "fld",   // Flood risk zones (river basin simulations)
+            "lsld",  // Landslide risk zones
+            "luse",  // Land use (2D classification polygons)
+            "urf",   // Urban planning zones (2D zoning)
+            "pref",  // Prefecture-level flood data (subdirectory of fld)
+        };
 
         [MenuItem("PLATEAU Pipeline/1. Log Import Checklist")]
         public static void LogImportChecklist()
@@ -116,10 +130,13 @@ namespace TokyoPlayground.Pipeline
             AuditMeshes(filterLod: null);
         }
 
-        [MenuItem("PLATEAU Pipeline/2b. Audit LOD2 Only")]
-        public static void AuditLOD2Only()
+        [MenuItem("PLATEAU Pipeline/2b. Audit Export-Ready Only")]
+        public static void AuditExportReady()
         {
-            AuditMeshes(filterLod: "LOD2");
+            // For bldg: LOD2 (primary) + LOD1 (backdrop)
+            // For ubld: LOD4 > LOD1 (no LOD2 exists)
+            // For everything else: best available (no LOD filter)
+            AuditMeshes(filterLod: null, exportFeaturesOnly: true);
         }
 
         [MenuItem("PLATEAU Pipeline/2c. Audit by LOD + Feature Breakdown")]
@@ -198,13 +215,14 @@ namespace TokyoPlayground.Pipeline
             Debug.Log($"Can skip/delete: {skipMeshes:N0} meshes, {skipTris:N0} tris");
         }
 
-        private static void AuditMeshes(string filterLod)
+        private static void AuditMeshes(string filterLod, bool exportFeaturesOnly = false)
         {
             var meshFilters = FindObjectsByType<MeshFilter>(FindObjectsSortMode.None);
             int totalVerts = 0;
             int totalTris = 0;
             int meshCount = 0;
             int skippedByLod = 0;
+            int skippedByFeature = 0;
             var materialSet = new HashSet<string>();
             var featureCounts = new Dictionary<string, (int meshes, int tris)>();
 
@@ -214,10 +232,17 @@ namespace TokyoPlayground.Pipeline
 
                 var (lod, feature) = ClassifyMesh(mf.transform);
 
+                // Skip non-export features if requested
+                if (exportFeaturesOnly && !ExportFeatures.Contains(feature) && feature != "unknown")
+                {
+                    skippedByFeature++;
+                    continue;
+                }
+
                 // Apply LOD filter if specified
                 if (filterLod != null && lod != filterLod)
                 {
-                    // Allow meshes with no LOD grouping (dem, etc.)
+                    // Allow meshes with no LOD grouping (dem, frn, veg, etc.)
                     if (lod != "unknown")
                     {
                         skippedByLod++;
@@ -245,10 +270,13 @@ namespace TokyoPlayground.Pipeline
                 }
             }
 
-            string label = filterLod != null ? $"Mesh Audit ({filterLod} only)" : "Mesh Audit (All)";
+            string label = exportFeaturesOnly ? "Mesh Audit (Export Features)" :
+                           filterLod != null ? $"Mesh Audit ({filterLod} only)" : "Mesh Audit (All)";
             Debug.Log($"=== {label} ===");
             if (skippedByLod > 0)
                 Debug.Log($"Skipped {skippedByLod:N0} meshes (other LOD levels)");
+            if (skippedByFeature > 0)
+                Debug.Log($"Skipped {skippedByFeature:N0} meshes (non-export features: fld, lsld, luse, urf)");
             Debug.Log($"Total meshes: {meshCount:N0}");
             Debug.Log($"Total vertices: {totalVerts:N0}");
             Debug.Log($"Total triangles: {totalTris:N0}");
@@ -276,6 +304,7 @@ namespace TokyoPlayground.Pipeline
                     if (mf.sharedMesh == null) continue;
                     var (lod, feature) = ClassifyMesh(mf.transform);
                     if (filterLod != null && lod != filterLod && lod != "unknown") continue;
+                    if (exportFeaturesOnly && !ExportFeatures.Contains(feature) && feature != "unknown") continue;
 
                     sorted.Add((mf.gameObject.name, feature, lod, mf.sharedMesh.triangles.Length / 3));
                 }
