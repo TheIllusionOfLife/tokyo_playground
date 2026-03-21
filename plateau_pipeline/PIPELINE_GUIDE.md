@@ -66,8 +66,8 @@ Select these 4 tiles:
 
 All features use:
 - **Granularity**: 地域単位 (area-based) for minimal mesh count
-- **Texture resolution**: 4096x4096
-- **No aerial photo** on DEM
+- **Texture resolution**: 2048x2048
+- **Aerial photo**: enabled (gives LOD1 buildings color, DEM ground texture)
 
 | Feature | LOD | Tiles | Notes |
 |---------|-----|-------|-------|
