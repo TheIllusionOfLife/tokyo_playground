@@ -246,11 +246,12 @@ export class HachiRideMinigame implements IMinigame {
 			// Apply default scale (50% of template size).
 			// ScaleTo handles all parts, welds, attachments, and joints uniformly.
 			clone.ScaleTo(HACHI_DEFAULT_SCALE);
-			// Set initial MaxSpeed for lobby riding (before round starts)
+			// MaxSpeed=0.01: tiny so VehicleSeat barely moves, but Throttle/Steer
+			// are still populated for client-side direct movement control.
 			const cloneSeat = clone.FindFirstChildOfClass("VehicleSeat") as
 				| VehicleSeat
 				| undefined;
-			if (cloneSeat) cloneSeat.MaxSpeed = HACHI_WALK_SPEEDS[0];
+			if (cloneSeat) cloneSeat.MaxSpeed = 0.01;
 			clone.Parent = Workspace;
 			this.hachiModels.set(player.UserId, clone);
 			matchJanitor.Add(clone);
@@ -398,13 +399,6 @@ export class HachiRideMinigame implements IMinigame {
 		this.hotspotElapsed = 0;
 		this.raceUpdateElapsed = 0;
 		this.finalSprintStarted = false;
-		// Disable VehicleSeat driving: client controls velocity directly during round
-		for (const [, hachiModel] of this.hachiModels) {
-			const seat = hachiModel.FindFirstChildOfClass("VehicleSeat") as
-				| VehicleSeat
-				| undefined;
-			if (seat) seat.MaxSpeed = 0;
-		}
 		// Reveal all items now
 		for (const item of this.activeItems) {
 			item.Transparency = 0;

@@ -22,8 +22,6 @@ import { MinigameId } from "shared/types";
 
 const ACTION_HACHI_EJECT = "HachiEject";
 const ACTION_HACHI_JUMP = "HachiJumpSink";
-const ACTION_HACHI_MOVE = "HachiMove";
-const ACTION_HACHI_THUMBSTICK = "HachiThumbstick";
 
 // Body bob tuning — slower than Hachi's leg freq for a gentle gallop sway
 const BOB_MAX_AMPLITUDE = 0.3; // studs at full speed
@@ -45,13 +43,6 @@ export class HachiRideController implements OnStart {
 	private bobConn?: RBXScriptConnection;
 	private bobRootC0?: CFrame; // original Motor6D.C0 to restore on dismount
 	private hiddenBillboard?: BillboardGui; // "Hachi" label hidden while riding
-
-	// Raw WASD key states for direct movement (bypasses VehicleSeat input routing)
-	private moveForward = false;
-	private moveBack = false;
-	private moveLeft = false;
-	private moveRight = false;
-	private thumbstickDir = Vector3.zero;
 
 	// Original humanoid jump values, restored on dismount
 	private origJumpPower = 0;
@@ -204,76 +195,28 @@ export class HachiRideController implements OnStart {
 			Enum.KeyCode.E,
 		);
 
-		// Bind WASD directly via ContextActionService to bypass VehicleSeat
-		// input routing (VehicleSeat maps W/S to Throttle, A/D to Steer,
-		// which gives car-like turning instead of character-like strafing).
-		ContextActionService.BindAction(
-			ACTION_HACHI_MOVE,
-			(_name, inputState, input) => {
-				const pressed = inputState === Enum.UserInputState.Begin;
-				const released = inputState === Enum.UserInputState.End;
-				if (!pressed && !released) return Enum.ContextActionResult.Sink;
-				const val = pressed;
-				if (input.KeyCode === Enum.KeyCode.W) this.moveForward = val;
-				else if (input.KeyCode === Enum.KeyCode.S) this.moveBack = val;
-				else if (input.KeyCode === Enum.KeyCode.A) this.moveLeft = val;
-				else if (input.KeyCode === Enum.KeyCode.D) this.moveRight = val;
-				return Enum.ContextActionResult.Sink;
-			},
-			false,
-			Enum.KeyCode.W,
-			Enum.KeyCode.A,
-			Enum.KeyCode.S,
-			Enum.KeyCode.D,
-		);
-
-		// Bind gamepad/mobile thumbstick for cross-platform support
-		ContextActionService.BindAction(
-			ACTION_HACHI_THUMBSTICK,
-			(_name, _inputState, input) => {
-				this.thumbstickDir = new Vector3(
-					input.Position.X,
-					0,
-					-input.Position.Y,
-				);
-				return Enum.ContextActionResult.Pass;
-			},
-			false,
-			Enum.KeyCode.Thumbstick1,
-		);
-
-		// Heartbeat: apply camera-relative velocity from raw key states
+		// Direct movement via VehicleSeat.Throttle/Steer.
+		// MaxSpeed is set to 0.01 so Throttle/Steer are still populated by
+		// WASD/arrows/joystick/gamepad, but the seat barely moves. We
+		// override AssemblyLinearVelocity every frame for instant response.
+		// Works in both lobby and minigame (shared movement feel).
 		this.moveConn = RunService.Heartbeat.Connect((dt) => {
 			if (!this.seatedInHachi) return;
 			const h =
 				Players.LocalPlayer.Character?.FindFirstChildOfClass("Humanoid");
 			if (!h) return;
-			const body = h.SeatPart?.Parent?.FindFirstChild("Body") as
-				| BasePart
-				| undefined;
+			const seat = h.SeatPart as VehicleSeat | undefined;
+			if (!seat || !seat.IsA("VehicleSeat")) return;
+			const body = seat.Parent?.FindFirstChild("Body") as BasePart | undefined;
 			if (!body || !body.IsDescendantOf(game)) return;
 
-			// Only apply direct movement during minigame (lobby uses VehicleSeat default)
-			const state = gameStore.getState();
-			if (state.activeMinigameId !== MinigameId.HachiRide) return;
+			// Read VehicleSeat input (populated by WASD/arrows/joystick)
+			// Throttle: W/Up=1, S/Down=-1. Steer: D/Right=1, A/Left=-1.
+			const throttle = seat.Throttle;
+			const steer = seat.Steer;
+			const hasInput = math.abs(throttle) > 0.1 || math.abs(steer) > 0.1;
 
-			// Build input vector from held keys
-			let inputX = 0;
-			let inputZ = 0;
-			if (this.moveForward) inputZ -= 1;
-			if (this.moveBack) inputZ += 1;
-			if (this.moveLeft) inputX -= 1;
-			if (this.moveRight) inputX += 1;
-
-			// Blend in thumbstick (mobile/gamepad)
-			if (this.thumbstickDir.Magnitude > 0.1) {
-				inputX += this.thumbstickDir.X;
-				inputZ += this.thumbstickDir.Z;
-			}
-
-			const hasInput = math.abs(inputX) > 0.01 || math.abs(inputZ) > 0.01;
-
-			// Project input onto camera-relative axes
+			// Project onto camera-relative axes (treat Steer as strafe, not turn)
 			const cam = Workspace.CurrentCamera;
 			let moveDir = Vector3.zero;
 			if (hasInput && cam) {
@@ -281,11 +224,16 @@ export class HachiRideController implements OnStart {
 				const camRight = cam.CFrame.RightVector;
 				const forward = new Vector3(camLook.X, 0, camLook.Z).Unit;
 				const right = new Vector3(camRight.X, 0, camRight.Z).Unit;
-				const raw = forward.mul(-inputZ).add(right.mul(inputX));
+				const raw = forward.mul(throttle).add(right.mul(steer));
 				moveDir = raw.Magnitude > 0.01 ? raw.Unit : Vector3.zero;
 			}
 
-			const evoLevel = state.hachiEvolutionLevel;
+			// Use evolution speed during minigame, base speed otherwise
+			const state = gameStore.getState();
+			const evoLevel =
+				state.activeMinigameId === MinigameId.HachiRide
+					? state.hachiEvolutionLevel
+					: 0;
 			const speed =
 				HACHI_WALK_SPEEDS[math.min(evoLevel, HACHI_WALK_SPEEDS.size() - 1)];
 
@@ -360,13 +308,6 @@ export class HachiRideController implements OnStart {
 		this.wallRunning = false;
 		ContextActionService.UnbindAction(ACTION_HACHI_JUMP);
 		ContextActionService.UnbindAction(ACTION_HACHI_EJECT);
-		ContextActionService.UnbindAction(ACTION_HACHI_MOVE);
-		ContextActionService.UnbindAction(ACTION_HACHI_THUMBSTICK);
-		this.moveForward = false;
-		this.moveBack = false;
-		this.moveLeft = false;
-		this.moveRight = false;
-		this.thumbstickDir = Vector3.zero;
 
 		// Restore "Hachi" BillboardGui label
 		if (this.hiddenBillboard && this.hiddenBillboard.Parent) {
