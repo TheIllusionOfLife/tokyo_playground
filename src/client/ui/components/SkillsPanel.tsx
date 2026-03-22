@@ -59,7 +59,6 @@ export function SkillsPanel() {
 
 	// Reset stale overlay when panel becomes invisible so
 	// TodayGoalChip/FeaturedUnlockBanner don't stay suppressed.
-	// useEffect keeps render pure (no store dispatch during render).
 	React.useEffect(() => {
 		if (!visible && activeOverlay === "skills") {
 			gameStore.setActiveOverlay("none");
@@ -73,8 +72,8 @@ export function SkillsPanel() {
 	return (
 		<frame
 			key="SkillsPanel"
-			Size={new UDim2(0, 100, 0, 30)}
-			Position={new UDim2(1, -10, 0, 86)}
+			Size={new UDim2(0, 50, 0, 30)}
+			Position={new UDim2(1, -10, 0.08, 0)}
 			AnchorPoint={new Vector2(1, 0)}
 			BackgroundColor3={Color3.fromRGB(50, 30, 70)}
 			BackgroundTransparency={0.3}
@@ -88,12 +87,12 @@ export function SkillsPanel() {
 				TextColor3={Color3.fromRGB(200, 150, 255)}
 				TextScaled={true}
 				Font={Enum.Font.GothamBold}
-				Text="Skills"
+				Text={`★${evolutionLevel}`}
 				Event={{
 					Activated: () => gameStore.setActiveOverlay(open ? "none" : "skills"),
 				}}
 			>
-				<uipadding PaddingLeft={new UDim(0, 8)} PaddingRight={new UDim(0, 8)} />
+				<uipadding PaddingLeft={new UDim(0, 4)} PaddingRight={new UDim(0, 4)} />
 			</textbutton>
 			{open ? (
 				<frame

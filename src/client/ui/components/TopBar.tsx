@@ -25,9 +25,36 @@ export function TopBar() {
 		(state: GameStoreState) => state.timeRemaining,
 	);
 
-	const showTimer = matchPhase === MatchPhase.InProgress;
+	const isInProgress = matchPhase === MatchPhase.InProgress;
 	const phaseText = PHASE_LABELS[matchPhase] ?? matchPhase;
 
+	// InProgress: show only the timer number, 2x size, centered
+	if (isInProgress) {
+		return (
+			<frame
+				key="TopBar"
+				Size={new UDim2(0.15, 0, 0.06, 0)}
+				Position={new UDim2(0.5, 0, 0, 0)}
+				AnchorPoint={new Vector2(0.5, 0)}
+				BackgroundColor3={Color3.fromRGB(0, 0, 0)}
+				BackgroundTransparency={0.4}
+				BorderSizePixel={0}
+			>
+				<uicorner CornerRadius={new UDim(0, 8)} />
+				<textlabel
+					key="Timer"
+					Size={new UDim2(1, 0, 1, 0)}
+					BackgroundTransparency={1}
+					TextColor3={Color3.fromRGB(255, 220, 100)}
+					TextScaled={true}
+					Font={Enum.Font.GothamBold}
+					Text={formatTime(timeRemaining)}
+				/>
+			</frame>
+		);
+	}
+
+	// Other phases: show phase text label
 	return (
 		<frame
 			key="TopBar"
@@ -40,26 +67,13 @@ export function TopBar() {
 			<uicorner CornerRadius={new UDim(0, 8)} />
 			<textlabel
 				key="PhaseText"
-				Size={showTimer ? new UDim2(0.6, 0, 1, 0) : new UDim2(1, 0, 1, 0)}
-				Position={new UDim2(0, 0, 0, 0)}
+				Size={new UDim2(1, 0, 1, 0)}
 				BackgroundTransparency={1}
 				TextColor3={Color3.fromRGB(255, 255, 255)}
 				TextScaled={true}
 				Font={Enum.Font.GothamBold}
 				Text={phaseText}
 			/>
-			{showTimer && (
-				<textlabel
-					key="Timer"
-					Size={new UDim2(0.4, 0, 1, 0)}
-					Position={new UDim2(0.6, 0, 0, 0)}
-					BackgroundTransparency={1}
-					TextColor3={Color3.fromRGB(255, 220, 100)}
-					TextScaled={true}
-					Font={Enum.Font.GothamBold}
-					Text={formatTime(timeRemaining)}
-				/>
-			)}
 		</frame>
 	);
 }

@@ -88,9 +88,14 @@ git push origin v0.6.0
 | v0.4.0 | 2026-03-15 | Hachi Polish: speed, animation, slides, audio |
 | v0.5.0 | 2026-03-17 | Equip system, portal-only matches, mobile landscape |
 | v0.6.0 | 2026-03-17 | Bonus items, Hachi mechanics rewrite, skills panel |
+| v0.7.0 | 2026-03-19 | Fun Pass: SFX, haptics, event feed, streak bonuses |
+| v0.8.0 | 2026-03-20 | Dismount fix, client jump prediction, HUD redesign |
+| v0.9.0 | 2026-03-20 | Living Shibuya: day/night, stamps, NPCs, micro-events |
+| v0.10.0 | 2026-03-20 | Visual enhancements, torii portals, collectible glow |
+| v0.11.0 | 2026-03-22 | HUD cleanup, GetMoveVector movement, half-size Hachi |
 
 ## Mini-games
 
 - **Can Kick** (缶蹴り): Oni vs. Hiders. Oni counts, then hunts. Hiders can kick the can to free jailed teammates.
 - **Shibuya Scramble**: Tag game at the famous crossing. Oni tags hiders amid periodic NPC crowd waves.
-- **Hachi Ride**: Collect items while riding Hachi. Evolve through 5 levels for speed, double-jump, wall-run, and size upgrades.
+- **Hachi Ride**: Collect items while riding Hachi. Evolve through 5 levels (start at Lv.2 with double-jump and wall-run). Camera-relative movement via GetMoveVector, client-side jump prediction.

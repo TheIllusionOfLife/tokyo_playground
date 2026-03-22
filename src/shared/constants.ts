@@ -400,10 +400,12 @@ export const HACHI_SPAWN_TAG = "HachiRideSpawn";
 // Hachi Ride tuning
 export const HACHI_ROUND_DURATION =
 	MINIGAME_CONFIGS[MinigameId.HachiRide].roundDuration;
-export const HACHI_EVOLUTION_THRESHOLDS = [0, 10, 25, 40, 60];
+export const HACHI_STARTING_EVOLUTION = 2; // start with double jump + wall run
+export const HACHI_EVOLUTION_THRESHOLDS = [0, 5, 12, 20, 30];
 export const HACHI_WALK_SPEEDS = [100, 120, 140, 170, 210];
 export const HACHI_ITEMS_TO_SPAWN = 200;
 export const HACHI_COLLECTION_RADIUS = 8;
+export const HACHI_DEFAULT_SCALE = 0.5; // default Hachi size is half the template
 export const HACHI_BIG_SCALE = 1.5;
 export const HACHI_DOUBLE_JUMP_IMPULSE = 240; // 139 × √3 — yields ~3× jump height
 export const HACHI_WALL_RUN_SPEED = 150;
@@ -418,6 +420,8 @@ export const HACHI_JUMP_COOLDOWN = 0.1; // seconds between jump requests
 export const HACHI_EJECT_COOLDOWN = 1.0; // seconds between eject requests
 export const HACHI_SLIDE_FORCE_RESTORE_DELAY = 0.5; // seconds to hold MaxForce=0 after impulse
 export const HACHI_EJECT_SEAT_DISABLE_DURATION = 0.1; // seconds VehicleSeat stays disabled on eject
+export const HACHI_TURN_SPEED = 20; // rad/sec rotation speed
+export const HACHI_DECEL_RATE = 0.85; // per-frame velocity multiplier when no input
 export const HACHI_HOTSPOT_RADIUS = 18;
 export const HACHI_HOTSPOT_ROTATION_INTERVAL = 20;
 export const HACHI_HOTSPOT_MULTIPLIER = 2;

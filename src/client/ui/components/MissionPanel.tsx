@@ -2,7 +2,7 @@ import React from "@rbxts/react";
 import { useSelector } from "@rbxts/react-reflex";
 import { clientEvents } from "client/network";
 import { GameStoreState, gameStore } from "shared/store/game-store";
-import { MissionProgressData } from "shared/types";
+import { MatchPhase, MinigameId, MissionProgressData } from "shared/types";
 
 function MissionRow({ mission }: { mission: MissionProgressData }) {
 	const canClaim =
@@ -94,6 +94,18 @@ export function MissionPanel() {
 	);
 	const open = activeOverlay === "missions";
 	const missions = useSelector((state: GameStoreState) => state.missions);
+	const matchPhase = useSelector((state: GameStoreState) => state.matchPhase);
+	const activeMinigameId = useSelector(
+		(state: GameStoreState) => state.activeMinigameId,
+	);
+
+	// Hide during HachiRide InProgress (overlaps with rank/skills/points)
+	if (
+		activeMinigameId === MinigameId.HachiRide &&
+		matchPhase === MatchPhase.InProgress
+	) {
+		return undefined!;
+	}
 
 	return (
 		<frame

@@ -140,6 +140,15 @@ export class MatchService implements OnStart {
 		this.gameStateService.transitionTo(GameState.Lobby);
 		this.transitionPhase(MatchPhase.WaitingForPlayers);
 
+		// Wait indefinitely until a player triggers a game via portal interaction.
+		// No auto-start: players can roam the city freely.
+		this.intermissionSecondsRemaining = 0;
+		while (!this.startRequested) {
+			this.broadcastQueueStatus(0, false);
+			task.wait(1);
+		}
+
+		// Once start is requested, run a short countdown
 		let waited = 0;
 		this.intermissionSecondsRemaining = LOBBY_INTERMISSION;
 		while (waited < LOBBY_INTERMISSION) {
@@ -147,18 +156,9 @@ export class MatchService implements OnStart {
 				0,
 				LOBBY_INTERMISSION - waited,
 			);
-			this.broadcastQueueStatus(
-				this.intermissionSecondsRemaining,
-				!this.startRequested,
-			);
+			this.broadcastQueueStatus(this.intermissionSecondsRemaining, false);
 			const dt = task.wait(1);
 			waited += dt;
-
-			const players = Players.GetPlayers();
-			const config = MINIGAME_CONFIGS[this.nextMinigameId];
-			if (this.startRequested && players.size() >= config.minPlayers) {
-				break;
-			}
 		}
 		this.intermissionSecondsRemaining = 0;
 		this.startRequested = false;

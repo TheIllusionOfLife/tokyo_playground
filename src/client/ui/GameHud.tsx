@@ -12,7 +12,7 @@ import { MissionPanel } from "./components/MissionPanel";
 import { ObstacleCourseTimer } from "./components/ObstacleCourseTimer";
 import { OmikujiCard } from "./components/OmikujiCard";
 import { PlayPointsDisplay } from "./components/PlayPointsDisplay";
-import { QueueStatusCard } from "./components/QueueStatusCard";
+
 import { RewardPopup } from "./components/RewardPopup";
 import { RoleIndicator } from "./components/RoleIndicator";
 import { RoundIntroOverlay } from "./components/RoundIntroOverlay";
@@ -33,7 +33,6 @@ export function GameHud() {
 		>
 			<PlayPointsDisplay />
 			<TopBar />
-			<QueueStatusCard />
 			<RoundIntroOverlay />
 			<RoleIndicator />
 			<HachiHud />

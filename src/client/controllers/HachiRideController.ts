@@ -4,13 +4,15 @@ import {
 	Players,
 	RunService,
 	SoundService,
+	Workspace,
 } from "@rbxts/services";
 import { clientEvents } from "client/network";
 import {
+	HACHI_DECEL_RATE,
 	HACHI_DOUBLE_JUMP_IMPULSE,
 	HACHI_JUMP_COOLDOWN,
 	HACHI_JUMP_VELOCITY,
-	HACHI_SLIDE_FORCE_RESTORE_DELAY,
+	HACHI_WALK_SPEEDS,
 	SE_JUMP,
 } from "shared/constants";
 import { gameStore } from "shared/store/game-store";
@@ -35,8 +37,11 @@ export class HachiRideController implements OnStart {
 	private seatedInHachi = false;
 
 	private steppedConn?: RBXScriptConnection;
+	private moveConn?: RBXScriptConnection;
 	private bobConn?: RBXScriptConnection;
 	private bobRootC0?: CFrame; // original Motor6D.C0 to restore on dismount
+	private hiddenBillboard?: BillboardGui; // "Hachi" label hidden while riding
+	private cachedBody?: BasePart; // Hachi body ref for dismount cleanup
 
 	// Original humanoid jump values, restored on dismount
 	private origJumpPower = 0;
@@ -98,6 +103,21 @@ export class HachiRideController implements OnStart {
 		const character = Players.LocalPlayer.Character;
 		const humanoid = character?.FindFirstChildOfClass("Humanoid");
 
+		// Hide "Hachi" BillboardGui label while riding
+		const hachiModel = humanoid?.SeatPart?.Parent;
+		const billboard = hachiModel
+			?.FindFirstChild("Head")
+			?.FindFirstChildOfClass("BillboardGui");
+		if (billboard) {
+			billboard.Enabled = false;
+			this.hiddenBillboard = billboard;
+		}
+
+		// Cache body ref for dismount cleanup (SeatPart is nil when onStoodUp fires)
+		this.cachedBody = hachiModel?.FindFirstChild("Body") as
+			| BasePart
+			| undefined;
+
 		// Reset jump state for fresh mount
 		this.jumpPhase = 0;
 		this.lastJumpTime = 0;
@@ -145,13 +165,10 @@ export class HachiRideController implements OnStart {
 			(_name, inputState, _input) => {
 				if (inputState === Enum.UserInputState.Begin) {
 					if (!this.seatedInHachi) return Enum.ContextActionResult.Sink;
-					const inMinigame =
-						gameStore.getState().activeMinigameId === MinigameId.HachiRide;
-					if (inMinigame) {
-						// Client-side prediction: apply impulse locally for
-						// instant feel. Server still receives event for bookkeeping.
-						if (!this.tryLocalJump()) return Enum.ContextActionResult.Sink;
-					}
+					// Client-side prediction for both lobby and minigame.
+					// moveConn keeps BodyVelocity.MaxForce at zero, so server-side
+					// impulse would fight it. Apply impulse locally for instant feel.
+					if (!this.tryLocalJump()) return Enum.ContextActionResult.Sink;
 					clientEvents.hachiJump.fire();
 					this.playJumpSE();
 				}
@@ -178,6 +195,99 @@ export class HachiRideController implements OnStart {
 			false,
 			Enum.KeyCode.E,
 		);
+
+		// Resolve PlayerModule for GetMoveVector() — the canonical cross-platform
+		// input API. Works with keyboard, mobile joystick, and gamepad uniformly.
+		// VehicleSeat has MaxSpeed=0 + TurnSpeed=0 to fully disable its physics.
+		const playerModule = Players.LocalPlayer.WaitForChild(
+			"PlayerScripts",
+		).WaitForChild("PlayerModule") as ModuleScript;
+		const pm = require(playerModule) as {
+			GetControls(): { GetMoveVector(): Vector3 };
+		};
+
+		this.moveConn = RunService.Heartbeat.Connect((dt) => {
+			if (!this.seatedInHachi) return;
+			// Don't override velocity during wall-run (server controls it)
+			if (this.wallRunning) return;
+			const h =
+				Players.LocalPlayer.Character?.FindFirstChildOfClass("Humanoid");
+			if (!h) return;
+			const body = h.SeatPart?.Parent?.FindFirstChild("Body") as
+				| BasePart
+				| undefined;
+			if (!body || !body.IsDescendantOf(game)) return;
+
+			// Zero BodyVelocity.MaxForce so it doesn't fight our velocity writes.
+			// (BodyVelocity re-asserts velocity every Heartbeat frame otherwise.)
+			const bv = body.FindFirstChildOfClass("BodyVelocity");
+			if (bv && bv.MaxForce.Magnitude > 0) {
+				if (this.cachedBodyVelocityForce === undefined) {
+					this.cachedBodyVelocityForce = bv.MaxForce;
+				}
+				bv.MaxForce = Vector3.zero;
+			}
+
+			// GetMoveVector returns raw input as (X=right, Y=up, Z=back).
+			// Z is negative when W/Up is pressed (Roblox convention: -Z = forward).
+			const moveVec = pm.GetControls().GetMoveVector();
+			const hasInput = moveVec.Magnitude > 0.1;
+
+			// Project onto world axes using camera orientation
+			const cam = Workspace.CurrentCamera;
+			let moveDir = Vector3.zero;
+			if (hasInput && cam) {
+				const camLook = cam.CFrame.LookVector;
+				const camRight = cam.CFrame.RightVector;
+				const fwdRaw = new Vector3(camLook.X, 0, camLook.Z);
+				const rtRaw = new Vector3(camRight.X, 0, camRight.Z);
+				// Guard against vertical camera (looking straight up/down)
+				if (fwdRaw.Magnitude < 0.01 || rtRaw.Magnitude < 0.01) return;
+				const forward = fwdRaw.Unit;
+				const right = rtRaw.Unit;
+				// Negate Z: GetMoveVector Z is negative for forward (W/Up)
+				const raw = forward.mul(-moveVec.Z).add(right.mul(moveVec.X));
+				moveDir = raw.Magnitude > 0.01 ? raw.Unit : Vector3.zero;
+			}
+
+			// Use evolution speed during minigame, base speed otherwise
+			const state = gameStore.getState();
+			const evoLevel =
+				state.activeMinigameId === MinigameId.HachiRide
+					? state.hachiEvolutionLevel
+					: 0;
+			const speed =
+				HACHI_WALK_SPEEDS[math.min(evoLevel, HACHI_WALK_SPEEDS.size() - 1)];
+
+			if (moveDir.Magnitude > 0.01) {
+				// Instant full speed in input direction, preserve Y velocity
+				body.AssemblyLinearVelocity = new Vector3(
+					moveDir.X * speed,
+					body.AssemblyLinearVelocity.Y,
+					moveDir.Z * speed,
+				);
+
+				// Rotate Hachi to face movement direction using BodyGyro.
+				// BodyGyro applies torque that works WITH physics (no weld fighting).
+				const seat = h.SeatPart;
+				const gyro = seat?.FindFirstChildOfClass("BodyGyro");
+				if (gyro) {
+					gyro.CFrame = CFrame.lookAt(
+						Vector3.zero,
+						new Vector3(moveDir.X, 0, moveDir.Z),
+					);
+				}
+			} else {
+				// No input: frame-rate independent deceleration (normalized to 60fps)
+				const decay = math.pow(HACHI_DECEL_RATE, dt * 60);
+				const vel = body.AssemblyLinearVelocity;
+				body.AssemblyLinearVelocity = new Vector3(
+					vel.X * decay,
+					vel.Y,
+					vel.Z * decay,
+				);
+			}
+		});
 
 		// Body bob: sinusoidal vertical offset on the character's root Motor6D,
 		// synced with Hachi's leg animation frequency so the rider bounces in rhythm.
@@ -214,6 +324,8 @@ export class HachiRideController implements OnStart {
 	private onStoodUp() {
 		this.steppedConn?.Disconnect();
 		this.steppedConn = undefined;
+		this.moveConn?.Disconnect();
+		this.moveConn = undefined;
 		this.wallRunStartConn?.Disconnect();
 		this.wallRunStartConn = undefined;
 		this.wallRunStopConn?.Disconnect();
@@ -221,6 +333,21 @@ export class HachiRideController implements OnStart {
 		this.wallRunning = false;
 		ContextActionService.UnbindAction(ACTION_HACHI_JUMP);
 		ContextActionService.UnbindAction(ACTION_HACHI_EJECT);
+
+		// Restore BodyVelocity.MaxForce (zeroed during movement).
+		// Uses cachedBody because SeatPart is nil by the time onStoodUp fires.
+		if (this.cachedBodyVelocityForce !== undefined && this.cachedBody) {
+			const bv = this.cachedBody.FindFirstChildOfClass("BodyVelocity");
+			if (bv) bv.MaxForce = this.cachedBodyVelocityForce;
+			this.cachedBodyVelocityForce = undefined;
+		}
+		this.cachedBody = undefined;
+
+		// Restore "Hachi" BillboardGui label
+		if (this.hiddenBillboard && this.hiddenBillboard.Parent) {
+			this.hiddenBillboard.Enabled = true;
+		}
+		this.hiddenBillboard = undefined;
 
 		// Restore humanoid jump properties
 		if (this.jumpLocked) {
@@ -319,28 +446,14 @@ export class HachiRideController implements OnStart {
 	private applyImpulse(body: BasePart, velocity: number) {
 		const bv = body.FindFirstChildOfClass("BodyVelocity");
 		if (bv) {
-			// Cache the original MaxForce on first call. Subsequent calls
-			// (double jump) would capture Vector3.zero since the first call
-			// hasn't restored yet (0.5s delay vs 0.1s cooldown).
-			if (this.cachedBodyVelocityForce === undefined) {
-				this.cachedBodyVelocityForce = bv.MaxForce;
-			}
+			// moveConn already keeps MaxForce at zero during movement.
+			// Just ensure it's zero for the impulse frame.
 			bv.MaxForce = Vector3.zero;
-			body.AssemblyLinearVelocity = new Vector3(
-				body.AssemblyLinearVelocity.X,
-				velocity,
-				body.AssemblyLinearVelocity.Z,
-			);
-			const restoreForce = this.cachedBodyVelocityForce;
-			task.delay(HACHI_SLIDE_FORCE_RESTORE_DELAY, () => {
-				if (bv.Parent) bv.MaxForce = restoreForce;
-			});
-		} else {
-			body.AssemblyLinearVelocity = new Vector3(
-				body.AssemblyLinearVelocity.X,
-				velocity,
-				body.AssemblyLinearVelocity.Z,
-			);
 		}
+		body.AssemblyLinearVelocity = new Vector3(
+			body.AssemblyLinearVelocity.X,
+			velocity,
+			body.AssemblyLinearVelocity.Z,
+		);
 	}
 }

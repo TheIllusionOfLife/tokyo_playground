@@ -9,7 +9,7 @@ export function PlayPointsDisplay() {
 	return (
 		<frame
 			key="PlayPointsDisplay"
-			Size={new UDim2(0.18, 0, 0.04, 0)}
+			Size={new UDim2(0.08, 0, 0.04, 0)}
 			Position={new UDim2(0.01, 0, 0.02, 0)}
 			BackgroundColor3={Color3.fromRGB(0, 0, 0)}
 			BackgroundTransparency={0.5}
@@ -22,7 +22,7 @@ export function PlayPointsDisplay() {
 				TextColor3={Color3.fromRGB(255, 220, 100)}
 				TextScaled={true}
 				Font={Enum.Font.GothamBold}
-				Text={`Lv.${level}  ${playPoints} pts`}
+				Text={`Lv.${level}`}
 			/>
 		</frame>
 	);

@@ -15,6 +15,7 @@ import {
 	HACHI_BONUS_ITEM_COUNT,
 	HACHI_BONUS_ITEM_VALUE,
 	HACHI_COLLECTION_RADIUS,
+	HACHI_DEFAULT_SCALE,
 	HACHI_EJECT_COOLDOWN,
 	HACHI_EJECT_SEAT_DISABLE_DURATION,
 	HACHI_EVOLUTION_THRESHOLDS,
@@ -31,6 +32,7 @@ import {
 	HACHI_ROUND_DURATION,
 	HACHI_SLIDE_FORCE_RESTORE_DELAY,
 	HACHI_SPAWN_TAG,
+	HACHI_STARTING_EVOLUTION,
 	HACHI_WALK_SPEEDS,
 	HACHI_WALL_RUN_MAX_DUR,
 	HACHI_WALL_RUN_RAYCAST,
@@ -123,8 +125,8 @@ export class HachiRideMinigame implements IMinigame {
 				minigameId: MinigameId.HachiRide,
 				playerId: player.UserId,
 				role: PlayerRole.None,
-				itemCount: 0,
-				evolutionLevel: 0,
+				itemCount: HACHI_EVOLUTION_THRESHOLDS[HACHI_STARTING_EVOLUTION] ?? 0,
+				evolutionLevel: HACHI_STARTING_EVOLUTION,
 				catchCount: 0,
 				rescueCount: 0,
 			});
@@ -242,11 +244,18 @@ export class HachiRideMinigame implements IMinigame {
 
 			const clone = template.Clone();
 			clone.Name = `Hachi_${player.UserId}`;
-			// Set initial MaxSpeed from level 0
+			// Apply default scale (50% of template size).
+			// ScaleTo handles all parts, welds, attachments, and joints uniformly.
+			clone.ScaleTo(HACHI_DEFAULT_SCALE);
+			// MaxSpeed=0 and TurnSpeed=0: fully disable VehicleSeat physics.
+			// Client uses GetMoveVector() for input and applies velocity directly.
 			const cloneSeat = clone.FindFirstChildOfClass("VehicleSeat") as
 				| VehicleSeat
 				| undefined;
-			if (cloneSeat) cloneSeat.MaxSpeed = HACHI_WALK_SPEEDS[0];
+			if (cloneSeat) {
+				cloneSeat.MaxSpeed = 0;
+				cloneSeat.TurnSpeed = 0;
+			}
 			clone.Parent = Workspace;
 			this.hachiModels.set(player.UserId, clone);
 			matchJanitor.Add(clone);
@@ -394,6 +403,16 @@ export class HachiRideMinigame implements IMinigame {
 		this.hotspotElapsed = 0;
 		this.raceUpdateElapsed = 0;
 		this.finalSprintStarted = false;
+		// Notify clients of starting evolution level
+		for (const [userId, state] of this.playerStates) {
+			const player = this.playerObjects.get(userId);
+			if (!player) continue;
+			this.serverEvents.hachiEvolved.fire(player, state.evolutionLevel);
+			this.serverEvents.hachiItemCollected.fire(player, state.itemCount);
+			if (state.evolutionLevel >= 1) {
+				this.serverEvents.hachiDoubleJumpGranted.fire(player);
+			}
+		}
 		// Reveal all items now
 		for (const item of this.activeItems) {
 			item.Transparency = 0;
@@ -471,14 +490,7 @@ export class HachiRideMinigame implements IMinigame {
 		}
 
 		state.evolutionLevel = level;
-		state.itemCount = level * 15;
-		const seat = hachiModel?.FindFirstChildOfClass("VehicleSeat") as
-			| VehicleSeat
-			| undefined;
-		if (seat) {
-			seat.MaxSpeed =
-				HACHI_WALK_SPEEDS[math.min(level, HACHI_WALK_SPEEDS.size() - 1)];
-		}
+		state.itemCount = HACHI_EVOLUTION_THRESHOLDS[level] ?? 0;
 		this.serverEvents.hachiEvolved.fire(player, level);
 		this.serverEvents.hachiItemCollected.fire(player, state.itemCount);
 		if (level >= 1) {
@@ -837,16 +849,6 @@ export class HachiRideMinigame implements IMinigame {
 			}
 		}
 
-		// Update Hachi drive speed (VehicleSeat only, not humanoid WalkSpeed)
-		const hachiModel = this.hachiModels.get(userId);
-		const seat = hachiModel?.FindFirstChildOfClass("VehicleSeat") as
-			| VehicleSeat
-			| undefined;
-		if (seat) {
-			seat.MaxSpeed =
-				HACHI_WALK_SPEEDS[math.min(newLevel, HACHI_WALK_SPEEDS.size() - 1)];
-		}
-
 		// Show ability description
 		const abilityText = this.getAbilityText(newLevel);
 		this.serverEvents.hintTextChanged.fire(player, abilityText);
@@ -1122,13 +1124,11 @@ export class HachiRideMinigame implements IMinigame {
 				let wallState = this.wallRunStates.get(userId);
 
 				if (!wallState || !wallState.running) {
-					// Compute wall-run direction from Hachi body forward
+					// Compute wall-run direction from Hachi's actual horizontal velocity
+					// (more reliable than LookVector which may not match movement direction)
 					const eps = 1e-4;
-					const xzRaw = new Vector3(
-						body.CFrame.LookVector.X,
-						0,
-						body.CFrame.LookVector.Z,
-					);
+					const vel = body.AssemblyLinearVelocity;
+					const xzRaw = new Vector3(vel.X, 0, vel.Z);
 					const forward =
 						xzRaw.Magnitude > eps ? xzRaw.Unit : new Vector3(0, 0, 1);
 					const projected = forward.sub(
