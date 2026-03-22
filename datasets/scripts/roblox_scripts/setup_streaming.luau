@@ -11,15 +11,18 @@ workspace.StreamingEnabled = true
 workspace.StreamingMinRadius = 256
 
 -- StreamingTargetRadius: target radius the engine tries to keep loaded.
--- 768 studs provides good draw distance for the 4-tile area (~1km real world).
-workspace.StreamingTargetRadius = 768
+-- 512 studs balances draw distance vs memory for 4-tile dense city.
+workspace.StreamingTargetRadius = 512
 
--- StreamOutBehavior: what happens to parts that stream out.
--- LowMemory means parts only stream out under memory pressure.
-workspace.StreamOutBehavior = Enum.StreamOutBehavior.LowMemory
+-- StreamOutBehavior: actively removes parts beyond target radius.
+-- Opportunistic is essential for 5000+ part worlds (vs LowMemory which only streams out under pressure).
+workspace.StreamOutBehavior = Enum.StreamOutBehavior.Opportunistic
+
+-- ModelStreamingBehavior: models only sent to clients when needed, faster join times.
+workspace.ModelStreamingBehavior = Enum.ModelStreamingBehavior.Improved
 
 return string.format(
-	"Streaming configured:\n  Enabled: true\n  MinRadius: %d\n  TargetRadius: %d\n  StreamOutBehavior: LowMemory",
+	"Streaming configured:\n  Enabled: true\n  MinRadius: %d\n  TargetRadius: %d\n  StreamOutBehavior: Opportunistic\n  ModelStreamingBehavior: Improved",
 	workspace.StreamingMinRadius,
 	workspace.StreamingTargetRadius
 )
