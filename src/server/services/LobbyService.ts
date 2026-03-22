@@ -186,9 +186,10 @@ export class LobbyService implements OnStart {
 				| undefined;
 			if (!seat) continue;
 
-			// MaxSpeed=0.01: barely moves, but Throttle/Steer stay populated
-			// for client-side direct movement override
-			seat.MaxSpeed = 0.01;
+			// Disable VehicleSeat physics entirely. Client uses GetMoveVector()
+			// for input and applies velocity directly.
+			seat.MaxSpeed = 0;
+			seat.TurnSpeed = 0;
 
 			seat.GetPropertyChangedSignal("Occupant").Connect(() => {
 				const occupant = seat.Occupant;

@@ -32,6 +32,7 @@ import {
 	HACHI_ROUND_DURATION,
 	HACHI_SLIDE_FORCE_RESTORE_DELAY,
 	HACHI_SPAWN_TAG,
+	HACHI_STARTING_EVOLUTION,
 	HACHI_WALK_SPEEDS,
 	HACHI_WALL_RUN_MAX_DUR,
 	HACHI_WALL_RUN_RAYCAST,
@@ -124,8 +125,8 @@ export class HachiRideMinigame implements IMinigame {
 				minigameId: MinigameId.HachiRide,
 				playerId: player.UserId,
 				role: PlayerRole.None,
-				itemCount: 0,
-				evolutionLevel: 0,
+				itemCount: HACHI_EVOLUTION_THRESHOLDS[HACHI_STARTING_EVOLUTION] ?? 0,
+				evolutionLevel: HACHI_STARTING_EVOLUTION,
 				catchCount: 0,
 				rescueCount: 0,
 			});
@@ -251,7 +252,10 @@ export class HachiRideMinigame implements IMinigame {
 			const cloneSeat = clone.FindFirstChildOfClass("VehicleSeat") as
 				| VehicleSeat
 				| undefined;
-			if (cloneSeat) cloneSeat.MaxSpeed = 0.01;
+			if (cloneSeat) {
+				cloneSeat.MaxSpeed = 0;
+				cloneSeat.TurnSpeed = 0;
+			}
 			clone.Parent = Workspace;
 			this.hachiModels.set(player.UserId, clone);
 			matchJanitor.Add(clone);
@@ -399,6 +403,16 @@ export class HachiRideMinigame implements IMinigame {
 		this.hotspotElapsed = 0;
 		this.raceUpdateElapsed = 0;
 		this.finalSprintStarted = false;
+		// Notify clients of starting evolution level
+		for (const [userId, state] of this.playerStates) {
+			const player = this.playerObjects.get(userId);
+			if (!player) continue;
+			this.serverEvents.hachiEvolved.fire(player, state.evolutionLevel);
+			this.serverEvents.hachiItemCollected.fire(player, state.itemCount);
+			if (state.evolutionLevel >= 1) {
+				this.serverEvents.hachiDoubleJumpGranted.fire(player);
+			}
+		}
 		// Reveal all items now
 		for (const item of this.activeItems) {
 			item.Transparency = 0;
