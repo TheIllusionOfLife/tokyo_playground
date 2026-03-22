@@ -106,7 +106,7 @@ export function ShopPanel() {
 
 	return (
 		<>
-			{/* Toggle button (stays at top-right) */}
+			{/* Toggle button (bottom-left, above missions) */}
 			<frame
 				key="ShopPanel"
 				Size={new UDim2(0, 100, 0, 30)}

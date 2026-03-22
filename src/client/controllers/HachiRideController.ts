@@ -206,6 +206,8 @@ export class HachiRideController implements OnStart {
 
 		this.moveConn = RunService.Heartbeat.Connect((dt) => {
 			if (!this.seatedInHachi) return;
+			// Don't override velocity during wall-run (server controls it)
+			if (this.wallRunning) return;
 			const h =
 				Players.LocalPlayer.Character?.FindFirstChildOfClass("Humanoid");
 			if (!h) return;
@@ -213,6 +215,16 @@ export class HachiRideController implements OnStart {
 				| BasePart
 				| undefined;
 			if (!body || !body.IsDescendantOf(game)) return;
+
+			// Zero BodyVelocity.MaxForce so it doesn't fight our velocity writes.
+			// (BodyVelocity re-asserts velocity every Heartbeat frame otherwise.)
+			const bv = body.FindFirstChildOfClass("BodyVelocity");
+			if (bv && bv.MaxForce.Magnitude > 0) {
+				if (this.cachedBodyVelocityForce === undefined) {
+					this.cachedBodyVelocityForce = bv.MaxForce;
+				}
+				bv.MaxForce = Vector3.zero;
+			}
 
 			// GetMoveVector returns raw input as (X=right, Y=up, Z=back).
 			// Z is negative when W/Up is pressed (Roblox convention: -Z = forward).
@@ -315,6 +327,18 @@ export class HachiRideController implements OnStart {
 		this.wallRunning = false;
 		ContextActionService.UnbindAction(ACTION_HACHI_JUMP);
 		ContextActionService.UnbindAction(ACTION_HACHI_EJECT);
+
+		// Restore BodyVelocity.MaxForce (zeroed during movement)
+		if (this.cachedBodyVelocityForce !== undefined) {
+			const character = Players.LocalPlayer.Character;
+			const humanoid = character?.FindFirstChildOfClass("Humanoid");
+			const body = humanoid?.SeatPart?.Parent?.FindFirstChild("Body") as
+				| BasePart
+				| undefined;
+			const bv = body?.FindFirstChildOfClass("BodyVelocity");
+			if (bv) bv.MaxForce = this.cachedBodyVelocityForce;
+			this.cachedBodyVelocityForce = undefined;
+		}
 
 		// Restore "Hachi" BillboardGui label
 		if (this.hiddenBillboard && this.hiddenBillboard.Parent) {
