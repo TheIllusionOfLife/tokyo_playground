@@ -7,10 +7,12 @@ import {
 } from "@rbxts/services";
 import { clientEvents } from "client/network";
 import {
+	HACHI_DECEL_RATE,
 	HACHI_DOUBLE_JUMP_IMPULSE,
 	HACHI_JUMP_COOLDOWN,
 	HACHI_JUMP_VELOCITY,
 	HACHI_SLIDE_FORCE_RESTORE_DELAY,
+	HACHI_WALK_SPEEDS,
 	SE_JUMP,
 } from "shared/constants";
 import { gameStore } from "shared/store/game-store";
@@ -35,6 +37,7 @@ export class HachiRideController implements OnStart {
 	private seatedInHachi = false;
 
 	private steppedConn?: RBXScriptConnection;
+	private moveConn?: RBXScriptConnection;
 	private bobConn?: RBXScriptConnection;
 	private bobRootC0?: CFrame; // original Motor6D.C0 to restore on dismount
 
@@ -179,6 +182,57 @@ export class HachiRideController implements OnStart {
 			Enum.KeyCode.E,
 		);
 
+		// Direct movement: camera-relative velocity control via Humanoid.MoveDirection.
+		// Replaces VehicleSeat's built-in Throttle/Steer physics for instant,
+		// responsive character-like movement. VehicleSeat MaxSpeed is set to 0
+		// on the server so the built-in driving is disabled.
+		this.moveConn = RunService.Heartbeat.Connect(() => {
+			if (!this.seatedInHachi) return;
+			const h =
+				Players.LocalPlayer.Character?.FindFirstChildOfClass("Humanoid");
+			if (!h) return;
+			const body = h.SeatPart?.Parent?.FindFirstChild("Body") as
+				| BasePart
+				| undefined;
+			if (!body || !body.IsDescendantOf(game)) return;
+
+			// Only apply direct movement during minigame (lobby uses VehicleSeat default)
+			const state = gameStore.getState();
+			if (state.activeMinigameId !== MinigameId.HachiRide) return;
+
+			// MoveDirection is a unit vector from WASD/joystick, already
+			// camera-relative thanks to Roblox's PlayerModule/ControlModule.
+			const moveDir = h.MoveDirection;
+			const hasInput = moveDir.Magnitude > 0.1;
+
+			const evoLevel = state.hachiEvolutionLevel;
+			const speed =
+				HACHI_WALK_SPEEDS[math.min(evoLevel, HACHI_WALK_SPEEDS.size() - 1)];
+
+			if (hasInput) {
+				// Instant full speed in input direction, preserve Y velocity
+				body.AssemblyLinearVelocity = new Vector3(
+					moveDir.X * speed,
+					body.AssemblyLinearVelocity.Y,
+					moveDir.Z * speed,
+				);
+
+				// Rotate Hachi body to face movement direction instantly
+				body.CFrame = CFrame.lookAt(
+					body.Position,
+					body.Position.add(new Vector3(moveDir.X, 0, moveDir.Z)),
+				);
+			} else {
+				// No input: rapidly decelerate horizontal velocity
+				const vel = body.AssemblyLinearVelocity;
+				body.AssemblyLinearVelocity = new Vector3(
+					vel.X * HACHI_DECEL_RATE,
+					vel.Y,
+					vel.Z * HACHI_DECEL_RATE,
+				);
+			}
+		});
+
 		// Body bob: sinusoidal vertical offset on the character's root Motor6D,
 		// synced with Hachi's leg animation frequency so the rider bounces in rhythm.
 		// R15: Motor6D "Root" lives in LowerTorso (Part1), not HumanoidRootPart (Part0).
@@ -214,6 +268,8 @@ export class HachiRideController implements OnStart {
 	private onStoodUp() {
 		this.steppedConn?.Disconnect();
 		this.steppedConn = undefined;
+		this.moveConn?.Disconnect();
+		this.moveConn = undefined;
 		this.wallRunStartConn?.Disconnect();
 		this.wallRunStartConn = undefined;
 		this.wallRunStopConn?.Disconnect();

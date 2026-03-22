@@ -99,8 +99,8 @@ export function MissionPanel() {
 		<frame
 			key="MissionPanel"
 			Size={new UDim2(0, 100, 0, 30)}
-			Position={new UDim2(1, -10, 0, 10)}
-			AnchorPoint={new Vector2(1, 0)}
+			Position={new UDim2(0, 10, 1, -10)}
+			AnchorPoint={new Vector2(0, 1)}
 			BackgroundColor3={Color3.fromRGB(30, 30, 70)}
 			BackgroundTransparency={0.3}
 			BorderSizePixel={0}
@@ -124,8 +124,8 @@ export function MissionPanel() {
 			{open ? (
 				<frame
 					Size={new UDim2(0, 290, 0, 205)}
-					Position={new UDim2(1, 0, 1, 4)}
-					AnchorPoint={new Vector2(1, 0)}
+					Position={new UDim2(0, 0, 0, -4)}
+					AnchorPoint={new Vector2(0, 1)}
 					BackgroundColor3={Color3.fromRGB(20, 20, 40)}
 					BackgroundTransparency={0.1}
 					BorderSizePixel={0}

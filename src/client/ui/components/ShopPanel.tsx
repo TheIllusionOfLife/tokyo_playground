@@ -110,8 +110,8 @@ export function ShopPanel() {
 			<frame
 				key="ShopPanel"
 				Size={new UDim2(0, 100, 0, 30)}
-				Position={new UDim2(1, -10, 0, 48)}
-				AnchorPoint={new Vector2(1, 0)}
+				Position={new UDim2(0, 10, 1, -48)}
+				AnchorPoint={new Vector2(0, 1)}
 				BackgroundColor3={Color3.fromRGB(70, 45, 25)}
 				BackgroundTransparency={0.3}
 				BorderSizePixel={0}

@@ -24,85 +24,107 @@ export function HachiHud() {
 		return undefined!;
 	}
 
-	// Compact single-line with rank, points, and next evo threshold
-	const evoText =
-		raceState && raceState.nextThreshold > 0
-			? `Next evo ${raceState.nextThreshold}`
-			: "MAX";
-	const mainText = raceState
-		? `#${raceState.playerRank} | ${itemCount} pts | ${evoText}`
-		: `${itemCount} pts`;
+	const playerRank = raceState?.playerRank ?? 0;
+	const nextThreshold = raceState?.nextThreshold ?? 0;
 
 	return (
-		<frame
-			key="HachiHud"
-			Size={new UDim2(0, 220, 0, 80)}
-			Position={new UDim2(0.5, -110, 0.09, 4)}
-			BackgroundColor3={Color3.fromRGB(15, 15, 30)}
-			BackgroundTransparency={0.2}
-			BorderSizePixel={0}
-		>
-			<uicorner CornerRadius={new UDim(0, 8)} />
-			<uilistlayout
-				SortOrder={Enum.SortOrder.LayoutOrder}
-				FillDirection={Enum.FillDirection.Vertical}
-				Padding={new UDim(0, 3)}
-				HorizontalAlignment={Enum.HorizontalAlignment.Center}
-				VerticalAlignment={Enum.VerticalAlignment.Center}
-			/>
-			<uipadding
-				PaddingTop={new UDim(0, 4)}
-				PaddingBottom={new UDim(0, 4)}
-				PaddingLeft={new UDim(0, 8)}
-				PaddingRight={new UDim(0, 8)}
-			/>
-			<textlabel
-				key="MainLine"
-				LayoutOrder={1}
-				Size={new UDim2(1, 0, 0, 22)}
-				BackgroundTransparency={1}
-				Text={mainText}
-				TextColor3={Color3.fromRGB(255, 220, 80)}
-				TextScaled={true}
-				Font={Enum.Font.GothamBold}
-			/>
+		<>
+			{/* Rank badge - top right */}
 			<frame
-				key="EvolutionDots"
-				LayoutOrder={2}
-				Size={new UDim2(0, 110, 0, 14)}
-				BackgroundTransparency={1}
+				key="RankBadge"
+				Size={new UDim2(0, 50, 0, 30)}
+				Position={new UDim2(1, -10, 0.02, 0)}
+				AnchorPoint={new Vector2(1, 0)}
+				BackgroundColor3={Color3.fromRGB(30, 30, 70)}
+				BackgroundTransparency={0.2}
+				BorderSizePixel={0}
 			>
+				<uicorner CornerRadius={new UDim(0, 8)} />
+				<textlabel
+					Size={new UDim2(1, 0, 1, 0)}
+					BackgroundTransparency={1}
+					TextColor3={Color3.fromRGB(255, 255, 255)}
+					TextScaled={true}
+					Font={Enum.Font.GothamBold}
+					Text={`#${playerRank}`}
+				/>
+			</frame>
+
+			{/* Points + evolution dots + next level - below skills badge */}
+			<frame
+				key="PointsInfo"
+				Size={new UDim2(0, 100, 0, 55)}
+				Position={new UDim2(1, -10, 0.12, 0)}
+				AnchorPoint={new Vector2(1, 0)}
+				BackgroundColor3={Color3.fromRGB(15, 15, 30)}
+				BackgroundTransparency={0.2}
+				BorderSizePixel={0}
+			>
+				<uicorner CornerRadius={new UDim(0, 8)} />
 				<uilistlayout
 					SortOrder={Enum.SortOrder.LayoutOrder}
-					FillDirection={Enum.FillDirection.Horizontal}
-					Padding={new UDim(0, 8)}
+					FillDirection={Enum.FillDirection.Vertical}
+					Padding={new UDim(0, 2)}
 					HorizontalAlignment={Enum.HorizontalAlignment.Center}
 					VerticalAlignment={Enum.VerticalAlignment.Center}
 				/>
-				{[1, 2, 3, 4].map((level) => (
-					<frame
-						key={`dot-${level}`}
-						LayoutOrder={level}
-						Size={new UDim2(0, 12, 0, 12)}
-						BackgroundColor3={evolutionLevel >= level ? DOT_ON : DOT_OFF}
-						BorderSizePixel={0}
-					>
-						<uicorner CornerRadius={new UDim(1, 0)} />
-					</frame>
-				))}
-			</frame>
-			{raceState && (
+				<uipadding
+					PaddingTop={new UDim(0, 4)}
+					PaddingBottom={new UDim(0, 4)}
+					PaddingLeft={new UDim(0, 6)}
+					PaddingRight={new UDim(0, 6)}
+				/>
+				{/* Points */}
 				<textlabel
-					key="RaceState"
-					LayoutOrder={3}
+					key="Points"
+					LayoutOrder={1}
 					Size={new UDim2(1, 0, 0, 16)}
 					BackgroundTransparency={1}
-					TextColor3={Color3.fromRGB(210, 230, 255)}
+					Text={`${itemCount} pts`}
+					TextColor3={Color3.fromRGB(255, 220, 80)}
 					TextScaled={true}
-					Font={Enum.Font.Gotham}
-					Text={`Leader: ${raceState.leaderName} (${raceState.leaderScore})`}
+					Font={Enum.Font.GothamBold}
 				/>
-			)}
-		</frame>
+				{/* Evolution dots */}
+				<frame
+					key="EvolutionDots"
+					LayoutOrder={2}
+					Size={new UDim2(0, 80, 0, 12)}
+					BackgroundTransparency={1}
+				>
+					<uilistlayout
+						SortOrder={Enum.SortOrder.LayoutOrder}
+						FillDirection={Enum.FillDirection.Horizontal}
+						Padding={new UDim(0, 6)}
+						HorizontalAlignment={Enum.HorizontalAlignment.Center}
+						VerticalAlignment={Enum.VerticalAlignment.Center}
+					/>
+					{[1, 2, 3, 4].map((level) => (
+						<frame
+							key={`dot-${level}`}
+							LayoutOrder={level}
+							Size={new UDim2(0, 10, 0, 10)}
+							BackgroundColor3={evolutionLevel >= level ? DOT_ON : DOT_OFF}
+							BorderSizePixel={0}
+						>
+							<uicorner CornerRadius={new UDim(1, 0)} />
+						</frame>
+					))}
+				</frame>
+				{/* Next threshold */}
+				{nextThreshold > 0 && (
+					<textlabel
+						key="NextLevel"
+						LayoutOrder={3}
+						Size={new UDim2(1, 0, 0, 14)}
+						BackgroundTransparency={1}
+						Text={`Next: ${nextThreshold}`}
+						TextColor3={Color3.fromRGB(180, 180, 200)}
+						TextScaled={true}
+						Font={Enum.Font.Gotham}
+					/>
+				)}
+			</frame>
+		</>
 	);
 }

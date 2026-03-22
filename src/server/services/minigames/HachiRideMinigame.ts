@@ -15,6 +15,7 @@ import {
 	HACHI_BONUS_ITEM_COUNT,
 	HACHI_BONUS_ITEM_VALUE,
 	HACHI_COLLECTION_RADIUS,
+	HACHI_DEFAULT_SCALE,
 	HACHI_EJECT_COOLDOWN,
 	HACHI_EJECT_SEAT_DISABLE_DURATION,
 	HACHI_EVOLUTION_THRESHOLDS,
@@ -242,11 +243,17 @@ export class HachiRideMinigame implements IMinigame {
 
 			const clone = template.Clone();
 			clone.Name = `Hachi_${player.UserId}`;
-			// Set initial MaxSpeed from level 0
+			// Apply default scale (50% of template size)
+			for (const part of clone.GetDescendants()) {
+				if (part.IsA("BasePart") && !part.IsA("UnionOperation")) {
+					part.Size = part.Size.mul(HACHI_DEFAULT_SCALE);
+				}
+			}
+			// Disable VehicleSeat built-in driving. Client controls velocity directly.
 			const cloneSeat = clone.FindFirstChildOfClass("VehicleSeat") as
 				| VehicleSeat
 				| undefined;
-			if (cloneSeat) cloneSeat.MaxSpeed = HACHI_WALK_SPEEDS[0];
+			if (cloneSeat) cloneSeat.MaxSpeed = 0;
 			clone.Parent = Workspace;
 			this.hachiModels.set(player.UserId, clone);
 			matchJanitor.Add(clone);
@@ -472,13 +479,6 @@ export class HachiRideMinigame implements IMinigame {
 
 		state.evolutionLevel = level;
 		state.itemCount = level * 15;
-		const seat = hachiModel?.FindFirstChildOfClass("VehicleSeat") as
-			| VehicleSeat
-			| undefined;
-		if (seat) {
-			seat.MaxSpeed =
-				HACHI_WALK_SPEEDS[math.min(level, HACHI_WALK_SPEEDS.size() - 1)];
-		}
 		this.serverEvents.hachiEvolved.fire(player, level);
 		this.serverEvents.hachiItemCollected.fire(player, state.itemCount);
 		if (level >= 1) {
@@ -835,16 +835,6 @@ export class HachiRideMinigame implements IMinigame {
 					}
 				}
 			}
-		}
-
-		// Update Hachi drive speed (VehicleSeat only, not humanoid WalkSpeed)
-		const hachiModel = this.hachiModels.get(userId);
-		const seat = hachiModel?.FindFirstChildOfClass("VehicleSeat") as
-			| VehicleSeat
-			| undefined;
-		if (seat) {
-			seat.MaxSpeed =
-				HACHI_WALK_SPEEDS[math.min(newLevel, HACHI_WALK_SPEEDS.size() - 1)];
 		}
 
 		// Show ability description
