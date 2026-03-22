@@ -248,6 +248,17 @@ export class HachiRideController implements OnStart {
 					body.AssemblyLinearVelocity.Y,
 					moveDir.Z * speed,
 				);
+
+				// Face Hachi toward movement direction (like a character).
+				// TurnSpeed=0 on VehicleSeat so no physics fighting.
+				const pos = body.Position;
+				const targetCF = CFrame.lookAt(
+					pos,
+					pos.add(new Vector3(moveDir.X, 0, moveDir.Z)),
+				);
+				body.CFrame = new CFrame(pos).mul(
+					targetCF.sub(targetCF.Position),
+				);
 			} else {
 				// No input: frame-rate independent deceleration (normalized to 60fps)
 				const decay = math.pow(HACHI_DECEL_RATE, dt * 60);
