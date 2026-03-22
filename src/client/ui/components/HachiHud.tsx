@@ -33,7 +33,7 @@ export function HachiHud() {
 			<frame
 				key="RankBadge"
 				Size={new UDim2(0, 50, 0, 30)}
-				Position={new UDim2(1, -10, 0.02, 0)}
+				Position={new UDim2(1, -10, 0, 0)}
 				AnchorPoint={new Vector2(1, 0)}
 				BackgroundColor3={Color3.fromRGB(30, 30, 70)}
 				BackgroundTransparency={0.2}
@@ -54,7 +54,7 @@ export function HachiHud() {
 			<frame
 				key="PointsInfo"
 				Size={new UDim2(0, 100, 0, 55)}
-				Position={new UDim2(1, -10, 0.12, 0)}
+				Position={new UDim2(1, -10, 0.15, 0)}
 				AnchorPoint={new Vector2(1, 0)}
 				BackgroundColor3={Color3.fromRGB(15, 15, 30)}
 				BackgroundTransparency={0.2}

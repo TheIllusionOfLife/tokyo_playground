@@ -73,7 +73,7 @@ export function SkillsPanel() {
 		<frame
 			key="SkillsPanel"
 			Size={new UDim2(0, 50, 0, 30)}
-			Position={new UDim2(1, -10, 0.07, 0)}
+			Position={new UDim2(1, -10, 0.08, 0)}
 			AnchorPoint={new Vector2(1, 0)}
 			BackgroundColor3={Color3.fromRGB(50, 30, 70)}
 			BackgroundTransparency={0.3}

@@ -33,8 +33,8 @@ export function TopBar() {
 		return (
 			<frame
 				key="TopBar"
-				Size={new UDim2(0.2, 0, 0.08, 0)}
-				Position={new UDim2(0.5, 0, 0.02, 0)}
+				Size={new UDim2(0.15, 0, 0.06, 0)}
+				Position={new UDim2(0.5, 0, 0, 0)}
 				AnchorPoint={new Vector2(0.5, 0)}
 				BackgroundColor3={Color3.fromRGB(0, 0, 0)}
 				BackgroundTransparency={0.4}

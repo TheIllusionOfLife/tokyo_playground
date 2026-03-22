@@ -21,8 +21,8 @@ export function QueueStatusCard() {
 	return (
 		<frame
 			key="QueueStatusCard"
-			Size={new UDim2(0, 260, 0, 78)}
-			Position={new UDim2(0.5, -130, 0.1, 0)}
+			Size={new UDim2(0, 200, 0, 60)}
+			Position={new UDim2(0.5, -100, 0.1, 0)}
 			BackgroundColor3={Color3.fromRGB(14, 20, 34)}
 			BackgroundTransparency={0.15}
 			BorderSizePixel={0}

@@ -4,6 +4,7 @@ import {
 	Players,
 	RunService,
 	SoundService,
+	Workspace,
 } from "@rbxts/services";
 import { clientEvents } from "client/network";
 import {
@@ -41,6 +42,7 @@ export class HachiRideController implements OnStart {
 	private moveConn?: RBXScriptConnection;
 	private bobConn?: RBXScriptConnection;
 	private bobRootC0?: CFrame; // original Motor6D.C0 to restore on dismount
+	private hiddenBillboard?: BillboardGui; // "Hachi" label hidden while riding
 
 	// Original humanoid jump values, restored on dismount
 	private origJumpPower = 0;
@@ -101,6 +103,16 @@ export class HachiRideController implements OnStart {
 	private onSeated() {
 		const character = Players.LocalPlayer.Character;
 		const humanoid = character?.FindFirstChildOfClass("Humanoid");
+
+		// Hide "Hachi" BillboardGui label while riding
+		const hachiModel = humanoid?.SeatPart?.Parent;
+		const billboard = hachiModel
+			?.FindFirstChild("Head")
+			?.FindFirstChildOfClass("BillboardGui");
+		if (billboard) {
+			billboard.Enabled = false;
+			this.hiddenBillboard = billboard;
+		}
 
 		// Reset jump state for fresh mount
 		this.jumpPhase = 0;
@@ -183,16 +195,19 @@ export class HachiRideController implements OnStart {
 			Enum.KeyCode.E,
 		);
 
-		// Direct movement: camera-relative velocity control via Humanoid.MoveDirection.
-		// Replaces VehicleSeat's built-in Throttle/Steer physics for instant,
-		// responsive character-like movement. VehicleSeat MaxSpeed is set to 0
-		// on the server so the built-in driving is disabled.
+		// Direct movement: camera-relative velocity control via VehicleSeat
+		// Throttle/Steer. Roblox routes W/S to Throttle and A/D to Steer
+		// when seated, so Humanoid.MoveDirection is NOT populated.
+		// VehicleSeat MaxSpeed is set to 0 on startRound so the built-in
+		// driving is disabled; we apply velocity directly instead.
 		this.moveConn = RunService.Heartbeat.Connect((dt) => {
 			if (!this.seatedInHachi) return;
 			const h =
 				Players.LocalPlayer.Character?.FindFirstChildOfClass("Humanoid");
 			if (!h) return;
-			const body = h.SeatPart?.Parent?.FindFirstChild("Body") as
+			const seat = h.SeatPart as VehicleSeat | undefined;
+			if (!seat || !seat.IsA("VehicleSeat")) return;
+			const body = seat.Parent?.FindFirstChild("Body") as
 				| BasePart
 				| undefined;
 			if (!body || !body.IsDescendantOf(game)) return;
@@ -201,16 +216,29 @@ export class HachiRideController implements OnStart {
 			const state = gameStore.getState();
 			if (state.activeMinigameId !== MinigameId.HachiRide) return;
 
-			// MoveDirection is a unit vector from WASD/joystick, already
-			// camera-relative thanks to Roblox's PlayerModule/ControlModule.
-			const moveDir = h.MoveDirection;
-			const hasInput = moveDir.Magnitude > 0.1;
+			// Read VehicleSeat input: Throttle (W=1, S=-1), Steer (D=1, A=-1)
+			const throttle = seat.Throttle;
+			const steer = seat.Steer;
+			const hasInput = math.abs(throttle) > 0.1 || math.abs(steer) > 0.1;
+
+			// Build camera-relative movement direction
+			const cam = Workspace.CurrentCamera;
+			let moveDir = Vector3.zero;
+			if (hasInput && cam) {
+				const camLook = cam.CFrame.LookVector;
+				const camRight = cam.CFrame.RightVector;
+				// Flatten to horizontal plane
+				const forward = new Vector3(camLook.X, 0, camLook.Z).Unit;
+				const right = new Vector3(camRight.X, 0, camRight.Z).Unit;
+				const raw = forward.mul(throttle).add(right.mul(steer));
+				moveDir = raw.Magnitude > 0.01 ? raw.Unit : Vector3.zero;
+			}
 
 			const evoLevel = state.hachiEvolutionLevel;
 			const speed =
 				HACHI_WALK_SPEEDS[math.min(evoLevel, HACHI_WALK_SPEEDS.size() - 1)];
 
-			if (hasInput) {
+			if (moveDir.Magnitude > 0.01) {
 				// Instant full speed in input direction, preserve Y velocity
 				body.AssemblyLinearVelocity = new Vector3(
 					moveDir.X * speed,
@@ -218,8 +246,7 @@ export class HachiRideController implements OnStart {
 					moveDir.Z * speed,
 				);
 
-				// Smoothly rotate Hachi body toward movement direction.
-				// Only update rotation component to avoid fighting physics position.
+				// Smoothly rotate Hachi body toward movement direction
 				const targetCF = CFrame.lookAt(
 					body.Position,
 					body.Position.add(new Vector3(moveDir.X, 0, moveDir.Z)),
@@ -282,6 +309,12 @@ export class HachiRideController implements OnStart {
 		this.wallRunning = false;
 		ContextActionService.UnbindAction(ACTION_HACHI_JUMP);
 		ContextActionService.UnbindAction(ACTION_HACHI_EJECT);
+
+		// Restore "Hachi" BillboardGui label
+		if (this.hiddenBillboard && this.hiddenBillboard.Parent) {
+			this.hiddenBillboard.Enabled = true;
+		}
+		this.hiddenBillboard = undefined;
 
 		// Restore humanoid jump properties
 		if (this.jumpLocked) {

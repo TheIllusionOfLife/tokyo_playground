@@ -48,10 +48,10 @@ export function TodayGoalChip() {
 						/>
 					</frame>
 				) : (
-					// Full chip in lobby
+					// Full chip in lobby (compact)
 					<frame
 						key="TodayGoalChip"
-						Size={new UDim2(0, 260, 0, 52)}
+						Size={new UDim2(0, 200, 0, 38)}
 						Position={new UDim2(0, 14, 0, 62)}
 						BackgroundColor3={Color3.fromRGB(24, 34, 48)}
 						BackgroundTransparency={0.12}
