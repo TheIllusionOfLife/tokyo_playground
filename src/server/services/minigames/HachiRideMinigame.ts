@@ -490,7 +490,7 @@ export class HachiRideMinigame implements IMinigame {
 		}
 
 		state.evolutionLevel = level;
-		state.itemCount = level * 15;
+		state.itemCount = HACHI_EVOLUTION_THRESHOLDS[level] ?? 0;
 		this.serverEvents.hachiEvolved.fire(player, level);
 		this.serverEvents.hachiItemCollected.fire(player, state.itemCount);
 		if (level >= 1) {

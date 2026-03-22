@@ -237,8 +237,12 @@ export class HachiRideController implements OnStart {
 			if (hasInput && cam) {
 				const camLook = cam.CFrame.LookVector;
 				const camRight = cam.CFrame.RightVector;
-				const forward = new Vector3(camLook.X, 0, camLook.Z).Unit;
-				const right = new Vector3(camRight.X, 0, camRight.Z).Unit;
+				const fwdRaw = new Vector3(camLook.X, 0, camLook.Z);
+				const rtRaw = new Vector3(camRight.X, 0, camRight.Z);
+				// Guard against vertical camera (looking straight up/down)
+				if (fwdRaw.Magnitude < 0.01 || rtRaw.Magnitude < 0.01) return;
+				const forward = fwdRaw.Unit;
+				const right = rtRaw.Unit;
 				// Negate Z: GetMoveVector Z is negative for forward (W/Up)
 				const raw = forward.mul(-moveVec.Z).add(right.mul(moveVec.X));
 				moveDir = raw.Magnitude > 0.01 ? raw.Unit : Vector3.zero;
