@@ -24,7 +24,7 @@ export function HachiHud() {
 		return undefined!;
 	}
 
-	const playerRank = raceState?.playerRank ?? 0;
+	const playerRank = raceState?.playerRank ?? 1;
 	const nextThreshold = raceState?.nextThreshold ?? 0;
 
 	return (

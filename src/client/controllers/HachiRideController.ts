@@ -12,6 +12,7 @@ import {
 	HACHI_JUMP_COOLDOWN,
 	HACHI_JUMP_VELOCITY,
 	HACHI_SLIDE_FORCE_RESTORE_DELAY,
+	HACHI_TURN_SPEED,
 	HACHI_WALK_SPEEDS,
 	SE_JUMP,
 } from "shared/constants";
@@ -186,7 +187,7 @@ export class HachiRideController implements OnStart {
 		// Replaces VehicleSeat's built-in Throttle/Steer physics for instant,
 		// responsive character-like movement. VehicleSeat MaxSpeed is set to 0
 		// on the server so the built-in driving is disabled.
-		this.moveConn = RunService.Heartbeat.Connect(() => {
+		this.moveConn = RunService.Heartbeat.Connect((dt) => {
 			if (!this.seatedInHachi) return;
 			const h =
 				Players.LocalPlayer.Character?.FindFirstChildOfClass("Humanoid");
@@ -217,18 +218,22 @@ export class HachiRideController implements OnStart {
 					moveDir.Z * speed,
 				);
 
-				// Rotate Hachi body to face movement direction instantly
-				body.CFrame = CFrame.lookAt(
+				// Smoothly rotate Hachi body toward movement direction.
+				// Only update rotation component to avoid fighting physics position.
+				const targetCF = CFrame.lookAt(
 					body.Position,
 					body.Position.add(new Vector3(moveDir.X, 0, moveDir.Z)),
 				);
+				const alpha = math.clamp(HACHI_TURN_SPEED * dt, 0, 1);
+				body.CFrame = body.CFrame.Lerp(targetCF, alpha);
 			} else {
-				// No input: rapidly decelerate horizontal velocity
+				// No input: frame-rate independent deceleration (normalized to 60fps)
+				const decay = math.pow(HACHI_DECEL_RATE, dt * 60);
 				const vel = body.AssemblyLinearVelocity;
 				body.AssemblyLinearVelocity = new Vector3(
-					vel.X * HACHI_DECEL_RATE,
+					vel.X * decay,
 					vel.Y,
-					vel.Z * HACHI_DECEL_RATE,
+					vel.Z * decay,
 				);
 			}
 		});
