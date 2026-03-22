@@ -2,7 +2,7 @@ import React from "@rbxts/react";
 import { useSelector } from "@rbxts/react-reflex";
 import { clientEvents } from "client/network";
 import { GameStoreState, gameStore } from "shared/store/game-store";
-import { MissionProgressData } from "shared/types";
+import { MatchPhase, MinigameId, MissionProgressData } from "shared/types";
 
 function MissionRow({ mission }: { mission: MissionProgressData }) {
 	const canClaim =
@@ -94,13 +94,25 @@ export function MissionPanel() {
 	);
 	const open = activeOverlay === "missions";
 	const missions = useSelector((state: GameStoreState) => state.missions);
+	const matchPhase = useSelector((state: GameStoreState) => state.matchPhase);
+	const activeMinigameId = useSelector(
+		(state: GameStoreState) => state.activeMinigameId,
+	);
+
+	// Hide during HachiRide InProgress (overlaps with rank/skills/points)
+	if (
+		activeMinigameId === MinigameId.HachiRide &&
+		matchPhase === MatchPhase.InProgress
+	) {
+		return undefined!;
+	}
 
 	return (
 		<frame
 			key="MissionPanel"
 			Size={new UDim2(0, 100, 0, 30)}
-			Position={new UDim2(0, 10, 1, -10)}
-			AnchorPoint={new Vector2(0, 1)}
+			Position={new UDim2(1, -10, 0, 10)}
+			AnchorPoint={new Vector2(1, 0)}
 			BackgroundColor3={Color3.fromRGB(30, 30, 70)}
 			BackgroundTransparency={0.3}
 			BorderSizePixel={0}
@@ -124,8 +136,8 @@ export function MissionPanel() {
 			{open ? (
 				<frame
 					Size={new UDim2(0, 290, 0, 205)}
-					Position={new UDim2(0, 0, 0, -4)}
-					AnchorPoint={new Vector2(0, 1)}
+					Position={new UDim2(1, 0, 1, 4)}
+					AnchorPoint={new Vector2(1, 0)}
 					BackgroundColor3={Color3.fromRGB(20, 20, 40)}
 					BackgroundTransparency={0.1}
 					BorderSizePixel={0}

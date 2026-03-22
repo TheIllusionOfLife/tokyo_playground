@@ -2,7 +2,7 @@ import React from "@rbxts/react";
 import { useSelector } from "@rbxts/react-reflex";
 import { clientEvents } from "client/network";
 import { GameStoreState, gameStore } from "shared/store/game-store";
-import { ShopItemData } from "shared/types";
+import { MatchPhase, MinigameId, ShopItemData } from "shared/types";
 
 function ShopCard({
 	item,
@@ -103,38 +103,50 @@ export function ShopPanel() {
 	const shopItems = useSelector((state: GameStoreState) => state.shopItems);
 	const shopBalance = useSelector((state: GameStoreState) => state.shopBalance);
 	const level = useSelector((state: GameStoreState) => state.playgroundLevel);
+	const matchPhase = useSelector((state: GameStoreState) => state.matchPhase);
+	const activeMinigameId = useSelector(
+		(state: GameStoreState) => state.activeMinigameId,
+	);
+
+	// Hide during HachiRide InProgress (overlaps with rank/skills/points)
+	const hideButton =
+		activeMinigameId === MinigameId.HachiRide &&
+		matchPhase === MatchPhase.InProgress;
 
 	return (
 		<>
-			{/* Toggle button (bottom-left, above missions) */}
-			<frame
-				key="ShopPanel"
-				Size={new UDim2(0, 100, 0, 30)}
-				Position={new UDim2(0, 10, 1, -48)}
-				AnchorPoint={new Vector2(0, 1)}
-				BackgroundColor3={Color3.fromRGB(70, 45, 25)}
-				BackgroundTransparency={0.3}
-				BorderSizePixel={0}
-				ZIndex={10}
-			>
-				<uicorner CornerRadius={new UDim(0, 15)} />
-				<textbutton
-					Size={new UDim2(1, 0, 1, 0)}
-					BackgroundTransparency={1}
-					TextColor3={Color3.fromRGB(255, 210, 100)}
-					TextScaled={true}
-					Font={Enum.Font.GothamBold}
-					Text="$ Shop"
-					Event={{
-						Activated: () => gameStore.setActiveOverlay(open ? "none" : "shop"),
-					}}
+			{/* Toggle button (top-right, above missions) */}
+			{!hideButton && (
+				<frame
+					key="ShopPanel"
+					Size={new UDim2(0, 100, 0, 30)}
+					Position={new UDim2(1, -10, 0, 48)}
+					AnchorPoint={new Vector2(1, 0)}
+					BackgroundColor3={Color3.fromRGB(70, 45, 25)}
+					BackgroundTransparency={0.3}
+					BorderSizePixel={0}
+					ZIndex={10}
 				>
-					<uipadding
-						PaddingLeft={new UDim(0, 8)}
-						PaddingRight={new UDim(0, 8)}
-					/>
-				</textbutton>
-			</frame>
+					<uicorner CornerRadius={new UDim(0, 15)} />
+					<textbutton
+						Size={new UDim2(1, 0, 1, 0)}
+						BackgroundTransparency={1}
+						TextColor3={Color3.fromRGB(255, 210, 100)}
+						TextScaled={true}
+						Font={Enum.Font.GothamBold}
+						Text="$ Shop"
+						Event={{
+							Activated: () =>
+								gameStore.setActiveOverlay(open ? "none" : "shop"),
+						}}
+					>
+						<uipadding
+							PaddingLeft={new UDim(0, 8)}
+							PaddingRight={new UDim(0, 8)}
+						/>
+					</textbutton>
+				</frame>
+			)}
 			{/* Full-screen overlay when open */}
 			{open ? (
 				<>
