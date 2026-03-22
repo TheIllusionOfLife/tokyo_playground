@@ -8,6 +8,7 @@ import {
 import {
 	CAN_KICK_PORTAL_TAG,
 	DEFAULT_WALK_SPEED,
+	HACHI_DEFAULT_SCALE,
 	HACHI_DOUBLE_JUMP_IMPULSE,
 	HACHI_EJECT_COOLDOWN,
 	HACHI_EJECT_SEAT_DISABLE_DURATION,
@@ -176,10 +177,18 @@ export class LobbyService implements OnStart {
 
 	private setupHachiRide() {
 		for (const hachi of CollectionService.GetTagged(HACHI_RIDE_TAG)) {
-			const seat = (hachi as Model).FindFirstChild("VehicleSeat") as
+			const model = hachi as Model;
+			// Apply default scale to lobby Hachi (same as minigame Hachi)
+			if (model.IsA("Model")) model.ScaleTo(HACHI_DEFAULT_SCALE);
+
+			const seat = model.FindFirstChild("VehicleSeat") as
 				| VehicleSeat
 				| undefined;
 			if (!seat) continue;
+
+			// MaxSpeed=0.01: barely moves, but Throttle/Steer stay populated
+			// for client-side direct movement override
+			seat.MaxSpeed = 0.01;
 
 			seat.GetPropertyChangedSignal("Occupant").Connect(() => {
 				const occupant = seat.Occupant;

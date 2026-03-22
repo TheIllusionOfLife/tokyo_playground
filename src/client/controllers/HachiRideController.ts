@@ -4,6 +4,7 @@ import {
 	Players,
 	RunService,
 	SoundService,
+	UserInputService,
 	Workspace,
 } from "@rbxts/services";
 import { clientEvents } from "client/network";
@@ -43,6 +44,15 @@ export class HachiRideController implements OnStart {
 	private bobConn?: RBXScriptConnection;
 	private bobRootC0?: CFrame; // original Motor6D.C0 to restore on dismount
 	private hiddenBillboard?: BillboardGui; // "Hachi" label hidden while riding
+
+	// Raw WASD key states tracked via UserInputService (not ContextActionService,
+	// which can't intercept keys consumed by VehicleSeat at engine level).
+	private moveForward = false;
+	private moveBack = false;
+	private moveLeft = false;
+	private moveRight = false;
+	private inputBeganConn?: RBXScriptConnection;
+	private inputEndedConn?: RBXScriptConnection;
 
 	// Original humanoid jump values, restored on dismount
 	private origJumpPower = 0;
@@ -195,28 +205,90 @@ export class HachiRideController implements OnStart {
 			Enum.KeyCode.E,
 		);
 
-		// Direct movement via VehicleSeat.Throttle/Steer.
-		// MaxSpeed is set to 0.01 so Throttle/Steer are still populated by
-		// WASD/arrows/joystick/gamepad, but the seat barely moves. We
-		// override AssemblyLinearVelocity every frame for instant response.
-		// Works in both lobby and minigame (shared movement feel).
+		// Track WASD via UserInputService. Unlike ContextActionService,
+		// UIS fires for ALL input even when VehicleSeat consumes WASD at
+		// the engine level. We ignore gameProcessedEvent intentionally.
+		this.inputBeganConn = UserInputService.InputBegan.Connect((input) => {
+			if (input.KeyCode === Enum.KeyCode.W || input.KeyCode === Enum.KeyCode.Up)
+				this.moveForward = true;
+			if (
+				input.KeyCode === Enum.KeyCode.S ||
+				input.KeyCode === Enum.KeyCode.Down
+			)
+				this.moveBack = true;
+			if (
+				input.KeyCode === Enum.KeyCode.A ||
+				input.KeyCode === Enum.KeyCode.Left
+			)
+				this.moveLeft = true;
+			if (
+				input.KeyCode === Enum.KeyCode.D ||
+				input.KeyCode === Enum.KeyCode.Right
+			)
+				this.moveRight = true;
+		});
+		this.inputEndedConn = UserInputService.InputEnded.Connect((input) => {
+			if (input.KeyCode === Enum.KeyCode.W || input.KeyCode === Enum.KeyCode.Up)
+				this.moveForward = false;
+			if (
+				input.KeyCode === Enum.KeyCode.S ||
+				input.KeyCode === Enum.KeyCode.Down
+			)
+				this.moveBack = false;
+			if (
+				input.KeyCode === Enum.KeyCode.A ||
+				input.KeyCode === Enum.KeyCode.Left
+			)
+				this.moveLeft = false;
+			if (
+				input.KeyCode === Enum.KeyCode.D ||
+				input.KeyCode === Enum.KeyCode.Right
+			)
+				this.moveRight = false;
+		});
+
+		// Heartbeat: compute camera-relative velocity from key states.
+		// Also reads VehicleSeat.ThrottleFloat/SteerFloat as fallback
+		// for mobile virtual joystick and gamepad thumbstick.
 		this.moveConn = RunService.Heartbeat.Connect((dt) => {
 			if (!this.seatedInHachi) return;
 			const h =
 				Players.LocalPlayer.Character?.FindFirstChildOfClass("Humanoid");
 			if (!h) return;
-			const seat = h.SeatPart as VehicleSeat | undefined;
-			if (!seat || !seat.IsA("VehicleSeat")) return;
-			const body = seat.Parent?.FindFirstChild("Body") as BasePart | undefined;
+			const body = h.SeatPart?.Parent?.FindFirstChild("Body") as
+				| BasePart
+				| undefined;
 			if (!body || !body.IsDescendantOf(game)) return;
 
-			// Read VehicleSeat input (populated by WASD/arrows/joystick)
-			// Throttle: W/Up=1, S/Down=-1. Steer: D/Right=1, A/Left=-1.
-			const throttle = seat.Throttle;
-			const steer = seat.Steer;
-			const hasInput = math.abs(throttle) > 0.1 || math.abs(steer) > 0.1;
+			// Build input from keyboard key states
+			let inputX = 0;
+			let inputZ = 0;
+			if (this.moveForward) inputZ -= 1;
+			if (this.moveBack) inputZ += 1;
+			if (this.moveLeft) inputX -= 1;
+			if (this.moveRight) inputX += 1;
 
-			// Project onto camera-relative axes (treat Steer as strafe, not turn)
+			// Fallback: read VehicleSeat for mobile/gamepad input
+			const seat = h.SeatPart;
+			if (
+				math.abs(inputX) < 0.01 &&
+				math.abs(inputZ) < 0.01 &&
+				seat &&
+				seat.IsA("VehicleSeat")
+			) {
+				const throttle =
+					(seat as { ThrottleFloat?: number }).ThrottleFloat ?? seat.Throttle;
+				const steer =
+					(seat as { SteerFloat?: number }).SteerFloat ?? seat.Steer;
+				if (math.abs(throttle) > 0.1 || math.abs(steer) > 0.1) {
+					inputZ = -throttle; // Throttle: W=1 → inputZ=-1 (forward)
+					inputX = steer; // Steer: D=1 → inputX=1 (right)
+				}
+			}
+
+			const hasInput = math.abs(inputX) > 0.01 || math.abs(inputZ) > 0.01;
+
+			// Project onto camera-relative axes
 			const cam = Workspace.CurrentCamera;
 			let moveDir = Vector3.zero;
 			if (hasInput && cam) {
@@ -224,7 +296,7 @@ export class HachiRideController implements OnStart {
 				const camRight = cam.CFrame.RightVector;
 				const forward = new Vector3(camLook.X, 0, camLook.Z).Unit;
 				const right = new Vector3(camRight.X, 0, camRight.Z).Unit;
-				const raw = forward.mul(throttle).add(right.mul(steer));
+				const raw = forward.mul(-inputZ).add(right.mul(inputX));
 				moveDir = raw.Magnitude > 0.01 ? raw.Unit : Vector3.zero;
 			}
 
@@ -308,6 +380,14 @@ export class HachiRideController implements OnStart {
 		this.wallRunning = false;
 		ContextActionService.UnbindAction(ACTION_HACHI_JUMP);
 		ContextActionService.UnbindAction(ACTION_HACHI_EJECT);
+		this.inputBeganConn?.Disconnect();
+		this.inputBeganConn = undefined;
+		this.inputEndedConn?.Disconnect();
+		this.inputEndedConn = undefined;
+		this.moveForward = false;
+		this.moveBack = false;
+		this.moveLeft = false;
+		this.moveRight = false;
 
 		// Restore "Hachi" BillboardGui label
 		if (this.hiddenBillboard && this.hiddenBillboard.Parent) {
