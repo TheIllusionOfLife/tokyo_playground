@@ -33,7 +33,7 @@ import {
 import { GlobalEvents } from "shared/network";
 import { MinigameId } from "shared/types";
 import { animateHachi, HachiAnimState } from "../utils/animateHachi";
-import { applyHachiJumpImpulse } from "../utils/hachiPhysics";
+
 import { PlayerDataService } from "./PlayerDataService";
 
 const LOBBY_SPAWN_TAG = "LobbySpawn";
@@ -379,15 +379,9 @@ export class LobbyService implements OnStart {
 			)
 				return;
 
-			const body = hachiModel.FindFirstChild("Body") as BasePart | undefined;
-			if (!body) return;
-			// Only allow jump from near-ground
-			if (math.abs(body.AssemblyLinearVelocity.Y) > 15) return;
-
 			this.hachiJumpCooldowns.set(player.UserId, now);
-			applyHachiJumpImpulse(body, HACHI_JUMP_VELOCITY);
-
-			// Track jump phase for double-jump gating
+			// Impulse is applied client-side (tryLocalJump) for instant feel.
+			// Server only tracks phase for double-jump gating.
 			const data = this.playerDataService.getPlayerData(player);
 			const maxLevel = data?.maxHachiLevel ?? 0;
 			this.lobbyJumpPhase.set(
@@ -446,7 +440,7 @@ export class LobbyService implements OnStart {
 			if (math.abs(body.AssemblyLinearVelocity.Y) < 5) return;
 
 			this.lobbyJumpPhase.set(player.UserId, 2); // Used
-			applyHachiJumpImpulse(body, HACHI_DOUBLE_JUMP_IMPULSE);
+			// Impulse is applied client-side (tryLocalJump handles double jump).
 			this.serverEvents.hachiDoubleJumpGranted.fire(player);
 		});
 	}
