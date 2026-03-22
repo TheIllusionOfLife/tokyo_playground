@@ -1124,13 +1124,11 @@ export class HachiRideMinigame implements IMinigame {
 				let wallState = this.wallRunStates.get(userId);
 
 				if (!wallState || !wallState.running) {
-					// Compute wall-run direction from Hachi body forward
+					// Compute wall-run direction from Hachi's actual horizontal velocity
+					// (more reliable than LookVector which may not match movement direction)
 					const eps = 1e-4;
-					const xzRaw = new Vector3(
-						body.CFrame.LookVector.X,
-						0,
-						body.CFrame.LookVector.Z,
-					);
+					const vel = body.AssemblyLinearVelocity;
+					const xzRaw = new Vector3(vel.X, 0, vel.Z);
 					const forward =
 						xzRaw.Magnitude > eps ? xzRaw.Unit : new Vector3(0, 0, 1);
 					const projected = forward.sub(

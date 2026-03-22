@@ -165,13 +165,10 @@ export class HachiRideController implements OnStart {
 			(_name, inputState, _input) => {
 				if (inputState === Enum.UserInputState.Begin) {
 					if (!this.seatedInHachi) return Enum.ContextActionResult.Sink;
-					const inMinigame =
-						gameStore.getState().activeMinigameId === MinigameId.HachiRide;
-					if (inMinigame) {
-						// Client-side prediction: apply impulse locally for
-						// instant feel. Server still receives event for bookkeeping.
-						if (!this.tryLocalJump()) return Enum.ContextActionResult.Sink;
-					}
+					// Client-side prediction for both lobby and minigame.
+					// moveConn keeps BodyVelocity.MaxForce at zero, so server-side
+					// impulse would fight it. Apply impulse locally for instant feel.
+					if (!this.tryLocalJump()) return Enum.ContextActionResult.Sink;
 					clientEvents.hachiJump.fire();
 					this.playJumpSE();
 				}
