@@ -6,19 +6,14 @@
 
 local lighting = game:GetService("Lighting")
 
--- Core lighting technology
-lighting.Technology = Enum.Technology.Future
+-- Lighting.Technology was replaced by LightingStyle + PrioritizeLightingQuality.
+-- LightingStyle=Realistic + PrioritizeLightingQuality=true = old "Future" technology.
+-- Neither property is scriptable: set them manually in Studio Properties panel.
 lighting.GlobalShadows = true
-
--- Realistic style enables ShadowSoftness control
-lighting.LightingStyle = Enum.LightingStyle.Realistic
 lighting.ShadowSoftness = 0.4
 
 -- Tokyo latitude for accurate sun angle
 lighting.GeographicLatitude = 35.66
-
--- Prioritize lighting quality over view distance
-lighting.PrioritizeLightingQuality = true
 
 -- Day defaults (scripts will adjust for day/night cycle later)
 lighting.Brightness = 1.5
@@ -53,6 +48,6 @@ if city then
 end
 
 return string.format(
-	"Lighting configured:\n  Technology: Future\n  LightingStyle: Realistic\n  ShadowSoftness: 0.4\n  GeographicLatitude: 35.66\n  Atmosphere: created/updated\n  RenderFidelity=Automatic on %d meshes",
+	"Lighting configured:\n  LightingStyle: set manually (Realistic)\n  PrioritizeLightingQuality: set manually (true)\n  ShadowSoftness: 0.4\n  GeographicLatitude: 35.66\n  Atmosphere: created/updated\n  RenderFidelity=Automatic on %d meshes",
 	meshCount
 )
