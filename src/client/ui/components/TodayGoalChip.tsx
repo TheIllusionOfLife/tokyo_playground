@@ -2,7 +2,7 @@ import React from "@rbxts/react";
 import { useSelector } from "@rbxts/react-reflex";
 import { clientEvents } from "client/network";
 import { GameStoreState } from "shared/store/game-store";
-import { MatchPhase } from "shared/types";
+import { MatchPhase, MinigameId } from "shared/types";
 
 export function TodayGoalChip() {
 	const missions = useSelector((state: GameStoreState) => state.missions);
@@ -13,6 +13,9 @@ export function TodayGoalChip() {
 		(state: GameStoreState) => state.activeOverlay,
 	);
 	const matchPhase = useSelector((state: GameStoreState) => state.matchPhase);
+	const activeMinigameId = useSelector(
+		(state: GameStoreState) => state.activeMinigameId,
+	);
 
 	const nextMission = missions.find(
 		(mission) => !mission.rewardCollected && mission.progress < mission.target,
@@ -21,10 +24,12 @@ export function TodayGoalChip() {
 	// Hide chip when an overlay is open (claim toast stays visible always)
 	const overlayOpen = activeOverlay !== "none";
 	const inProgress = matchPhase === MatchPhase.InProgress;
+	// Hide goal chip during HachiRide (irrelevant mission info)
+	const isHachiRide = activeMinigameId === MinigameId.HachiRide;
 
 	return (
 		<>
-			{nextMission && !overlayOpen ? (
+			{nextMission && !overlayOpen && !(inProgress && isHachiRide) ? (
 				inProgress ? (
 					// Minimized compact chip during gameplay
 					<frame
@@ -51,8 +56,8 @@ export function TodayGoalChip() {
 					// Full chip in lobby (compact)
 					<frame
 						key="TodayGoalChip"
-						Size={new UDim2(0, 200, 0, 38)}
-						Position={new UDim2(0, 14, 0, 62)}
+						Size={new UDim2(0, 220, 0, 44)}
+						Position={new UDim2(0, 14, 0, 52)}
 						BackgroundColor3={Color3.fromRGB(24, 34, 48)}
 						BackgroundTransparency={0.12}
 						BorderSizePixel={0}
