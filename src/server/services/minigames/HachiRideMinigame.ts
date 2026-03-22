@@ -247,8 +247,8 @@ export class HachiRideMinigame implements IMinigame {
 			// Apply default scale (50% of template size).
 			// ScaleTo handles all parts, welds, attachments, and joints uniformly.
 			clone.ScaleTo(HACHI_DEFAULT_SCALE);
-			// MaxSpeed=0.01: tiny so VehicleSeat barely moves, but Throttle/Steer
-			// are still populated for client-side direct movement control.
+			// MaxSpeed=0 and TurnSpeed=0: fully disable VehicleSeat physics.
+			// Client uses GetMoveVector() for input and applies velocity directly.
 			const cloneSeat = clone.FindFirstChildOfClass("VehicleSeat") as
 				| VehicleSeat
 				| undefined;

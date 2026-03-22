@@ -12,7 +12,6 @@ import {
 	HACHI_DOUBLE_JUMP_IMPULSE,
 	HACHI_JUMP_COOLDOWN,
 	HACHI_JUMP_VELOCITY,
-	HACHI_SLIDE_FORCE_RESTORE_DELAY,
 	HACHI_WALK_SPEEDS,
 	SE_JUMP,
 } from "shared/constants";
@@ -42,6 +41,7 @@ export class HachiRideController implements OnStart {
 	private bobConn?: RBXScriptConnection;
 	private bobRootC0?: CFrame; // original Motor6D.C0 to restore on dismount
 	private hiddenBillboard?: BillboardGui; // "Hachi" label hidden while riding
+	private cachedBody?: BasePart; // Hachi body ref for dismount cleanup
 
 	// Original humanoid jump values, restored on dismount
 	private origJumpPower = 0;
@@ -112,6 +112,11 @@ export class HachiRideController implements OnStart {
 			billboard.Enabled = false;
 			this.hiddenBillboard = billboard;
 		}
+
+		// Cache body ref for dismount cleanup (SeatPart is nil when onStoodUp fires)
+		this.cachedBody = hachiModel?.FindFirstChild("Body") as
+			| BasePart
+			| undefined;
 
 		// Reset jump state for fresh mount
 		this.jumpPhase = 0;
@@ -332,17 +337,14 @@ export class HachiRideController implements OnStart {
 		ContextActionService.UnbindAction(ACTION_HACHI_JUMP);
 		ContextActionService.UnbindAction(ACTION_HACHI_EJECT);
 
-		// Restore BodyVelocity.MaxForce (zeroed during movement)
-		if (this.cachedBodyVelocityForce !== undefined) {
-			const character = Players.LocalPlayer.Character;
-			const humanoid = character?.FindFirstChildOfClass("Humanoid");
-			const body = humanoid?.SeatPart?.Parent?.FindFirstChild("Body") as
-				| BasePart
-				| undefined;
-			const bv = body?.FindFirstChildOfClass("BodyVelocity");
+		// Restore BodyVelocity.MaxForce (zeroed during movement).
+		// Uses cachedBody because SeatPart is nil by the time onStoodUp fires.
+		if (this.cachedBodyVelocityForce !== undefined && this.cachedBody) {
+			const bv = this.cachedBody.FindFirstChildOfClass("BodyVelocity");
 			if (bv) bv.MaxForce = this.cachedBodyVelocityForce;
 			this.cachedBodyVelocityForce = undefined;
 		}
+		this.cachedBody = undefined;
 
 		// Restore "Hachi" BillboardGui label
 		if (this.hiddenBillboard && this.hiddenBillboard.Parent) {
@@ -447,28 +449,14 @@ export class HachiRideController implements OnStart {
 	private applyImpulse(body: BasePart, velocity: number) {
 		const bv = body.FindFirstChildOfClass("BodyVelocity");
 		if (bv) {
-			// Cache the original MaxForce on first call. Subsequent calls
-			// (double jump) would capture Vector3.zero since the first call
-			// hasn't restored yet (0.5s delay vs 0.1s cooldown).
-			if (this.cachedBodyVelocityForce === undefined) {
-				this.cachedBodyVelocityForce = bv.MaxForce;
-			}
+			// moveConn already keeps MaxForce at zero during movement.
+			// Just ensure it's zero for the impulse frame.
 			bv.MaxForce = Vector3.zero;
-			body.AssemblyLinearVelocity = new Vector3(
-				body.AssemblyLinearVelocity.X,
-				velocity,
-				body.AssemblyLinearVelocity.Z,
-			);
-			const restoreForce = this.cachedBodyVelocityForce;
-			task.delay(HACHI_SLIDE_FORCE_RESTORE_DELAY, () => {
-				if (bv.Parent) bv.MaxForce = restoreForce;
-			});
-		} else {
-			body.AssemblyLinearVelocity = new Vector3(
-				body.AssemblyLinearVelocity.X,
-				velocity,
-				body.AssemblyLinearVelocity.Z,
-			);
 		}
+		body.AssemblyLinearVelocity = new Vector3(
+			body.AssemblyLinearVelocity.X,
+			velocity,
+			body.AssemblyLinearVelocity.Z,
+		);
 	}
 }
