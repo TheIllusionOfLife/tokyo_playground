@@ -248,6 +248,17 @@ export class HachiRideController implements OnStart {
 					body.AssemblyLinearVelocity.Y,
 					moveDir.Z * speed,
 				);
+
+				// Rotate Hachi to face movement direction using BodyGyro.
+				// BodyGyro applies torque that works WITH physics (no weld fighting).
+				const seat = h.SeatPart;
+				const gyro = seat?.FindFirstChildOfClass("BodyGyro");
+				if (gyro) {
+					gyro.CFrame = CFrame.lookAt(
+						Vector3.zero,
+						new Vector3(moveDir.X, 0, moveDir.Z),
+					);
+				}
 			} else {
 				// No input: frame-rate independent deceleration (normalized to 60fps)
 				const decay = math.pow(HACHI_DECEL_RATE, dt * 60);
