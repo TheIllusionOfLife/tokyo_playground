@@ -214,8 +214,8 @@ export class HachiRideController implements OnStart {
 				| undefined;
 			if (!body || !body.IsDescendantOf(game)) return;
 
-			// GetMoveVector returns raw input as (X=right, Y=up, Z=forward)
-			// in camera space. Already accounts for keyboard, joystick, gamepad.
+			// GetMoveVector returns raw input as (X=right, Y=up, Z=back).
+			// Z is negative when W/Up is pressed (Roblox convention: -Z = forward).
 			const moveVec = pm.GetControls().GetMoveVector();
 			const hasInput = moveVec.Magnitude > 0.1;
 
@@ -227,8 +227,8 @@ export class HachiRideController implements OnStart {
 				const camRight = cam.CFrame.RightVector;
 				const forward = new Vector3(camLook.X, 0, camLook.Z).Unit;
 				const right = new Vector3(camRight.X, 0, camRight.Z).Unit;
-				// moveVec: X=right, Z=forward (positive Z = forward in this API)
-				const raw = forward.mul(moveVec.Z).add(right.mul(moveVec.X));
+				// Negate Z: GetMoveVector Z is negative for forward (W/Up)
+				const raw = forward.mul(-moveVec.Z).add(right.mul(moveVec.X));
 				moveDir = raw.Magnitude > 0.01 ? raw.Unit : Vector3.zero;
 			}
 
