@@ -23,7 +23,7 @@ Roblox party mini-game platform set in Tokyo (Shibuya). roblox-ts + Flamework + 
 
 ## MCP / Studio Gotchas
 - `execute_luau` runs **client-side** (`IsServer=false, IsClient=true`). Use `return` (not `print`) to get output — the tool returns the last expression, not stdout.
-- City building `MeshPart`s in `Workspace.city` have `CanCollide=true` + `CollisionFidelity=Box` (AABB). Parts placed inside the building's XZ footprint will be blocked at all heights.
+- City `MeshPart`s in `Workspace.city` use `CanCollide=true` + `CollisionFidelity=PreciseConvexDecomposition` + `Anchored=true`. Buildings are merged into area chunks via PLATEAU SDK's 分割/結合 feature.
 - Flamework networking uses `ModuleScript`-based remotes — no raw `RemoteEvent`s are visible via `GetDescendants()`.
 
 ## Physics Ownership Rules

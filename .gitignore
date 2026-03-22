@@ -8,6 +8,12 @@ include/
 *.rbxlx.lock
 flamework.build
 
+# PLATEAU datasets (large binary files)
+datasets/unity_exports/
+datasets/raw/
+datasets/blender_exports/
+# Track datasets/PIPELINE_GUIDE.md and datasets/scripts/ (not gitignored)
+
 # PLATEAU / Blender assets
 13113_shibuya-ku_pref_2023_citygml_2_op/
 13113_shibuya-ku_pref_2023_citygml_2_op.zip
