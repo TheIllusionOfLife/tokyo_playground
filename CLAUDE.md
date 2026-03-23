@@ -23,8 +23,19 @@ Roblox party mini-game platform set in Tokyo (Shibuya). roblox-ts + Flamework + 
 
 ## MCP / Studio Gotchas
 - `execute_luau` runs **client-side** (`IsServer=false, IsClient=true`). Use `return` (not `print`) to get output — the tool returns the last expression, not stdout.
-- City `MeshPart`s in `Workspace.city` use `CanCollide=true` + `CollisionFidelity=PreciseConvexDecomposition` + `Anchored=true`. Buildings are merged into area chunks via PLATEAU SDK's 分割/結合 feature.
+- `execute_luau` **cannot write** protected properties: `Lighting.Technology` (deprecated, replaced by `LightingStyle`+`PrioritizeLightingQuality`), `StreamingMinRadius`, `StreamingTargetRadius`, `StreamOutBehavior`, `ModelStreamingBehavior`. Set these manually in Studio Properties panel.
+- `execute_luau` **times out** on 3000+ MeshPart operations (e.g., setting PCD collision). Batch into groups of 500.
+- **FBX import is GUI-only.** No Luau API or MCP tool exists for importing local FBX files. Must use File > Import 3D manually.
+- City `MeshPart`s in `Workspace.city` use `CanCollide=true` + `CollisionFidelity=PreciseConvexDecomposition` + `Anchored=true`. All city parts have `CanTouch=false` + `CanQuery=false` for performance.
 - Flamework networking uses `ModuleScript`-based remotes — no raw `RemoteEvent`s are visible via `GetDescendants()`.
+
+## City Pipeline (PLATEAU → Roblox)
+- Pipeline: PLATEAU SDK (Unity) → SDK FBX export → Blender batch export (`blender_batch_export.py`) → Roblox import
+- Blender script recenters vertices to geometric centroid (PLATEAU uses absolute JPC coordinates), then scales by 13.16x
+- Scale 13.16 calibrated via tallest Shibuya building (bldg_7b006717). New meshes are ~1.37x larger than old per-building import due to different PLATEAU granularity (area-based vs per-building). This is inherent to the data.
+- Batch FBX import (~54 files) takes ~40 minutes. Some batches may warn "dimensions too large" due to spread-out furniture meshes. Retry failed batches manually.
+- `Lighting.Technology` is deprecated. Use `LightingStyle=Realistic` + `PrioritizeLightingQuality=true` (equivalent of old Future).
+- Streaming: `StreamingEnabled=true`, `StreamOutBehavior=Opportunistic`, `ModelStreamingBehavior=Improved`, `StreamingTargetRadius=512`, `StreamingMinRadius=256`.
 
 ## Physics Ownership Rules
 - **Character HRP** physics are client-owned. Apply `AssemblyLinearVelocity` from the client. Use `Humanoid.PlatformStand=true` first to disable the ground controller (otherwise it dampens the impulse within one step).

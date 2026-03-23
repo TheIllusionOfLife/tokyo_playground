@@ -134,7 +134,7 @@ Record the material catalog. 72 unique materials with area-based import.
 
 ---
 
-## Step 4: FBX Export
+## Step 4: FBX Export from Unity
 
 ### Export Settings
 
@@ -164,44 +164,83 @@ Export in two batches:
 
 ---
 
+## Step 4b: Blender Batch Export
+
+The SDK FBX export produces per-feature FBX files with absolute Japanese Plane Coordinate System (JPC) coordinates baked into mesh vertices. Blender is used to recenter and scale the data for Roblox.
+
+### Open in Blender
+
+Open `datasets/city.blend` (contains all imported PLATEAU FBX data).
+
+### Run Batch Export Script
+
+Run `datasets/scripts/blender_batch_export.py` in Blender (Scripting tab > Open > Run Script, or headless: `blender city.blend --background --python blender_batch_export.py`).
+
+The script:
+1. **Recenters** all meshes to the geometric centroid (calculates center from world-space bounding boxes, translates vertices via `transform_apply(location=True)`)
+2. **Scales** by 13.16x from origin (baked into vertex positions)
+3. **Exports** in batches of 100 meshes per FBX file
+
+**Important notes:**
+- Scale 13.16 was calibrated by comparing the tallest Shibuya building (bldg_7b006717) between old and new city imports
+- PLATEAU data stores absolute JPC coordinates in mesh vertices (NOT object location). Recentering must use `obj.matrix_world @ bound_box` to find the geometric center, not `obj.location`
+- The script modifies the Blender scene. Reload `city.blend` to restore original state.
+- Output: `datasets/blender_exports/batch_001.fbx` through `batch_054.fbx` (~27GB total)
+
+---
+
 ## Step 5: Roblox Import and Configuration
 
 ### 5a. Import FBX Files
 
-1. File > Import 3D for each FBX file
-2. Roblox auto-splits meshes over 20k tris into multiple MeshParts
-3. Roblox auto-creates SurfaceAppearance from embedded textures
-4. Organize into hierarchy:
+1. File > Import 3D, select all batch FBX files. Check **Anchored**, **Import Only as Model**, **Insert Using Scene Position**, **Set Pivot to Scene Origin**.
+2. Import takes ~40 minutes for 54 batches. Studio may crash on large imports. Retry failed batches individually.
+3. Some batches may warn "One of the objects dimensions are larger than can be imported" (furniture meshes spanning large areas). Click Import anyway. Retry if they fail.
+4. Roblox auto-splits meshes over 20k tris into multiple MeshParts and auto-creates SurfaceAppearance from embedded textures.
+
+### 5b. Organize into city_v2
+
+Use MCP `execute_luau` to create folder structure and sort by mesh name pattern:
 
 ```
 Workspace.city_v2/
-  buildings/
-  underground/
-  roads/       (generated roads)
-  bridges/
-  furniture/   (frn: signs, lights, subway entrances)
-  vegetation/  (veg: street trees)
+  buildings/   (*bldg* meshes)
+  underground/ (*ubld* meshes)
+  roads/       (generated roads, imported separately)
+  bridges/     (*brid* meshes)
+  furniture/   (*frn* meshes: signs, lights, subway entrances)
+  vegetation/  (*veg* meshes: street trees)
 ```
 
-### 5b. Configure Meshes
+### 5c. Configure Meshes
 
-Run via MCP: `execute_luau` with `configure_city_meshes.luau`
+Run via MCP `execute_luau` with `configure_city_meshes.luau`. **Batch PCD in groups of 500** (3000+ meshes times out otherwise).
 
 Sets per category:
-- Buildings: `CanCollide=true`, `CollisionFidelity=PreciseConvexDecomposition`, `Anchored=true`
-- Roads: `CanCollide=true`, `CollisionFidelity=Default`, `Anchored=true`
-- Underground: `CanCollide=true`, `CollisionFidelity=PreciseConvexDecomposition`, `Anchored=true`
-- Bridges: `CanCollide=true`, `CollisionFidelity=PreciseConvexDecomposition`, `Anchored=true`
+- Buildings: `CanCollide=true`, `CollisionFidelity=PreciseConvexDecomposition`, `CastShadow=true`
+- Roads: `CanCollide=true`, `CollisionFidelity=Default`
+- Underground/Bridges: `CanCollide=true`, `CollisionFidelity=PreciseConvexDecomposition`
+- Furniture/Vegetation: `CanCollide=false`, `CollisionFidelity=Box`, `CastShadow=false`
+- All: `Anchored=true`, `CanTouch=false`, `CanQuery=false`, `RenderFidelity=Automatic`
 
-### 5c. Configure Streaming
+### 5d. Configure Streaming (Manual in Studio)
 
-Run via MCP: `execute_luau` with `setup_streaming.luau`
-
+These properties are NOT scriptable. Set manually in Studio Properties panel on Workspace:
 - `StreamingEnabled = true`
 - `StreamingMinRadius = 256` studs
-- `StreamingTargetRadius = 768` studs
+- `StreamingTargetRadius = 512` studs
+- `StreamOutBehavior = Opportunistic`
+- `ModelStreamingBehavior = Improved`
 
-### 5d. Verify Textures
+### 5e. Configure Lighting (Partially Manual)
+
+Run via MCP `execute_luau` with `setup_lighting.luau` for scriptable properties (GlobalShadows, ShadowSoftness, GeographicLatitude, Atmosphere).
+
+Set manually in Studio (NOT scriptable):
+- `LightingStyle = Realistic` (replaces deprecated `Technology = Future`)
+- `PrioritizeLightingQuality = true`
+
+### 5f. Verify Textures
 
 If textures imported correctly via FBX, SurfaceAppearance is already set up.
 
@@ -251,14 +290,20 @@ workspace.city_old:Destroy()
 
 ## Performance Budget
 
-| Metric | Budget | Expected |
+| Metric | Budget | Expected (4-tile city) |
 |--------|--------|----------|
-| Total meshes (after Roblox auto-split) | - | ~50-80 |
-| Total draw calls | <1,000 | ~50-80 |
-| Mesh memory | <200 MB | ~40-60 MB |
-| Texture memory | <200 MB | ~20-30 MB |
-| Total memory | <600 MB | ~60-90 MB |
+| Total meshes (after Roblox auto-split) | - | ~5,300 |
+| Total draw calls | <1,000 | Managed by streaming (512 stud radius) |
+| Mesh memory | <200 MB | Managed by Opportunistic streaming |
+| Texture memory | <200 MB | Managed by Opportunistic streaming |
+| Total memory | <600 MB | Monitor via Cmd+F9 |
 | Tris per mesh (after auto-split) | <20,000 | <20,000 |
+
+### MicroProfiler Scopes to Watch
+- `physicsStepped` / `worldStep`: PCD collision cost (target <4ms)
+- `Prepare` / `Perform` / `RenderView`: rendering cost
+- Shortcut: Opt+Cmd+F6
+- Render Stats: Shift+F2 (draw calls, triangle counts)
 
 ---
 
@@ -275,9 +320,20 @@ Verify import has "Include textures" enabled.
 ### Roblox auto-split produces too many parts
 Meshes over 20k tris are split automatically. If too fragmented, consider exporting from Unity with per-building granularity for that feature type instead of area-based.
 
-### Origin/scale mismatch
-Measure a known building in both old and new city.
-The PLATEAU SDK reference point (lat/lon) determines origin.
+### "One of the objects dimensions are larger than can be imported"
+Common with furniture/vegetation batches that span large areas. Click Import anyway. If the batch fails, retry it individually. The meshes themselves are within limits; the warning is about the batch's bounding box.
+
+### Scale mismatch between old and new city
+The PLATEAU SDK area-based import produces ~1.37x larger meshes than the old per-building CityGML import. This is inherent to the data granularity difference and cannot be fixed by changing the Blender scale factor. Use bldg_7b006717 (tallest Shibuya building) as the calibration reference.
+
+### Blender recentering doesn't work (positions still millions of studs)
+PLATEAU data stores absolute JPC coordinates in mesh VERTICES, not object locations. `obj.location` is typically (0,0,0). Must use `obj.matrix_world @ bound_box` to calculate geometric center, then `transform.translate()` + `transform_apply(location=True)` to bake the offset into vertices.
+
+### MCP execute_luau times out on large operations
+Setting PreciseConvexDecomposition on 3000+ meshes times out. Batch into groups of 500. Set basic properties (Anchored, CanTouch, etc.) first, then PCD in separate batches.
+
+### Studio crashes during batch FBX import
+54 batch FBX files (~27GB) can crash Studio. If it crashes, reopen and re-import. Already-imported batches are preserved. Check which batches are missing and import only those.
 
 ### Textures look blurry in Roblox
 Roblox downscales to 1024x1024 max. If quality is insufficient, use `PlateauAtlasBaker.cs` in Unity to bake optimized atlases before export.
