@@ -34,9 +34,9 @@ local function configurePart(part: BasePart, category: string)
 		part.CanCollide = true
 		part.CollisionFidelity = Enum.CollisionFidelity.Default
 	elseif category == "furniture" or category == "vegetation" then
-		-- Decorative: no collision needed (signs, trees above head height)
-		part.CanCollide = false
-		part.CollisionFidelity = Enum.CollisionFidelity.Box
+		-- Collidable: players interact with street furniture and trees
+		part.CanCollide = true
+		part.CollisionFidelity = Enum.CollisionFidelity.PreciseConvexDecomposition
 	else
 		part.CanCollide = true
 		part.CollisionFidelity = Enum.CollisionFidelity.Box
@@ -56,15 +56,16 @@ end
 
 local function categorize(name: string): string
 	local lower = string.lower(name)
-	if string.find(lower, "ubld") or string.find(lower, "underground") then
+	if string.find(lower, "ubld") or string.find(lower, "underground") or string.find(lower, "gml_id_not_found") then
 		return "underground"
 	elseif string.find(lower, "bldg") or string.find(lower, "building") then
 		return "buildings"
-	elseif string.find(lower, "tran") or string.find(lower, "road") then
+	elseif string.find(lower, "lane") or string.find(lower, "crosswalk") or string.find(lower, "sidewalk")
+		or string.find(lower, "road") or string.find(lower, "median") or string.find(lower, "tran") then
 		return "roads"
 	elseif string.find(lower, "brid") or string.find(lower, "bridge") then
 		return "bridges"
-	elseif string.find(lower, "dem") or string.find(lower, "terrain") then
+	elseif string.find(lower, "dem") or string.find(lower, "lod1") or string.find(lower, "terrain") then
 		return "terrain"
 	elseif string.find(lower, "frn") or string.find(lower, "furniture") then
 		return "furniture"
