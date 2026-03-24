@@ -162,6 +162,10 @@ Export in two batches:
 - dem (terrain) - use Roblox Terrain instead
 - tran (raw roads) - replaced by generated roads
 
+### CRITICAL: Road Data Alignment
+
+Road data (ReproducedRoad.fbx) uses a DIFFERENT coordinate system than city CityGML data (~35km offset in Blender). When importing roads into city.blend via `blender_import_roads.py`, you MUST verify alignment in Blender's viewport before exporting. If roads don't overlay with city streets, manually adjust the road mesh positions in Blender. Simple centroid-to-centroid offset does NOT work because the coordinate difference may involve rotation or scale, not just translation. The alignment must be done visually in Blender.
+
 ---
 
 ## Step 4b: Blender Batch Export
@@ -319,6 +323,12 @@ Verify import has "Include textures" enabled.
 
 ### Roblox auto-split produces too many parts
 Meshes over 20k tris are split automatically. If too fragmented, consider exporting from Unity with per-building granularity for that feature type instead of area-based.
+
+### Disable StreamingEnabled before organize/configure scripts
+MCP execute_luau runs CLIENT-SIDE. With StreamingEnabled ON, parts outside the streaming radius are invisible to the script. If you run organize/configure while streaming is active, streamed-out parts get destroyed or missed. ALWAYS disable StreamingEnabled in Studio Properties before running any batch Luau operations on city meshes. Re-enable after.
+
+### Road data misaligned with city data
+ReproducedRoad.fbx uses a different coordinate system than CityGML city data (~35km offset, possibly different axes). Centroid-to-centroid alignment in Roblox does NOT work. The alignment must be done visually in Blender before batch export. Open city.blend, check that road meshes overlay building streets in the viewport. Adjust road mesh positions if needed.
 
 ### "One of the objects dimensions are larger than can be imported"
 Common with furniture/vegetation batches that span large areas. Click Import anyway. If the batch fails, retry it individually. The meshes themselves are within limits; the warning is about the batch's bounding box.
