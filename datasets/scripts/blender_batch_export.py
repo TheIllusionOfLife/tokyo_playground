@@ -19,7 +19,7 @@ from mathutils import Vector
 # Configuration
 BATCH_SIZE = 100  # meshes per FBX
 EXPORT_DIR = "/Users/yuyamukai/dev/mini_games/tokyo_playground/datasets/blender_exports"
-SCALE = 40.0  # ~3x gameplay scale (calibrated via bldg_7b006717 at 13.16, rounded up)
+SCALE = 243.0  # 3x gameplay scale (bldg_7b006717: 18.48 Blender units -> 4491 studs)
 
 # Create export directory
 os.makedirs(EXPORT_DIR, exist_ok=True)
