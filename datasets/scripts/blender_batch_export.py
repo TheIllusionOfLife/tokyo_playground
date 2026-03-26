@@ -1,104 +1,190 @@
 # blender_batch_export.py
-# Run in Blender: Scripting tab > Open > Run Script
-# Or headless: blender city.blend --background --python blender_batch_export.py
+# Spatial tile batch export for Roblox.
+# Source: city_and_roads.blend (Unity FBX export with Apply Transform)
+# Headless: blender city_and_roads.blend --background --python blender_batch_export.py
 #
-# 1. Recenters all mesh objects to the geometric centroid (fixes absolute JPC coordinates)
-# 2. Applies scale via FBX export settings (NOT baked into vertices)
-# 3. Exports in batches of BATCH_SIZE into separate FBX files
+# Key principle (from Codex analysis):
+# - Group meshes by SPATIAL PROXIMITY, not sequential order
+# - Keep positions in obj.location (FBX node transform), NOT baked into vertices
+# - Each tile FBX contains all mesh types (buildings + roads + furniture) for that area
+# - "Import Only As Model" preserves positions within each FBX
 #
-# Roblox import: Use Asset Manager > Bulk Import, then right-click > "Insert with location"
-# to preserve mesh positions. Set Scale Unit = Stud in import settings.
-#
-# Output: datasets/blender_exports/batch_001.fbx, batch_002.fbx, etc.
+# Output: datasets/blender_exports/tile_X_Y.fbx
 
 import bpy
 import os
 import math
 from mathutils import Vector
+from collections import defaultdict
 
 # Configuration
-BATCH_SIZE = 100  # meshes per FBX
 EXPORT_DIR = "/Users/yuyamukai/dev/mini_games/tokyo_playground/datasets/blender_exports"
-SCALE = 243.0  # 3x gameplay scale (bldg_7b006717: 18.48 Blender units -> 4491 studs)
+SCALE = 2.0  # 3x gameplay scale for city_and_roads.blend (0.2 was 10x too small)
+MAX_MESHES_PER_TILE = 200  # Stay under Roblox limits
 
-# Create export directory
 os.makedirs(EXPORT_DIR, exist_ok=True)
 
-# Collect all mesh objects
 meshes = [obj for obj in bpy.data.objects if obj.type == 'MESH']
 total = len(meshes)
-batches = math.ceil(total / BATCH_SIZE)
-
 print(f"Total meshes: {total}")
-print(f"Batch size: {BATCH_SIZE}")
-print(f"Total batches: {batches}")
-print(f"Scale factor: {SCALE}")
 
-# Step 1: Recenter all meshes to geometric centroid
-# PLATEAU data stores absolute JPC coordinates in mesh VERTICES (not object location).
-# All objects have location=(0,0,0) with vertex data containing world positions.
-# We calculate the geometric center from bounding boxes, translate, then apply.
-print("Calculating geometric centroid from mesh bounding boxes...")
-geo_center = Vector((0, 0, 0))
-for obj in meshes:
-    bbox_corners = [obj.matrix_world @ Vector(corner) for corner in obj.bound_box]
-    bbox_center = sum(bbox_corners, Vector()) / 8
-    geo_center += bbox_center
-geo_center /= total
-print(f"Geometric centroid: {geo_center.x:.1f}, {geo_center.y:.1f}, {geo_center.z:.1f}")
-
-# Translate all objects by -centroid
-print("Translating all meshes to origin...")
+# Step 1: Set origin to geometry for all meshes
+# This puts obj.location at the mesh center, vertex data relative to center.
+# FBX will carry obj.location as the node transform (world position).
+print("Setting origin to geometry for all meshes...")
 bpy.ops.object.select_all(action='DESELECT')
 for obj in meshes:
     obj.select_set(True)
 bpy.context.view_layer.objects.active = meshes[0]
-bpy.ops.transform.translate(value=(-geo_center.x, -geo_center.y, -geo_center.z))
+bpy.ops.object.origin_set(type='ORIGIN_GEOMETRY', center='BOUNDS')
+print("Origins set.")
 
-# Apply location: bakes translation into vertex data, resets location to (0,0,0)
-bpy.ops.object.transform_apply(location=True, rotation=False, scale=False)
-print("Recentered: vertex data now relative to centroid.")
+# Step 2: Scale from world origin
+# Scales both obj.location (positions) and vertices (mesh size) by SCALE.
+print(f"Scaling by {SCALE}...")
+bpy.context.scene.cursor.location = (0, 0, 0)
+bpy.context.scene.tool_settings.transform_pivot_point = 'CURSOR'
+bpy.ops.transform.resize(value=(SCALE, SCALE, SCALE))
+# Apply scale into vertices ONLY (keep location for FBX node transform)
+bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
+print("Scale applied to vertices. Locations preserved.")
 
-# Step 2: Export in batches
-# Scale is handled via global_scale in FBX export (NOT baked into vertices).
-# FBX_SCALE_UNITS lets the FBX metadata communicate the unit scale to Roblox.
-# axis_forward='Z', axis_up='Y' aligns Blender Z-up with Roblox Y-up correctly.
-for batch_idx in range(batches):
-    start = batch_idx * BATCH_SIZE
-    end = min(start + BATCH_SIZE, total)
-    batch_meshes = meshes[start:end]
+# Step 3: Compute spatial tile grid
+# Use XY plane (Blender) for tiling. Z is height.
+print("Computing spatial tiles...")
+positions = []
+for obj in meshes:
+    positions.append((obj.location.x, obj.location.y, obj))
 
-    bpy.ops.object.select_all(action='DESELECT')
-    for obj in batch_meshes:
-        obj.select_set(True)
-    bpy.context.view_layer.objects.active = batch_meshes[0]
+if not positions:
+    print("No meshes found!")
+else:
+    xs = sorted([p[0] for p in positions])
+    ys = sorted([p[1] for p in positions])
 
-    filename = f"batch_{batch_idx + 1:03d}.fbx"
-    filepath = os.path.join(EXPORT_DIR, filename)
+    # Use 2nd-98th percentile to ignore outliers for tile grid
+    p2 = int(len(xs) * 0.02)
+    p98 = int(len(xs) * 0.98)
+    min_x, max_x = xs[p2], xs[p98]
+    min_y, max_y = ys[p2], ys[p98]
+    extent_x = max(1, max_x - min_x)
+    extent_y = max(1, max_y - min_y)
+    print(f"Position range (2-98 pct): X[{min_x:.0f} to {max_x:.0f}], Y[{min_y:.0f} to {max_y:.0f}]")
+    print(f"Dense extent: {extent_x:.0f} x {extent_y:.0f}")
+    print(f"Full range: X[{xs[0]:.0f} to {xs[-1]:.0f}], Y[{ys[0]:.0f} to {ys[-1]:.0f}]")
 
-    bpy.ops.export_scene.fbx(
-        filepath=filepath,
-        use_selection=True,
-        global_scale=SCALE,
-        apply_unit_scale=True,
-        apply_scale_options='FBX_SCALE_UNITS',
-        axis_forward='Z',
-        axis_up='Y',
-        object_types={'MESH'},
-        use_mesh_modifiers=True,
-        mesh_smooth_type='FACE',
-        use_tspace=False,
-        use_triangles=True,
-        path_mode='COPY',
-        embed_textures=True,
-        batch_mode='OFF',
-    )
+    # Calculate tile size for ~MAX_MESHES_PER_TILE per tile
+    target_tiles = max(1, total / MAX_MESHES_PER_TILE)
+    tile_area = (extent_x * extent_y) / target_tiles
+    tile_size = max(1, math.sqrt(tile_area))
 
-    print(f"Exported batch {batch_idx + 1}/{batches}: {filename} ({end - start} meshes)")
+    nx = max(1, int(math.ceil(extent_x / tile_size)))
+    ny = max(1, int(math.ceil(extent_y / tile_size)))
+    tile_w = extent_x / nx
+    tile_h = extent_y / ny
 
-print(f"\nDone! {batches} FBX files exported to {EXPORT_DIR}")
-print("NOTE: Meshes in Blender are now recentered. Undo (Cmd+Z) or reload the file to restore.")
-print("\nRoblox import instructions:")
-print("  1. View > Asset Manager > Bulk Import (select all batch FBX files)")
-print("  2. Right-click imported assets > 'Insert with location'")
-print("  3. Import settings: Scale Unit = Stud, World Forward = Front, World Up = Top")
+    print(f"Grid: {nx}x{ny} = {nx*ny} tiles (tile size: {tile_w:.0f} x {tile_h:.0f})")
+
+    # Step 4: Assign meshes to tiles
+    tiles = defaultdict(list)
+    for x, y, obj in positions:
+        # Clamp outliers to grid edges
+        tx = max(0, min(nx - 1, int((x - min_x) / tile_w)))
+        ty = max(0, min(ny - 1, int((y - min_y) / tile_h)))
+        tiles[(tx, ty)].append(obj)
+
+    # Handle DEM separately (exclude from tiles)
+    dem_objs = []
+    for key in list(tiles.keys()):
+        remaining = []
+        for obj in tiles[key]:
+            if 'lod1' in obj.name.lower() or 'dem' in obj.name.lower():
+                dem_objs.append(obj)
+            else:
+                remaining.append(obj)
+        tiles[key] = remaining
+        if not remaining:
+            del tiles[key]
+
+    print(f"Non-empty tiles: {len(tiles)}")
+    tile_counts = [len(v) for v in tiles.values()]
+    print(f"Meshes per tile: min={min(tile_counts)}, max={max(tile_counts)}, avg={sum(tile_counts)/len(tile_counts):.0f}")
+
+    # Step 5: Export each tile
+    exported = 0
+    for (tx, ty), tile_meshes in sorted(tiles.items()):
+        if not tile_meshes:
+            continue
+
+        bpy.ops.object.select_all(action='DESELECT')
+        for obj in tile_meshes:
+            obj.select_set(True)
+        bpy.context.view_layer.objects.active = tile_meshes[0]
+
+        filename = f"tile_{tx:02d}_{ty:02d}.fbx"
+        filepath = os.path.join(EXPORT_DIR, filename)
+
+        bpy.ops.export_scene.fbx(
+            filepath=filepath,
+            use_selection=True,
+            global_scale=1.0,
+            apply_unit_scale=False,  # Data already in correct units, no cm conversion
+            apply_scale_options='FBX_SCALE_UNITS',
+            axis_forward='Z',
+            axis_up='Y',
+            object_types={'MESH'},
+            use_mesh_modifiers=True,
+            mesh_smooth_type='FACE',
+            use_tspace=False,
+            use_triangles=True,
+            path_mode='COPY',
+            embed_textures=True,
+            batch_mode='OFF',
+        )
+
+        exported += 1
+        print(f"Exported {filename}: {len(tile_meshes)} meshes")
+
+    # Export DEM separately
+    if dem_objs:
+        bpy.ops.object.select_all(action='DESELECT')
+        for obj in dem_objs:
+            obj.select_set(True)
+        bpy.context.view_layer.objects.active = dem_objs[0]
+        filepath = os.path.join(EXPORT_DIR, "dem_terrain.fbx")
+        bpy.ops.export_scene.fbx(
+            filepath=filepath,
+            use_selection=True,
+            global_scale=1.0,
+            apply_unit_scale=False,
+            apply_scale_options='FBX_SCALE_UNITS',
+            axis_forward='Z',
+            axis_up='Y',
+            object_types={'MESH'},
+            use_mesh_modifiers=True,
+            mesh_smooth_type='FACE',
+            use_tspace=False,
+            use_triangles=True,
+            path_mode='COPY',
+            embed_textures=True,
+            batch_mode='OFF',
+        )
+        exported += 1
+        print(f"Exported dem_terrain.fbx: {len(dem_objs)} meshes")
+
+    # Export manifest JSON
+    import json
+    manifest = {}
+    for obj in meshes:
+        manifest[obj.name] = {
+            "x": round(obj.location.x, 2),
+            "y": round(obj.location.y, 2),
+            "z": round(obj.location.z, 2),
+        }
+    manifest_path = os.path.join(EXPORT_DIR, "position_manifest.json")
+    with open(manifest_path, 'w') as f:
+        json.dump(manifest, f)
+    print(f"Exported position manifest: {len(manifest)} entries")
+
+    print(f"\nDone! {exported} files exported to {EXPORT_DIR}")
+    print("Import: File > Import 3D, check 'Insert Using Scene Position' + 'Import Only As Model'")
