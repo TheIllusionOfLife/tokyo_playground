@@ -134,7 +134,7 @@ Record the material catalog. 72 unique materials with area-based import.
 
 ---
 
-## Step 4: FBX Export
+## Step 4: FBX Export from Unity
 
 ### Export Settings
 
@@ -162,46 +162,106 @@ Export in two batches:
 - dem (terrain) - use Roblox Terrain instead
 - tran (raw roads) - replaced by generated roads
 
+### CRITICAL: Road Data Alignment
+
+Road data (ReproducedRoad.fbx) uses a DIFFERENT coordinate system than city CityGML data (~35km offset in Blender). When importing roads into city.blend via `blender_import_roads.py`, you MUST verify alignment in Blender's viewport before exporting. If roads don't overlay with city streets, manually adjust the road mesh positions in Blender. Simple centroid-to-centroid offset does NOT work because the coordinate difference may involve rotation or scale, not just translation. The alignment must be done visually in Blender.
+
+---
+
+## Step 4b: Blender Spatial Tile Export
+
+The Unity FBX export produces meshes with absolute JPC coordinates. Blender groups them into spatial tiles and exports with position manifest for cross-tile alignment in Roblox.
+
+### Source File
+
+`datasets/city_and_roads.blend` (Unity FBX export with Apply Transform, 11384 meshes). Run `blender_fix_all_transforms.py` first if transforms need unification.
+
+### Run Spatial Tile Export
+
+Run `datasets/scripts/blender_batch_export.py` headless:
+```
+blender city_and_roads.blend --background --python blender_batch_export.py
+```
+
+The script:
+1. **Sets origin** to geometry bounds center (`ORIGIN_GEOMETRY`, `BOUNDS`)
+2. **Scales** by SCALE factor from world origin (both positions and vertices)
+3. **Applies scale** to vertices only (`transform_apply(location=False, scale=True)`)
+4. **Groups** meshes into spatial tiles by proximity (percentile-based grid)
+5. **Exports** each tile as FBX + position manifest JSON
+
+**Key settings:**
+- `SCALE=2.0` in the script. Roblox imports at ~0.041x, resulting in ~0.083x net scale. Mesh sizes need **0.5x correction in Roblox** after import (the SCALE doubles vertex size relative to positions).
+- `apply_unit_scale=False` (Unity data already in cm)
+- `axis_forward='Z'`, `axis_up='Y'`
+- DEM exported separately
+
+**Output:** `datasets/blender_exports/tile_XX_YY.fbx` (63 tiles) + `position_manifest.json`
+
+### Post-Import: Manifest Correction + Size Fix
+
+After importing all tiles into Roblox:
+1. **Calibrate k factor**: pick reference tile (tile_03_02), compare manifest position to Roblox position. k = Roblox_pos / (-Blender_X). At SCALE=2.0, k = 0.041376.
+2. **Compute per-tile offset**: for each tile, sample a mesh, compute expected = manifest * k, offset = actual - expected.
+3. **Apply correction**: `tile:PivotTo(pivot - offset)` for each tile.
+4. **Recenter to origin**: shift all tiles by city center offset.
+5. **Halve mesh sizes**: `meshPart.Size = meshPart.Size * 0.5` (corrects SCALE=2.0 vertex doubling).
+6. Axis mapping: Roblox X = -Blender_X * k, Roblox Y = Blender_Z * k, Roblox Z = Blender_Y * k
+
 ---
 
 ## Step 5: Roblox Import and Configuration
 
 ### 5a. Import FBX Files
 
-1. File > Import 3D for each FBX file
-2. Roblox auto-splits meshes over 20k tris into multiple MeshParts
-3. Roblox auto-creates SurfaceAppearance from embedded textures
-4. Organize into hierarchy:
+1. File > Import 3D, select all batch FBX files. Check **Anchored**, **Import Only as Model**, **Insert Using Scene Position**, **Set Pivot to Scene Origin**.
+2. Import takes ~40 minutes for 54 batches. Studio may crash on large imports. Retry failed batches individually.
+3. Some batches may warn "One of the objects dimensions are larger than can be imported" (furniture meshes spanning large areas). Click Import anyway. Retry if they fail.
+4. Roblox auto-splits meshes over 20k tris into multiple MeshParts and auto-creates SurfaceAppearance from embedded textures.
+
+### 5b. Organize into city_v2
+
+Use MCP `execute_luau` to create folder structure and sort by mesh name pattern:
 
 ```
 Workspace.city_v2/
-  buildings/
-  underground/
-  roads/       (generated roads)
-  bridges/
-  furniture/   (frn: signs, lights, subway entrances)
-  vegetation/  (veg: street trees)
+  buildings/   (*bldg* meshes)
+  underground/ (*ubld* meshes)
+  roads/       (generated roads, imported separately)
+  bridges/     (*brid* meshes)
+  furniture/   (*frn* meshes: signs, lights, subway entrances)
+  vegetation/  (*veg* meshes: street trees)
 ```
 
-### 5b. Configure Meshes
+### 5c. Configure Meshes
 
-Run via MCP: `execute_luau` with `configure_city_meshes.luau`
+Run via MCP `execute_luau` with `configure_city_meshes.luau`. **Batch PCD in groups of 500** (3000+ meshes times out otherwise).
 
 Sets per category:
-- Buildings: `CanCollide=true`, `CollisionFidelity=PreciseConvexDecomposition`, `Anchored=true`
-- Roads: `CanCollide=true`, `CollisionFidelity=Default`, `Anchored=true`
-- Underground: `CanCollide=true`, `CollisionFidelity=PreciseConvexDecomposition`, `Anchored=true`
-- Bridges: `CanCollide=true`, `CollisionFidelity=PreciseConvexDecomposition`, `Anchored=true`
+- Buildings: `CanCollide=true`, `CollisionFidelity=PreciseConvexDecomposition`, `CastShadow=true`
+- Roads: `CanCollide=true`, `CollisionFidelity=Default`
+- Underground/Bridges: `CanCollide=true`, `CollisionFidelity=PreciseConvexDecomposition`
+- Furniture/Vegetation: `CanCollide=false`, `CollisionFidelity=Box`, `CastShadow=false`
+- All: `Anchored=true`, `CanTouch=false`, `CanQuery=false`, `RenderFidelity=Automatic`
 
-### 5c. Configure Streaming
+### 5d. Configure Streaming (Manual in Studio)
 
-Run via MCP: `execute_luau` with `setup_streaming.luau`
-
+These properties are NOT scriptable. Set manually in Studio Properties panel on Workspace:
 - `StreamingEnabled = true`
 - `StreamingMinRadius = 256` studs
-- `StreamingTargetRadius = 768` studs
+- `StreamingTargetRadius = 512` studs
+- `StreamOutBehavior = Opportunistic`
+- `ModelStreamingBehavior = Improved`
 
-### 5d. Verify Textures
+### 5e. Configure Lighting (Partially Manual)
+
+Run via MCP `execute_luau` with `setup_lighting.luau` for scriptable properties (GlobalShadows, ShadowSoftness, GeographicLatitude, Atmosphere).
+
+Set manually in Studio (NOT scriptable):
+- `LightingStyle = Realistic` (replaces deprecated `Technology = Future`)
+- `PrioritizeLightingQuality = true`
+
+### 5f. Verify Textures
 
 If textures imported correctly via FBX, SurfaceAppearance is already set up.
 
@@ -251,14 +311,20 @@ workspace.city_old:Destroy()
 
 ## Performance Budget
 
-| Metric | Budget | Expected |
+| Metric | Budget | Expected (4-tile city) |
 |--------|--------|----------|
-| Total meshes (after Roblox auto-split) | - | ~50-80 |
-| Total draw calls | <1,000 | ~50-80 |
-| Mesh memory | <200 MB | ~40-60 MB |
-| Texture memory | <200 MB | ~20-30 MB |
-| Total memory | <600 MB | ~60-90 MB |
+| Total meshes (after Roblox auto-split) | - | ~5,300 |
+| Total draw calls | <1,000 | Managed by streaming (512 stud radius) |
+| Mesh memory | <200 MB | Managed by Opportunistic streaming |
+| Texture memory | <200 MB | Managed by Opportunistic streaming |
+| Total memory | <600 MB | Monitor via Cmd+F9 |
 | Tris per mesh (after auto-split) | <20,000 | <20,000 |
+
+### MicroProfiler Scopes to Watch
+- `physicsStepped` / `worldStep`: PCD collision cost (target <4ms)
+- `Prepare` / `Perform` / `RenderView`: rendering cost
+- Shortcut: Opt+Cmd+F6
+- Render Stats: Shift+F2 (draw calls, triangle counts)
 
 ---
 
@@ -275,9 +341,26 @@ Verify import has "Include textures" enabled.
 ### Roblox auto-split produces too many parts
 Meshes over 20k tris are split automatically. If too fragmented, consider exporting from Unity with per-building granularity for that feature type instead of area-based.
 
-### Origin/scale mismatch
-Measure a known building in both old and new city.
-The PLATEAU SDK reference point (lat/lon) determines origin.
+### Disable StreamingEnabled before organize/configure scripts
+MCP execute_luau runs CLIENT-SIDE. With StreamingEnabled ON, parts outside the streaming radius are invisible to the script. If you run organize/configure while streaming is active, streamed-out parts get destroyed or missed. ALWAYS disable StreamingEnabled in Studio Properties before running any batch Luau operations on city meshes. Re-enable after.
+
+### Road data misaligned with city data
+ReproducedRoad.fbx uses a different coordinate system than CityGML city data (~35km offset, possibly different axes). Centroid-to-centroid alignment in Roblox does NOT work. The alignment must be done visually in Blender before batch export. Open city.blend, check that road meshes overlay building streets in the viewport. Adjust road mesh positions if needed.
+
+### "One of the objects dimensions are larger than can be imported"
+Common with furniture/vegetation batches that span large areas. Click Import anyway. If the batch fails, retry it individually. The meshes themselves are within limits; the warning is about the batch's bounding box.
+
+### Scale mismatch between old and new city
+The PLATEAU SDK area-based import produces ~1.37x larger meshes than the old per-building CityGML import. This is inherent to the data granularity difference and cannot be fixed by changing the Blender scale factor. Use bldg_7b006717 (tallest Shibuya building) as the calibration reference.
+
+### Blender recentering doesn't work (positions still millions of studs)
+PLATEAU data stores absolute JPC coordinates in mesh VERTICES, not object locations. `obj.location` is typically (0,0,0). Must use `obj.matrix_world @ bound_box` to calculate geometric center, then `transform.translate()` + `transform_apply(location=True)` to bake the offset into vertices.
+
+### MCP execute_luau times out on large operations
+Setting PreciseConvexDecomposition on 3000+ meshes times out. Batch into groups of 500. Set basic properties (Anchored, CanTouch, etc.) first, then PCD in separate batches.
+
+### Studio crashes during batch FBX import
+54 batch FBX files (~27GB) can crash Studio. If it crashes, reopen and re-import. Already-imported batches are preserved. Check which batches are missing and import only those.
 
 ### Textures look blurry in Roblox
 Roblox downscales to 1024x1024 max. If quality is insufficient, use `PlateauAtlasBaker.cs` in Unity to bake optimized atlases before export.

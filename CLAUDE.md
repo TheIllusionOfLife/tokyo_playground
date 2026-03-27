@@ -23,8 +23,21 @@ Roblox party mini-game platform set in Tokyo (Shibuya). roblox-ts + Flamework + 
 
 ## MCP / Studio Gotchas
 - `execute_luau` runs **client-side** (`IsServer=false, IsClient=true`). Use `return` (not `print`) to get output — the tool returns the last expression, not stdout.
-- City `MeshPart`s in `Workspace.city` use `CanCollide=true` + `CollisionFidelity=PreciseConvexDecomposition` + `Anchored=true`. Buildings are merged into area chunks via PLATEAU SDK's 分割/結合 feature.
+- `execute_luau` **cannot write** protected properties: `Lighting.Technology` (deprecated, replaced by `LightingStyle`+`PrioritizeLightingQuality`), `StreamingMinRadius`, `StreamingTargetRadius`, `StreamOutBehavior`, `ModelStreamingBehavior`. Set these manually in Studio Properties panel.
+- `execute_luau` **times out** on 3000+ MeshPart operations (e.g., setting PCD collision). Batch into groups of 500.
+- **FBX import is GUI-only.** No Luau API or MCP tool exists for importing local FBX files. Must use File > Import 3D manually.
+- City `MeshPart`s in `Workspace.city` use `CanCollide=true` + `CollisionFidelity=PreciseConvexDecomposition` + `Anchored=true`. All city parts have `CanTouch=false` + `CanQuery=false` for performance.
 - Flamework networking uses `ModuleScript`-based remotes — no raw `RemoteEvent`s are visible via `GetDescendants()`.
+
+## City Pipeline (PLATEAU → Roblox)
+- Pipeline: PLATEAU SDK (Unity) → FBX export → Blender spatial tile batch (`blender_batch_export.py`) → Roblox import → manifest correction
+- Blender script sets origin to geometry center, scales by SCALE factor, exports spatial tiles (63 tile FBX + `position_manifest.json`)
+- After Roblox import: calibrate k factor from reference tile, apply per-tile PivotTo correction, recenter to origin
+- **Do NOT resize MeshPart.Size** after import. This breaks TextureID UV mapping. Choose correct SCALE in Blender instead.
+- Roblox imports FBX textures to `MeshPart.TextureID` (legacy), not `SurfaceAppearance`. One texture per MeshPart.
+- DEM terrain uses separate `blender_split_dem.py` (8x8 grid). DEM has 10x coordinate offset (JPC mismatch), fixed by DEM_COORD_FIX=0.1.
+- `Lighting.Technology` is deprecated. Use `LightingStyle=Realistic` + `PrioritizeLightingQuality=true` (equivalent of old Future).
+- Streaming: `StreamingEnabled=true`, `StreamOutBehavior=Opportunistic`, `ModelStreamingBehavior=Improved`, `StreamingTargetRadius=512`, `StreamingMinRadius=256`.
 
 ## Physics Ownership Rules
 - **Character HRP** physics are client-owned. Apply `AssemblyLinearVelocity` from the client. Use `Humanoid.PlatformStand=true` first to disable the ground controller (otherwise it dampens the impulse within one step).

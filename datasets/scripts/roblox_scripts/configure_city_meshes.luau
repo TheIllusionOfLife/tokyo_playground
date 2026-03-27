@@ -7,9 +7,9 @@
 --   2. FBX files imported into Workspace.city_v2/ with this structure:
 --      city_v2/tile_53393585/buildings/, city_v2/tile_53393585/roads/, etc.
 
-local city = workspace:FindFirstChild("city_v2")
+local city = workspace:FindFirstChild("city_v2") or workspace:FindFirstChild("city")
 if not city then
-	return "ERROR: Workspace.city_v2 not found. Import FBX files first."
+	return "ERROR: Workspace.city_v2 or Workspace.city not found. Import FBX files first."
 end
 
 local stats = {
@@ -18,22 +18,35 @@ local stats = {
 	underground = 0,
 	bridges = 0,
 	terrain = 0,
+	furniture = 0,
+	vegetation = 0,
 	other = 0,
 }
 
 local function configurePart(part: BasePart, category: string)
 	part.Anchored = true
-	part.CanCollide = true
 
+	-- Collision fidelity: PCD for complex walkable geometry, Default for flat surfaces
 	if category == "buildings" or category == "underground" or category == "bridges" then
-		-- PreciseConvexDecomposition for complex geometry
+		part.CanCollide = true
 		part.CollisionFidelity = Enum.CollisionFidelity.PreciseConvexDecomposition
 	elseif category == "roads" or category == "terrain" then
-		-- Default (box) for flat surfaces
+		part.CanCollide = true
 		part.CollisionFidelity = Enum.CollisionFidelity.Default
+	elseif category == "furniture" or category == "vegetation" then
+		-- Non-collidable decorative meshes: Box collision for minimal physics overhead
+		part.CanCollide = false
+		part.CollisionFidelity = Enum.CollisionFidelity.Box
+	else
+		part.CanCollide = true
+		part.CollisionFidelity = Enum.CollisionFidelity.Box
 	end
 
-	-- CastShadow on for buildings, off for roads/terrain (performance)
+	-- Disable touch/query on all city parts (saves event + raycast overhead)
+	part.CanTouch = false
+	part.CanQuery = false
+
+	-- CastShadow only on buildings and bridges (performance)
 	if category == "buildings" or category == "bridges" then
 		part.CastShadow = true
 	else
@@ -43,16 +56,21 @@ end
 
 local function categorize(name: string): string
 	local lower = string.lower(name)
-	if string.find(lower, "ubld") or string.find(lower, "underground") then
+	if string.find(lower, "ubld") or string.find(lower, "underground") or string.find(lower, "gml_id_not_found") then
 		return "underground"
 	elseif string.find(lower, "bldg") or string.find(lower, "building") then
 		return "buildings"
-	elseif string.find(lower, "tran") or string.find(lower, "road") then
+	elseif string.find(lower, "lane") or string.find(lower, "crosswalk") or string.find(lower, "sidewalk")
+		or string.find(lower, "road") or string.find(lower, "median") or string.find(lower, "tran") then
 		return "roads"
 	elseif string.find(lower, "brid") or string.find(lower, "bridge") then
 		return "bridges"
-	elseif string.find(lower, "dem") or string.find(lower, "terrain") then
+	elseif string.find(lower, "dem") or string.find(lower, "lod1") or string.find(lower, "terrain") then
 		return "terrain"
+	elseif string.find(lower, "frn") or string.find(lower, "furniture") then
+		return "furniture"
+	elseif string.find(lower, "veg") or string.find(lower, "vegetation") then
+		return "vegetation"
 	end
 	return "other"
 end
@@ -73,7 +91,8 @@ for _, descendant in city:GetDescendants() do
 end
 
 return string.format(
-	"Configured city_v2 meshes:\n  Buildings: %d\n  Roads: %d\n  Underground: %d\n  Bridges: %d\n  Terrain: %d\n  Other: %d",
+	"Configured city_v2 meshes:\n  Buildings: %d\n  Roads: %d\n  Underground: %d\n  Bridges: %d\n  Terrain: %d\n  Furniture: %d\n  Vegetation: %d\n  Other: %d",
 	stats.buildings, stats.roads, stats.underground,
-	stats.bridges, stats.terrain, stats.other
+	stats.bridges, stats.terrain, stats.furniture,
+	stats.vegetation, stats.other
 )
