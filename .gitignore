@@ -15,7 +15,7 @@ datasets/blender_exports/
 # Track datasets/PIPELINE_GUIDE.md and datasets/scripts/ (not gitignored)
 datasets/*.blend
 datasets/*.blend1
-datasets/*.json
+datasets/mesh_positions.json
 
 # PLATEAU / Blender assets
 13113_shibuya-ku_pref_2023_citygml_2_op/

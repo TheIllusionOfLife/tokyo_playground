@@ -7,10 +7,11 @@
 import bpy
 import os
 
-ROAD_FBX = "/Users/yuyamukai/dev/mini_games/tokyo_playground/datasets/unity_exports/plateau_sdk_exporter/ReproducedRoad.fbx"
+ROAD_FBX = os.environ.get("ROAD_FBX",
+    os.path.join(os.path.dirname(bpy.data.filepath), "unity_exports", "plateau_sdk_exporter", "ReproducedRoad.fbx"))
 
 if not os.path.exists(ROAD_FBX):
-    print(f"ERROR: Road FBX not found at {ROAD_FBX}")
+    raise FileNotFoundError(f"Road FBX not found at {ROAD_FBX}. Set ROAD_FBX env var.")
 else:
     before = len([o for o in bpy.data.objects if o.type == 'MESH'])
     print(f"Meshes before import: {before}")

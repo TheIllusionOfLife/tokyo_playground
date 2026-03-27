@@ -25,8 +25,10 @@ for obj in bpy.data.objects:
             print(f"  City parent '{obj.name}': scale={city_parent_scale}")
 
 if city_parent_scale and road_parent_scale:
-    road_scale_correction = city_parent_scale / road_parent_scale
-    print(f"  Scale correction for roads: {road_scale_correction:.2f} ({city_parent_scale}/{road_parent_scale})")
+    # Roads need to be scaled to match city units: apply city_parent_scale directly
+    # (road data is in raw meters after unparent+apply, city data is in meters*city_parent_scale)
+    road_scale_correction = city_parent_scale
+    print(f"  Scale correction for roads: {road_scale_correction:.4f} (city_parent_scale={city_parent_scale})")
 else:
     road_scale_correction = 1.0
     print("  WARNING: Could not determine parent scales. No correction applied.")
@@ -68,17 +70,18 @@ if empties:
 print(f"  Transforms applied, {len(empties)} empties deleted.")
 
 # Step 5: Scale road meshes to match city scale
-if road_scale_correction != 1.0:
-    print(f"\nStep 5: Scaling road meshes by {road_scale_correction:.2f}...")
-    road_objs = [obj for obj in bpy.data.objects if obj.type == 'MESH' and obj.name in road_mesh_names]
+def calc_centroid(objects):
+    if not objects:
+        return Vector((0, 0, 0))
+    total = Vector((0, 0, 0))
+    for obj in objects:
+        bbox_corners = [obj.matrix_world @ Vector(c) for c in obj.bound_box]
+        total += sum(bbox_corners, Vector()) / 8
+    return total / len(objects)
 
-    # Scale from road centroid
-    def calc_centroid(objects):
-        total = Vector((0, 0, 0))
-        for obj in objects:
-            bbox_corners = [obj.matrix_world @ Vector(c) for c in obj.bound_box]
-            total += sum(bbox_corners, Vector()) / 8
-        return total / len(objects)
+if road_scale_correction != 1.0:
+    print(f"\nStep 5: Scaling road meshes by {road_scale_correction:.4f}...")
+    road_objs = [obj for obj in bpy.data.objects if obj.type == 'MESH' and obj.name in road_mesh_names]
 
     road_center = calc_centroid(road_objs)
 
@@ -105,13 +108,6 @@ meshes = [obj for obj in bpy.data.objects if obj.type == 'MESH']
 city_objs = [obj for obj in meshes if obj.name in city_mesh_names]
 road_objs = [obj for obj in meshes if obj.name in road_mesh_names]
 
-def calc_centroid(objects):
-    total = Vector((0, 0, 0))
-    for obj in objects:
-        bbox_corners = [obj.matrix_world @ Vector(c) for c in obj.bound_box]
-        total += sum(bbox_corners, Vector()) / 8
-    return total / len(objects)
-
 city_center = calc_centroid(city_objs)
 road_center = calc_centroid(road_objs)
 offset = city_center - road_center
@@ -121,11 +117,9 @@ print(f"  Road centroid: ({road_center.x:.1f}, {road_center.y:.1f}, {road_center
 print(f"  Distance: {offset.length:.1f}")
 
 if offset.length > 1:
+    # Apply offset uniformly to all road meshes (do not filter by distance)
     for obj in road_objs:
-        bbox_corners = [obj.matrix_world @ Vector(c) for c in obj.bound_box]
-        center = sum(bbox_corners, Vector()) / 8
-        if (center - road_center).length < (center - city_center).length:
-            obj.location += offset
+        obj.location += offset
 
     bpy.ops.object.select_all(action='DESELECT')
     for obj in road_objs:

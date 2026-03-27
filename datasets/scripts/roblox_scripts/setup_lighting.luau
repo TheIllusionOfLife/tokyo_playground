@@ -18,7 +18,7 @@ lighting.GeographicLatitude = 35.66
 -- Day defaults (scripts will adjust for day/night cycle later)
 lighting.Brightness = 1.5
 lighting.ExposureCompensation = 0.0
-lighting.OutdoorAmbient = Color3.fromRGB(255, 150, 50)
+lighting.OutdoorAmbient = Color3.fromRGB(180, 190, 210)
 lighting.EnvironmentDiffuseScale = 0.6
 lighting.EnvironmentSpecularScale = 0.7
 

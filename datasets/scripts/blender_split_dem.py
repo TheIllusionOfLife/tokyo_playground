@@ -11,7 +11,8 @@ import bmesh
 import os
 import math
 
-EXPORT_DIR = "/Users/yuyamukai/dev/mini_games/tokyo_playground/datasets/blender_exports"
+EXPORT_DIR = os.environ.get("BLENDER_EXPORT_DIR",
+    os.path.join(os.path.dirname(bpy.data.filepath), "blender_exports"))
 SCALE = 2.0  # Match city tile export scale
 DEM_COORD_FIX = 0.1  # DEM vertices are at 10x city coordinates (JPC units mismatch)
 GRID_SIZE = 8  # 8x8 grid = 64 tiles (each ~30k faces max, ~3k tris target)
@@ -44,18 +45,19 @@ tile_w = (max_x - min_x) / GRID_SIZE
 tile_h = (max_y - min_y) / GRID_SIZE
 print(f"Tile size: {tile_w:.0f} x {tile_h:.0f}, Grid: {GRID_SIZE}x{GRID_SIZE}")
 
-# Ensure DEM is selected and active
+# Work on a copy to preserve original
 bpy.ops.object.select_all(action='DESELECT')
 dem.select_set(True)
 bpy.context.view_layer.objects.active = dem
-
-# Apply transforms first
-bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
-
-# Work on a copy to preserve original
 bpy.ops.object.duplicate()
 dem_copy = bpy.context.active_object
 dem_copy.name = "DEM_work"
+
+# Apply transforms on the copy only
+bpy.ops.object.select_all(action='DESELECT')
+dem_copy.select_set(True)
+bpy.context.view_layer.objects.active = dem_copy
+bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
 
 # Scale the copy: first fix 10x coordinate mismatch, then apply SCALE
 # Net effect: DEM_COORD_FIX * SCALE = 0.1 * 2.0 = 0.2

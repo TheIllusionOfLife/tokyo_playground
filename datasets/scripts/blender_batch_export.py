@@ -18,7 +18,8 @@ from mathutils import Vector
 from collections import defaultdict
 
 # Configuration
-EXPORT_DIR = "/Users/yuyamukai/dev/mini_games/tokyo_playground/datasets/blender_exports"
+EXPORT_DIR = os.environ.get("BLENDER_EXPORT_DIR",
+    os.path.join(os.path.dirname(bpy.data.filepath), "blender_exports"))
 SCALE = 2.0  # 3x gameplay scale for city_and_roads.blend (0.2 was 10x too small)
 MAX_MESHES_PER_TILE = 200  # Stay under Roblox limits
 
@@ -26,6 +27,8 @@ os.makedirs(EXPORT_DIR, exist_ok=True)
 
 meshes = [obj for obj in bpy.data.objects if obj.type == 'MESH']
 total = len(meshes)
+if not meshes:
+    raise RuntimeError("No mesh objects found in blend file. Check the file path.")
 print(f"Total meshes: {total}")
 
 # Step 1: Set origin to geometry for all meshes
@@ -98,7 +101,7 @@ else:
     for key in list(tiles.keys()):
         remaining = []
         for obj in tiles[key]:
-            if 'lod1' in obj.name.lower() or 'dem' in obj.name.lower():
+            if 'dem' in obj.name.lower():
                 dem_objs.append(obj)
             else:
                 remaining.append(obj)

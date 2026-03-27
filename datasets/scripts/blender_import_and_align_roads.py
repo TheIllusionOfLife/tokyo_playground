@@ -10,7 +10,8 @@ import bpy
 import os
 from mathutils import Vector
 
-ROAD_FBX = "/Users/yuyamukai/dev/mini_games/tokyo_playground/datasets/unity_exports/plateau_sdk_exporter/ReproducedRoad.fbx"
+ROAD_FBX = os.environ.get("ROAD_FBX",
+    os.path.join(os.path.dirname(bpy.data.filepath), "unity_exports", "plateau_sdk_exporter", "ReproducedRoad.fbx"))
 
 # Step 0: Record existing city meshes before import
 city_mesh_names = set(obj.name for obj in bpy.data.objects if obj.type == 'MESH')

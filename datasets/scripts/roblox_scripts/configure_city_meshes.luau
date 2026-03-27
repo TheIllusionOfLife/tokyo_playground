@@ -7,9 +7,9 @@
 --   2. FBX files imported into Workspace.city_v2/ with this structure:
 --      city_v2/tile_53393585/buildings/, city_v2/tile_53393585/roads/, etc.
 
-local city = workspace:FindFirstChild("city_v2")
+local city = workspace:FindFirstChild("city_v2") or workspace:FindFirstChild("city")
 if not city then
-	return "ERROR: Workspace.city_v2 not found. Import FBX files first."
+	return "ERROR: Workspace.city_v2 or Workspace.city not found. Import FBX files first."
 end
 
 local stats = {
@@ -34,9 +34,9 @@ local function configurePart(part: BasePart, category: string)
 		part.CanCollide = true
 		part.CollisionFidelity = Enum.CollisionFidelity.Default
 	elseif category == "furniture" or category == "vegetation" then
-		-- Collidable: players interact with street furniture and trees
-		part.CanCollide = true
-		part.CollisionFidelity = Enum.CollisionFidelity.PreciseConvexDecomposition
+		-- Non-collidable decorative meshes: Box collision for minimal physics overhead
+		part.CanCollide = false
+		part.CollisionFidelity = Enum.CollisionFidelity.Box
 	else
 		part.CanCollide = true
 		part.CollisionFidelity = Enum.CollisionFidelity.Box

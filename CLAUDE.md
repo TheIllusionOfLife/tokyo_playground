@@ -30,10 +30,12 @@ Roblox party mini-game platform set in Tokyo (Shibuya). roblox-ts + Flamework + 
 - Flamework networking uses `ModuleScript`-based remotes — no raw `RemoteEvent`s are visible via `GetDescendants()`.
 
 ## City Pipeline (PLATEAU → Roblox)
-- Pipeline: PLATEAU SDK (Unity) → SDK FBX export → Blender batch export (`blender_batch_export.py`) → Roblox import
-- Blender script recenters vertices to geometric centroid (PLATEAU uses absolute JPC coordinates), then scales by 13.16x
-- Scale 13.16 calibrated via tallest Shibuya building (bldg_7b006717). New meshes are ~1.37x larger than old per-building import due to different PLATEAU granularity (area-based vs per-building). This is inherent to the data.
-- Batch FBX import (~54 files) takes ~40 minutes. Some batches may warn "dimensions too large" due to spread-out furniture meshes. Retry failed batches manually.
+- Pipeline: PLATEAU SDK (Unity) → FBX export → Blender spatial tile batch (`blender_batch_export.py`) → Roblox import → manifest correction
+- Blender script sets origin to geometry center, scales by SCALE factor, exports spatial tiles (63 tile FBX + `position_manifest.json`)
+- After Roblox import: calibrate k factor from reference tile, apply per-tile PivotTo correction, recenter to origin
+- **Do NOT resize MeshPart.Size** after import. This breaks TextureID UV mapping. Choose correct SCALE in Blender instead.
+- Roblox imports FBX textures to `MeshPart.TextureID` (legacy), not `SurfaceAppearance`. One texture per MeshPart.
+- DEM terrain uses separate `blender_split_dem.py` (8x8 grid). DEM has 10x coordinate offset (JPC mismatch), fixed by DEM_COORD_FIX=0.1.
 - `Lighting.Technology` is deprecated. Use `LightingStyle=Realistic` + `PrioritizeLightingQuality=true` (equivalent of old Future).
 - Streaming: `StreamingEnabled=true`, `StreamOutBehavior=Opportunistic`, `ModelStreamingBehavior=Improved`, `StreamingTargetRadius=512`, `StreamingMinRadius=256`.
 

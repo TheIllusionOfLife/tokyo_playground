@@ -9,14 +9,14 @@ Source: https://create.roblox.com/docs
 
 ### Lighting Technology
 
-Use `Lighting.Technology = Enum.Technology.Future` for the most advanced lighting and shadows. This is the recommended mode for a photorealistic Shibuya city environment.
+`Lighting.Technology` is deprecated. Use `LightingStyle=Realistic` + `PrioritizeLightingQuality=true` for equivalent of the old Future technology. Set these in Studio Properties panel (not scriptable).
 
-| Technology | Description | Recommendation |
-|------------|-------------|----------------|
-| Future | Most advanced, high-fidelity lighting and shadows | **Use this** |
-| ShadowMap | Crisp directional shadows from sunlight | Acceptable fallback |
-| Voxel | 4x4x4 voxel map, basic lighting | Not recommended |
-| Compatibility | Deprecated | Do not use |
+| Property | Value | Notes |
+|----------|-------|-------|
+| LightingStyle | Realistic | Replaces Technology=Future |
+| PrioritizeLightingQuality | true | High-fidelity shadows |
+| GlobalShadows | true | Scriptable |
+| ShadowSoftness | 0.4 | Scriptable |
 
 ### Lighting Properties
 
