@@ -168,28 +168,45 @@ Road data (ReproducedRoad.fbx) uses a DIFFERENT coordinate system than city City
 
 ---
 
-## Step 4b: Blender Batch Export
+## Step 4b: Blender Spatial Tile Export
 
-The SDK FBX export produces per-feature FBX files with absolute Japanese Plane Coordinate System (JPC) coordinates baked into mesh vertices. Blender is used to recenter and scale the data for Roblox.
+The Unity FBX export produces meshes with absolute JPC coordinates. Blender groups them into spatial tiles and exports with position manifest for cross-tile alignment in Roblox.
 
-### Open in Blender
+### Source File
 
-Open `datasets/city.blend` (contains all imported PLATEAU FBX data).
+`datasets/city_and_roads.blend` (Unity FBX export with Apply Transform, 11384 meshes). Run `blender_fix_all_transforms.py` first if transforms need unification.
 
-### Run Batch Export Script
+### Run Spatial Tile Export
 
-Run `datasets/scripts/blender_batch_export.py` in Blender (Scripting tab > Open > Run Script, or headless: `blender city.blend --background --python blender_batch_export.py`).
+Run `datasets/scripts/blender_batch_export.py` headless:
+```
+blender city_and_roads.blend --background --python blender_batch_export.py
+```
 
 The script:
-1. **Recenters** all meshes to the geometric centroid (calculates center from world-space bounding boxes, translates vertices via `transform_apply(location=True)`)
-2. **Scales** by 13.16x from origin (baked into vertex positions)
-3. **Exports** in batches of 100 meshes per FBX file
+1. **Sets origin** to geometry bounds center (`ORIGIN_GEOMETRY`, `BOUNDS`)
+2. **Scales** by SCALE factor from world origin (both positions and vertices)
+3. **Applies scale** to vertices only (`transform_apply(location=False, scale=True)`)
+4. **Groups** meshes into spatial tiles by proximity (percentile-based grid)
+5. **Exports** each tile as FBX + position manifest JSON
 
-**Important notes:**
-- Scale 13.16 was calibrated by comparing the tallest Shibuya building (bldg_7b006717) between old and new city imports
-- PLATEAU data stores absolute JPC coordinates in mesh vertices (NOT object location). Recentering must use `obj.matrix_world @ bound_box` to find the geometric center, not `obj.location`
-- The script modifies the Blender scene. Reload `city.blend` to restore original state.
-- Output: `datasets/blender_exports/batch_001.fbx` through `batch_054.fbx` (~27GB total)
+**Key settings:**
+- `SCALE=2.0` in the script. Roblox imports at ~0.041x, resulting in ~0.083x net scale. Mesh sizes need **0.5x correction in Roblox** after import (the SCALE doubles vertex size relative to positions).
+- `apply_unit_scale=False` (Unity data already in cm)
+- `axis_forward='Z'`, `axis_up='Y'`
+- DEM exported separately
+
+**Output:** `datasets/blender_exports/tile_XX_YY.fbx` (63 tiles) + `position_manifest.json`
+
+### Post-Import: Manifest Correction + Size Fix
+
+After importing all tiles into Roblox:
+1. **Calibrate k factor**: pick reference tile (tile_03_02), compare manifest position to Roblox position. k = Roblox_pos / (-Blender_X). At SCALE=2.0, k = 0.041376.
+2. **Compute per-tile offset**: for each tile, sample a mesh, compute expected = manifest * k, offset = actual - expected.
+3. **Apply correction**: `tile:PivotTo(pivot - offset)` for each tile.
+4. **Recenter to origin**: shift all tiles by city center offset.
+5. **Halve mesh sizes**: `meshPart.Size = meshPart.Size * 0.5` (corrects SCALE=2.0 vertex doubling).
+6. Axis mapping: Roblox X = -Blender_X * k, Roblox Y = Blender_Z * k, Roblox Z = Blender_Y * k
 
 ---
 
