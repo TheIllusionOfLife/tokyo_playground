@@ -13,6 +13,7 @@ import math
 
 EXPORT_DIR = "/Users/yuyamukai/dev/mini_games/tokyo_playground/datasets/blender_exports"
 SCALE = 2.0  # Match city tile export scale
+DEM_COORD_FIX = 0.1  # DEM vertices are at 10x city coordinates (JPC units mismatch)
 GRID_SIZE = 8  # 8x8 grid = 64 tiles (each ~30k faces max, ~3k tris target)
 
 os.makedirs(EXPORT_DIR, exist_ok=True)
@@ -56,22 +57,25 @@ bpy.ops.object.duplicate()
 dem_copy = bpy.context.active_object
 dem_copy.name = "DEM_work"
 
-# Scale the copy
+# Scale the copy: first fix 10x coordinate mismatch, then apply SCALE
+# Net effect: DEM_COORD_FIX * SCALE = 0.1 * 2.0 = 0.2
+net_scale = DEM_COORD_FIX * SCALE
 bpy.context.scene.cursor.location = (0, 0, 0)
 bpy.context.scene.tool_settings.transform_pivot_point = 'CURSOR'
 bpy.ops.object.select_all(action='DESELECT')
 dem_copy.select_set(True)
 bpy.context.view_layer.objects.active = dem_copy
-bpy.ops.transform.resize(value=(SCALE, SCALE, SCALE))
+bpy.ops.transform.resize(value=(net_scale, net_scale, net_scale))
 bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
+print(f"Applied net scale: {net_scale} (DEM_COORD_FIX={DEM_COORD_FIX} * SCALE={SCALE})")
 
 # Update bounds after scaling
-scaled_min_x = min_x * SCALE
-scaled_max_x = max_x * SCALE
-scaled_min_y = min_y * SCALE
-scaled_max_y = max_y * SCALE
-scaled_tile_w = tile_w * SCALE
-scaled_tile_h = tile_h * SCALE
+scaled_min_x = min_x * net_scale
+scaled_max_x = max_x * net_scale
+scaled_min_y = min_y * net_scale
+scaled_max_y = max_y * net_scale
+scaled_tile_w = tile_w * net_scale
+scaled_tile_h = tile_h * net_scale
 
 # Split into tiles using bisect
 exported = 0
