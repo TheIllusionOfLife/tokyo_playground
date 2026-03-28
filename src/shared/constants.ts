@@ -226,17 +226,8 @@ export const ALL_MISSION_IDS: MissionId[] = [
 	MissionId.WinHachiRide,
 	MissionId.CollectBonusItem,
 	MissionId.DodgeCars,
-	// Living Shibuya exploration missions
-	MissionId.DiscoverStamps,
-	MissionId.CompleteStampSet,
-	MissionId.VisitFoodTruck,
-	MissionId.WatchFireworks,
-	MissionId.AttendBonOdori,
-	MissionId.GetPhotographed,
-	MissionId.DrawOmikuji,
-	MissionId.CompleteObstacleCourse,
-	MissionId.VisitCatColony,
-	MissionId.WatchStreetArt,
+	// Living Shibuya exploration missions temporarily removed from pool
+	// (features not yet working in new city layout)
 ];
 
 /** Minigame-specific missions for daily slot selection. */
@@ -252,20 +243,13 @@ export const MINIGAME_MISSION_IDS: MissionId[] = [
 ];
 
 /**
- * Exploration mission IDs for weighted daily selection (M8).
- * Excludes DiscoverStamps and CompleteStampSet: those are permanent
- * progression objectives tracked via stamp rally, not daily tasks.
+ * Exploration mission IDs for weighted daily selection.
+ * Temporarily empty: Living Shibuya features (food truck, fireworks,
+ * bon odori, etc.) are not yet working in the new city layout.
+ * When empty, the daily slot logic skips the exploration slot and
+ * fills all 3 slots from minigame + full pool instead.
  */
-export const EXPLORATION_MISSION_IDS: MissionId[] = [
-	MissionId.VisitFoodTruck,
-	MissionId.WatchFireworks,
-	MissionId.AttendBonOdori,
-	MissionId.GetPhotographed,
-	MissionId.DrawOmikuji,
-	MissionId.CompleteObstacleCourse,
-	MissionId.VisitCatColony,
-	MissionId.WatchStreetArt,
-];
+export const EXPLORATION_MISSION_IDS: MissionId[] = [];
 
 export const SHOP_CATALOG: Omit<ShopItemData, "owned" | "equipped">[] = [
 	{
