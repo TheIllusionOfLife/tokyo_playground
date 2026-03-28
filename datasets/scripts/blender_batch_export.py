@@ -20,7 +20,7 @@ from collections import defaultdict
 # Configuration
 EXPORT_DIR = os.environ.get("BLENDER_EXPORT_DIR",
     os.path.join(os.path.dirname(bpy.data.filepath), "blender_exports"))
-SCALE = 2.0  # 2x gameplay scale (0.5x Size correction applied in Roblox post-import)
+SCALE = 2.0  # 2x gameplay scale (legacy; new passthrough pipeline may not need this)
 MAX_MESHES_PER_TILE = 500  # Per tile limit (increased for material-split meshes)
 
 os.makedirs(EXPORT_DIR, exist_ok=True)
@@ -59,7 +59,6 @@ print("Scale applied to vertices. Locations preserved.")
 print("Splitting multi-material meshes...")
 bpy.ops.object.select_all(action='DESELECT')
 multi_mat_count = 0
-split_total = 0
 for obj in list(bpy.data.objects):
     if obj.type != 'MESH':
         continue
@@ -69,8 +68,9 @@ for obj in list(bpy.data.objects):
     bpy.ops.object.select_all(action='DESELECT')
     obj.select_set(True)
     bpy.context.view_layer.objects.active = obj
+    bpy.ops.object.mode_set(mode='EDIT')
     bpy.ops.mesh.separate(type='MATERIAL')
-    split_total += len(obj.data.materials)
+    bpy.ops.object.mode_set(mode='OBJECT')
 
 # Refresh mesh list after splitting
 meshes = [obj for obj in bpy.data.objects if obj.type == 'MESH']

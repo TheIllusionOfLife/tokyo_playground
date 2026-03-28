@@ -80,7 +80,7 @@ City model: city_and_roads (11,382 MeshParts)
 | Shadow draw calls | - | 32 (40,551 tri) | Light |
 
 ### Configuration Applied
-- ReproducedRoad (6,070): Box collision, CanCollide OFF, FluidForces OFF, Massless ON
+- ReproducedRoad (6,070): Default collision, CanCollide ON, FluidForces OFF, Massless ON
 - Buildings+bridges+furniture+veg (5,311): PCD collision
 - Terrain/DEM (1): Default collision
 - All: CanTouch OFF, CanQuery OFF, DoubleSided ON, Anchored ON

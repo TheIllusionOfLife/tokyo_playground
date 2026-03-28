@@ -16,7 +16,7 @@ import os
 
 EXPORT_DIR = os.environ.get("BLENDER_EXPORT_DIR",
     os.path.join(os.path.dirname(bpy.data.filepath), "blender_exports"))
-SCALE = 1.0  # Must match blender_batch_export.py
+SCALE = 1.0  # 1.0 for passthrough pipeline (no post-import Size correction needed)
 
 os.makedirs(EXPORT_DIR, exist_ok=True)
 

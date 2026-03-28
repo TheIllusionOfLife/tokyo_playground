@@ -43,9 +43,11 @@ bpy.context.scene.tool_settings.transform_pivot_point = 'CURSOR'
 bpy.ops.transform.resize(value=(SCALE, SCALE, SCALE))
 bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
 
-# Step 3: Split by material
+# Step 3: Split by material (requires Edit Mode)
 print("\nSplitting by material...")
+bpy.ops.object.mode_set(mode='EDIT')
 bpy.ops.mesh.separate(type='MATERIAL')
+bpy.ops.object.mode_set(mode='OBJECT')
 
 # Collect all resulting objects (original + splits)
 parts = [obj for obj in bpy.context.selected_objects if obj.type == 'MESH']
@@ -68,7 +70,13 @@ for p in parts:
         p.data.uv_layers.remove(p.data.uv_layers[-1])
 
 # Step 5: Remove empty meshes
-parts = [p for p in parts if len(p.data.vertices) > 0]
+non_empty = []
+for p in parts:
+    if len(p.data.vertices) == 0:
+        bpy.data.objects.remove(p, do_unlink=True)
+    else:
+        non_empty.append(p)
+parts = non_empty
 
 # Step 6: Export
 bpy.ops.object.select_all(action='DESELECT')

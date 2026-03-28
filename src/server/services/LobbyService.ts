@@ -80,21 +80,20 @@ export class LobbyService implements OnStart {
 			player.CharacterAdded.Connect((character) => {
 				// Small delay to let character load
 				task.wait(0.5);
-				const humanoid = character.FindFirstChildOfClass("Humanoid");
-				if (humanoid) {
-					humanoid.WalkSpeed = DEFAULT_WALK_SPEED;
-					humanoid.JumpHeight = DEFAULT_JUMP_HEIGHT;
-					// Half-size characters: set scale NumberValues
-					const scaleNames = [
-						"BodyHeightScale",
-						"BodyWidthScale",
-						"BodyDepthScale",
-						"HeadScale",
-					];
-					for (const name of scaleNames) {
-						const nv = humanoid.FindFirstChild(name) as NumberValue | undefined;
-						if (nv) nv.Value = CHARACTER_SCALE;
-					}
+				const humanoid = character.WaitForChild("Humanoid") as Humanoid;
+				humanoid.WalkSpeed = DEFAULT_WALK_SPEED;
+				humanoid.UseJumpPower = false;
+				humanoid.JumpHeight = DEFAULT_JUMP_HEIGHT;
+				// Half-size characters: set scale NumberValues
+				const scaleNames = [
+					"BodyHeightScale",
+					"BodyWidthScale",
+					"BodyDepthScale",
+					"HeadScale",
+				];
+				for (const name of scaleNames) {
+					const nv = humanoid.WaitForChild(name, 2) as NumberValue | undefined;
+					if (nv) nv.Value = CHARACTER_SCALE;
 				}
 				if (this.matchActive) return;
 				if (player.Character) {
