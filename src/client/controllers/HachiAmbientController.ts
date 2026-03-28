@@ -6,19 +6,22 @@ import {
 	SoundService,
 } from "@rbxts/services";
 import {
+	HACHI_COSTUME_NAME,
+	SE_HACHI_BARK,
+	SE_HACHI_YAWN,
+} from "shared/constants";
+import {
 	AMBIENT_CHECK_INTERVAL,
 	CAT_APPROACH_SPEED,
 	FOOD_STALL_TAG,
-	HACHI_COSTUME_NAME,
 	HACHI_PAIR_INTERACTION_RADIUS,
 	MOOD_DECAY_DURATION,
 	MUSICIAN_TAG,
-	SE_HACHI_BARK,
-	SE_HACHI_YAWN,
 	SLEEP_IDLE_THRESHOLD,
 	TONGUE_OUT_SPEED_THRESHOLD,
 	WATER_FEATURE_TAG,
-} from "shared/constants";
+} from "shared/living-shibuya-constants";
+
 import { gameStore } from "shared/store/game-store";
 import { HachiMood, MatchPhase, TimePhase } from "shared/types";
 

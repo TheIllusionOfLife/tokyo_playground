@@ -6,7 +6,7 @@ import {
 	FOOD_TRUCK_LATE_POINTS,
 	FOOD_TRUCK_SPOT_TAG,
 	NPC_INTERACTION_RADIUS,
-} from "shared/constants";
+} from "shared/living-shibuya-constants";
 import { GlobalEvents } from "shared/network";
 import { MicroEventId, MissionId } from "shared/types";
 import { MissionService } from "../MissionService";

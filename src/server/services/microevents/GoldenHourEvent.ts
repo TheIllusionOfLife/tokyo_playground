@@ -1,4 +1,4 @@
-import { GOLDEN_HOUR_DURATION, LIGHTING_PROFILES } from "shared/constants";
+import { GOLDEN_HOUR_DURATION, LIGHTING_PROFILES } from "shared/living-shibuya-constants";
 import { GlobalEvents } from "shared/network";
 import { MicroEventId, TimePhase } from "shared/types";
 import { DayNightService } from "../DayNightService";

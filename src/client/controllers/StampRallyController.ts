@@ -1,10 +1,8 @@
 import { Controller, OnStart } from "@flamework/core";
 import { SoundService } from "@rbxts/services";
-import {
-	SE_STAMP_CHIME,
-	SE_STAMP_SET_COMPLETE,
-	STAMP_CARD_DISPLAY_DURATION,
-} from "shared/constants";
+import { SE_STAMP_CHIME, SE_STAMP_SET_COMPLETE } from "shared/constants";
+import { STAMP_CARD_DISPLAY_DURATION } from "shared/living-shibuya-constants";
+
 import { GlobalEvents } from "shared/network";
 import { gameStore } from "shared/store/game-store";
 

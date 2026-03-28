@@ -4,7 +4,7 @@ import {
 	OBSTACLE_COURSE_COMPLETION_POINTS,
 	OBSTACLE_COURSE_DURATION,
 	OBSTACLE_COURSE_REPEAT_POINTS,
-} from "shared/constants";
+} from "shared/living-shibuya-constants";
 import { GlobalEvents } from "shared/network";
 import { MicroEventId, MissionId } from "shared/types";
 import { MissionService } from "../MissionService";

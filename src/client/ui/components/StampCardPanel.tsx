@@ -1,6 +1,6 @@
 import React from "@rbxts/react";
 import { useSelector } from "@rbxts/react-reflex";
-import { STAMP_SET_DEFINITIONS } from "shared/constants";
+import { STAMP_SET_DEFINITIONS } from "shared/living-shibuya-constants";
 import { GameStoreState, gameStore } from "shared/store/game-store";
 import { StampSetId } from "shared/types";
 

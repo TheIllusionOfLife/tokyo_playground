@@ -5,7 +5,7 @@ import {
 	STREET_ART_LAYERS,
 	STREET_ART_PARTIAL_POINTS,
 	STREET_ART_WATCH_RADIUS,
-} from "shared/constants";
+} from "shared/living-shibuya-constants";
 import { GlobalEvents } from "shared/network";
 import { MicroEventId, MissionId } from "shared/types";
 import { MissionService } from "../MissionService";

@@ -4,7 +4,7 @@ import {
 	DAY_CYCLE_MINUTES,
 	LIGHTING_PROFILES,
 	TIME_SYNC_INTERVAL,
-} from "shared/constants";
+} from "shared/living-shibuya-constants";
 import { GlobalEvents } from "shared/network";
 import { GameState, TimePhase } from "shared/types";
 import { GameStateService } from "./GameStateService";

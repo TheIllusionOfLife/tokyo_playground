@@ -1,11 +1,12 @@
 import { Controller, OnStart } from "@flamework/core";
 import { SoundService, TweenService, Workspace } from "@rbxts/services";
 import {
-	NPC_SPAWN_FADE_DURATION,
 	SE_CAMERA_SHUTTER,
 	SE_NPC_TREAT,
 	SE_OMIKUJI_DRAW,
 } from "shared/constants";
+import { NPC_SPAWN_FADE_DURATION } from "shared/living-shibuya-constants";
+
 import { GlobalEvents } from "shared/network";
 import { gameStore } from "shared/store/game-store";
 

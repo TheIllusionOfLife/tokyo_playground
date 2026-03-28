@@ -10,7 +10,7 @@ import {
 	STAMP_SET_DEFINITIONS,
 	STAMP_SPOT_TAG,
 	STAMP_TOTAL_COUNT,
-} from "shared/constants";
+} from "shared/living-shibuya-constants";
 import { GlobalEvents } from "shared/network";
 import { MissionId, StampSetId } from "shared/types";
 import { DayNightService } from "./DayNightService";
