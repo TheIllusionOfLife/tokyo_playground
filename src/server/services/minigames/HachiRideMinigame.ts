@@ -50,6 +50,8 @@ import { animateHachi, HachiAnimState } from "../../utils/animateHachi";
 import { animateItemCollect } from "../../utils/animateItemCollect";
 import {
 	equipHachiCostume,
+	forceUnmount,
+	HACHI_SLIDE_DURATION,
 	isPlayerMounted,
 	unequipHachiCostume,
 	updateHachiWalkSpeed,
@@ -271,24 +273,33 @@ export class HachiRideMinigame implements IMinigame {
 				if (!this.roundStarted) return;
 				this.respawnGrace.set(player.UserId, os.clock());
 				task.wait(0.5);
+				// Re-check after yield: round may have ended during the wait
+				if (!this.roundStarted) return;
+				if (!player.Character) return;
 				const spawnPart = spawnParts[0];
-				if (spawnPart && player.Character) {
+				if (spawnPart) {
 					player.Character.PivotTo(
 						new CFrame(spawnPart.Position.add(new Vector3(0, 3, 0))),
 					);
 					this.resetAnticheatBaseline(player.UserId, spawnPart.Position);
 				}
-				// Re-equip Hachi costume on new character
+				// Clear stale mount state and re-equip Hachi costume
 				if (!template) return;
+				forceUnmount(player);
 				const state = this.playerStates.get(player.UserId);
 				const clone = template.Clone();
 				clone.Name = `Hachi_${player.UserId}`;
-				equipHachiCostume(
-					player,
-					clone,
-					state?.evolutionLevel ?? HACHI_STARTING_EVOLUTION,
-				);
-				this.hachiModels.set(player.UserId, clone);
+				if (
+					equipHachiCostume(
+						player,
+						clone,
+						state?.evolutionLevel ?? HACHI_STARTING_EVOLUTION,
+					)
+				) {
+					this.hachiModels.set(player.UserId, clone);
+				} else {
+					clone.Destroy();
+				}
 			});
 			matchJanitor.Add(conn);
 		}
@@ -327,7 +338,7 @@ export class HachiRideMinigame implements IMinigame {
 					return;
 				this.slideCooldowns.set(player.UserId, now);
 				this.hachiSlideActive.add(player.UserId);
-				task.delay(0.5, () => {
+				task.delay(HACHI_SLIDE_DURATION, () => {
 					this.hachiSlideActive.delete(player.UserId);
 				});
 			}),
@@ -476,7 +487,13 @@ export class HachiRideMinigame implements IMinigame {
 		this.roundStarted = false;
 		HachiRideMinigame.activeInstance = undefined;
 
-		// Unequip Hachi costumes from all players
+		// Stop wall-runs FIRST (restores WalkSpeed to Hachi speed)
+		for (const [userId] of this.wallRunStates) {
+			const player = this.playerObjects.get(userId);
+			if (player) this.stopWallRun(userId, player);
+		}
+
+		// Then unequip costumes (restores WalkSpeed to default)
 		for (const [, player] of this.playerObjects) {
 			unequipHachiCostume(player);
 		}
@@ -484,12 +501,6 @@ export class HachiRideMinigame implements IMinigame {
 		// Re-show key items
 		for (const item of this.keyItems) {
 			item.Transparency = 0;
-		}
-
-		// Stop any active wall-runs (restore WalkSpeed)
-		for (const [userId] of this.wallRunStates) {
-			const player = this.playerObjects.get(userId);
-			if (player) this.stopWallRun(userId, player);
 		}
 
 		this.playerStates.clear();
@@ -721,6 +732,8 @@ export class HachiRideMinigame implements IMinigame {
 		if (newLevel <= state.evolutionLevel) return;
 		state.evolutionLevel = newLevel;
 
+		// Update Humanoid WalkSpeed for new evolution level
+		updateHachiWalkSpeed(player, newLevel);
 		this.serverEvents.hachiEvolved.fire(player, newLevel);
 
 		// Level 1: grant double jump
@@ -975,8 +988,9 @@ export class HachiRideMinigame implements IMinigame {
 		// Restore Humanoid movement
 		const humanoid = player.Character?.FindFirstChildOfClass("Humanoid");
 		if (humanoid) {
-			humanoid.WalkSpeed = wallState.origWalkSpeed;
+			humanoid.PlatformStand = false;
 			humanoid.AutoRotate = true;
+			humanoid.WalkSpeed = wallState.origWalkSpeed;
 		}
 	}
 
@@ -1059,10 +1073,16 @@ export class HachiRideMinigame implements IMinigame {
 								: Vector3.yAxis.Cross(wallResult.Normal).Unit;
 					}
 
-					// Lock Humanoid movement during wall run
+					// Flip direction if it opposes player's travel
+					if (xzRaw.Magnitude > 1 && wallDir.Dot(xzRaw.Unit) < 0) {
+						wallDir = wallDir.mul(-1);
+					}
+
+					// Lock Humanoid movement during wall run with PlatformStand
 					const origWalkSpeed = humanoid.WalkSpeed;
 					humanoid.WalkSpeed = 0;
 					humanoid.AutoRotate = false;
+					humanoid.PlatformStand = true;
 
 					wallState = {
 						running: true,

@@ -36,9 +36,12 @@ import { MinigameId } from "shared/types";
 import { animateHachi, HachiAnimState } from "../utils/animateHachi";
 import {
 	equipHachiCostume,
+	forceUnmount,
 	getPlayerHachi,
+	HACHI_SLIDE_DURATION,
 	isPlayerMounted,
 	unequipHachiCostume,
+	updateHachiWalkSpeed,
 } from "../utils/hachiCostume";
 
 import { PlayerDataService } from "./PlayerDataService";
@@ -323,17 +326,28 @@ export class LobbyService implements OnStart {
 					? rawSpeed
 					: SCRAMBLE_SLIDE_SPEED;
 
-			// Disable walk during slide impulse, apply velocity directly to HRP
+			// Disable walk during slide impulse, apply velocity with PlatformStand guard
 			const humanoid = character.FindFirstChildOfClass("Humanoid");
 			if (!humanoid) return;
 			if (this.hachiSlideActive.has(player.UserId)) return;
 			this.hachiSlideActive.add(player.UserId);
-			const origWalkSpeed = humanoid.WalkSpeed;
 			humanoid.WalkSpeed = 0;
+			humanoid.PlatformStand = true;
 			hrp.AssemblyLinearVelocity = serverDir.mul(speed);
-			task.delay(0.5, () => {
-				if (humanoid.Parent) humanoid.WalkSpeed = origWalkSpeed;
+			task.delay(HACHI_SLIDE_DURATION, () => {
 				this.hachiSlideActive.delete(player.UserId);
+				if (!humanoid.Parent) return;
+				humanoid.PlatformStand = false;
+				if (isPlayerMounted(player)) {
+					const data = this.playerDataService.getPlayerData(player);
+					const evoLevel = math.max(
+						data?.maxHachiLevel ?? 0,
+						HACHI_LOBBY_MIN_LEVEL,
+					);
+					updateHachiWalkSpeed(player, evoLevel);
+				} else {
+					humanoid.WalkSpeed = DEFAULT_WALK_SPEED;
+				}
 			});
 		});
 	}
@@ -470,25 +484,41 @@ export class LobbyService implements OnStart {
 			const serverNormal = rayResult.Normal;
 			const crossResult = serverNormal.Cross(new Vector3(0, 1, 0));
 			if (crossResult.Magnitude < 0.1) return;
-			const lateralDir = crossResult.Unit;
+			let lateralDir = crossResult.Unit;
+
+			// Flip direction if it opposes the player's horizontal velocity
+			const vel = hrp.AssemblyLinearVelocity;
+			const horizontal = new Vector3(vel.X, 0, vel.Z);
+			if (horizontal.Magnitude > 1 && lateralDir.Dot(horizontal.Unit) < 0) {
+				lateralDir = lateralDir.mul(-1);
+			}
 
 			// Guard against concurrent wall-runs
 			if (this.hachiSlideActive.has(player.UserId)) return;
 			this.hachiSlideActive.add(player.UserId);
 
-			// Lock movement during wall run
-			const origWalkSpeed = humanoid.WalkSpeed;
+			// Lock movement during wall run with PlatformStand guard
 			humanoid.WalkSpeed = 0;
 			humanoid.AutoRotate = false;
+			humanoid.PlatformStand = true;
 			hrp.AssemblyLinearVelocity = lateralDir.mul(HACHI_WALL_RUN_SPEED);
 			this.serverEvents.hachiWallRunStart.fire(player, serverNormal);
 
 			task.delay(HACHI_WALL_RUN_MAX_DUR, () => {
-				if (humanoid.Parent) {
-					humanoid.WalkSpeed = origWalkSpeed;
-					humanoid.AutoRotate = true;
-				}
 				this.hachiSlideActive.delete(player.UserId);
+				if (!humanoid.Parent) return;
+				humanoid.PlatformStand = false;
+				humanoid.AutoRotate = true;
+				if (isPlayerMounted(player)) {
+					const data = this.playerDataService.getPlayerData(player);
+					const evoLevel = math.max(
+						data?.maxHachiLevel ?? 0,
+						HACHI_LOBBY_MIN_LEVEL,
+					);
+					updateHachiWalkSpeed(player, evoLevel);
+				} else {
+					humanoid.WalkSpeed = DEFAULT_WALK_SPEED;
+				}
 				this.serverEvents.hachiWallRunStop.fire(player);
 			});
 		});

@@ -9,6 +9,7 @@ import {
 	AMBIENT_CHECK_INTERVAL,
 	CAT_APPROACH_SPEED,
 	FOOD_STALL_TAG,
+	HACHI_COSTUME_NAME,
 	HACHI_PAIR_INTERACTION_RADIUS,
 	MOOD_DECAY_DURATION,
 	MUSICIAN_TAG,
@@ -151,7 +152,7 @@ export class HachiAmbientController implements OnStart {
 			if (player === Players.LocalPlayer) continue;
 			const character = player.Character;
 			if (!character) continue;
-			const hachiModel = character.FindFirstChild("HachiCostume");
+			const hachiModel = character.FindFirstChild(HACHI_COSTUME_NAME);
 			if (!hachiModel) continue;
 			const body = hachiModel.FindFirstChild("Body") as BasePart | undefined;
 			if (!body || body === localBody) continue;
@@ -218,7 +219,7 @@ export class HachiAmbientController implements OnStart {
 		const character = Players.LocalPlayer.Character;
 		if (!character) return undefined;
 		// Find costume model parented to character (equipped by server)
-		const hachiModel = character.FindFirstChild("HachiCostume");
+		const hachiModel = character.FindFirstChild(HACHI_COSTUME_NAME);
 		if (!hachiModel) return undefined;
 		return hachiModel.FindFirstChild("Body") as BasePart | undefined;
 	}

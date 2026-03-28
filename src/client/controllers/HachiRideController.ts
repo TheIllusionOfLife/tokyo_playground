@@ -7,9 +7,9 @@ import {
 } from "@rbxts/services";
 import { clientEvents } from "client/network";
 import {
+	HACHI_COSTUME_NAME,
 	HACHI_DOUBLE_JUMP_IMPULSE,
 	HACHI_JUMP_COOLDOWN,
-	HACHI_JUMP_VELOCITY,
 	HACHI_LOBBY_MIN_LEVEL,
 	SE_JUMP,
 } from "shared/constants";
@@ -18,7 +18,6 @@ import { MinigameId } from "shared/types";
 
 const ACTION_HACHI_EJECT = "HachiEject";
 const ACTION_HACHI_JUMP = "HachiJumpSink";
-const HACHI_COSTUME_NAME = "HachiCostume";
 
 // Body bob tuning
 const BOB_MAX_AMPLITUDE = 0.3;
@@ -52,7 +51,6 @@ export class HachiRideController implements OnStart {
 	}
 
 	onStart() {
-		// Listen for server costume equip/unequip
 		clientEvents.hachiCostumeEquipped.connect((equipped) => {
 			if (equipped && !this.costumed) {
 				this.onCostumeEquipped();
@@ -61,7 +59,6 @@ export class HachiRideController implements OnStart {
 			}
 		});
 
-		// Handle character death/respawn while costumed
 		Players.LocalPlayer.CharacterRemoving?.Connect(() => {
 			if (this.costumed) {
 				this.onCostumeRemoved();
@@ -70,10 +67,12 @@ export class HachiRideController implements OnStart {
 	}
 
 	private onCostumeEquipped() {
-		this.costumed = true;
 		const character = Players.LocalPlayer.Character;
 		const humanoid = character?.FindFirstChildOfClass("Humanoid");
 		if (!character || !humanoid) return;
+
+		// Set costumed AFTER guard so early return doesn't leave stale state
+		this.costumed = true;
 
 		// Reset jump state
 		this.jumpPhase = 0;
@@ -108,6 +107,12 @@ export class HachiRideController implements OnStart {
 					// First jump detected (native). Arm double if evolution allows.
 					this.lastJumpTime = os.clock();
 					this.jumpPhase = this.getActiveEvoLevel() >= 1 ? 1 : 2;
+					// Notify server so it can arm phase tracking
+					if (this.isInMinigame()) {
+						clientEvents.hachiJump.fire();
+					} else {
+						clientEvents.hachiJump.fire();
+					}
 				} else if (newState === Enum.HumanoidStateType.Landed) {
 					this.jumpPhase = 0;
 				}
@@ -124,8 +129,9 @@ export class HachiRideController implements OnStart {
 			}
 		});
 
-		// CAS sink: intercept Space/ButtonA for double jump.
-		// First jump uses native Humanoid jump. CAS handles only double jump.
+		// CAS sink: intercept Space/ButtonA for double jump only.
+		// No createTouchButton (false) to avoid duplicate mobile jump button.
+		// The native Humanoid jump button handles the first jump on mobile.
 		ContextActionService.BindAction(
 			ACTION_HACHI_JUMP,
 			(_name, inputState, _input) => {
@@ -135,7 +141,6 @@ export class HachiRideController implements OnStart {
 				if (!this.costumed) return Enum.ContextActionResult.Pass;
 
 				if (this.jumpPhase === 1) {
-					// Double jump: apply impulse client-side for instant feel
 					const now = os.clock();
 					if (now - this.lastJumpTime < HACHI_JUMP_COOLDOWN) {
 						return Enum.ContextActionResult.Pass;
@@ -143,16 +148,25 @@ export class HachiRideController implements OnStart {
 					this.lastJumpTime = now;
 					this.jumpPhase = 2;
 
+					// Apply double jump impulse with PlatformStand guard
+					const h =
+						Players.LocalPlayer.Character?.FindFirstChildOfClass("Humanoid");
 					const hrp = Players.LocalPlayer.Character?.FindFirstChild(
 						"HumanoidRootPart",
 					) as BasePart | undefined;
-					if (hrp) {
+					if (hrp && h) {
+						h.PlatformStand = true;
 						hrp.AssemblyLinearVelocity = new Vector3(
 							hrp.AssemblyLinearVelocity.X,
 							HACHI_DOUBLE_JUMP_IMPULSE,
 							hrp.AssemblyLinearVelocity.Z,
 						);
-						humanoid.ChangeState(Enum.HumanoidStateType.Jumping);
+						task.defer(() => {
+							if (h.Parent) {
+								h.PlatformStand = false;
+								h.ChangeState(Enum.HumanoidStateType.Jumping);
+							}
+						});
 					}
 
 					if (this.isInMinigame()) {
@@ -164,10 +178,10 @@ export class HachiRideController implements OnStart {
 					return Enum.ContextActionResult.Sink;
 				}
 
-				// Phase 0 or 2: let native jump handle it (pass through)
+				// Phase 0 or 2: let native jump handle it
 				return Enum.ContextActionResult.Pass;
 			},
-			true, // createTouchButton for mobile double jump
+			false, // no createTouchButton: avoids duplicate mobile jump button
 			Enum.KeyCode.Space,
 			Enum.KeyCode.ButtonA,
 		);
@@ -215,7 +229,6 @@ export class HachiRideController implements OnStart {
 	private onCostumeRemoved() {
 		this.costumed = false;
 
-		// Disconnect all connections
 		this.stateChangedConn?.Disconnect();
 		this.stateChangedConn = undefined;
 		this.landedCheckConn?.Disconnect();
@@ -229,7 +242,6 @@ export class HachiRideController implements OnStart {
 		ContextActionService.UnbindAction(ACTION_HACHI_JUMP);
 		ContextActionService.UnbindAction(ACTION_HACHI_EJECT);
 
-		// Restore body bob
 		this.bobConn?.Disconnect();
 		this.bobConn = undefined;
 		if (this.bobRootC0) {

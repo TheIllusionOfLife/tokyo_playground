@@ -1,43 +1,75 @@
-import { Players } from "@rbxts/services";
+import { Players, Workspace } from "@rbxts/services";
 import {
 	DEFAULT_JUMP_HEIGHT,
 	DEFAULT_WALK_SPEED,
+	HACHI_COSTUME_NAME,
 	HACHI_DEFAULT_SCALE,
-	HACHI_JUMP_VELOCITY,
 	HACHI_WALK_SPEEDS,
 } from "shared/constants";
 import { GlobalEvents } from "shared/network";
 
 const serverEvents = GlobalEvents.createServer({});
 
-/** Name of the Hachi costume model when parented to character. */
-export const HACHI_COSTUME_NAME = "HachiCostume";
+/** Duration to hold WalkSpeed=0 during slide impulse. */
+export const HACHI_SLIDE_DURATION = 0.5;
 
 /** R15 sitting animation — overrides locomotion while riding. */
 const SIT_ANIMATION_ID = "rbxassetid://2506281703";
+
+/**
+ * JumpHeight that produces an apex matching the old HACHI_JUMP_VELOCITY impulse.
+ * Formula: V^2 / (2 * gravity). With V=106 and gravity=196.2: ~28.6 studs.
+ */
+const HACHI_JUMP_HEIGHT = 106 ** 2 / (2 * Workspace.Gravity);
 
 /** Server-authoritative map of mounted players → their Hachi model. */
 const mountedPlayers = new Map<number, Model>();
 /** Active sit animation tracks for cleanup on unequip. */
 const sitTracks = new Map<number, AnimationTrack>();
 
-/** Check if a player is currently mounted on Hachi. */
+/** Check if a player is currently mounted on Hachi (validates model is still alive). */
 export function isPlayerMounted(player: Player): boolean {
-	return mountedPlayers.has(player.UserId);
+	const model = mountedPlayers.get(player.UserId);
+	if (!model) return false;
+	// Validate the model is still parented to the current character
+	if (!model.Parent || model.Parent !== player.Character) {
+		mountedPlayers.delete(player.UserId);
+		sitTracks.delete(player.UserId);
+		return false;
+	}
+	return true;
 }
 
 /** Get the Hachi model for a mounted player, or undefined. */
 export function getPlayerHachi(player: Player): Model | undefined {
+	if (!isPlayerMounted(player)) return undefined;
 	return mountedPlayers.get(player.UserId);
+}
+
+/**
+ * Force-clear any stale mounted state for a player.
+ * Call before equipping to handle respawn/transition scenarios.
+ */
+export function forceUnmount(player: Player): void {
+	const track = sitTracks.get(player.UserId);
+	if (track) {
+		track.Stop();
+		sitTracks.delete(player.UserId);
+	}
+	const model = mountedPlayers.get(player.UserId);
+	if (model && model.Parent) model.Destroy();
+	mountedPlayers.delete(player.UserId);
 }
 
 /**
  * Equip the Hachi costume on a player's character.
  *
- * 1. Strips physics objects (VehicleSeat, BodyVelocity, BodyGyro)
- * 2. Sets all parts Massless + non-collidable
- * 3. Creates a Weld from HRP to Hachi Body with sitting offset
- * 4. Sets Humanoid WalkSpeed/JumpHeight for Hachi movement
+ * 1. Force-clears any stale mount state
+ * 2. Strips physics objects (VehicleSeat, BodyVelocity, BodyGyro, ProximityPrompt)
+ * 3. Sets all parts Massless + non-collidable
+ * 4. Creates a Weld from HRP to Hachi Body with sitting offset
+ * 5. Plays sitting animation at Action4 priority
+ * 6. Sets Humanoid WalkSpeed/JumpHeight for Hachi movement
  */
 export function equipHachiCostume(
 	player: Player,
@@ -53,8 +85,8 @@ export function equipHachiCostume(
 		| undefined;
 	if (!humanoid || !hrp) return false;
 
-	// Already mounted: skip
-	if (mountedPlayers.has(player.UserId)) return false;
+	// Clear any stale mount state (respawn, lobby→minigame transition)
+	forceUnmount(player);
 
 	// Strip objects that are no longer needed
 	hachiModel.FindFirstChildWhichIsA("VehicleSeat")?.Destroy();
@@ -98,7 +130,7 @@ export function equipHachiCostume(
 	weld.Part0 = hrp;
 	weld.Part1 = body;
 	// C0 offset: move Hachi below HRP so character sits on top.
-	// Rotate 180° around Y so Hachi's forward matches the character's forward.
+	// Rotate 180 around Y so Hachi's forward matches the character's forward.
 	weld.C0 = new CFrame(0, -(bodyHalfHeight + hrp.Size.Y / 2), 0).mul(
 		CFrame.Angles(0, math.pi, 0),
 	);
@@ -119,12 +151,13 @@ export function equipHachiCostume(
 	track.Looped = true;
 	track.Play();
 	sitTracks.set(player.UserId, track);
-	sitAnim.Destroy(); // Animation instance no longer needed after loading
+	sitAnim.Destroy();
 
 	// Set Humanoid movement properties
+	humanoid.UseJumpPower = false;
 	const walkSpeed = HACHI_WALK_SPEEDS[evolutionLevel] ?? HACHI_WALK_SPEEDS[0];
 	humanoid.WalkSpeed = walkSpeed;
-	humanoid.JumpHeight = HACHI_JUMP_VELOCITY * 0.15; // Approximate: convert impulse to JumpHeight
+	humanoid.JumpHeight = HACHI_JUMP_HEIGHT;
 
 	// Track mounted state
 	mountedPlayers.set(player.UserId, hachiModel);
@@ -162,6 +195,7 @@ export function unequipHachiCostume(player: Player): boolean {
 		const humanoid = character.FindFirstChildOfClass("Humanoid");
 		if (humanoid) {
 			humanoid.WalkSpeed = DEFAULT_WALK_SPEED;
+			humanoid.UseJumpPower = false;
 			humanoid.JumpHeight = DEFAULT_JUMP_HEIGHT;
 			humanoid.AutoRotate = true;
 		}
@@ -177,9 +211,7 @@ export function unequipHachiCostume(player: Player): boolean {
 	return true;
 }
 
-/**
- * Update the Hachi walk speed for evolution level changes.
- */
+/** Update the Hachi walk speed for evolution level changes. */
 export function updateHachiWalkSpeed(
 	player: Player,
 	evolutionLevel: number,
@@ -194,6 +226,5 @@ export function updateHachiWalkSpeed(
 
 /** Clean up mounted state when a player leaves. */
 Players.PlayerRemoving.Connect((player) => {
-	sitTracks.delete(player.UserId);
-	mountedPlayers.delete(player.UserId);
+	forceUnmount(player);
 });

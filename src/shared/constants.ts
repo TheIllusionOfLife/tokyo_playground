@@ -393,6 +393,7 @@ export const HACHI_SLIDE_RAMP_PROXIMITY = 20; // studs — server-side ramp owne
 
 export const CAN_KICK_PORTAL_TAG = "CanKickPortal";
 export const SCRAMBLE_PORTAL_TAG = "ShibuyaScramblePortal";
+export const HACHI_COSTUME_NAME = "HachiCostume";
 export const HACHI_RIDE_TAG = "HachiRide";
 export const HACHI_RIDE_PORTAL_TAG = "HachiRidePortal";
 export const HACHI_ITEM_TAG = "HachiCollectible";
