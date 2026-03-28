@@ -7,6 +7,7 @@ import {
 } from "@rbxts/services";
 import { clientEvents } from "client/network";
 import {
+	HACHI_COSTUME_NAME,
 	SCRAMBLE_SLIDE_COOLDOWN,
 	SCRAMBLE_SLIDE_SPEED,
 	SE_SLIDE,
@@ -57,11 +58,14 @@ export class SlideController implements OnStart {
 		if (!hrp) return;
 
 		const humanoid = char.FindFirstChildOfClass("Humanoid");
+		// Detect Hachi costume (welded to character) or legacy VehicleSeat
+		const costumeModel = char.FindFirstChild(HACHI_COSTUME_NAME);
 		const seatPart = humanoid?.SeatPart;
-		const vehicleBody = seatPart?.Parent?.FindFirstChild("Body") as
-			| BasePart
-			| undefined;
-		const checkPos = vehicleBody ? vehicleBody.Position : hrp.Position;
+		const isOnHachi =
+			costumeModel !== undefined ||
+			(seatPart !== undefined &&
+				seatPart.Parent?.FindFirstChild("Body") !== undefined);
+		const checkPos = hrp.Position;
 
 		for (const ramp of this.slideRamps) {
 			if (!ramp.Parent) continue;
@@ -82,9 +86,7 @@ export class SlideController implements OnStart {
 			const usePlayerDir = ramp.GetAttribute("UsePlayerDirection");
 			let dir: Vector3;
 			if (typeIs(usePlayerDir, "boolean") && usePlayerDir) {
-				const vel = vehicleBody
-					? vehicleBody.AssemblyLinearVelocity
-					: hrp.AssemblyLinearVelocity;
+				const vel = hrp.AssemblyLinearVelocity;
 				const horizontal = new Vector3(vel.X, 0, vel.Z);
 				dir =
 					horizontal.Magnitude > 1
@@ -102,9 +104,8 @@ export class SlideController implements OnStart {
 					? rawSpeed
 					: SCRAMBLE_SLIDE_SPEED;
 
-			if (vehicleBody) {
-				// Server must apply impulse to vehicle (server owns Body physics).
-				// Client fires event; server zeros BodyVelocity.MaxForce then applies.
+			if (isOnHachi) {
+				// Server applies impulse for Hachi riders (server validates + PlatformStand).
 				clientEvents.requestHachiSlide.fire();
 			} else {
 				// Character physics are client-owned. Disable Humanoid ground

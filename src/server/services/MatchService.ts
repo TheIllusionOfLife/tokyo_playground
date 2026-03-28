@@ -24,6 +24,7 @@ import {
 	getHachiRoundOutcome,
 	type HachiRoundOutcome,
 } from "shared/utils/hachiOutcome";
+import { unequipHachiCostume } from "../utils/hachiCostume";
 import { GameStateService } from "./GameStateService";
 import { LobbyService } from "./LobbyService";
 import { MinigameService } from "./MinigameService";
@@ -214,6 +215,12 @@ export class MatchService implements OnStart {
 		this.playerCooldowns.clear();
 		this.currentMinigameId = minigameId;
 		this.lobbyService.setMatchActive(true);
+
+		// Force-unequip lobby Hachi costumes before match starts
+		// (prevents carrying boosted WalkSpeed/JumpHeight into non-Hachi minigames)
+		for (const player of Players.GetPlayers()) {
+			unequipHachiCostume(player);
+		}
 
 		const minigame = this.minigameService.create(minigameId, this.serverEvents);
 		if (!minigame) {

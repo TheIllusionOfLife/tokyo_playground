@@ -3,6 +3,7 @@ import {
 	CollectionService,
 	Players,
 	RunService,
+	ServerStorage,
 	Workspace,
 } from "@rbxts/services";
 import {
@@ -13,13 +14,10 @@ import {
 	HACHI_DEFAULT_SCALE,
 	HACHI_DOUBLE_JUMP_IMPULSE,
 	HACHI_EJECT_COOLDOWN,
-	HACHI_EJECT_SEAT_DISABLE_DURATION,
 	HACHI_JUMP_COOLDOWN,
-	HACHI_JUMP_VELOCITY,
 	HACHI_LOBBY_MIN_LEVEL,
 	HACHI_RIDE_PORTAL_TAG,
 	HACHI_RIDE_TAG,
-	HACHI_SLIDE_FORCE_RESTORE_DELAY,
 	HACHI_SLIDE_RAMP_PROXIMITY,
 	HACHI_WALL_RUN_MAX_DUR,
 	HACHI_WALL_RUN_RAYCAST,
@@ -36,6 +34,15 @@ import {
 import { GlobalEvents } from "shared/network";
 import { MinigameId } from "shared/types";
 import { animateHachi, HachiAnimState } from "../utils/animateHachi";
+import {
+	equipHachiCostume,
+	forceUnmount,
+	getPlayerHachi,
+	HACHI_SLIDE_DURATION,
+	isPlayerMounted,
+	unequipHachiCostume,
+	updateHachiWalkSpeed,
+} from "../utils/hachiCostume";
 
 import { PlayerDataService } from "./PlayerDataService";
 
@@ -59,12 +66,10 @@ export class LobbyService implements OnStart {
 
 	constructor(private readonly playerDataService: PlayerDataService) {}
 
-	/** Registered by MatchService to avoid circular DI. */
 	setOnStartRequested(cb: (minigameId: MinigameId) => void) {
 		this.onStartRequested = cb;
 	}
 
-	/** Called by MatchService when a match starts/ends to disable lobby-level handlers. */
 	setMatchActive(active: boolean) {
 		this.matchActive = active;
 	}
@@ -79,15 +84,11 @@ export class LobbyService implements OnStart {
 
 		Players.PlayerAdded.Connect((player) => {
 			player.CharacterAdded.Connect((character) => {
-				// Small delay to let character load
 				task.wait(0.5);
 				const humanoid = character.WaitForChild("Humanoid") as Humanoid;
 				humanoid.WalkSpeed = DEFAULT_WALK_SPEED;
 				humanoid.UseJumpPower = false;
 				humanoid.JumpHeight = DEFAULT_JUMP_HEIGHT;
-				// Half-size characters: set scale NumberValues
-				// BodyTypeScale and BodyProportionScale control body shape
-				// (R15 vs Rthro), not size. Only scale the 4 size values.
 				const scaleNames = [
 					"BodyHeightScale",
 					"BodyWidthScale",
@@ -114,7 +115,7 @@ export class LobbyService implements OnStart {
 			this.lobbyJumpPhase.delete(player.UserId);
 		});
 
-		// Cache slide ramps with live add/remove tracking
+		// Cache slide ramps
 		this.slideRamps = CollectionService.GetTagged(SLIDE_RAMP_TAG).filter(
 			(i): i is BasePart => i.IsA("BasePart"),
 		);
@@ -139,6 +140,7 @@ export class LobbyService implements OnStart {
 		this.setupLobbyHachiEject();
 		this.setupLobbyDoubleJump();
 		this.setupLobbyWallRun();
+		this.setupHachiToggle();
 	}
 
 	private setupRooftopTPs() {
@@ -192,36 +194,38 @@ export class LobbyService implements OnStart {
 		print(`[LobbyService] Set up ${portals.size()} Hachi Ride portals`);
 	}
 
+	/** Scale lobby Hachi models as visual props (no VehicleSeat setup needed). */
 	private setupHachiRide() {
 		for (const hachi of CollectionService.GetTagged(HACHI_RIDE_TAG)) {
 			const model = hachi as Model;
-			// Apply default scale to lobby Hachi (same as minigame Hachi)
 			if (model.IsA("Model")) model.ScaleTo(HACHI_DEFAULT_SCALE);
-
-			const seat = model.FindFirstChild("VehicleSeat") as
-				| VehicleSeat
-				| undefined;
-			if (!seat) continue;
-
-			// Disable VehicleSeat physics entirely. Client uses GetMoveVector()
-			// for input and applies velocity directly.
-			seat.MaxSpeed = 0;
-			seat.TurnSpeed = 0;
-
-			seat.GetPropertyChangedSignal("Occupant").Connect(() => {
-				const occupant = seat.Occupant;
-				if (!occupant) return;
-				const character = occupant.FindFirstAncestorOfClass("Model");
-				if (!character) return;
-				const player = Players.GetPlayerFromCharacter(character);
-				if (player) {
-					this.serverEvents.hintTextChanged.fire(
-						player,
-						"WASD / arrow keys to drive Hachi!",
-					);
-				}
-			});
 		}
+	}
+
+	/** HUD toggle: client requests costume equip/unequip. */
+	private setupHachiToggle() {
+		this.serverEvents.hachiToggleCostume.connect((player, equip) => {
+			if (this.matchActive) return;
+
+			if (equip) {
+				if (isPlayerMounted(player)) return; // already mounted
+				const template = ServerStorage.FindFirstChild("HachiTemplate") as
+					| Model
+					| undefined;
+				if (!template) return;
+				const clone = template.Clone();
+				const data = this.playerDataService.getPlayerData(player);
+				const evoLevel = math.max(
+					data?.maxHachiLevel ?? 0,
+					HACHI_LOBBY_MIN_LEVEL,
+				);
+				if (!equipHachiCostume(player, clone, evoLevel)) {
+					clone.Destroy();
+				}
+			} else {
+				unequipHachiCostume(player);
+			}
+		});
 	}
 
 	private setupPortals() {
@@ -267,7 +271,6 @@ export class LobbyService implements OnStart {
 
 	private setupHachiSlideHandler() {
 		this.serverEvents.requestHachiSlide.connect((player) => {
-			// Rate-limit first — prevents rapid-fire requests and MaxForce race.
 			const now = os.clock();
 			if (
 				now - (this.slideCooldowns.get(player.UserId) ?? 0) <
@@ -275,26 +278,20 @@ export class LobbyService implements OnStart {
 			)
 				return;
 
-			// Verify player is seated in their own Hachi clone.
+			// Verify player is mounted on Hachi
+			if (!isPlayerMounted(player)) return;
 			const character = player.Character;
 			if (!character) return;
-			const humanoid = character.FindFirstChildOfClass("Humanoid");
-			const seatPart = humanoid?.SeatPart;
-			if (!seatPart) return;
-			const hachiModel = seatPart.Parent;
-			if (!hachiModel) return;
-			const isMinigameHachi = hachiModel.Name === `Hachi_${player.UserId}`;
-			const isLobbyHachi = CollectionService.HasTag(hachiModel, HACHI_RIDE_TAG);
-			if (!isMinigameHachi && !isLobbyHachi) return;
-			const body = hachiModel.FindFirstChild("Body") as BasePart | undefined;
-			if (!body) return;
+			const hrp = character.FindFirstChild("HumanoidRootPart") as
+				| BasePart
+				| undefined;
+			if (!hrp) return;
 
-			// Verify the Hachi body is within range of a slide ramp using OBB
-			// closest-point (same math as client SlideController) so both sides agree.
+			// Verify within range of a slide ramp (OBB closest-point)
 			let nearestRamp: BasePart | undefined;
 			let nearestDist = HACHI_SLIDE_RAMP_PROXIMITY;
 			for (const ramp of this.slideRamps) {
-				const localPos = ramp.CFrame.PointToObjectSpace(body.Position);
+				const localPos = ramp.CFrame.PointToObjectSpace(hrp.Position);
 				const half = ramp.Size.mul(0.5);
 				const clamped = new Vector3(
 					math.clamp(localPos.X, -half.X, half.X),
@@ -302,20 +299,19 @@ export class LobbyService implements OnStart {
 					math.clamp(localPos.Z, -half.Z, half.Z),
 				);
 				const closestWorld = ramp.CFrame.PointToWorldSpace(clamped);
-				const dist = body.Position.sub(closestWorld).Magnitude;
+				const dist = hrp.Position.sub(closestWorld).Magnitude;
 				if (dist < nearestDist) {
 					nearestDist = dist;
 					nearestRamp = ramp;
 				}
 			}
-			if (!nearestRamp) return; // not near any ramp — reject spoofed request
+			if (!nearestRamp) return;
 
 			this.slideCooldowns.set(player.UserId, now);
 			const usePlayerDir = nearestRamp.GetAttribute("UsePlayerDirection");
 			let serverDir: Vector3;
 			if (typeIs(usePlayerDir, "boolean") && usePlayerDir) {
-				// Use player/Hachi's current horizontal velocity as boost direction
-				const vel = body.AssemblyLinearVelocity;
+				const vel = hrp.AssemblyLinearVelocity;
 				const horizontal = new Vector3(vel.X, 0, vel.Z);
 				serverDir =
 					horizontal.Magnitude > 1
@@ -332,40 +328,54 @@ export class LobbyService implements OnStart {
 					? rawSpeed
 					: SCRAMBLE_SLIDE_SPEED;
 
-			const bv = body.FindFirstChildOfClass("BodyVelocity");
-			if (bv) {
-				// Guard against in-flight restore overwriting origForce.
-				if (this.hachiSlideActive.has(player.UserId)) return;
-				this.hachiSlideActive.add(player.UserId);
-				const origForce = bv.MaxForce;
-				bv.MaxForce = Vector3.zero;
-				body.AssemblyLinearVelocity = serverDir.mul(speed);
-				task.delay(HACHI_SLIDE_FORCE_RESTORE_DELAY, () => {
-					if (bv.Parent) bv.MaxForce = origForce;
-					this.hachiSlideActive.delete(player.UserId);
-				});
-			} else {
-				body.AssemblyLinearVelocity = serverDir.mul(speed);
-			}
+			// Disable walk during slide impulse, apply velocity with PlatformStand guard
+			const humanoid = character.FindFirstChildOfClass("Humanoid");
+			if (!humanoid) return;
+			if (this.hachiSlideActive.has(player.UserId)) return;
+			this.hachiSlideActive.add(player.UserId);
+			humanoid.WalkSpeed = 0;
+			humanoid.PlatformStand = true;
+			hrp.AssemblyLinearVelocity = serverDir.mul(speed);
+			task.delay(HACHI_SLIDE_DURATION, () => {
+				this.hachiSlideActive.delete(player.UserId);
+				if (!humanoid.Parent) return;
+				humanoid.PlatformStand = false;
+				if (isPlayerMounted(player)) {
+					const data = this.playerDataService.getPlayerData(player);
+					const evoLevel = math.max(
+						data?.maxHachiLevel ?? 0,
+						HACHI_LOBBY_MIN_LEVEL,
+					);
+					updateHachiWalkSpeed(player, evoLevel);
+				} else {
+					humanoid.WalkSpeed = DEFAULT_WALK_SPEED;
+				}
+			});
 		});
 	}
 
+	/** Animate Hachi costume models on mounted players. */
 	private setupHachiAnimation() {
-		const lobbyHachis = CollectionService.GetTagged(HACHI_RIDE_TAG).filter(
-			(i): i is Model => i.IsA("Model"),
-		);
-		for (const hachi of lobbyHachis) {
-			this.hachiAnimStates.set(hachi, { animTime: 0, airborne: false });
-		}
 		RunService.Heartbeat.Connect((dt) => {
-			for (const [hachi, state] of this.hachiAnimStates) {
-				if (!hachi.Parent) {
-					this.hachiAnimStates.delete(hachi);
-					continue;
-				}
-				const body = hachi.FindFirstChild("Body") as BasePart | undefined;
+			// Animate all currently mounted players' Hachi costumes
+			for (const player of Players.GetPlayers()) {
+				const hachiModel = getPlayerHachi(player);
+				if (!hachiModel || !hachiModel.Parent) continue;
+				const body = hachiModel.FindFirstChild("Body") as BasePart | undefined;
 				if (!body) continue;
-				this.hachiAnimStates.set(hachi, animateHachi(body, dt, state));
+
+				let state = this.hachiAnimStates.get(hachiModel);
+				if (!state) {
+					state = { animTime: 0, airborne: false };
+				}
+				this.hachiAnimStates.set(hachiModel, animateHachi(body, dt, state));
+			}
+
+			// Clean up stale entries
+			for (const [model] of this.hachiAnimStates) {
+				if (!model.Parent) {
+					this.hachiAnimStates.delete(model);
+				}
 			}
 		});
 	}
@@ -373,21 +383,7 @@ export class LobbyService implements OnStart {
 	private setupLobbyHachiJump() {
 		this.serverEvents.hachiJump.connect((player) => {
 			if (this.matchActive) return;
-
-			const character = player.Character;
-			if (!character) return;
-			const humanoid = character.FindFirstChildOfClass("Humanoid");
-			const seatPart = humanoid?.SeatPart;
-			if (!seatPart) return;
-			const hachiModel = seatPart.Parent;
-			if (!hachiModel || !CollectionService.HasTag(hachiModel, HACHI_RIDE_TAG))
-				return;
-
-			// Verify player actually occupies this seat
-			const seat = hachiModel.FindFirstChildOfClass("VehicleSeat") as
-				| VehicleSeat
-				| undefined;
-			if (!seat || seat.Occupant !== humanoid) return;
+			if (!isPlayerMounted(player)) return;
 
 			const now = os.clock();
 			if (
@@ -397,34 +393,30 @@ export class LobbyService implements OnStart {
 				return;
 
 			this.hachiJumpCooldowns.set(player.UserId, now);
-			// Impulse is applied client-side (tryLocalJump) for instant feel.
-			// Server only tracks phase for double-jump gating.
+			// Jump impulse is applied client-side (native Humanoid jump).
+			// Server tracks phase for double-jump gating.
 			const data = this.playerDataService.getPlayerData(player);
 			const maxLevel = math.max(
 				data?.maxHachiLevel ?? 0,
 				HACHI_LOBBY_MIN_LEVEL,
 			);
-			this.lobbyJumpPhase.set(
-				player.UserId,
-				maxLevel >= 2 ? 1 : 2, // 1 = double available, 2 = used
-			);
+			this.lobbyJumpPhase.set(player.UserId, maxLevel >= 2 ? 1 : 2);
 
-			// Reset phase to 0 when Hachi lands (Y velocity settles)
+			// Reset phase when landed (HRP Y velocity settles)
 			task.delay(0.3, () => {
-				const checkBody = hachiModel.FindFirstChild("Body") as
+				const hrp = player.Character?.FindFirstChild("HumanoidRootPart") as
 					| BasePart
 					| undefined;
-				if (!checkBody) return;
+				if (!hrp) return;
 				let checks = 0;
 				const landConn = RunService.Heartbeat.Connect(() => {
 					checks++;
 					if (checks > 300) {
-						// 5s safety timeout
 						landConn.Disconnect();
 						this.lobbyJumpPhase.set(player.UserId, 0);
 						return;
 					}
-					if (math.abs(checkBody.AssemblyLinearVelocity.Y) < 5) {
+					if (math.abs(hrp.AssemblyLinearVelocity.Y) < 5) {
 						landConn.Disconnect();
 						this.lobbyJumpPhase.set(player.UserId, 0);
 					}
@@ -433,40 +425,32 @@ export class LobbyService implements OnStart {
 		});
 	}
 
-	/** Lobby double-jump: requires maxHachiLevel >= 2, must be airborne. */
 	private setupLobbyDoubleJump() {
 		this.serverEvents.hachiLobbyDoubleJump.connect((player) => {
 			if (this.matchActive) return;
 
 			const phase = this.lobbyJumpPhase.get(player.UserId) ?? 0;
-			if (phase !== 1) return; // Must be in "double available" phase
+			if (phase !== 1) return;
 
 			const data = this.playerDataService.getPlayerData(player);
 			if (!data || math.max(data.maxHachiLevel, HACHI_LOBBY_MIN_LEVEL) < 2)
 				return;
 
-			const character = player.Character;
-			if (!character) return;
-			const humanoid = character.FindFirstChildOfClass("Humanoid");
-			const seatPart = humanoid?.SeatPart;
-			if (!seatPart) return;
-			const hachiModel = seatPart.Parent;
-			if (!hachiModel || !CollectionService.HasTag(hachiModel, HACHI_RIDE_TAG))
-				return;
+			if (!isPlayerMounted(player)) return;
+			const hrp = player.Character?.FindFirstChild("HumanoidRootPart") as
+				| BasePart
+				| undefined;
+			if (!hrp) return;
 
-			const body = hachiModel.FindFirstChild("Body") as BasePart | undefined;
-			if (!body) return;
+			// Must be airborne
+			if (math.abs(hrp.AssemblyLinearVelocity.Y) < 5) return;
 
-			// Must be airborne (Y velocity significant)
-			if (math.abs(body.AssemblyLinearVelocity.Y) < 5) return;
-
-			this.lobbyJumpPhase.set(player.UserId, 2); // Used
-			// Impulse is applied client-side (tryLocalJump handles double jump).
+			this.lobbyJumpPhase.set(player.UserId, 2);
+			// Impulse applied client-side for instant feel.
 			this.serverEvents.hachiDoubleJumpGranted.fire(player);
 		});
 	}
 
-	/** Lobby wall-run: requires maxHachiLevel >= 3, near wall (raycast). */
 	private setupLobbyWallRun() {
 		this.serverEvents.hachiLobbyWallRun.connect((player, wallNormal) => {
 			if (this.matchActive) return;
@@ -475,74 +459,77 @@ export class LobbyService implements OnStart {
 			if (!data || math.max(data.maxHachiLevel, HACHI_LOBBY_MIN_LEVEL) < 3)
 				return;
 
+			if (!isPlayerMounted(player)) return;
 			const character = player.Character;
 			if (!character) return;
+			const hrp = character.FindFirstChild("HumanoidRootPart") as
+				| BasePart
+				| undefined;
 			const humanoid = character.FindFirstChildOfClass("Humanoid");
-			const seatPart = humanoid?.SeatPart;
-			if (!seatPart) return;
-			const hachiModel = seatPart.Parent;
-			if (!hachiModel || !CollectionService.HasTag(hachiModel, HACHI_RIDE_TAG))
-				return;
+			if (!hrp || !humanoid) return;
 
-			const body = hachiModel.FindFirstChild("Body") as BasePart | undefined;
-			if (!body) return;
-
-			// Use client normal only for initial ray direction hint, then
-			// derive the authoritative wall normal from the raycast result.
 			const mag = wallNormal.Magnitude;
 			if (mag < 0.5 || mag > 1.5) return;
 			const hintDir = wallNormal.Unit;
 
-			// Server raycast with RaycastParams excluding the Hachi body
+			// Server raycast
+			const hachiModel = getPlayerHachi(player);
 			const rayParams = new RaycastParams();
 			rayParams.FilterType = Enum.RaycastFilterType.Exclude;
-			rayParams.FilterDescendantsInstances = [hachiModel as Instance];
+			const excludeList: Instance[] = [character];
+			if (hachiModel) excludeList.push(hachiModel);
+			rayParams.FilterDescendantsInstances = excludeList;
 			const rayDir = hintDir.mul(-HACHI_WALL_RUN_RAYCAST);
-			const rayResult = Workspace.Raycast(body.Position, rayDir, rayParams);
+			const rayResult = Workspace.Raycast(hrp.Position, rayDir, rayParams);
 			if (!rayResult) return;
 
-			// Use server-computed hit normal (not client normal)
 			const serverNormal = rayResult.Normal;
 			const crossResult = serverNormal.Cross(new Vector3(0, 1, 0));
-			if (crossResult.Magnitude < 0.1) return; // near-vertical surface, reject
-			const lateralDir = crossResult.Unit;
-			const bv = body.FindFirstChildOfClass("BodyVelocity");
-			if (bv) {
-				// Fix #5: guard against concurrent wall-runs with active flag
-				if (this.hachiSlideActive.has(player.UserId)) return;
-				this.hachiSlideActive.add(player.UserId);
-				const origForce = bv.MaxForce;
-				bv.MaxForce = Vector3.zero;
-				body.AssemblyLinearVelocity = lateralDir.mul(HACHI_WALL_RUN_SPEED);
-				this.serverEvents.hachiWallRunStart.fire(player, serverNormal);
+			if (crossResult.Magnitude < 0.1) return;
+			let lateralDir = crossResult.Unit;
 
-				task.delay(HACHI_WALL_RUN_MAX_DUR, () => {
-					if (bv.Parent) bv.MaxForce = origForce;
-					this.hachiSlideActive.delete(player.UserId);
-					this.serverEvents.hachiWallRunStop.fire(player);
-				});
+			// Flip direction if it opposes the player's horizontal velocity
+			const vel = hrp.AssemblyLinearVelocity;
+			const horizontal = new Vector3(vel.X, 0, vel.Z);
+			if (horizontal.Magnitude > 1 && lateralDir.Dot(horizontal.Unit) < 0) {
+				lateralDir = lateralDir.mul(-1);
 			}
+
+			// Guard against concurrent wall-runs
+			if (this.hachiSlideActive.has(player.UserId)) return;
+			this.hachiSlideActive.add(player.UserId);
+
+			// Lock movement during wall run with PlatformStand guard
+			humanoid.WalkSpeed = 0;
+			humanoid.AutoRotate = false;
+			humanoid.PlatformStand = true;
+			hrp.AssemblyLinearVelocity = lateralDir.mul(HACHI_WALL_RUN_SPEED);
+			this.serverEvents.hachiWallRunStart.fire(player, serverNormal);
+
+			task.delay(HACHI_WALL_RUN_MAX_DUR, () => {
+				this.hachiSlideActive.delete(player.UserId);
+				if (!humanoid.Parent) return;
+				humanoid.PlatformStand = false;
+				humanoid.AutoRotate = true;
+				if (isPlayerMounted(player)) {
+					const data = this.playerDataService.getPlayerData(player);
+					const evoLevel = math.max(
+						data?.maxHachiLevel ?? 0,
+						HACHI_LOBBY_MIN_LEVEL,
+					);
+					updateHachiWalkSpeed(player, evoLevel);
+				} else {
+					humanoid.WalkSpeed = DEFAULT_WALK_SPEED;
+				}
+				this.serverEvents.hachiWallRunStop.fire(player);
+			});
 		});
 	}
 
 	private setupLobbyHachiEject() {
 		this.serverEvents.hachiEject.connect((player) => {
 			if (this.matchActive) return;
-
-			const character = player.Character;
-			if (!character) return;
-			const humanoid = character.FindFirstChildOfClass("Humanoid");
-			const seatPart = humanoid?.SeatPart;
-			if (!seatPart) return;
-			const hachiModel = seatPart.Parent;
-			if (!hachiModel || !CollectionService.HasTag(hachiModel, HACHI_RIDE_TAG))
-				return;
-
-			// Verify player actually occupies this seat
-			const seat = hachiModel.FindFirstChildOfClass("VehicleSeat") as
-				| VehicleSeat
-				| undefined;
-			if (!seat || seat.Occupant !== humanoid) return;
+			if (!isPlayerMounted(player)) return;
 
 			const now = os.clock();
 			if (
@@ -552,10 +539,7 @@ export class LobbyService implements OnStart {
 				return;
 			this.hachiEjectCooldowns.set(player.UserId, now);
 
-			seat.Disabled = true;
-			task.delay(HACHI_EJECT_SEAT_DISABLE_DURATION, () => {
-				if (seat.Parent) seat.Disabled = false;
-			});
+			unequipHachiCostume(player);
 		});
 	}
 
@@ -569,7 +553,6 @@ export class LobbyService implements OnStart {
 			character.PivotTo(spawn.CFrame.add(new Vector3(0, 3, 0)));
 			print(`[LobbyService] ${player.Name} teleported to lobby`);
 		} else {
-			// Fallback: use first SpawnLocation in Workspace
 			const spawn = Workspace.FindFirstChildWhichIsA("SpawnLocation");
 			if (spawn) {
 				character.PivotTo(spawn.CFrame.add(new Vector3(0, 3, 0)));

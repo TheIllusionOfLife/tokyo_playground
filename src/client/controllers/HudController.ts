@@ -151,6 +151,10 @@ export class HudController implements OnStart {
 			task.delay(3, () => gameStore.hideLevelUp());
 		});
 
+		clientEvents.hachiCostumeEquipped.connect((equipped) => {
+			gameStore.setHachiCostumed(equipped);
+		});
+
 		clientEvents.hachiItemCollected.connect((count) => {
 			gameStore.setHachiItemCount(count);
 		});

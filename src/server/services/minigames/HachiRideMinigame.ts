@@ -15,9 +15,7 @@ import {
 	HACHI_BONUS_ITEM_COUNT,
 	HACHI_BONUS_ITEM_VALUE,
 	HACHI_COLLECTION_RADIUS,
-	HACHI_DEFAULT_SCALE,
 	HACHI_EJECT_COOLDOWN,
-	HACHI_EJECT_SEAT_DISABLE_DURATION,
 	HACHI_EVOLUTION_THRESHOLDS,
 	HACHI_FINAL_SPRINT_MULTIPLIER,
 	HACHI_FINAL_SPRINT_WINDOW,
@@ -31,7 +29,6 @@ import {
 	HACHI_KEY_ITEM_TAG,
 	HACHI_MAX_SPEED_TOLERANCE,
 	HACHI_ROUND_DURATION,
-	HACHI_SLIDE_FORCE_RESTORE_DELAY,
 	HACHI_SPAWN_TAG,
 	HACHI_STARTING_EVOLUTION,
 	HACHI_WALK_SPEEDS,
@@ -51,6 +48,14 @@ import {
 import { buildHachiRaceSnapshot } from "shared/utils/hachiRace";
 import { animateHachi, HachiAnimState } from "../../utils/animateHachi";
 import { animateItemCollect } from "../../utils/animateItemCollect";
+import {
+	equipHachiCostume,
+	forceUnmount,
+	HACHI_SLIDE_DURATION,
+	isPlayerMounted,
+	unequipHachiCostume,
+	updateHachiWalkSpeed,
+} from "../../utils/hachiCostume";
 import { IMinigame } from "./MinigameBase";
 
 type ServerEvents = ReturnType<typeof GlobalEvents.createServer>;
@@ -60,7 +65,7 @@ interface WallRunState {
 	duration: number;
 	normal: Vector3;
 	wallDir: Vector3;
-	origMaxForce: Vector3;
+	origWalkSpeed: number;
 }
 
 interface Hotspot {
@@ -107,7 +112,6 @@ export class HachiRideMinigame implements IMinigame {
 	private slideCooldowns = new Map<number, number>();
 	private roundStarted = false;
 	private respawnGrace = new Map<number, number>();
-	private seatOccupantConns: RBXScriptConnection[] = [];
 	private hotspots: Hotspot[] = [];
 	private activeHotspotIndex = 0;
 	private hotspotElapsed = 0;
@@ -245,81 +249,58 @@ export class HachiRideMinigame implements IMinigame {
 
 			const clone = template.Clone();
 			clone.Name = `Hachi_${player.UserId}`;
-			// Apply default scale (50% of template size).
-			// ScaleTo handles all parts, welds, attachments, and joints uniformly.
-			clone.ScaleTo(HACHI_DEFAULT_SCALE);
-			// MaxSpeed=0 and TurnSpeed=0: fully disable VehicleSeat physics.
-			// Client uses GetMoveVector() for input and applies velocity directly.
-			const cloneSeat = clone.FindFirstChildOfClass("VehicleSeat") as
-				| VehicleSeat
-				| undefined;
-			if (cloneSeat) {
-				cloneSeat.MaxSpeed = 0;
-				cloneSeat.TurnSpeed = 0;
-			}
-			clone.Parent = Workspace;
-			this.hachiModels.set(player.UserId, clone);
-			matchJanitor.Add(clone);
 
-			// Position near corresponding spawn
-			if (spawnParts.size() > 0) {
+			// Equip costume on player (welds to HRP, sets WalkSpeed/JumpHeight)
+			const evoLevel = HACHI_STARTING_EVOLUTION;
+			equipHachiCostume(player, clone, evoLevel);
+			this.hachiModels.set(player.UserId, clone);
+			matchJanitor.Add(() => {
+				unequipHachiCostume(player);
+			});
+
+			// Teleport to spawn position
+			if (spawnParts.size() > 0 && player.Character) {
 				const spawnPart = spawnParts[i % spawnParts.size()];
-				clone.PivotTo(new CFrame(spawnPart.Position.add(new Vector3(0, 3, 0))));
+				player.Character.PivotTo(
+					new CFrame(spawnPart.Position.add(new Vector3(0, 3, 0))),
+				);
 			}
 		}
 
-		// Re-spawn mid-match deaths back to observation deck (not lobby)
+		// Re-spawn mid-match deaths: re-equip costume on new character
 		for (const player of players) {
 			const conn = player.CharacterAdded.Connect(() => {
 				if (!this.roundStarted) return;
 				this.respawnGrace.set(player.UserId, os.clock());
 				task.wait(0.5);
+				// Re-check after yield: round may have ended during the wait
+				if (!this.roundStarted) return;
+				if (!player.Character) return;
 				const spawnPart = spawnParts[0];
-				if (spawnPart && player.Character) {
+				if (spawnPart) {
 					player.Character.PivotTo(
 						new CFrame(spawnPart.Position.add(new Vector3(0, 3, 0))),
 					);
 					this.resetAnticheatBaseline(player.UserId, spawnPart.Position);
 				}
+				// Clear stale mount state and re-equip Hachi costume
+				if (!template) return;
+				forceUnmount(player);
+				const state = this.playerStates.get(player.UserId);
+				const clone = template.Clone();
+				clone.Name = `Hachi_${player.UserId}`;
+				if (
+					equipHachiCostume(
+						player,
+						clone,
+						state?.evolutionLevel ?? HACHI_STARTING_EVOLUTION,
+					)
+				) {
+					this.hachiModels.set(player.UserId, clone);
+				} else {
+					clone.Destroy();
+				}
 			});
-			matchJanitor.Add(conn);
-		}
-
-		// Force-reseat: if a player pops out of their Hachi during the round,
-		// snap them back in using the authoritative Seat:Sit() API.
-		for (const [userId, hachiModel] of this.hachiModels) {
-			const seat = hachiModel.FindFirstChildOfClass("VehicleSeat") as
-				| VehicleSeat
-				| undefined;
-			if (!seat) continue;
-			const conn = seat.GetPropertyChangedSignal("Occupant").Connect(() => {
-				if (seat.Occupant !== undefined) return; // Someone sat down, ignore
-				if (!this.roundStarted) return;
-				const player = this.playerObjects.get(userId);
-				if (!player) return;
-				// Skip during respawn grace period to avoid fighting the spawn system
-				const graceTime = this.respawnGrace.get(userId) ?? 0;
-				if (os.clock() - graceTime < 1.5) return;
-				// Wait 1 frame to avoid single-frame physics glitches
-				task.defer(() => {
-					if (!this.roundStarted) return;
-					if (seat.Occupant !== undefined) return; // Re-seated naturally
-					const humanoid = player.Character?.FindFirstChildOfClass("Humanoid");
-					if (!humanoid) {
-						warn(
-							`[HachiRide] Force-reseat skipped for userId ${userId}: humanoid nil (roundStarted=${this.roundStarted}, graceTime=${this.respawnGrace.get(userId) ?? 0})`,
-						);
-						return;
-					}
-					const hrp = player.Character?.FindFirstChild("HumanoidRootPart") as
-						| BasePart
-						| undefined;
-					if (hrp) hrp.CFrame = seat.CFrame.add(new Vector3(0, 2, 0));
-					seat.Sit(humanoid);
-					humanoid.Jump = false;
-				});
-			});
-			this.seatOccupantConns.push(conn);
 			matchJanitor.Add(conn);
 		}
 
@@ -347,15 +328,7 @@ export class HachiRideMinigame implements IMinigame {
 			this.serverEvents.requestHachiSlide.connect((player) => {
 				if (!this.roundStarted) return;
 				if (!this.playerStates.has(player.UserId)) return;
-
-				// Verify player is seated in their own Hachi
-				const hachiModel = this.hachiModels.get(player.UserId);
-				if (!hachiModel) return;
-				const humanoid = player.Character?.FindFirstChildOfClass("Humanoid");
-				const seat = hachiModel.FindFirstChildOfClass("VehicleSeat") as
-					| VehicleSeat
-					| undefined;
-				if (!seat || !humanoid || seat.Occupant !== humanoid) return;
+				if (!isPlayerMounted(player)) return;
 
 				const now = os.clock();
 				if (
@@ -365,7 +338,7 @@ export class HachiRideMinigame implements IMinigame {
 					return;
 				this.slideCooldowns.set(player.UserId, now);
 				this.hachiSlideActive.add(player.UserId);
-				task.delay(HACHI_SLIDE_FORCE_RESTORE_DELAY, () => {
+				task.delay(HACHI_SLIDE_DURATION, () => {
 					this.hachiSlideActive.delete(player.UserId);
 				});
 			}),
@@ -511,38 +484,23 @@ export class HachiRideMinigame implements IMinigame {
 	}
 
 	cleanup() {
-		// Stop the round FIRST so the force-reseat Occupant.Changed handler
-		// becomes a no-op and won't fight the eject loop below.
 		this.roundStarted = false;
 		HachiRideMinigame.activeInstance = undefined;
 
-		// Disconnect seat occupant watchers before ejecting
-		for (const conn of this.seatOccupantConns) {
-			conn.Disconnect();
+		// Stop wall-runs FIRST (restores WalkSpeed to Hachi speed)
+		for (const [userId] of this.wallRunStates) {
+			const player = this.playerObjects.get(userId);
+			if (player) this.stopWallRun(userId, player);
 		}
-		this.seatOccupantConns = [];
 
-		// Eject players from VehicleSeats before janitor destroys Hachi models.
-		// Use seat.Disabled=true (server-authoritative) instead of Jump=true,
-		// because the client unconditionally suppresses Jump while seated.
-		for (const [, model] of this.hachiModels) {
-			const seat = model.FindFirstChildOfClass("VehicleSeat") as
-				| VehicleSeat
-				| undefined;
-			if (seat?.Occupant) {
-				seat.Disabled = true;
-			}
+		// Then unequip costumes (restores WalkSpeed to default)
+		for (const [, player] of this.playerObjects) {
+			unequipHachiCostume(player);
 		}
 
 		// Re-show key items
 		for (const item of this.keyItems) {
 			item.Transparency = 0;
-		}
-
-		// Restore BodyVelocity for any Hachi still wall-running at round end
-		for (const [userId] of this.wallRunStates) {
-			const player = this.playerObjects.get(userId);
-			if (player) this.stopWallRun(userId, player);
 		}
 
 		this.playerStates.clear();
@@ -602,16 +560,7 @@ export class HachiRideMinigame implements IMinigame {
 	}
 
 	private handleJumpRequest(player: Player) {
-		const hachiModel = this.hachiModels.get(player.UserId);
-		if (!hachiModel) return;
-
-		// Verify player is actually seated in their Hachi before applying any effect.
-		const seat = hachiModel.FindFirstChildOfClass("VehicleSeat") as
-			| VehicleSeat
-			| undefined;
-		if (!seat) return;
-		const humanoid = player.Character?.FindFirstChildOfClass("Humanoid");
-		if (!humanoid || seat.Occupant !== humanoid) return;
+		if (!isPlayerMounted(player)) return;
 
 		const now = os.clock();
 		if (
@@ -620,19 +569,13 @@ export class HachiRideMinigame implements IMinigame {
 		)
 			return;
 
-		const body = hachiModel.FindFirstChild("Body") as BasePart | undefined;
-		if (!body) return;
-
 		// Jump phase: 0 = grounded/ready, 1 = jumped once (double available), 2 = fully used
 		const phase = this.jumpPhase.get(player.UserId) ?? 0;
 
 		if (phase === 0) {
-			// Ground check is done client-side (tryLocalJump). Server skips
-			// the Y-velocity guard because the client applies impulse before
-			// firing this event, so body.Y may already be high.
+			// First jump: impulse applied client-side (native Humanoid jump).
+			// Server tracks phase for double-jump gating.
 			this.jumpCooldowns.set(player.UserId, now);
-			// Impulse is applied client-side for instant feel (client has
-			// network ownership of the Hachi while seated in VehicleSeat).
 			const state = this.playerStates.get(player.UserId);
 			this.jumpPhase.set(
 				player.UserId,
@@ -647,20 +590,22 @@ export class HachiRideMinigame implements IMinigame {
 		// phase 2: reject
 	}
 
-	/** Reset jump phase when Hachi has landed (Y velocity settled after jump). */
+	/** Reset jump phase when player has landed (Y velocity settled after jump). */
 	private resetLandedJumps() {
 		const now = os.clock();
 		for (const [userId] of this.playerStates) {
 			const phase = this.jumpPhase.get(userId) ?? 0;
-			if (phase === 0) continue; // Already ready
+			if (phase === 0) continue;
 			const wallState = this.wallRunStates.get(userId);
-			if (wallState?.running) continue; // Don't reset during wall-run
+			if (wallState?.running) continue;
 			const jumpT = this.jumpTime.get(userId) ?? 0;
-			if (now - jumpT < 1.0) continue; // Too soon after jump (avoid apex false positive)
-			const hachiModel = this.hachiModels.get(userId);
-			const body = hachiModel?.FindFirstChild("Body") as BasePart | undefined;
-			if (!body) continue;
-			if (math.abs(body.AssemblyLinearVelocity.Y) < 5) {
+			if (now - jumpT < 1.0) continue;
+			const player = this.playerObjects.get(userId);
+			const hrp = player?.Character?.FindFirstChild("HumanoidRootPart") as
+				| BasePart
+				| undefined;
+			if (!hrp) continue;
+			if (math.abs(hrp.AssemblyLinearVelocity.Y) < 5) {
 				this.jumpPhase.set(userId, 0);
 			}
 		}
@@ -669,17 +614,7 @@ export class HachiRideMinigame implements IMinigame {
 	private handleEjectRequest(player: Player) {
 		// Block voluntary eject during the round
 		if (this.roundStarted) return;
-
-		const hachiModel = this.hachiModels.get(player.UserId);
-		if (!hachiModel) return;
-
-		// Verify player is actually seated in their Hachi before applying any effect.
-		const seat = hachiModel.FindFirstChildOfClass("VehicleSeat") as
-			| VehicleSeat
-			| undefined;
-		if (!seat) return;
-		const humanoid = player.Character?.FindFirstChildOfClass("Humanoid");
-		if (!humanoid || seat.Occupant !== humanoid) return;
+		if (!isPlayerMounted(player)) return;
 
 		const now = os.clock();
 		if (
@@ -689,10 +624,7 @@ export class HachiRideMinigame implements IMinigame {
 			return;
 		this.ejectCooldowns.set(player.UserId, now);
 
-		seat.Disabled = true;
-		task.delay(HACHI_EJECT_SEAT_DISABLE_DURATION, () => {
-			if (seat.Parent) seat.Disabled = false;
-		});
+		unequipHachiCostume(player);
 	}
 
 	private checkItemCollection() {
@@ -704,20 +636,9 @@ export class HachiRideMinigame implements IMinigame {
 				| undefined;
 			if (!hrp) continue;
 
-			// Use Hachi body position when seated — HRP sits ~5-8 studs above ground.
-			// Use this.hachiModels to verify ownership (not tags — another player's
-			// tagged Hachi would incorrectly shift collection position).
-			const ownHachi = this.hachiModels.get(userId);
-			const humanoid = player.Character.FindFirstChildOfClass("Humanoid");
-			const seatPart = humanoid?.SeatPart;
-			const isSeatedInOwnHachi =
-				ownHachi !== undefined &&
-				seatPart !== undefined &&
-				seatPart.IsDescendantOf(ownHachi);
-			const hachiBody = isSeatedInOwnHachi
-				? (ownHachi.FindFirstChild("Body") as BasePart | undefined)
-				: undefined;
-			const pos = hachiBody?.Position ?? hrp.Position;
+			// HRP and Hachi body share the same assembly (welded).
+			// Use HRP position directly for collection checks.
+			const pos = hrp.Position;
 
 			// Check regular collectible items
 			const toRemove: BasePart[] = [];
@@ -811,6 +732,8 @@ export class HachiRideMinigame implements IMinigame {
 		if (newLevel <= state.evolutionLevel) return;
 		state.evolutionLevel = newLevel;
 
+		// Update Humanoid WalkSpeed for new evolution level
+		updateHachiWalkSpeed(player, newLevel);
 		this.serverEvents.hachiEvolved.fire(player, newLevel);
 
 		// Level 1: grant double jump
@@ -1062,11 +985,13 @@ export class HachiRideMinigame implements IMinigame {
 		wallState.running = false;
 		this.serverEvents.hachiWallRunStop.fire(player);
 
-		// Restore BodyVelocity MaxForce
-		const hachiModel = this.hachiModels.get(userId);
-		const body = hachiModel?.FindFirstChild("Body") as BasePart | undefined;
-		const bv = body?.FindFirstChildOfClass("BodyVelocity");
-		if (bv) bv.MaxForce = wallState.origMaxForce;
+		// Restore Humanoid movement
+		const humanoid = player.Character?.FindFirstChildOfClass("Humanoid");
+		if (humanoid) {
+			humanoid.PlatformStand = false;
+			humanoid.AutoRotate = true;
+			humanoid.WalkSpeed = wallState.origWalkSpeed;
+		}
 	}
 
 	private detectWallRun(dt: number) {
@@ -1074,23 +999,19 @@ export class HachiRideMinigame implements IMinigame {
 			const player = this.playerObjects.get(userId);
 			if (!player?.Character) continue;
 
-			// Wall-run is a Hachi ability: must be seated
-			const hachiModel = this.hachiModels.get(userId);
-			if (!hachiModel) continue;
-			const body = hachiModel.FindFirstChild("Body") as BasePart | undefined;
-			if (!body) continue;
-			const humanoid = player.Character.FindFirstChildOfClass("Humanoid");
-			if (!humanoid) continue;
-			const seat = hachiModel.FindFirstChildOfClass("VehicleSeat") as
-				| VehicleSeat
-				| undefined;
-			if (!seat || seat.Occupant !== humanoid) {
+			// Wall-run requires mounted Hachi costume
+			if (!isPlayerMounted(player)) {
 				this.stopWallRun(userId, player);
 				continue;
 			}
+			const humanoid = player.Character.FindFirstChildOfClass("Humanoid");
+			const hrp = player.Character.FindFirstChild("HumanoidRootPart") as
+				| BasePart
+				| undefined;
+			if (!humanoid || !hrp) continue;
 
-			// Grounded detection via Y velocity (avoids model geometry issues)
-			const isGrounded = math.abs(body.AssemblyLinearVelocity.Y) < 5;
+			// Grounded detection via Y velocity
+			const isGrounded = math.abs(hrp.AssemblyLinearVelocity.Y) < 5;
 
 			if (isGrounded) {
 				this.doubleJumpUsed.set(userId, false);
@@ -1101,23 +1022,24 @@ export class HachiRideMinigame implements IMinigame {
 			// Wall-run requires evolution >= 2
 			if (state.evolutionLevel < 2) continue;
 
+			const hachiModel = this.hachiModels.get(userId);
 			const rayParams = new RaycastParams();
 			rayParams.FilterDescendantsInstances = [
-				hachiModel,
 				...(player.Character ? [player.Character] : []),
+				...(hachiModel ? [hachiModel] : []),
 			];
 			rayParams.FilterType = Enum.RaycastFilterType.Exclude;
 
-			// Cast left and right from Hachi body
-			const left = body.CFrame.RightVector.mul(-HACHI_WALL_RUN_RAYCAST);
-			const right = body.CFrame.RightVector.mul(HACHI_WALL_RUN_RAYCAST);
-			const leftResult = Workspace.Raycast(body.Position, left, rayParams);
-			const rightResult = Workspace.Raycast(body.Position, right, rayParams);
+			// Cast left and right from HRP
+			const left = hrp.CFrame.RightVector.mul(-HACHI_WALL_RUN_RAYCAST);
+			const right = hrp.CFrame.RightVector.mul(HACHI_WALL_RUN_RAYCAST);
+			const leftResult = Workspace.Raycast(hrp.Position, left, rayParams);
+			const rightResult = Workspace.Raycast(hrp.Position, right, rayParams);
 
 			let wallResult: RaycastResult | undefined;
 			if (leftResult && rightResult) {
-				const leftDist = body.Position.sub(leftResult.Position).Magnitude;
-				const rightDist = body.Position.sub(rightResult.Position).Magnitude;
+				const leftDist = hrp.Position.sub(leftResult.Position).Magnitude;
+				const rightDist = hrp.Position.sub(rightResult.Position).Magnitude;
 				wallResult = leftDist <= rightDist ? leftResult : rightResult;
 			} else {
 				wallResult = leftResult ?? rightResult;
@@ -1127,10 +1049,9 @@ export class HachiRideMinigame implements IMinigame {
 				let wallState = this.wallRunStates.get(userId);
 
 				if (!wallState || !wallState.running) {
-					// Compute wall-run direction from Hachi's actual horizontal velocity
-					// (more reliable than LookVector which may not match movement direction)
+					// Compute wall-run direction from player's horizontal velocity
 					const eps = 1e-4;
-					const vel = body.AssemblyLinearVelocity;
+					const vel = hrp.AssemblyLinearVelocity;
 					const xzRaw = new Vector3(vel.X, 0, vel.Z);
 					const forward =
 						xzRaw.Magnitude > eps ? xzRaw.Unit : new Vector3(0, 0, 1);
@@ -1152,17 +1073,23 @@ export class HachiRideMinigame implements IMinigame {
 								: Vector3.yAxis.Cross(wallResult.Normal).Unit;
 					}
 
-					// Zero BodyVelocity so it doesn't fight wall-run
-					const bv = body.FindFirstChildOfClass("BodyVelocity");
-					const origForce = bv?.MaxForce ?? Vector3.zero;
-					if (bv) bv.MaxForce = Vector3.zero;
+					// Flip direction if it opposes player's travel
+					if (xzRaw.Magnitude > 1 && wallDir.Dot(xzRaw.Unit) < 0) {
+						wallDir = wallDir.mul(-1);
+					}
+
+					// Lock Humanoid movement during wall run with PlatformStand
+					const origWalkSpeed = humanoid.WalkSpeed;
+					humanoid.WalkSpeed = 0;
+					humanoid.AutoRotate = false;
+					humanoid.PlatformStand = true;
 
 					wallState = {
 						running: true,
 						duration: 0,
 						normal: wallResult.Normal,
 						wallDir,
-						origMaxForce: origForce,
+						origWalkSpeed,
 					};
 					this.wallRunStates.set(userId, wallState);
 					this.serverEvents.hachiWallRunStart.fire(player, wallResult.Normal);
@@ -1172,10 +1099,10 @@ export class HachiRideMinigame implements IMinigame {
 				if (wallState.duration >= HACHI_WALL_RUN_MAX_DUR) {
 					this.stopWallRun(userId, player);
 				} else {
-					// Apply wall-run velocity to Hachi body each tick
-					body.AssemblyLinearVelocity = new Vector3(
+					// Apply wall-run velocity to HRP each tick
+					hrp.AssemblyLinearVelocity = new Vector3(
 						wallState.wallDir.X * HACHI_WALL_RUN_SPEED,
-						body.AssemblyLinearVelocity.Y,
+						hrp.AssemblyLinearVelocity.Y,
 						wallState.wallDir.Z * HACHI_WALL_RUN_SPEED,
 					);
 				}
