@@ -18,3 +18,4 @@ Roblox Studio Version History + git tags:
 | v0.10.0 | TBD | 2026-03-20 | Visual enhancements: coin-spin item animation, 3 stamp hats + 2 trails, torii portals, booster chevrons, collectible glow rings, building PCD collision |
 | v0.11.0 | TBD | 2026-03-22 | HUD cleanup + Hachi controls: compact HUD, GetMoveVector movement, BodyGyro rotation, 50% Hachi scale, start Lv.2, halved thresholds, no auto-start |
 | v0.12.0 | TBD | 2026-03-28 | Real Shibuya city with textures, half-size characters, visual effects, Fabric material |
+| v0.13.0 | TBD | 2026-03-28 | Hachi costume system, HUD toggle, native Humanoid movement, UI cleanup |
