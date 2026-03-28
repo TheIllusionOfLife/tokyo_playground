@@ -52,6 +52,14 @@ export class HachiRideController implements OnStart {
 	// Client-side jump phase tracking (mirrors server logic)
 	// 0 = grounded/ready, 1 = jumped once (double available), 2 = fully used
 	private jumpPhase = 0;
+
+	/** Active Hachi evolution level (minigame level or lobby min). */
+	private getActiveEvoLevel(): number {
+		const state = gameStore.getState();
+		return state.activeMinigameId === MinigameId.HachiRide
+			? state.hachiEvolutionLevel
+			: HACHI_LOBBY_MIN_LEVEL;
+	}
 	private lastJumpTime = 0;
 	// Wall-run state from server events. Used to guard checkLanded()
 	// so jump phase isn't reset while wall-running (Y velocity can settle < 5).
@@ -251,12 +259,7 @@ export class HachiRideController implements OnStart {
 				moveDir = raw.Magnitude > 0.01 ? raw.Unit : Vector3.zero;
 			}
 
-			// Use evolution speed during minigame, base speed otherwise
-			const state = gameStore.getState();
-			const evoLevel =
-				state.activeMinigameId === MinigameId.HachiRide
-					? state.hachiEvolutionLevel
-					: HACHI_LOBBY_MIN_LEVEL;
+			const evoLevel = this.getActiveEvoLevel();
 			const speed =
 				HACHI_WALK_SPEEDS[math.min(evoLevel, HACHI_WALK_SPEEDS.size() - 1)];
 
@@ -414,12 +417,7 @@ export class HachiRideController implements OnStart {
 			if (math.abs(body.AssemblyLinearVelocity.Y) > 15) return false;
 			this.lastJumpTime = now;
 			this.applyImpulse(body, HACHI_JUMP_VELOCITY);
-			const state2 = gameStore.getState();
-			const evoLevel2 =
-				state2.activeMinigameId === MinigameId.HachiRide
-					? state2.hachiEvolutionLevel
-					: HACHI_LOBBY_MIN_LEVEL;
-			this.jumpPhase = evoLevel2 >= 1 ? 1 : 2;
+			this.jumpPhase = this.getActiveEvoLevel() >= 1 ? 1 : 2;
 			return true;
 		} else if (this.jumpPhase === 1) {
 			// Double jump (midair, evolution >= 1)

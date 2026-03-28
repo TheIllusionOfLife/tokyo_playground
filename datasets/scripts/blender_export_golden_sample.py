@@ -20,7 +20,7 @@ SCALE = 1.0  # 1.0 for passthrough pipeline (no post-import Size correction need
 
 os.makedirs(EXPORT_DIR, exist_ok=True)
 
-meshes = [obj for obj in bpy.data.objects if obj.type == 'MESH']
+meshes = [obj for obj in bpy.context.scene.objects if obj.type == 'MESH']
 if not meshes:
     print("ERROR: No meshes found")
     raise SystemExit(1)
