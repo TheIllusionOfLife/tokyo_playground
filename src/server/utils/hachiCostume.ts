@@ -158,7 +158,8 @@ export function equipHachiCostume(
 	sitTracks.set(player.UserId, track);
 	sitAnim.Destroy();
 
-	// Set Humanoid movement properties
+	// Set Humanoid movement properties (reset PlatformStand in case of stale state)
+	humanoid.PlatformStand = false;
 	humanoid.UseJumpPower = false;
 	const walkSpeed = HACHI_WALK_SPEEDS[evolutionLevel] ?? HACHI_WALK_SPEEDS[0];
 	humanoid.WalkSpeed = walkSpeed;
@@ -199,6 +200,7 @@ export function unequipHachiCostume(player: Player): boolean {
 	if (character) {
 		const humanoid = character.FindFirstChildOfClass("Humanoid");
 		if (humanoid) {
+			humanoid.PlatformStand = false;
 			humanoid.WalkSpeed = DEFAULT_WALK_SPEED;
 			humanoid.UseJumpPower = false;
 			humanoid.JumpHeight = DEFAULT_JUMP_HEIGHT;
