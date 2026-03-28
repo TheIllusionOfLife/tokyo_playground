@@ -12,9 +12,6 @@ import {
 	SCRAMBLE_CROWD_WAVE_INTERVAL,
 	SCRAMBLE_MAX_ACTIVE_SPIRIT_WAVES,
 	SCRAMBLE_ONI_COUNT_DURATION,
-	SCRAMBLE_ROOFTOP_TP_COOLDOWN,
-	SCRAMBLE_ROOFTOP_TP_DEST,
-	SCRAMBLE_ROOFTOP_TP_TAG,
 	SCRAMBLE_SLIDE_COOLDOWN,
 	SCRAMBLE_SLIDE_SPEED,
 	SCRAMBLE_SPIRIT_WAVE_DURATION,
@@ -55,7 +52,6 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 	private crowdLoopRunning = false;
 	private activeCrowdNPCs: Part[] = [];
 	private slideCooldowns = new Map<number, number>();
-	private rooftopTpCooldowns = new Map<number, number>();
 	private lastHintText = "";
 	private spiritCharges = new Map<number, number>();
 	private activeSpiritWaveCount = 0;
@@ -74,6 +70,7 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 				isTagged: false,
 				catchCount: 0,
 				rescueCount: 0,
+				carWavesSurvived: 0,
 			});
 			this.playerObjects.set(player.UserId, player);
 			this.spiritCharges.set(player.UserId, 0);
@@ -93,21 +90,6 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 				ramp.Touched.Connect((touching) =>
 					this.handleSlideTouch(touching, ramp),
 				),
-			);
-		}
-
-		// Connect rooftop teleport pad handlers
-		const tpPads = CollectionService.GetTagged(SCRAMBLE_ROOFTOP_TP_TAG).filter(
-			(i): i is BasePart => i.IsA("BasePart"),
-		);
-		if (tpPads.size() === 0) {
-			warn(
-				"[ShibuyaScramble] Missing Studio asset: ShibuyaRooftopTP — check map setup",
-			);
-		}
-		for (const pad of tpPads) {
-			matchJanitor.Add(
-				pad.Touched.Connect((touching) => this.handleRooftopTpTouch(touching)),
 			);
 		}
 
@@ -291,7 +273,6 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 		this.playerStates.delete(userId);
 		this.playerObjects.delete(userId);
 		this.slideCooldowns.delete(userId);
-		this.rooftopTpCooldowns.delete(userId);
 		this.spiritCharges.delete(userId);
 	}
 
@@ -326,7 +307,6 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 		this.playerStates.clear();
 		this.playerObjects.clear();
 		this.slideCooldowns.clear();
-		this.rooftopTpCooldowns.clear();
 		this.spiritCharges.clear();
 		this.activeSpiritWaveCount = 0;
 	}
@@ -408,34 +388,6 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 		this.activeCrowdNPCs = this.activeCrowdNPCs.filter(
 			(npc) => !npcs.includes(npc),
 		);
-	}
-
-	private handleRooftopTpTouch(touching: BasePart) {
-		const character = touching.FindFirstAncestorOfClass("Model");
-		if (!character) return;
-		const player = Players.GetPlayerFromCharacter(character);
-		if (!player) return;
-
-		const state = this.playerStates.get(player.UserId);
-		if (
-			!state ||
-			state.isTagged ||
-			state.role === PlayerRole.Oni ||
-			this.oniCounting
-		)
-			return;
-
-		const now = os.clock();
-		if (
-			now - (this.rooftopTpCooldowns.get(player.UserId) ?? 0) <
-			SCRAMBLE_ROOFTOP_TP_COOLDOWN
-		)
-			return;
-		this.rooftopTpCooldowns.set(player.UserId, now);
-
-		player.Character?.PivotTo(new CFrame(SCRAMBLE_ROOFTOP_TP_DEST));
-		// Targeted hint — broadcasting would reveal a hider's position to the Oni
-		this.serverEvents.hintTextChanged.fire(player, "You reached the rooftop!");
 	}
 
 	private handleSlideTouch(touching: BasePart, ramp: BasePart) {

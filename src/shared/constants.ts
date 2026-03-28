@@ -153,6 +153,16 @@ export const MISSION_DEFS: Record<
 		target: 1,
 		pointsReward: 75,
 	},
+	[MissionId.CollectBonusItem]: {
+		label: "Collect a Bonus Item",
+		target: 1,
+		pointsReward: 40,
+	},
+	[MissionId.DodgeCars]: {
+		label: "Survive a Car Wave",
+		target: 1,
+		pointsReward: 35,
+	},
 	// Living Shibuya missions
 	[MissionId.DiscoverStamps]: {
 		label: "Discover 3 Stamps",
@@ -216,10 +226,11 @@ export const ALL_MISSION_IDS: MissionId[] = [
 	MissionId.EarnPoints,
 	MissionId.SurviveScramble,
 	MissionId.TagInScramble,
-	MissionId.ReachRooftop,
 	MissionId.CollectHachiItems,
 	MissionId.ReachHachiLevel3,
 	MissionId.WinHachiRide,
+	MissionId.CollectBonusItem,
+	MissionId.DodgeCars,
 	// Living Shibuya exploration missions
 	MissionId.DiscoverStamps,
 	MissionId.CompleteStampSet,
@@ -231,6 +242,17 @@ export const ALL_MISSION_IDS: MissionId[] = [
 	MissionId.CompleteObstacleCourse,
 	MissionId.VisitCatColony,
 	MissionId.WatchStreetArt,
+];
+
+/** Minigame-specific missions for daily slot selection. */
+export const MINIGAME_MISSION_IDS: MissionId[] = [
+	MissionId.KickCan,
+	MissionId.SurviveScramble,
+	MissionId.TagInScramble,
+	MissionId.CollectHachiItems,
+	MissionId.WinHachiRide,
+	MissionId.CollectBonusItem,
+	MissionId.DodgeCars,
 ];
 
 /**
@@ -408,7 +430,7 @@ export const HACHI_LOBBY_MIN_LEVEL = 3; // lobby Hachi always has double jump + 
 export const HACHI_EVOLUTION_THRESHOLDS = [0, 5, 12, 20, 30];
 export const HACHI_WALK_SPEEDS = [70, 70, 70, 70, 70]; // flat speed (no evolution boost for now)
 export const HACHI_ITEMS_TO_SPAWN = 200;
-export const HACHI_COLLECTION_RADIUS = 8;
+export const HACHI_COLLECTION_RADIUS = 14;
 export const HACHI_DEFAULT_SCALE = CHARACTER_SCALE; // matches character scale
 export const HACHI_BIG_SCALE = 1.5;
 export const HACHI_DOUBLE_JUMP_IMPULSE = 106; // same as HACHI_JUMP_VELOCITY
@@ -428,10 +450,35 @@ export const HACHI_HOTSPOT_MULTIPLIER = 2;
 export const HACHI_FINAL_SPRINT_WINDOW = 30;
 export const HACHI_FINAL_SPRINT_MULTIPLIER = 3;
 
+// Can Kick visual
+export const CAN_KICK_RISE = 15; // studs the can flies up
+export const CAN_KICK_SPIN = 1080; // degrees of spin
+export const CAN_KICK_TWEEN_DURATION = 1.2; // seconds
+
+// Hachi Ride sky-drop
+export const HACHI_SKY_DROP_MIN_Y = 300;
+export const HACHI_SKY_DROP_MAX_Y = 400;
+export const HACHI_SKY_DROP_FALL_DURATION = 4; // seconds
+export const HACHI_SKY_DROP_GROUND_Y = 16;
+export const HACHI_SKY_DROP_DENSE_RADIUS = 200; // Gaussian std dev for center cluster
+export const HACHI_SKY_DROP_SPREAD_RADIUS = 600; // max XZ clamp
+export const HACHI_CITY_CENTER = new Vector3(-10608, 0, 33375);
+export const HACHI_ROOFTOP_BONUS_OFFSET_Y = 50;
+export const HACHI_ROOFTOP_BUILDINGS: { topY: number; x: number; z: number }[] =
+	[
+		{ topY: 216.7, x: -10476, z: 33443 },
+		{ topY: 187.2, x: -10689, z: 33635 },
+		{ topY: 178.3, x: -10362, z: 33375 },
+		{ topY: 173.8, x: -10475, z: 33623 },
+		{ topY: 172.0, x: -10402, z: 33558 },
+		{ topY: 156.0, x: -10833, z: 32874 },
+		{ topY: 139.5, x: -10226, z: 33407 },
+		{ topY: 137.6, x: -11132, z: 33877 },
+		{ topY: 137.1, x: -10466, z: 33711 },
+		{ topY: 135.1, x: -9941, z: 33485 },
+	];
+
 // Shibuya Scramble
-export const SCRAMBLE_ROOFTOP_TP_TAG = "ShibuyaRooftopTP";
-export const SCRAMBLE_ROOFTOP_TP_COOLDOWN = 15; // seconds
-export const SCRAMBLE_ROOFTOP_TP_DEST = new Vector3(-73, 1476, -1512);
 
 export const SCRAMBLE_TAG_RADIUS = 8;
 export const SCRAMBLE_ONI_COUNT_DURATION = 10;
@@ -443,6 +490,12 @@ export const SCRAMBLE_SLIDE_SPEED = 800;
 export const SCRAMBLE_SLIDE_COOLDOWN = 8;
 export const SCRAMBLE_TAG_BONUS_PER_TAG = 5;
 export const SCRAMBLE_SPIRIT_WAVE_DURATION = 5;
+
+// Scramble cars
+export const SCRAMBLE_CAR_SPEED_DURATION = 8; // seconds for car tween across road
+export const SCRAMBLE_CAR_SPAWN_INTERVAL = 15; // seconds between car waves
+export const SCRAMBLE_CAR_WAVE_DURATION = 12; // seconds cars are present
+export const SCRAMBLE_CAR_DODGE_RADIUS = 12; // proximity check for dodge mission
 
 // Hachi anti-cheat
 export const HACHI_MAX_SPEED_TOLERANCE = 1.5; // multiplier over max expected speed

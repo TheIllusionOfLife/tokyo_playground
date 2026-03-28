@@ -2,6 +2,7 @@ import { OnStart, Service } from "@flamework/core";
 import {
 	ALL_MISSION_IDS,
 	EXPLORATION_MISSION_IDS,
+	MINIGAME_MISSION_IDS,
 	MISSION_DEFS,
 } from "shared/constants";
 import { GlobalEvents } from "shared/network";
@@ -47,7 +48,7 @@ export class MissionService implements OnStart {
 		const data = this.playerDataService.getPlayerData(player);
 		if (!data) return;
 
-		// Assign 3 daily missions: at least 1 exploration + 2 from full pool (M8)
+		// Assign 3 daily missions: 1 exploration + 1 minigame + 1 from full pool
 		if (data.missions.slots.size() === 0) {
 			const chosen = new Set<MissionId>();
 
@@ -61,7 +62,14 @@ export class MissionService implements OnStart {
 				chosen.add(pick);
 			}
 
-			// Slots 2-3: from full pool (no duplicates)
+			// Slot 2: guaranteed minigame mission
+			const minigamePool = MINIGAME_MISSION_IDS.filter((id) => !chosen.has(id));
+			if (minigamePool.size() > 0) {
+				const pick = minigamePool[math.random(0, minigamePool.size() - 1)];
+				chosen.add(pick);
+			}
+
+			// Slot 3: from full pool (no duplicates)
 			const fullPool = ALL_MISSION_IDS.filter((id) => !chosen.has(id));
 			for (let i = chosen.size(); i < 3 && fullPool.size() > 0; i++) {
 				const idx = math.random(0, fullPool.size() - 1);

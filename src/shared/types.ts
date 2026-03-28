@@ -103,6 +103,8 @@ export enum MissionId {
 	CollectHachiItems = "CollectHachiItems",
 	ReachHachiLevel3 = "ReachHachiLevel3",
 	WinHachiRide = "WinHachiRide",
+	CollectBonusItem = "CollectBonusItem",
+	DodgeCars = "DodgeCars",
 	// Living Shibuya missions
 	DiscoverStamps = "DiscoverStamps",
 	CompleteStampSet = "CompleteStampSet",
@@ -161,6 +163,7 @@ export interface ShibuyaScramblePlayerState {
 	isTagged: boolean;
 	catchCount: number;
 	rescueCount: number;
+	carWavesSurvived: number;
 }
 
 export interface HachiRidePlayerState {

@@ -23,9 +23,6 @@ import {
 	HACHI_WALL_RUN_RAYCAST,
 	HACHI_WALL_RUN_SPEED,
 	SCRAMBLE_PORTAL_TAG,
-	SCRAMBLE_ROOFTOP_TP_COOLDOWN,
-	SCRAMBLE_ROOFTOP_TP_DEST,
-	SCRAMBLE_ROOFTOP_TP_TAG,
 	SCRAMBLE_SLIDE_COOLDOWN,
 	SCRAMBLE_SLIDE_SPEED,
 	SLIDE_DIR_Y_OFFSET,
@@ -53,7 +50,6 @@ export class LobbyService implements OnStart {
 	private lobbySpawns: BasePart[] = [];
 	private readonly serverEvents = GlobalEvents.createServer({});
 	private readonly slideCooldowns = new Map<number, number>();
-	private readonly tpCooldowns = new Map<number, number>();
 	private readonly hachiSlideActive = new Set<number>();
 	private readonly hachiJumpCooldowns = new Map<number, number>();
 	private readonly hachiEjectCooldowns = new Map<number, number>();
@@ -108,7 +104,6 @@ export class LobbyService implements OnStart {
 
 		Players.PlayerRemoving.Connect((player) => {
 			this.slideCooldowns.delete(player.UserId);
-			this.tpCooldowns.delete(player.UserId);
 			this.hachiSlideActive.delete(player.UserId);
 			this.hachiJumpCooldowns.delete(player.UserId);
 			this.hachiEjectCooldowns.delete(player.UserId);
@@ -133,7 +128,6 @@ export class LobbyService implements OnStart {
 		this.setupPortals();
 		this.setupHachiRide();
 		this.setupHachiRidePortal();
-		this.setupRooftopTPs();
 		this.setupHachiSlideHandler();
 		this.setupHachiAnimation();
 		this.setupLobbyHachiJump();
@@ -141,38 +135,6 @@ export class LobbyService implements OnStart {
 		this.setupLobbyDoubleJump();
 		this.setupLobbyWallRun();
 		this.setupHachiToggle();
-	}
-
-	private setupRooftopTPs() {
-		const pads = CollectionService.GetTagged(SCRAMBLE_ROOFTOP_TP_TAG).filter(
-			(i): i is BasePart => i.IsA("BasePart"),
-		);
-		for (const pad of pads) {
-			pad.Touched.Connect((touching) => {
-				if (this.matchActive) return;
-				const character = touching.FindFirstAncestorOfClass("Model");
-				if (!character) return;
-				const player = Players.GetPlayerFromCharacter(character);
-				if (!player) return;
-
-				const now = os.clock();
-				if (
-					now - (this.tpCooldowns.get(player.UserId) ?? 0) <
-					SCRAMBLE_ROOFTOP_TP_COOLDOWN
-				)
-					return;
-				this.tpCooldowns.set(player.UserId, now);
-
-				player.Character?.PivotTo(new CFrame(SCRAMBLE_ROOFTOP_TP_DEST));
-				this.serverEvents.hintTextChanged.fire(
-					player,
-					`${player.Name} flew to the rooftop!`,
-				);
-			});
-		}
-		print(
-			`[LobbyService] Connected ${pads.size()} rooftop TP pads (always-on)`,
-		);
 	}
 
 	private setupHachiRidePortal() {
