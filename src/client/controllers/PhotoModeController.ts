@@ -12,6 +12,7 @@ export class PhotoModeController implements OnStart {
 	private originalCameraType?: Enum.CameraType;
 	private originalWalkSpeed = 0;
 	private originalJumpPower = 0;
+	private originalJumpHeight = 0;
 	private renderConn?: RBXScriptConnection;
 
 	onStart() {
@@ -39,8 +40,10 @@ export class PhotoModeController implements OnStart {
 		// Save and freeze character movement
 		this.originalWalkSpeed = humanoid.WalkSpeed;
 		this.originalJumpPower = humanoid.JumpPower;
+		this.originalJumpHeight = humanoid.JumpHeight;
 		humanoid.WalkSpeed = 0;
 		humanoid.JumpPower = 0;
+		humanoid.JumpHeight = 0;
 
 		// Free camera
 		const camera = game.GetService("Workspace").CurrentCamera;
@@ -64,6 +67,7 @@ export class PhotoModeController implements OnStart {
 		if (humanoid) {
 			humanoid.WalkSpeed = this.originalWalkSpeed;
 			humanoid.JumpPower = this.originalJumpPower;
+			humanoid.JumpHeight = this.originalJumpHeight;
 		}
 
 		// Restore camera

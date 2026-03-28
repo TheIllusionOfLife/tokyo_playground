@@ -12,9 +12,9 @@ import {
 } from "shared/types";
 
 // Defaults
-export const DEFAULT_WALK_SPEED = 16;
+export const DEFAULT_WALK_SPEED = 32;
 export const CHARACTER_SCALE = 0.5; // half-size characters (makes city feel larger)
-export const DEFAULT_JUMP_HEIGHT = 3.6; // halved from default 7.2 for half-scale characters
+export const DEFAULT_JUMP_HEIGHT = 7.2; // standard jump height
 
 // Lobby & Match Flow
 export const LOBBY_INTERMISSION = 8;
@@ -409,7 +409,7 @@ export const HACHI_ITEMS_TO_SPAWN = 200;
 export const HACHI_COLLECTION_RADIUS = 8;
 export const HACHI_DEFAULT_SCALE = CHARACTER_SCALE; // matches character scale
 export const HACHI_BIG_SCALE = 1.5;
-export const HACHI_DOUBLE_JUMP_IMPULSE = 120; // halved for half-scale world
+export const HACHI_DOUBLE_JUMP_IMPULSE = 170; // 240 * sqrt(0.5) for half jump apex
 export const HACHI_WALL_RUN_SPEED = 75;
 export const HACHI_WALL_RUN_RAYCAST = 3;
 export const HACHI_WALL_RUN_MAX_DUR = 3;
@@ -417,7 +417,7 @@ export const HACHI_ITEM_POINT_VALUE = 1;
 export const HACHI_BONUS_ITEM_COUNT = 20;
 export const HACHI_BONUS_ITEM_VALUE = 5;
 export const HACHI_WIN_ITEM_BONUS = 20;
-export const HACHI_JUMP_VELOCITY = 75; // halved for half-scale world
+export const HACHI_JUMP_VELOCITY = 106; // 150 * sqrt(0.5) for half jump apex
 export const HACHI_JUMP_COOLDOWN = 0.1; // seconds between jump requests
 export const HACHI_EJECT_COOLDOWN = 1.0; // seconds between eject requests
 export const HACHI_SLIDE_FORCE_RESTORE_DELAY = 0.5; // seconds to hold MaxForce=0 after impulse
