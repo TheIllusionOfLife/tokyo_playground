@@ -372,62 +372,14 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 					0,
 					(math.random() - 0.5) * 6,
 				);
-
-				if (noobTemplate) {
-					const npc = noobTemplate.Clone();
-					// Make non-interactive
-					for (const desc of npc.GetDescendants()) {
-						if (desc.IsA("BasePart")) {
-							desc.CanCollide = false;
-							desc.CanTouch = false;
-							desc.CanQuery = false;
-						}
-					}
-					const hrp = npc.FindFirstChild("HumanoidRootPart") as
-						| BasePart
-						| undefined;
-					if (hrp) {
-						hrp.Anchored = true;
-						hrp.CFrame = new CFrame(startPart.Position.add(offset));
-						npc.Parent = Workspace;
-						TweenService.Create(
-							hrp,
-							new TweenInfo(duration, Enum.EasingStyle.Linear),
-							{
-								CFrame: new CFrame(endPart.Position.add(offset)),
-							},
-						).Play();
-					} else {
-						npc.PivotTo(new CFrame(startPart.Position.add(offset)));
-						npc.Parent = Workspace;
-					}
-					this.activeCrowdNPCs.push(npc);
-					waveNpcs.push(npc);
-				} else {
-					// Fallback: gray Part
-					const fallback = new Instance("Model");
-					const body = new Instance("Part");
-					body.Name = "HumanoidRootPart";
-					body.Size = new Vector3(1, 3, 1);
-					body.Anchored = true;
-					body.CanCollide = false;
-					body.CanTouch = false;
-					body.CanQuery = false;
-					body.Color = Color3.fromRGB(150, 150, 150);
-					body.CFrame = new CFrame(startPart.Position.add(offset));
-					body.Parent = fallback;
-					fallback.PrimaryPart = body;
-					fallback.Parent = Workspace;
-					TweenService.Create(
-						body,
-						new TweenInfo(duration, Enum.EasingStyle.Linear),
-						{
-							CFrame: new CFrame(endPart.Position.add(offset)),
-						},
-					).Play();
-					this.activeCrowdNPCs.push(fallback);
-					waveNpcs.push(fallback);
-				}
+				const npc = this.createCrowdNpc(
+					noobTemplate,
+					startPart.Position.add(offset),
+					endPart.Position.add(offset),
+					duration,
+				);
+				this.activeCrowdNPCs.push(npc);
+				waveNpcs.push(npc);
 			}
 		}
 
@@ -441,6 +393,61 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 		);
 
 		return waveNpcs;
+	}
+
+	private createCrowdNpc(
+		template: Model | undefined,
+		startPos: Vector3,
+		endPos: Vector3,
+		duration: number,
+	): Model {
+		if (template) {
+			const npc = template.Clone();
+			for (const desc of npc.GetDescendants()) {
+				if (desc.IsA("BasePart")) {
+					desc.CanCollide = false;
+					desc.CanTouch = false;
+					desc.CanQuery = false;
+				}
+			}
+			const hrp = npc.FindFirstChild("HumanoidRootPart") as
+				| BasePart
+				| undefined;
+			if (hrp) {
+				hrp.Anchored = true;
+				hrp.CFrame = new CFrame(startPos);
+				npc.Parent = Workspace;
+				TweenService.Create(
+					hrp,
+					new TweenInfo(duration, Enum.EasingStyle.Linear),
+					{ CFrame: new CFrame(endPos) },
+				).Play();
+			} else {
+				npc.PivotTo(new CFrame(startPos));
+				npc.Parent = Workspace;
+			}
+			return npc;
+		}
+		// Fallback: gray Part model
+		const fallback = new Instance("Model");
+		const body = new Instance("Part");
+		body.Name = "HumanoidRootPart";
+		body.Size = new Vector3(1, 3, 1);
+		body.Anchored = true;
+		body.CanCollide = false;
+		body.CanTouch = false;
+		body.CanQuery = false;
+		body.Color = Color3.fromRGB(150, 150, 150);
+		body.CFrame = new CFrame(startPos);
+		body.Parent = fallback;
+		fallback.PrimaryPart = body;
+		fallback.Parent = Workspace;
+		TweenService.Create(
+			body,
+			new TweenInfo(duration, Enum.EasingStyle.Linear),
+			{ CFrame: new CFrame(endPos) },
+		).Play();
+		return fallback;
 	}
 
 	private despawnCrowdNPCs(npcs = this.activeCrowdNPCs) {
@@ -533,7 +540,26 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 		for (const [userId, state] of this.playerStates) {
 			if (state.role !== PlayerRole.Hider || state.isTagged) continue;
 			const player = this.playerObjects.get(userId);
-			if (!player) continue;
+			if (!player?.Character) continue;
+			const hrp = player.Character.FindFirstChild("HumanoidRootPart") as
+				| BasePart
+				| undefined;
+			if (!hrp) continue;
+
+			// Only award if player was near at least one car during this wave
+			let nearCar = false;
+			for (const car of wave) {
+				const primary = car.PrimaryPart;
+				if (!primary) continue;
+				if (
+					hrp.Position.sub(primary.Position).Magnitude <=
+					SCRAMBLE_CAR_DODGE_RADIUS
+				) {
+					nearCar = true;
+					break;
+				}
+			}
+			if (!nearCar) continue;
 
 			state.carWavesSurvived += 1;
 			this.missionService.incrementAndNotify(player, MissionId.DodgeCars, 1);

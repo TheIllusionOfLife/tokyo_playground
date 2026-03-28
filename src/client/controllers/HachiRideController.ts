@@ -96,14 +96,7 @@ export class HachiRideController implements OnStart {
 			?.FindFirstChildOfClass("BillboardGui");
 		if (billboard) billboard.Enabled = false;
 
-		// Mute the default Humanoid jump sound so our custom SE plays instead.
-		const hrp = character.FindFirstChild("HumanoidRootPart") as
-			| BasePart
-			| undefined;
-		const defaultJumpSound = hrp?.FindFirstChild("Jumping") as
-			| Sound
-			| undefined;
-		if (defaultJumpSound) defaultJumpSound.Volume = 0;
+		this.setDefaultJumpSoundEnabled(false);
 
 		// Double jump detection via Humanoid.StateChanged.
 		// Arm double jump after first real jump (not slope/small drop).
@@ -239,15 +232,7 @@ export class HachiRideController implements OnStart {
 	private onCostumeRemoved() {
 		this.costumed = false;
 
-		// Restore default Humanoid jump sound
-		const character = Players.LocalPlayer.Character;
-		const hrp = character?.FindFirstChild("HumanoidRootPart") as
-			| BasePart
-			| undefined;
-		const defaultJumpSound = hrp?.FindFirstChild("Jumping") as
-			| Sound
-			| undefined;
-		if (defaultJumpSound) defaultJumpSound.Volume = 0.65;
+		this.setDefaultJumpSoundEnabled(true);
 
 		this.stateChangedConn?.Disconnect();
 		this.stateChangedConn = undefined;
@@ -275,6 +260,15 @@ export class HachiRideController implements OnStart {
 			if (rootMotor) rootMotor.C0 = this.bobRootC0;
 			this.bobRootC0 = undefined;
 		}
+	}
+
+	private setDefaultJumpSoundEnabled(enabled: boolean) {
+		const character = Players.LocalPlayer.Character;
+		const hrp = character?.FindFirstChild("HumanoidRootPart") as
+			| BasePart
+			| undefined;
+		const jumpSound = hrp?.FindFirstChild("Jumping") as Sound | undefined;
+		if (jumpSound) jumpSound.Volume = enabled ? 0.65 : 0;
 	}
 
 	private jumpSE?: Sound;

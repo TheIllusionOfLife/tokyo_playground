@@ -17,10 +17,20 @@ export function HachiToggleButton() {
 
 	const outerRef = useRef<Frame>();
 	const frameRef = useRef<Frame>();
+	const pendingRef = useRef(false);
 
-	// Pulsing glow + shake animation when not mounted
+	// Reset pending flag when costumed state updates from server
 	useEffect(() => {
-		if (costumed) {
+		pendingRef.current = false;
+	}, [costumed]);
+
+	const isVisible =
+		matchPhase === MatchPhase.WaitingForPlayers &&
+		activeMinigameId !== MinigameId.HachiRide;
+
+	// Pulsing glow + shake animation when not mounted and visible
+	useEffect(() => {
+		if (costumed || !isVisible) {
 			const outer = outerRef.current;
 			if (outer) outer.Rotation = 0;
 			return;
@@ -37,11 +47,9 @@ export function HachiToggleButton() {
 			outer.Rotation = math.sin(t * SHAKE_SPEED) * SHAKE_ANGLE;
 		});
 		return () => conn.Disconnect();
-	}, [costumed]);
+	}, [costumed, isVisible]);
 
-	// Only show in lobby (not during minigames)
-	if (matchPhase !== MatchPhase.WaitingForPlayers) return undefined!;
-	if (activeMinigameId === MinigameId.HachiRide) return undefined!;
+	if (!isVisible) return undefined!;
 
 	const mounted = costumed;
 	const bgColor = mounted
@@ -111,6 +119,8 @@ export function HachiToggleButton() {
 					ZIndex={11}
 					Event={{
 						Activated: () => {
+							if (pendingRef.current) return;
+							pendingRef.current = true;
 							clientEvents.hachiToggleCostume.fire(!costumed);
 						},
 					}}
