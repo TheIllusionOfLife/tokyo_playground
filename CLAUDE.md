@@ -26,7 +26,9 @@ Roblox party mini-game platform set in Tokyo (Shibuya). roblox-ts + Flamework + 
 - `execute_luau` **cannot write** protected properties: `Lighting.Technology` (deprecated, replaced by `LightingStyle`+`PrioritizeLightingQuality`), `StreamingMinRadius`, `StreamingTargetRadius`, `StreamOutBehavior`, `ModelStreamingBehavior`. Set these manually in Studio Properties panel.
 - `execute_luau` **times out** on 3000+ MeshPart operations (e.g., setting PCD collision). Batch into groups of 500.
 - **FBX import is GUI-only.** No Luau API or MCP tool exists for importing local FBX files. Must use File > Import 3D manually.
-- City `MeshPart`s in `Workspace.city` use `CanCollide=true` + `CollisionFidelity=PreciseConvexDecomposition` + `Anchored=true`. All city parts have `CanTouch=false` + `CanQuery=false` for performance.
+- City is `Workspace.city_and_roads` (11,382 MeshParts, Material=Fabric). Buildings use PCD collision. Roads use Default collision. Furniture is non-collidable. All parts: `CanTouch=false`, `CanQuery=false`, `DoubleSided=true`.
+- **Character scaling**: Set `UseJumpPower=false` before setting `JumpHeight` (Roblox defaults to `UseJumpPower=true`, which makes `JumpHeight` silently ignored).
+- **Blender `mesh.separate`** requires Edit Mode. Calling from Object Mode is a silent no-op.
 - Flamework networking uses `ModuleScript`-based remotes — no raw `RemoteEvent`s are visible via `GetDescendants()`.
 
 ## City Pipeline (PLATEAU → Roblox)
