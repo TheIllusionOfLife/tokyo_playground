@@ -27,6 +27,7 @@ import {
 	HACHI_ITEM_TAG,
 	HACHI_ITEMS_TO_SPAWN,
 	HACHI_JUMP_COOLDOWN,
+	HACHI_JUMP_VELOCITY,
 	HACHI_KEY_ITEM_TAG,
 	HACHI_MAX_SPEED_TOLERANCE,
 	HACHI_ROUND_DURATION,
@@ -990,8 +991,10 @@ export class HachiRideMinigame implements IMinigame {
 		this.lastPositionTime = now;
 
 		const maxSpeed =
-			HACHI_WALK_SPEEDS[HACHI_WALK_SPEEDS.size() - 1] *
-			HACHI_MAX_SPEED_TOLERANCE;
+			math.max(
+				HACHI_WALK_SPEEDS[HACHI_WALK_SPEEDS.size() - 1],
+				HACHI_JUMP_VELOCITY,
+			) * HACHI_MAX_SPEED_TOLERANCE;
 		const maxDist = maxSpeed * elapsed + HACHI_ANTICHEAT_GRACE_STUDS;
 
 		for (const [userId] of this.playerStates) {
