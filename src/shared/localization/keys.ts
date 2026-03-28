@@ -85,6 +85,14 @@ export const L_BON_ODORI_HINT = "bon_odori_hint";
 // Obstacle course
 export const L_OBSTACLE_ACTIVE = "obstacle_active";
 
+// Social
+export const L_INVITE = "invite";
+export const L_SPECTATOR_TAP = "spectator_tap";
+
+// Misc formatting
+export const L_LV_PREFIX = "lv_prefix";
+export const L_SKILL_PTS_FMT = "skill_pts_fmt";
+
 // Today's goal
 export const L_TODAYS_GOAL = "todays_goal";
 export const L_MISSION_READY = "mission_ready";

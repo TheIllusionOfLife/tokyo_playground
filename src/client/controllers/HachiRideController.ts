@@ -162,6 +162,7 @@ export class HachiRideController implements OnStart {
 		// Mobile double jump: UserInputService.JumpRequest fires when the
 		// native touch jump button is tapped. CAS doesn't create a touch
 		// button, so this is the only path for mobile double jump.
+		this.jumpRequestConn?.Disconnect();
 		this.jumpRequestConn = UserInputService.JumpRequest.Connect(() => {
 			if (!this.costumed) return;
 			if (this.jumpPhase !== 1) return;
@@ -224,14 +225,24 @@ export class HachiRideController implements OnStart {
 		if (now - this.lastJumpTime < HACHI_JUMP_COOLDOWN) return false;
 		if (this.doubleJumpConsumed) return false;
 
-		this.lastJumpTime = now;
-		this.jumpPhase = 2;
-		this.doubleJumpConsumed = true;
-
+		// Validate character and airborne state BEFORE consuming state
 		const h = Players.LocalPlayer.Character?.FindFirstChildOfClass("Humanoid");
 		const hrp = Players.LocalPlayer.Character?.FindFirstChild(
 			"HumanoidRootPart",
 		) as BasePart | undefined;
+		if (!hrp || !h) return false;
+		const state = h.GetState();
+		if (
+			state !== Enum.HumanoidStateType.Jumping &&
+			state !== Enum.HumanoidStateType.Freefall
+		) {
+			return false;
+		}
+
+		this.lastJumpTime = now;
+		this.jumpPhase = 2;
+		this.doubleJumpConsumed = true;
+
 		if (hrp && h) {
 			h.PlatformStand = true;
 			hrp.AssemblyLinearVelocity = new Vector3(

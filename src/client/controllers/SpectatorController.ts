@@ -1,11 +1,17 @@
 import { Controller, OnStart } from "@flamework/core";
-import { Players, RunService, Workspace } from "@rbxts/services";
+import {
+	Players,
+	RunService,
+	UserInputService,
+	Workspace,
+} from "@rbxts/services";
 import { clientEvents } from "client/network";
 import { gameStore } from "shared/store/game-store";
 import { MatchPhase, PlayerRole } from "shared/types";
 
 const CAMERA_OFFSET = new Vector3(0, 8, 16);
 const CAMERA_LERP_SPEED = 5;
+const CYCLE_COOLDOWN = 0.5;
 
 @Controller()
 export class SpectatorController implements OnStart {
@@ -14,6 +20,7 @@ export class SpectatorController implements OnStart {
 	private targetIndex = 0;
 	private renderConn?: RBXScriptConnection;
 	private inputConn?: RBXScriptConnection;
+	private lastCycleTime = 0;
 
 	onStart() {
 		clientEvents.roleAssigned.connect((role) => {
@@ -49,6 +56,7 @@ export class SpectatorController implements OnStart {
 		if (targets.size() > 0) {
 			this.targetIndex = 0;
 			this.targetPlayer = targets[0];
+			gameStore.setSpectateTargetName(this.targetPlayer.Name);
 			this.streamAroundTarget();
 		}
 
@@ -61,17 +69,15 @@ export class SpectatorController implements OnStart {
 		});
 
 		// Tap/click to cycle targets
-		this.inputConn = game
-			.GetService("UserInputService")
-			.InputBegan.Connect((input, processed) => {
-				if (processed) return;
-				if (
-					input.UserInputType === Enum.UserInputType.Touch ||
-					input.UserInputType === Enum.UserInputType.MouseButton1
-				) {
-					this.cycleTarget();
-				}
-			});
+		this.inputConn = UserInputService.InputBegan.Connect((input, processed) => {
+			if (processed) return;
+			if (
+				input.UserInputType === Enum.UserInputType.Touch ||
+				input.UserInputType === Enum.UserInputType.MouseButton1
+			) {
+				this.cycleTarget();
+			}
+		});
 	}
 
 	private exitSpectatorMode() {
@@ -79,6 +85,7 @@ export class SpectatorController implements OnStart {
 		this.active = false;
 
 		gameStore.setSpectating(false);
+		gameStore.setSpectateTargetName("");
 
 		this.renderConn?.Disconnect();
 		this.renderConn = undefined;
@@ -98,8 +105,16 @@ export class SpectatorController implements OnStart {
 	}
 
 	private cycleTarget() {
+		const now = os.clock();
+		if (now - this.lastCycleTime < CYCLE_COOLDOWN) return;
+		this.lastCycleTime = now;
+
 		const targets = this.getSpectateTargets();
-		if (targets.size() === 0) return;
+		if (targets.size() === 0) {
+			this.targetPlayer = undefined;
+			gameStore.setSpectateTargetName("");
+			return;
+		}
 		this.targetIndex = (this.targetIndex + 1) % targets.size();
 		this.targetPlayer = targets[this.targetIndex];
 		this.streamAroundTarget();
@@ -125,7 +140,7 @@ export class SpectatorController implements OnStart {
 		const camera = Workspace.CurrentCamera;
 		if (!camera) return;
 
-		// If target left or character missing, auto-cycle
+		// If target left or character missing, rate-limited auto-cycle
 		if (
 			!this.targetPlayer ||
 			!this.targetPlayer.Parent ||

@@ -316,11 +316,14 @@ export class MatchService implements OnStart {
 		// Stop countdown immediately so its tail never fires during results display
 		this.activeMinigame?.stopCountdown();
 		this.serverEvents.roundResultAnnounced.broadcast(result);
+		const roundConfig = MINIGAME_CONFIGS[this.currentMinigameId];
 		this.analyticsService.fire({
 			name: "round_end",
 			gameType: this.currentMinigameId,
 			winnerId: 0,
-			duration: MINIGAME_CONFIGS[this.currentMinigameId].roundDuration,
+			duration: math.floor(
+				roundConfig.roundDuration - math.max(0, this.matchTimeRemaining),
+			),
 		});
 
 		const minigame = this.activeMinigame!;
@@ -586,7 +589,14 @@ export class MatchService implements OnStart {
 		// Remove from minigame state so win condition reflects reality
 		this.activeMinigame.removePlayer(player.UserId);
 
-		if ((this.currentPhase as MatchPhase) !== MatchPhase.InProgress) return;
+		const phase = this.currentPhase as MatchPhase;
+		if (
+			phase !== MatchPhase.InProgress &&
+			phase !== MatchPhase.Preparing &&
+			phase !== MatchPhase.Countdown
+		) {
+			return;
+		}
 
 		// Reset streak on early leave
 		this.playerDataService.resetStreak(player);

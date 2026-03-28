@@ -84,6 +84,14 @@ export const EN: Record<string, string> = {
 	// Obstacle course
 	obstacle_active: "Obstacle Course Active",
 
+	// Social
+	invite: "Invite",
+	spectator_tap: "Tap to switch",
+
+	// Misc formatting
+	lv_prefix: "Lv.",
+	skill_pts_fmt: "%d pts",
+
 	// Today's goal
 	todays_goal: "Today's Goal",
 	mission_ready: "Mission Ready!",

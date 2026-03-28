@@ -1,6 +1,6 @@
 # Game Public Info
 
-Copy-paste ready metadata for the Roblox game page and store listing.
+Copy-paste-ready metadata for the Roblox game page and store listing.
 
 ---
 

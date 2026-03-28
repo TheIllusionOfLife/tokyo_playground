@@ -1,7 +1,7 @@
 import React from "@rbxts/react";
 import { useSelector } from "@rbxts/react-reflex";
 import { t } from "shared/localization";
-import { L_ROLE_SPECTATOR } from "shared/localization/keys";
+import { L_ROLE_SPECTATOR, L_SPECTATOR_TAP } from "shared/localization/keys";
 import { GameStoreState } from "shared/store/game-store";
 
 export function SpectatorOverlay() {
@@ -45,7 +45,7 @@ export function SpectatorOverlay() {
 				TextColor3={Color3.fromRGB(150, 150, 170)}
 				TextScaled={true}
 				Font={Enum.Font.Gotham}
-				Text="Tap to switch"
+				Text={t(L_SPECTATOR_TAP)}
 				ZIndex={16}
 			/>
 		</frame>

@@ -3,7 +3,7 @@
 | Version | Date | Summary |
 |---------|------|---------|
 | v0.1.0 | 2026-03-12 | PLATEAU spike: Shibuya buildings, Flamework game loop, persistence |
-| v0.3 | 2026-03-14 | Shibuya Scramble minigame, crowd waves, rooftop slides, missions |
+| v0.3.0 | 2026-03-14 | Shibuya Scramble minigame, crowd waves, rooftop slides, missions |
 | v0.4.0 | 2026-03-15 | Hachi Polish: 3x speed, animations, slides/tubes, audio, world |
 | v0.5.0 | 2026-03-17 | Equip system, portal-only matches, mobile landscape, anti-cheat |
 | v0.5.1 | 2026-03-17 | Mobile jump fix, body bob, shared lobby/minigame Hachi logic |

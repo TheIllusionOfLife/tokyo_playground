@@ -84,6 +84,14 @@ export const JA: Record<string, string> = {
 	// Obstacle course
 	obstacle_active: "障害物コース開催中",
 
+	// Social
+	invite: "招待",
+	spectator_tap: "タップで切替",
+
+	// Misc formatting
+	lv_prefix: "Lv.",
+	skill_pts_fmt: "%d pts",
+
 	// Today's goal
 	todays_goal: "今日の目標",
 	mission_ready: "ミッション達成!",

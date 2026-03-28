@@ -11,6 +11,7 @@ import {
 	L_SKILL_FLUFFY_HACHI_DESC,
 	L_SKILL_JUMP,
 	L_SKILL_JUMP_DESC,
+	L_SKILL_PTS_FMT,
 	L_SKILL_UNLOCKED,
 	L_SKILL_WALL_RUN,
 	L_SKILL_WALL_RUN_DESC,
@@ -189,7 +190,11 @@ export function SkillsPanel() {
 									}
 									TextScaled={true}
 									Font={Enum.Font.Gotham}
-									Text={unlocked ? t(L_SKILL_UNLOCKED) : `${skill.items} pts`}
+									Text={
+										unlocked
+											? t(L_SKILL_UNLOCKED)
+											: t(L_SKILL_PTS_FMT).gsub("%%d", tostring(skill.items))[0]
+									}
 								/>
 							</frame>
 						);

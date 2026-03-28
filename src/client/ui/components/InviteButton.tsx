@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "@rbxts/react";
 import { useSelector } from "@rbxts/react-reflex";
 import { Players, SocialService } from "@rbxts/services";
+import { t } from "shared/localization";
+import { L_INVITE } from "shared/localization/keys";
 import { GameStoreState } from "shared/store/game-store";
 import { MatchPhase } from "shared/types";
 
@@ -35,7 +37,7 @@ export function InviteButton() {
 			TextColor3={Color3.fromRGB(255, 255, 255)}
 			TextScaled={true}
 			Font={Enum.Font.GothamBold}
-			Text="Invite"
+			Text={t(L_INVITE)}
 			ZIndex={10}
 			Event={{
 				Activated: () => {

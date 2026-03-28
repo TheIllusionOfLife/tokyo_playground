@@ -9,17 +9,17 @@ export class AnalyticsService implements OnStart {
 	onStart() {
 		Players.PlayerAdded.Connect((player) => {
 			this.joinTimes.set(player.UserId, os.clock());
-			this.fire({
+			this.fireForPlayer(player, {
 				name: "session_start",
 				playerId: player.UserId,
-				platform: this.detectPlatform(player),
+				platform: "unknown",
 			});
 		});
 
 		Players.PlayerRemoving.Connect((player) => {
 			const joinTime = this.joinTimes.get(player.UserId);
 			if (joinTime !== undefined) {
-				this.fire({
+				this.fireForPlayer(player, {
 					name: "session_end",
 					playerId: player.UserId,
 					durationSeconds: math.floor(os.clock() - joinTime),
@@ -28,41 +28,10 @@ export class AnalyticsService implements OnStart {
 			}
 		});
 
-		// Prune join times periodically (safety net)
-		task.spawn(() => {
-			while (true) {
-				task.wait(300);
-				const playerIds = new Set(Players.GetPlayers().map((p) => p.UserId));
-				for (const [userId] of this.joinTimes) {
-					if (!playerIds.has(userId)) {
-						this.joinTimes.delete(userId);
-					}
-				}
-			}
-		});
-
 		print("[AnalyticsService] Started");
 	}
 
-	fire(event: AnalyticsEvent) {
-		const customFields: Record<string, unknown> = {};
-		for (const [key, val] of pairs(
-			event as unknown as Record<string, unknown>,
-		)) {
-			if (key !== "name") {
-				customFields[key as string] = val;
-			}
-		}
-
-		RobloxAnalytics.FireCustomEvent(
-			undefined as unknown as Player,
-			event.name,
-			customFields,
-		);
-
-		print(`[Analytics] ${event.name}`);
-	}
-
+	/** Fire an analytics event for a specific player. */
 	fireForPlayer(player: Player, event: AnalyticsEvent) {
 		const customFields: Record<string, unknown> = {};
 		for (const [key, val] of pairs(
@@ -73,15 +42,20 @@ export class AnalyticsService implements OnStart {
 			}
 		}
 
-		RobloxAnalytics.FireCustomEvent(player, event.name, customFields);
+		pcall(() => {
+			RobloxAnalytics.FireCustomEvent(player, event.name, customFields);
+		});
 	}
 
-	private detectPlatform(player: Player): string {
-		// GuiService.IsTenFootInterface for console, touch for mobile, else desktop
-		const playerGui = player.FindFirstChildOfClass("PlayerGui");
-		if (!playerGui) return "unknown";
-		// Simple heuristic: platform detection happens via client, but for server
-		// analytics we use a basic approach
-		return "server";
+	/**
+	 * Fire a global analytics event using an arbitrary active player.
+	 * Falls back to print-only if no players are connected.
+	 */
+	fire(event: AnalyticsEvent) {
+		const players = Players.GetPlayers();
+		if (players.size() > 0) {
+			this.fireForPlayer(players[0], event);
+		}
+		print(`[Analytics] ${event.name}`);
 	}
 }
