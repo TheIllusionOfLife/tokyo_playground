@@ -17,4 +17,26 @@ export type AnalyticsEvent =
 	| { name: "player_caught"; catcherId: number; caughtId: number }
 	| { name: "can_kicked"; kickerId: number; freedCount: number }
 	| { name: "player_join_mid_match"; playerId: number; matchId: string }
-	| { name: "player_leave_mid_match"; playerId: number; matchId: string };
+	| { name: "player_leave_mid_match"; playerId: number; matchId: string }
+	| {
+			name: "mission_completed";
+			playerId: number;
+			missionId: string;
+			pointsReward: number;
+	  }
+	| {
+			name: "shop_purchase";
+			playerId: number;
+			itemId: string;
+			price: number;
+	  }
+	| {
+			name: "session_start";
+			playerId: number;
+			platform: string;
+	  }
+	| {
+			name: "session_end";
+			playerId: number;
+			durationSeconds: number;
+	  };

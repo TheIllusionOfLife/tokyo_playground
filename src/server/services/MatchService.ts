@@ -25,6 +25,7 @@ import {
 	type HachiRoundOutcome,
 } from "shared/utils/hachiOutcome";
 import { unequipHachiCostume } from "../utils/hachiCostume";
+import { AnalyticsService } from "./AnalyticsService";
 import { GameStateService } from "./GameStateService";
 import { LobbyService } from "./LobbyService";
 import { MinigameService } from "./MinigameService";
@@ -67,6 +68,7 @@ export class MatchService implements OnStart {
 		private readonly rewardService: RewardService,
 		private readonly missionService: MissionService,
 		private readonly lobbyService: LobbyService,
+		private readonly analyticsService: AnalyticsService,
 	) {}
 
 	onStart() {
@@ -259,6 +261,11 @@ export class MatchService implements OnStart {
 
 		// In Progress
 		this.transitionPhase(MatchPhase.InProgress);
+		this.analyticsService.fire({
+			name: "match_start",
+			gameType: minigameId,
+			playerCount: this.matchPlayers.size(),
+		});
 
 		const config = MINIGAME_CONFIGS[minigameId];
 		let timeRemaining = config.roundDuration;
@@ -309,6 +316,12 @@ export class MatchService implements OnStart {
 		// Stop countdown immediately so its tail never fires during results display
 		this.activeMinigame?.stopCountdown();
 		this.serverEvents.roundResultAnnounced.broadcast(result);
+		this.analyticsService.fire({
+			name: "round_end",
+			gameType: this.currentMinigameId,
+			winnerId: 0,
+			duration: MINIGAME_CONFIGS[this.currentMinigameId].roundDuration,
+		});
 
 		const minigame = this.activeMinigame!;
 		const playerStates = minigame.getPlayerStates();
@@ -577,6 +590,11 @@ export class MatchService implements OnStart {
 
 		// Reset streak on early leave
 		this.playerDataService.resetStreak(player);
+		this.analyticsService.fire({
+			name: "player_leave_mid_match",
+			playerId: player.UserId,
+			matchId: this.currentMinigameId,
+		});
 
 		if (playerState?.role === PlayerRole.Oni) {
 			print("[MatchService] Oni left — Hiders win!");
