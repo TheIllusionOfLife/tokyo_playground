@@ -20,8 +20,8 @@ from collections import defaultdict
 # Configuration
 EXPORT_DIR = os.environ.get("BLENDER_EXPORT_DIR",
     os.path.join(os.path.dirname(bpy.data.filepath), "blender_exports"))
-SCALE = 2.0  # 3x gameplay scale for city_and_roads.blend (0.2 was 10x too small)
-MAX_MESHES_PER_TILE = 200  # Stay under Roblox limits
+SCALE = 2.0  # 2x gameplay scale (legacy; new passthrough pipeline may not need this)
+MAX_MESHES_PER_TILE = 500  # Per tile limit (increased for material-split meshes)
 
 os.makedirs(EXPORT_DIR, exist_ok=True)
 
@@ -51,6 +51,55 @@ bpy.ops.transform.resize(value=(SCALE, SCALE, SCALE))
 # Apply scale into vertices ONLY (keep location for FBX node transform)
 bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
 print("Scale applied to vertices. Locations preserved.")
+
+# Step 2b: Split multi-material meshes and strip extra UV layers
+# Roblox assigns only 1 TextureID per MeshPart. Multi-material meshes lose
+# all but one material's texture, causing UV breakage on other faces.
+# Splitting by material ensures each sub-mesh has exactly 1 material = 1 texture.
+print("Splitting multi-material meshes...")
+bpy.ops.object.select_all(action='DESELECT')
+multi_mat_count = 0
+for obj in list(bpy.data.objects):
+    if obj.type != 'MESH':
+        continue
+    if len(obj.data.materials) <= 1:
+        continue
+    multi_mat_count += 1
+    bpy.ops.object.select_all(action='DESELECT')
+    obj.select_set(True)
+    bpy.context.view_layer.objects.active = obj
+    bpy.ops.object.mode_set(mode='EDIT')
+    bpy.ops.mesh.separate(type='MATERIAL')
+    bpy.ops.object.mode_set(mode='OBJECT')
+
+# Refresh mesh list after splitting
+meshes = [obj for obj in bpy.data.objects if obj.type == 'MESH']
+print(f"Split {multi_mat_count} multi-material meshes. Total meshes now: {len(meshes)}")
+
+# Strip extra UV layers (Roblox only reads one UV channel)
+print("Stripping extra UV layers...")
+uv_stripped = 0
+for obj in meshes:
+    if obj.type == 'MESH' and len(obj.data.uv_layers) > 1:
+        # Keep the first UV layer, remove the rest
+        while len(obj.data.uv_layers) > 1:
+            obj.data.uv_layers.remove(obj.data.uv_layers[-1])
+        uv_stripped += 1
+print(f"Stripped extra UV layers from {uv_stripped} meshes.")
+
+# Remove meshes with no geometry (empty after split)
+empty_removed = 0
+for obj in list(bpy.data.objects):
+    if obj.type == 'MESH' and len(obj.data.vertices) == 0:
+        bpy.data.objects.remove(obj, do_unlink=True)
+        empty_removed += 1
+if empty_removed:
+    print(f"Removed {empty_removed} empty meshes.")
+
+# Final mesh list
+meshes = [obj for obj in bpy.data.objects if obj.type == 'MESH']
+total = len(meshes)
+print(f"Final mesh count after material split: {total}")
 
 # Step 3: Compute spatial tile grid
 # Use XY plane (Blender) for tiling. Z is height.

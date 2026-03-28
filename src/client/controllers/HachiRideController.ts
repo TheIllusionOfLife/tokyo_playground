@@ -12,6 +12,7 @@ import {
 	HACHI_DOUBLE_JUMP_IMPULSE,
 	HACHI_JUMP_COOLDOWN,
 	HACHI_JUMP_VELOCITY,
+	HACHI_LOBBY_MIN_LEVEL,
 	HACHI_WALK_SPEEDS,
 	SE_JUMP,
 } from "shared/constants";
@@ -51,6 +52,18 @@ export class HachiRideController implements OnStart {
 	// Client-side jump phase tracking (mirrors server logic)
 	// 0 = grounded/ready, 1 = jumped once (double available), 2 = fully used
 	private jumpPhase = 0;
+
+	/** Whether currently in the Hachi Ride minigame. */
+	private isInMinigame(): boolean {
+		return gameStore.getState().activeMinigameId === MinigameId.HachiRide;
+	}
+
+	/** Active Hachi evolution level (minigame level or lobby min). */
+	private getActiveEvoLevel(): number {
+		return this.isInMinigame()
+			? gameStore.getState().hachiEvolutionLevel
+			: HACHI_LOBBY_MIN_LEVEL;
+	}
 	private lastJumpTime = 0;
 	// Wall-run state from server events. Used to guard checkLanded()
 	// so jump phase isn't reset while wall-running (Y velocity can settle < 5).
@@ -168,8 +181,13 @@ export class HachiRideController implements OnStart {
 					// Client-side prediction for both lobby and minigame.
 					// moveConn keeps BodyVelocity.MaxForce at zero, so server-side
 					// impulse would fight it. Apply impulse locally for instant feel.
-					if (!this.tryLocalJump()) return Enum.ContextActionResult.Sink;
-					clientEvents.hachiJump.fire();
+					const jumpType = this.tryLocalJump();
+					if (!jumpType) return Enum.ContextActionResult.Sink;
+					if (jumpType === "double" && !this.isInMinigame()) {
+						clientEvents.hachiLobbyDoubleJump.fire();
+					} else {
+						clientEvents.hachiJump.fire();
+					}
 					this.playJumpSE();
 				}
 				return Enum.ContextActionResult.Sink;
@@ -250,12 +268,7 @@ export class HachiRideController implements OnStart {
 				moveDir = raw.Magnitude > 0.01 ? raw.Unit : Vector3.zero;
 			}
 
-			// Use evolution speed during minigame, base speed otherwise
-			const state = gameStore.getState();
-			const evoLevel =
-				state.activeMinigameId === MinigameId.HachiRide
-					? state.hachiEvolutionLevel
-					: 0;
+			const evoLevel = this.getActiveEvoLevel();
 			const speed =
 				HACHI_WALK_SPEEDS[math.min(evoLevel, HACHI_WALK_SPEEDS.size() - 1)];
 
@@ -394,37 +407,37 @@ export class HachiRideController implements OnStart {
 		this.jumpSE.Play();
 	}
 
-	/** Client-side jump with phase tracking. Returns true if jump was applied.
+	/** Client-side jump with phase tracking.
+	 *  Returns "first", "double", or undefined (rejected).
 	 *  Mirrors the server's phase logic so we don't apply impulses the
 	 *  server would reject. Phase 0=grounded, 1=double available, 2=used. */
-	private tryLocalJump(): boolean {
+	private tryLocalJump(): "first" | "double" | undefined {
 		const humanoid =
 			Players.LocalPlayer.Character?.FindFirstChildOfClass("Humanoid");
 		const body = humanoid?.SeatPart?.Parent?.FindFirstChild("Body") as
 			| BasePart
 			| undefined;
-		if (!body) return false;
+		if (!body) return undefined;
 
 		const now = os.clock();
-		if (now - this.lastJumpTime < HACHI_JUMP_COOLDOWN) return false;
+		if (now - this.lastJumpTime < HACHI_JUMP_COOLDOWN) return undefined;
 
 		if (this.jumpPhase === 0) {
 			// First jump: only from near-ground
-			if (math.abs(body.AssemblyLinearVelocity.Y) > 15) return false;
+			if (math.abs(body.AssemblyLinearVelocity.Y) > 15) return undefined;
 			this.lastJumpTime = now;
 			this.applyImpulse(body, HACHI_JUMP_VELOCITY);
-			const evoLevel = gameStore.getState().hachiEvolutionLevel;
-			this.jumpPhase = evoLevel >= 1 ? 1 : 2;
-			return true;
+			this.jumpPhase = this.getActiveEvoLevel() >= 1 ? 1 : 2;
+			return "first";
 		} else if (this.jumpPhase === 1) {
 			// Double jump (midair, evolution >= 1)
 			this.lastJumpTime = now;
 			this.applyImpulse(body, HACHI_DOUBLE_JUMP_IMPULSE);
 			this.jumpPhase = 2;
-			return true;
+			return "double";
 		}
 		// Phase 2: reject
-		return false;
+		return undefined;
 	}
 
 	/** Reset jump phase when Hachi has landed (called from Heartbeat). */
