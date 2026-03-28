@@ -57,17 +57,34 @@
 
 ---
 
-## Post-SCALE=1.0 (Phase 3)
+## Post-Configuration (New Pipeline, 2026-03-28)
 
-| Metric | Budget | Baseline | Post-SCALE=1.0 | Post-Collision-Audit |
-|--------|--------|----------|-----------------|----------------------|
-| Draw calls | <1,000 | ? | ? | ? |
-| Total memory | <600 MB | ? | ? | ? |
-| Mesh memory | <200 MB | ? | ? | ? |
-| Texture memory | <200 MB | ? | ? | ? |
-| worldStep | <4 ms | ? | ? | ? |
-| Frame time | <16.67 ms | ? | ? | ? |
-| Visible MeshParts | varies | ? | ? | ? |
+Pipeline: Unity FBX → Blender passthrough → Roblox (textures working)
+StreamingEnabled: true (TargetRadius=512, MinRadius=256, Opportunistic)
+City model: city_and_roads (11,382 MeshParts)
+
+| Metric | Budget | Value | Status |
+|--------|--------|-------|--------|
+| FPS | 60 | 60.0 | GO |
+| Frame time (avg) | <16.67 ms | 16.66 ms | GO |
+| Frame time (max) | - | 17.61 ms | OK |
+| CPU | - | 3.6 ms (prepare 0.2, perform 2.4, present 0.2) | Excellent |
+| GPU | - | 2.4 ms (Metal) | Excellent |
+| Physics | <4 ms | 0.2 ms | Excellent |
+| Draw calls (total) | <1,000 | 753 | GO |
+| Draw calls (scene) | - | 356 | Excellent |
+| Triangles (total) | - | 300,431 | OK |
+| Triangles (scene) | - | 131,146 | OK |
+| Texture memory (live) | <200 MB | 327 MB | Over, but streaming manages it |
+| Texture memory (cached) | - | 9 MB | OK |
+| Shadow draw calls | - | 32 (40,551 tri) | Light |
+
+### Configuration Applied
+- ReproducedRoad (6,070): Box collision, CanCollide OFF, FluidForces OFF, Massless ON
+- Buildings+bridges+furniture+veg (5,311): PCD collision
+- Terrain/DEM (1): Default collision
+- All: CanTouch OFF, CanQuery OFF, DoubleSided ON, Anchored ON
+- CastShadow: ON only for buildings (3,064) + bridges (54)
 
 ---
 
