@@ -418,8 +418,6 @@ export const SCRAMBLE_PORTAL_TAG = "ShibuyaScramblePortal";
 export const HACHI_COSTUME_NAME = "HachiCostume";
 export const HACHI_RIDE_TAG = "HachiRide";
 export const HACHI_RIDE_PORTAL_TAG = "HachiRidePortal";
-export const HACHI_ITEM_TAG = "HachiCollectible";
-export const HACHI_KEY_ITEM_TAG = "HachiKeyItem";
 export const HACHI_SPAWN_TAG = "HachiRideSpawn";
 
 // Hachi Ride tuning
