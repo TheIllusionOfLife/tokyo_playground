@@ -857,17 +857,26 @@ export class HachiRideMinigame implements IMinigame {
 	}
 
 	private buildHotspots(): Hotspot[] {
+		const groundY = HACHI_SKY_DROP_GROUND_Y;
 		return [
 			{
-				center: HACHI_CITY_CENTER.add(new Vector3(0, 0, 0)),
+				center: new Vector3(HACHI_CITY_CENTER.X, groundY, HACHI_CITY_CENTER.Z),
 				label: "Scramble Crossing",
 			},
 			{
-				center: HACHI_CITY_CENTER.add(new Vector3(150, 0, 100)),
+				center: new Vector3(
+					HACHI_CITY_CENTER.X + 150,
+					groundY,
+					HACHI_CITY_CENTER.Z + 100,
+				),
 				label: "East District",
 			},
 			{
-				center: HACHI_CITY_CENTER.add(new Vector3(-150, 0, -100)),
+				center: new Vector3(
+					HACHI_CITY_CENTER.X - 150,
+					groundY,
+					HACHI_CITY_CENTER.Z - 100,
+				),
 				label: "West District",
 			},
 		];
@@ -901,7 +910,10 @@ export class HachiRideMinigame implements IMinigame {
 	private isInActiveHotspot(position: Vector3) {
 		const hotspot = this.hotspots[this.activeHotspotIndex];
 		if (!hotspot) return false;
-		return position.sub(hotspot.center).Magnitude <= HACHI_HOTSPOT_RADIUS;
+		// XZ-only distance so items at any height (ground or rooftop) can trigger
+		const dx = position.X - hotspot.center.X;
+		const dz = position.Z - hotspot.center.Z;
+		return math.sqrt(dx * dx + dz * dz) <= HACHI_HOTSPOT_RADIUS;
 	}
 
 	private broadcastRaceState() {

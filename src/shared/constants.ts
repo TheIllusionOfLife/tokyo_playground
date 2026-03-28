@@ -245,6 +245,7 @@ export const MINIGAME_MISSION_IDS: MissionId[] = [
 	MissionId.SurviveScramble,
 	MissionId.TagInScramble,
 	MissionId.CollectHachiItems,
+	MissionId.ReachHachiLevel3,
 	MissionId.WinHachiRide,
 	MissionId.CollectBonusItem,
 	MissionId.DodgeCars,
