@@ -25,6 +25,9 @@ export function TopBar() {
 		(state: GameStoreState) => state.timeRemaining,
 	);
 
+	// Hide in lobby — QueueStatusCard handles queue info separately
+	if (matchPhase === MatchPhase.WaitingForPlayers) return undefined!;
+
 	const isInProgress = matchPhase === MatchPhase.InProgress;
 	const phaseText = PHASE_LABELS[matchPhase] ?? matchPhase;
 
