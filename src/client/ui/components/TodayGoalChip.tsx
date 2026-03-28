@@ -21,15 +21,16 @@ export function TodayGoalChip() {
 		(mission) => !mission.rewardCollected && mission.progress < mission.target,
 	);
 
-	// Hide chip when an overlay is open (claim toast stays visible always)
-	const overlayOpen = activeOverlay !== "none";
+	// Show chip only when Missions overlay is open, or during InProgress gameplay
+	const missionsOpen = activeOverlay === "missions";
 	const inProgress = matchPhase === MatchPhase.InProgress;
-	// Hide goal chip during HachiRide (irrelevant mission info)
 	const isHachiRide = activeMinigameId === MinigameId.HachiRide;
+	const showChip =
+		nextMission !== undefined && (missionsOpen || (inProgress && !isHachiRide));
 
 	return (
 		<>
-			{nextMission && !overlayOpen && !(inProgress && isHachiRide) ? (
+			{showChip ? (
 				inProgress ? (
 					// Minimized compact chip during gameplay
 					<frame

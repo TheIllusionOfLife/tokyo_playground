@@ -217,10 +217,6 @@ export class LobbyService implements OnStart {
 					HACHI_LOBBY_MIN_LEVEL,
 				);
 				equipHachiCostume(player, clone, evoLevel);
-				this.serverEvents.hintTextChanged.fire(
-					player,
-					"WASD / arrow keys to ride Hachi!",
-				);
 			} else {
 				unequipHachiCostume(player);
 			}

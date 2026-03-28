@@ -12,10 +12,10 @@ export function FeaturedUnlockBanner() {
 	);
 	const matchPhase = useSelector((state: GameStoreState) => state.matchPhase);
 
-	// Hide during gameplay or when an overlay is open
+	// Only show when Missions overlay is open (not always on screen)
 	if (
 		!featuredUnlock ||
-		activeOverlay !== "none" ||
+		activeOverlay !== "missions" ||
 		matchPhase === MatchPhase.InProgress
 	) {
 		return undefined!;

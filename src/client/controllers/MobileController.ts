@@ -12,5 +12,8 @@ export class MobileController implements OnStart {
 			"PlayerGui",
 		) as PlayerGui;
 		playerGui.ScreenOrientation = Enum.ScreenOrientation.LandscapeSensor;
+
+		// Hide the default Roblox capture/recording HUD
+		StarterGui.SetCoreGuiEnabled(Enum.CoreGuiType.Captures, false);
 	}
 }
