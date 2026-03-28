@@ -56,10 +56,13 @@ export function equipHachiCostume(
 	// Already mounted: skip
 	if (mountedPlayers.has(player.UserId)) return false;
 
-	// Strip physics objects that are no longer needed
+	// Strip objects that are no longer needed
 	hachiModel.FindFirstChildWhichIsA("VehicleSeat")?.Destroy();
 	hachiModel.FindFirstChildOfClass("BodyVelocity")?.Destroy();
 	hachiModel.FindFirstChildOfClass("BodyGyro")?.Destroy();
+	for (const desc of hachiModel.GetDescendants()) {
+		if (desc.IsA("ProximityPrompt")) desc.Destroy();
+	}
 
 	// Make all Hachi parts cosmetic-only (no physics impact on Humanoid)
 	for (const desc of hachiModel.GetDescendants()) {
