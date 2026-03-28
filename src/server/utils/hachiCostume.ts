@@ -13,8 +13,13 @@ const serverEvents = GlobalEvents.createServer({});
 /** Name of the Hachi costume model when parented to character. */
 export const HACHI_COSTUME_NAME = "HachiCostume";
 
+/** R15 sitting animation — overrides locomotion while riding. */
+const SIT_ANIMATION_ID = "rbxassetid://2506281703";
+
 /** Server-authoritative map of mounted players → their Hachi model. */
 const mountedPlayers = new Map<number, Model>();
+/** Active sit animation tracks for cleanup on unequip. */
+const sitTracks = new Map<number, AnimationTrack>();
 
 /** Check if a player is currently mounted on Hachi. */
 export function isPlayerMounted(player: Player): boolean {
@@ -96,6 +101,23 @@ export function equipHachiCostume(
 	);
 	weld.Parent = body;
 
+	// Play sitting animation at Action4 priority to override locomotion
+	const animator =
+		humanoid.FindFirstChildOfClass("Animator") ??
+		(() => {
+			const a = new Instance("Animator");
+			a.Parent = humanoid;
+			return a;
+		})();
+	const sitAnim = new Instance("Animation");
+	sitAnim.AnimationId = SIT_ANIMATION_ID;
+	const track = animator.LoadAnimation(sitAnim);
+	track.Priority = Enum.AnimationPriority.Action4;
+	track.Looped = true;
+	track.Play();
+	sitTracks.set(player.UserId, track);
+	sitAnim.Destroy(); // Animation instance no longer needed after loading
+
 	// Set Humanoid movement properties
 	const walkSpeed = HACHI_WALK_SPEEDS[evolutionLevel] ?? HACHI_WALK_SPEEDS[0];
 	humanoid.WalkSpeed = walkSpeed;
@@ -120,6 +142,13 @@ export function equipHachiCostume(
 export function unequipHachiCostume(player: Player): boolean {
 	const hachiModel = mountedPlayers.get(player.UserId);
 	if (!hachiModel) return false;
+
+	// Stop sitting animation
+	const track = sitTracks.get(player.UserId);
+	if (track) {
+		track.Stop();
+		sitTracks.delete(player.UserId);
+	}
 
 	// Destroy the model (weld is a child, destroyed with it)
 	hachiModel.Destroy();
@@ -162,5 +191,6 @@ export function updateHachiWalkSpeed(
 
 /** Clean up mounted state when a player leaves. */
 Players.PlayerRemoving.Connect((player) => {
+	sitTracks.delete(player.UserId);
 	mountedPlayers.delete(player.UserId);
 });
