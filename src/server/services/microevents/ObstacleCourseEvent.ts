@@ -6,8 +6,7 @@ import {
 	OBSTACLE_COURSE_REPEAT_POINTS,
 } from "shared/living-shibuya-constants";
 import { GlobalEvents } from "shared/network";
-import { MicroEventId, MissionId } from "shared/types";
-import { MissionService } from "../MissionService";
+import { MicroEventId } from "shared/types";
 import { PlayerDataService } from "../PlayerDataService";
 import { IMicroEvent } from "./MicroEventBase";
 
@@ -33,7 +32,6 @@ export class ObstacleCourseEvent implements IMicroEvent {
 	constructor(
 		private readonly serverEvents: ServerEvents,
 		private readonly playerDataService: PlayerDataService,
-		private readonly missionService: MissionService,
 	) {}
 
 	start() {
@@ -103,12 +101,6 @@ export class ObstacleCourseEvent implements IMicroEvent {
 				if (isFirstCompletion && !data.badges.includes("ParkourPup")) {
 					data.badges.push("ParkourPup");
 				}
-
-				this.missionService.incrementAndNotify(
-					player,
-					MissionId.CompleteObstacleCourse,
-					1,
-				);
 
 				this.playerStates.delete(userId);
 				print(

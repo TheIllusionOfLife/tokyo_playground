@@ -8,8 +8,7 @@ import {
 	NPC_INTERACTION_RADIUS,
 } from "shared/living-shibuya-constants";
 import { GlobalEvents } from "shared/network";
-import { MicroEventId, MissionId } from "shared/types";
-import { MissionService } from "../MissionService";
+import { MicroEventId } from "shared/types";
 import { PlayerDataService } from "../PlayerDataService";
 import { IMicroEvent } from "./MicroEventBase";
 
@@ -30,7 +29,6 @@ export class FoodTruckEvent implements IMicroEvent {
 	constructor(
 		private readonly serverEvents: ServerEvents,
 		private readonly playerDataService: PlayerDataService,
-		private readonly missionService: MissionService,
 	) {}
 
 	start() {
@@ -73,11 +71,6 @@ export class FoodTruckEvent implements IMicroEvent {
 					FOOD_TRUCK_EARLY_BIRD_SLOTS - this.earlyBirdCount,
 				);
 				this.serverEvents.foodTruckFound.broadcast(player.Name, remaining);
-				this.missionService.incrementAndNotify(
-					player,
-					MissionId.VisitFoodTruck,
-					1,
-				);
 			}),
 		);
 	}

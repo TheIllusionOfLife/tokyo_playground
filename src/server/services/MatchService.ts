@@ -584,6 +584,15 @@ export class MatchService implements OnStart {
 			const result = this.activeMinigame.checkWinCondition();
 			if (result !== undefined) {
 				this.endRound(result);
+			} else if (
+				this.matchPlayers.size() > 0 &&
+				this.matchPlayers.size() <
+					MINIGAME_CONFIGS[this.currentMinigameId].minPlayers
+			) {
+				print(
+					"[MatchService] Below minimum players — ending round gracefully",
+				);
+				this.endRound(RoundResult.TimerExpired);
 			}
 		}
 	}

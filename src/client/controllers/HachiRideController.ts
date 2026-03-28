@@ -1,9 +1,11 @@
 import { Controller, OnStart } from "@flamework/core";
 import {
+	ContentProvider,
 	ContextActionService,
 	Players,
 	RunService,
 	SoundService,
+	UserInputService,
 } from "@rbxts/services";
 import { clientEvents } from "client/network";
 import {
@@ -34,11 +36,13 @@ export class HachiRideController implements OnStart {
 	private landedCheckConn?: RBXScriptConnection;
 	private wallRunStartConn?: RBXScriptConnection;
 	private wallRunStopConn?: RBXScriptConnection;
+	private jumpRequestConn?: RBXScriptConnection;
 
 	// Client-side jump phase: 0=grounded, 1=double available, 2=used
 	private jumpPhase = 0;
 	private lastJumpTime = 0;
 	private wallRunning = false;
+	private doubleJumpConsumed = false;
 
 	private isInMinigame(): boolean {
 		return gameStore.getState().activeMinigameId === MinigameId.HachiRide;
@@ -97,6 +101,7 @@ export class HachiRideController implements OnStart {
 		if (billboard) billboard.Enabled = false;
 
 		this.setDefaultJumpSoundEnabled(false);
+		this.ensureJumpSE();
 
 		// Double jump detection via Humanoid.StateChanged.
 		// Arm double jump after first real jump (not slope/small drop).
@@ -109,13 +114,10 @@ export class HachiRideController implements OnStart {
 					// First jump detected (native). Arm double if evolution allows.
 					this.lastJumpTime = os.clock();
 					this.jumpPhase = this.getActiveEvoLevel() >= 1 ? 1 : 2;
+					this.doubleJumpConsumed = false;
 					this.playJumpSE();
 					// Notify server so it can arm phase tracking
-					if (this.isInMinigame()) {
-						clientEvents.hachiJump.fire();
-					} else {
-						clientEvents.hachiJump.fire();
-					}
+					clientEvents.hachiJump.fire();
 				} else if (newState === Enum.HumanoidStateType.Landed) {
 					this.jumpPhase = 0;
 				}
@@ -144,41 +146,9 @@ export class HachiRideController implements OnStart {
 				if (!this.costumed) return Enum.ContextActionResult.Pass;
 
 				if (this.jumpPhase === 1) {
-					const now = os.clock();
-					if (now - this.lastJumpTime < HACHI_JUMP_COOLDOWN) {
-						return Enum.ContextActionResult.Pass;
+					if (this.performDoubleJump()) {
+						return Enum.ContextActionResult.Sink;
 					}
-					this.lastJumpTime = now;
-					this.jumpPhase = 2;
-
-					// Apply double jump impulse with PlatformStand guard
-					const h =
-						Players.LocalPlayer.Character?.FindFirstChildOfClass("Humanoid");
-					const hrp = Players.LocalPlayer.Character?.FindFirstChild(
-						"HumanoidRootPart",
-					) as BasePart | undefined;
-					if (hrp && h) {
-						h.PlatformStand = true;
-						hrp.AssemblyLinearVelocity = new Vector3(
-							hrp.AssemblyLinearVelocity.X,
-							HACHI_DOUBLE_JUMP_IMPULSE,
-							hrp.AssemblyLinearVelocity.Z,
-						);
-						task.defer(() => {
-							if (h.Parent) {
-								h.PlatformStand = false;
-								h.ChangeState(Enum.HumanoidStateType.Jumping);
-							}
-						});
-					}
-
-					if (this.isInMinigame()) {
-						clientEvents.hachiDoubleJump.fire();
-					} else {
-						clientEvents.hachiLobbyDoubleJump.fire();
-					}
-					this.playJumpSE();
-					return Enum.ContextActionResult.Sink;
 				}
 
 				// Phase 0 or 2: let native jump handle it
@@ -188,6 +158,26 @@ export class HachiRideController implements OnStart {
 			Enum.KeyCode.Space,
 			Enum.KeyCode.ButtonA,
 		);
+
+		// Mobile double jump: UserInputService.JumpRequest fires when the
+		// native touch jump button is tapped. CAS doesn't create a touch
+		// button, so this is the only path for mobile double jump.
+		this.jumpRequestConn = UserInputService.JumpRequest.Connect(() => {
+			if (!this.costumed) return;
+			if (this.jumpPhase !== 1) return;
+			if (this.doubleJumpConsumed) return;
+			const h =
+				Players.LocalPlayer.Character?.FindFirstChildOfClass("Humanoid");
+			if (!h) return;
+			const state = h.GetState();
+			if (
+				state !== Enum.HumanoidStateType.Jumping &&
+				state !== Enum.HumanoidStateType.Freefall
+			) {
+				return;
+			}
+			this.performDoubleJump();
+		});
 
 		// E key to dismount (blocked during active Hachi minigame)
 		ContextActionService.BindAction(
@@ -229,6 +219,44 @@ export class HachiRideController implements OnStart {
 		}
 	}
 
+	private performDoubleJump(): boolean {
+		const now = os.clock();
+		if (now - this.lastJumpTime < HACHI_JUMP_COOLDOWN) return false;
+		if (this.doubleJumpConsumed) return false;
+
+		this.lastJumpTime = now;
+		this.jumpPhase = 2;
+		this.doubleJumpConsumed = true;
+
+		const h =
+			Players.LocalPlayer.Character?.FindFirstChildOfClass("Humanoid");
+		const hrp = Players.LocalPlayer.Character?.FindFirstChild(
+			"HumanoidRootPart",
+		) as BasePart | undefined;
+		if (hrp && h) {
+			h.PlatformStand = true;
+			hrp.AssemblyLinearVelocity = new Vector3(
+				hrp.AssemblyLinearVelocity.X,
+				HACHI_DOUBLE_JUMP_IMPULSE,
+				hrp.AssemblyLinearVelocity.Z,
+			);
+			task.defer(() => {
+				if (h.Parent) {
+					h.PlatformStand = false;
+					h.ChangeState(Enum.HumanoidStateType.Jumping);
+				}
+			});
+		}
+
+		if (this.isInMinigame()) {
+			clientEvents.hachiDoubleJump.fire();
+		} else {
+			clientEvents.hachiLobbyDoubleJump.fire();
+		}
+		this.playJumpSE();
+		return true;
+	}
+
 	private onCostumeRemoved() {
 		this.costumed = false;
 
@@ -242,6 +270,8 @@ export class HachiRideController implements OnStart {
 		this.wallRunStartConn = undefined;
 		this.wallRunStopConn?.Disconnect();
 		this.wallRunStopConn = undefined;
+		this.jumpRequestConn?.Disconnect();
+		this.jumpRequestConn = undefined;
 		this.wallRunning = false;
 
 		ContextActionService.UnbindAction(ACTION_HACHI_JUMP);
@@ -274,16 +304,20 @@ export class HachiRideController implements OnStart {
 	private jumpSE?: Sound;
 	private lastJumpSETime = 0;
 
+	private ensureJumpSE() {
+		if (this.jumpSE) return;
+		this.jumpSE = new Instance("Sound");
+		this.jumpSE.SoundId = SE_JUMP;
+		this.jumpSE.Volume = 0.4;
+		this.jumpSE.Parent = SoundService;
+		task.spawn(() => ContentProvider.PreloadAsync([this.jumpSE!]));
+	}
+
 	private playJumpSE() {
 		const now = os.clock();
-		if (now - this.lastJumpSETime < 0.3) return;
+		if (now - this.lastJumpSETime < 0.05) return;
 		this.lastJumpSETime = now;
-		if (!this.jumpSE) {
-			this.jumpSE = new Instance("Sound");
-			this.jumpSE.SoundId = SE_JUMP;
-			this.jumpSE.Volume = 0.4;
-			this.jumpSE.Parent = SoundService;
-		}
-		this.jumpSE.Play();
+		this.ensureJumpSE();
+		this.jumpSE!.Play();
 	}
 }

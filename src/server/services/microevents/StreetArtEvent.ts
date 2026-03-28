@@ -7,8 +7,7 @@ import {
 	STREET_ART_WATCH_RADIUS,
 } from "shared/living-shibuya-constants";
 import { GlobalEvents } from "shared/network";
-import { MicroEventId, MissionId } from "shared/types";
-import { MissionService } from "../MissionService";
+import { MicroEventId } from "shared/types";
 import { PlayerDataService } from "../PlayerDataService";
 import { IMicroEvent } from "./MicroEventBase";
 
@@ -30,7 +29,6 @@ export class StreetArtEvent implements IMicroEvent {
 	constructor(
 		private readonly serverEvents: ServerEvents,
 		private readonly playerDataService: PlayerDataService,
-		private readonly missionService: MissionService,
 	) {}
 
 	start() {
@@ -85,11 +83,6 @@ export class StreetArtEvent implements IMicroEvent {
 				this.playerDataService.addPlayPoints(
 					player,
 					STREET_ART_FULL_WATCH_POINTS,
-				);
-				this.missionService.incrementAndNotify(
-					player,
-					MissionId.WatchStreetArt,
-					1,
 				);
 			} else if (this.partialVisitors.has(userId)) {
 				this.playerDataService.addPlayPoints(player, STREET_ART_PARTIAL_POINTS);

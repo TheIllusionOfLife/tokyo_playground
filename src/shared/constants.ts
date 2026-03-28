@@ -128,11 +128,6 @@ export const MISSION_DEFS: Record<
 		target: 3,
 		pointsReward: 55,
 	},
-	[MissionId.ReachRooftop]: {
-		label: "Reach a Rooftop",
-		target: 1,
-		pointsReward: 30,
-	},
 	[MissionId.CollectHachiItems]: {
 		label: "Collect 20 Items on Hachi",
 		target: 20,
@@ -158,57 +153,6 @@ export const MISSION_DEFS: Record<
 		target: 1,
 		pointsReward: 35,
 	},
-	// Living Shibuya missions
-	[MissionId.DiscoverStamps]: {
-		label: "Discover 3 Stamps",
-		target: 3,
-		pointsReward: 40,
-	},
-	[MissionId.CompleteStampSet]: {
-		label: "Complete a Stamp Set",
-		target: 1,
-		pointsReward: 75,
-	},
-	[MissionId.VisitFoodTruck]: {
-		label: "Find the Food Truck",
-		target: 1,
-		pointsReward: 30,
-	},
-	[MissionId.WatchFireworks]: {
-		label: "Watch a Fireworks Show",
-		target: 1,
-		pointsReward: 25,
-	},
-	[MissionId.AttendBonOdori]: {
-		label: "Join the Bon Odori",
-		target: 1,
-		pointsReward: 35,
-	},
-	[MissionId.GetPhotographed]: {
-		label: "Get Photographed 3 Times",
-		target: 3,
-		pointsReward: 30,
-	},
-	[MissionId.DrawOmikuji]: {
-		label: "Draw Your Fortune",
-		target: 1,
-		pointsReward: 20,
-	},
-	[MissionId.CompleteObstacleCourse]: {
-		label: "Complete Hachi Obstacle Course",
-		target: 1,
-		pointsReward: 45,
-	},
-	[MissionId.VisitCatColony]: {
-		label: "Visit the Cat Colony",
-		target: 1,
-		pointsReward: 20,
-	},
-	[MissionId.WatchStreetArt]: {
-		label: "Watch Street Art Being Made",
-		target: 1,
-		pointsReward: 35,
-	},
 };
 
 export const ALL_MISSION_IDS: MissionId[] = [
@@ -226,8 +170,6 @@ export const ALL_MISSION_IDS: MissionId[] = [
 	MissionId.WinHachiRide,
 	MissionId.CollectBonusItem,
 	MissionId.DodgeCars,
-	// Living Shibuya exploration missions temporarily removed from pool
-	// (features not yet working in new city layout)
 ];
 
 /** Minigame-specific missions for daily slot selection. */
@@ -241,15 +183,6 @@ export const MINIGAME_MISSION_IDS: MissionId[] = [
 	MissionId.CollectBonusItem,
 	MissionId.DodgeCars,
 ];
-
-/**
- * Exploration mission IDs for weighted daily selection.
- * Temporarily empty: Living Shibuya features (food truck, fireworks,
- * bon odori, etc.) are not yet working in the new city layout.
- * When empty, the daily slot logic skips the exploration slot and
- * fills all 3 slots from minigame + full pool instead.
- */
-export const EXPLORATION_MISSION_IDS: MissionId[] = [];
 
 export const SHOP_CATALOG: Omit<ShopItemData, "owned" | "equipped">[] = [
 	{

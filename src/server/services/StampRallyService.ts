@@ -12,9 +12,8 @@ import {
 	STAMP_TOTAL_COUNT,
 } from "shared/living-shibuya-constants";
 import { GlobalEvents } from "shared/network";
-import { MissionId, StampSetId } from "shared/types";
+import { StampSetId } from "shared/types";
 import { DayNightService } from "./DayNightService";
-import { MissionService } from "./MissionService";
 import { PlayerDataService } from "./PlayerDataService";
 
 /**
@@ -31,7 +30,6 @@ export class StampRallyService implements OnStart {
 	constructor(
 		private readonly playerDataService: PlayerDataService,
 		private readonly dayNightService: DayNightService,
-		private readonly missionService: MissionService,
 	) {}
 
 	onStart() {
@@ -124,9 +122,6 @@ export class StampRallyService implements OnStart {
 			(spot.GetAttribute("DisplayName") as string | undefined) ?? stampId;
 		this.serverEvents.stampDiscovered.fire(player, stampId, displayName);
 
-		// Mission progress
-		this.missionService.incrementAndNotify(player, MissionId.DiscoverStamps, 1);
-
 		print(`[StampRallyService] ${player.Name} discovered stamp: ${stampId}`);
 
 		// Check set completion
@@ -158,11 +153,6 @@ export class StampRallyService implements OnStart {
 			player,
 			setId,
 			setDef.rewardItemId,
-		);
-		this.missionService.incrementAndNotify(
-			player,
-			MissionId.CompleteStampSet,
-			1,
 		);
 		print(
 			`[StampRallyService] ${player.Name} completed set: ${setDef.displayName}`,

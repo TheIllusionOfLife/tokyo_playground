@@ -9,7 +9,6 @@ import { GlobalEvents } from "shared/network";
 import { GameState, MicroEventId } from "shared/types";
 import { DayNightService } from "./DayNightService";
 import { GameStateService } from "./GameStateService";
-import { MissionService } from "./MissionService";
 import { BonOdoriEvent } from "./microevents/BonOdoriEvent";
 import { FireworksEvent } from "./microevents/FireworksEvent";
 import { FoodTruckEvent } from "./microevents/FoodTruckEvent";
@@ -37,7 +36,6 @@ export class MicroEventService implements OnStart {
 		private readonly gameStateService: GameStateService,
 		private readonly dayNightService: DayNightService,
 		private readonly playerDataService: PlayerDataService,
-		private readonly missionService: MissionService,
 	) {}
 
 	onStart() {
@@ -132,30 +130,17 @@ export class MicroEventService implements OnStart {
 	private createEvent(eventId: MicroEventId): IMicroEvent | undefined {
 		switch (eventId) {
 			case MicroEventId.BonOdori:
-				return new BonOdoriEvent(
-					this.serverEvents,
-					this.playerDataService,
-					this.missionService,
-				);
+				return new BonOdoriEvent(this.serverEvents, this.playerDataService);
 			case MicroEventId.FoodTruck:
-				return new FoodTruckEvent(
-					this.serverEvents,
-					this.playerDataService,
-					this.missionService,
-				);
+				return new FoodTruckEvent(this.serverEvents, this.playerDataService);
 			case MicroEventId.Fireworks:
-				return new FireworksEvent(this.playerDataService, this.missionService);
+				return new FireworksEvent(this.playerDataService);
 			case MicroEventId.StreetArt:
-				return new StreetArtEvent(
-					this.serverEvents,
-					this.playerDataService,
-					this.missionService,
-				);
+				return new StreetArtEvent(this.serverEvents, this.playerDataService);
 			case MicroEventId.ObstacleCourse:
 				return new ObstacleCourseEvent(
 					this.serverEvents,
 					this.playerDataService,
-					this.missionService,
 				);
 			case MicroEventId.GoldenHour:
 				return new GoldenHourEvent(this.serverEvents, this.dayNightService);

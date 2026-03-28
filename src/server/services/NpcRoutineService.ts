@@ -16,9 +16,8 @@ import {
 	PHOTOGRAPHER_POSE_REWARD,
 } from "shared/living-shibuya-constants";
 import { GlobalEvents } from "shared/network";
-import { MissionId, NpcId, TimePhase } from "shared/types";
+import { NpcId, TimePhase } from "shared/types";
 import { DayNightService } from "./DayNightService";
-import { MissionService } from "./MissionService";
 import { PlayerDataService } from "./PlayerDataService";
 
 interface ActiveNpc {
@@ -46,7 +45,6 @@ export class NpcRoutineService implements OnStart {
 	constructor(
 		private readonly dayNightService: DayNightService,
 		private readonly playerDataService: PlayerDataService,
-		private readonly missionService: MissionService,
 	) {}
 
 	onStart() {
@@ -200,11 +198,6 @@ export class NpcRoutineService implements OnStart {
 				`catReact_${level}`,
 				0,
 			);
-			this.missionService.incrementAndNotify(
-				player,
-				MissionId.VisitCatColony,
-				1,
-			);
 		}
 	}
 
@@ -235,11 +228,6 @@ export class NpcRoutineService implements OnStart {
 				npcId,
 				"photograph",
 				PHOTOGRAPHER_POSE_REWARD,
-			);
-			this.missionService.incrementAndNotify(
-				player,
-				MissionId.GetPhotographed,
-				1,
 			);
 		}
 	}
@@ -279,7 +267,6 @@ export class NpcRoutineService implements OnStart {
 			fortune.tier,
 			points,
 		);
-		this.missionService.incrementAndNotify(player, MissionId.DrawOmikuji, 1);
 		print(
 			`[NpcRoutineService] ${player.Name} drew omikuji: ${fortune.fortuneJP} (${points} pts)`,
 		);
