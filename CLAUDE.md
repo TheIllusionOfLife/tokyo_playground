@@ -30,10 +30,12 @@ Roblox party mini-game platform set in Tokyo (Shibuya). roblox-ts + Flamework + 
 - Flamework networking uses `ModuleScript`-based remotes — no raw `RemoteEvent`s are visible via `GetDescendants()`.
 
 ## City Pipeline (PLATEAU → Roblox)
-- Pipeline: PLATEAU SDK (Unity) → FBX export → Blender spatial tile batch (`blender_batch_export.py`) → Roblox import → manifest correction
-- Blender script sets origin to geometry center, scales by SCALE factor, exports spatial tiles (63 tile FBX + `position_manifest.json`)
-- After Roblox import: calibrate k factor from reference tile, apply per-tile PivotTo correction, recenter to origin
-- **Do NOT resize MeshPart.Size** after import. This breaks TextureID UV mapping. Choose correct SCALE in Blender instead.
+- Pipeline: PLATEAU SDK (Unity) → Unity built-in FBX export → Blender passthrough → Roblox import
+- Step 1: Import CityGML in Unity via PLATEAU SDK. Apply aerial photo for DEM. Generate roads via SDK.
+- Step 2: Export from Unity using **built-in FBX export** (NOT SDK export, which can't export roads). Include textures.
+- Step 3: Import FBX into Blender, then re-export. Blender cleans texture embedding (direct Unity→Roblox has dirty textures).
+- Step 4: Import into Roblox. Textures render correctly.
+- **Don't use bldg LOD1** (white blocks, no textures). Use aerial photo DEM for suburb coverage instead.
 - Roblox imports FBX textures to `MeshPart.TextureID` (legacy), not `SurfaceAppearance`. One texture per MeshPart.
 - DEM terrain uses separate `blender_split_dem.py` (8x8 grid). DEM has 10x coordinate offset (JPC mismatch), fixed by DEM_COORD_FIX=0.1.
 - `Lighting.Technology` is deprecated. Use `LightingStyle=Realistic` + `PrioritizeLightingQuality=true` (equivalent of old Future).

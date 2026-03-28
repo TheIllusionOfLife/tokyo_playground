@@ -138,75 +138,47 @@ Record the material catalog. 72 unique materials with area-based import.
 
 ### Export Settings
 
-Use **PLATEAU > Export** (SDK built-in exporter):
-- **出力形式**: FBX Binary
-- **テクスチャを含める**: checked (embeds textures in FBX)
-- **座標変換**: Local
-- **座標軸**: WUN (右手座標系, Y軸が上, Z軸が北)
+**IMPORTANT: Use Unity's built-in FBX export, NOT PLATEAU SDK export.**
+PLATEAU SDK export cannot export generated road data. Use Unity's File > Export > FBX instead.
+- Include textures when exporting
 
 ### What to Export
 
-Export in two batches:
-
-**Batch 1: CityGML data** (エクスポート対象 = CityGML import root)
-- bldg (LOD2 + LOD1 buildings)
+Export city data and roads together:
+- bldg LOD2 (photogrammetry buildings)
 - ubld (underground)
 - brid (bridges)
 - frn (street furniture)
 - veg (vegetation)
-
-**Batch 2: Generated roads** (エクスポート対象 = road generation output)
-- The road objects created by 道路調整
+- ReproducedRoad (generated roads from Step 3)
 
 **Do NOT export:**
-- dem (terrain) - use Roblox Terrain instead
+- bldg LOD1 (white blocks without textures). Use aerial photo DEM for suburb coverage instead.
+- dem (terrain) - handled separately via `blender_split_dem.py`
 - tran (raw roads) - replaced by generated roads
-
-### CRITICAL: Road Data Alignment
-
-Road data (ReproducedRoad.fbx) uses a DIFFERENT coordinate system than city CityGML data (~35km offset in Blender). When importing roads into city.blend via `blender_import_roads.py`, you MUST verify alignment in Blender's viewport before exporting. If roads don't overlay with city streets, manually adjust the road mesh positions in Blender. Simple centroid-to-centroid offset does NOT work because the coordinate difference may involve rotation or scale, not just translation. The alignment must be done visually in Blender.
 
 ---
 
-## Step 4b: Blender Spatial Tile Export
+## Step 4b: Blender Passthrough
 
-The Unity FBX export produces meshes with absolute JPC coordinates. Blender groups them into spatial tiles and exports with position manifest for cross-tile alignment in Roblox.
+**Why Blender?** Direct Unity to Roblox FBX import produces dirty/broken textures. Importing through Blender first cleans the texture embedding and produces correct textures in Roblox.
 
-### Source File
+### Process
 
-`datasets/city_and_roads.blend` (Unity FBX export with Apply Transform, 11384 meshes). Run `blender_fix_all_transforms.py` first if transforms need unification.
+1. Import the Unity FBX into Blender (`datasets/city_and_roads.blend`)
+2. Re-export from Blender as FBX with embedded textures
+3. Import the Blender FBX into Roblox
 
-### Run Spatial Tile Export
+No material splitting, spatial tiling, or manifest correction is needed. Blender acts as a texture-cleaning format converter.
 
-Run `datasets/scripts/blender_batch_export.py` headless:
-```
-blender city_and_roads.blend --background --python blender_batch_export.py
-```
+### DEM Terrain (Separate Pipeline)
 
-The script:
-1. **Sets origin** to geometry bounds center (`ORIGIN_GEOMETRY`, `BOUNDS`)
-2. **Scales** by SCALE factor from world origin (both positions and vertices)
-3. **Applies scale** to vertices only (`transform_apply(location=False, scale=True)`)
-4. **Groups** meshes into spatial tiles by proximity (percentile-based grid)
-5. **Exports** each tile as FBX + position manifest JSON
+DEM terrain still uses `blender_split_dem.py` for splitting into tiles that fit Roblox's 2048-stud mesh limit.
+DEM has 10x coordinate offset (JPC mismatch), fixed by DEM_COORD_FIX=0.1. Default 8x8 grid = 64 tiles.
 
-**Key settings:**
-- `SCALE=2.0` in the script. Roblox imports at ~0.041x, resulting in ~0.083x net scale. Mesh sizes need **0.5x correction in Roblox** after import (the SCALE doubles vertex size relative to positions).
-- `apply_unit_scale=False` (Unity data already in cm)
-- `axis_forward='Z'`, `axis_up='Y'`
-- DEM exported separately
+### Legacy: Spatial Tile Pipeline (Deprecated)
 
-**Output:** `datasets/blender_exports/tile_XX_YY.fbx` (63 tiles) + `position_manifest.json`
-
-### Post-Import: Manifest Correction + Size Fix
-
-After importing all tiles into Roblox:
-1. **Calibrate k factor**: pick reference tile (tile_03_02), compare manifest position to Roblox position. k = Roblox_pos / (-Blender_X). At SCALE=2.0, k = 0.041376.
-2. **Compute per-tile offset**: for each tile, sample a mesh, compute expected = manifest * k, offset = actual - expected.
-3. **Apply correction**: `tile:PivotTo(pivot - offset)` for each tile.
-4. **Recenter to origin**: shift all tiles by city center offset.
-5. **Halve mesh sizes**: `meshPart.Size = meshPart.Size * 0.5` (corrects SCALE=2.0 vertex doubling).
-6. Axis mapping: Roblox X = -Blender_X * k, Roblox Y = Blender_Z * k, Roblox Z = Blender_Y * k
+The old `blender_batch_export.py` pipeline with spatial tiling, manifest correction, k factor calibration, and 0.5x Size correction is no longer needed. The simple Blender passthrough produces correct results. Legacy scripts remain in `datasets/scripts/` for reference.
 
 ---
 
