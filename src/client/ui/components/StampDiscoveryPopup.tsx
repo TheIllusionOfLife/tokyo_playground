@@ -1,5 +1,7 @@
 import React from "@rbxts/react";
 import { useSelector } from "@rbxts/react-reflex";
+import { t } from "shared/localization";
+import { L_STAMP_DISCOVERED } from "shared/localization/keys";
 import { GameStoreState } from "shared/store/game-store";
 
 /**
@@ -40,7 +42,7 @@ export function StampDiscoveryPopup() {
 				TextColor3={Color3.fromRGB(255, 220, 100)}
 				TextScaled={true}
 				Font={Enum.Font.GothamBold}
-				Text="Stamp Discovered!"
+				Text={t(L_STAMP_DISCOVERED)}
 				TextXAlignment={Enum.TextXAlignment.Left}
 			/>
 			<textlabel

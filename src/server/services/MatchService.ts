@@ -240,10 +240,12 @@ export class MatchService implements OnStart {
 		let oniPlayer: Player | undefined;
 		for (const [player, role] of roles) {
 			this.serverEvents.roleAssigned.fire(player, role, minigameId);
-			this.serverEvents.roundIntroShown.fire(
-				player,
-				MINIGAME_INTROS[minigameId],
-			);
+			const introConfig = MINIGAME_INTROS[minigameId];
+			this.serverEvents.roundIntroShown.fire(player, {
+				title: introConfig.titleKey,
+				subtitle: introConfig.subtitleKey,
+				durationSeconds: introConfig.durationSeconds,
+			});
 			if (role === PlayerRole.Oni) {
 				oniPlayer = player;
 			}
@@ -589,9 +591,7 @@ export class MatchService implements OnStart {
 				this.matchPlayers.size() <
 					MINIGAME_CONFIGS[this.currentMinigameId].minPlayers
 			) {
-				print(
-					"[MatchService] Below minimum players — ending round gracefully",
-				);
+				print("[MatchService] Below minimum players — ending round gracefully");
 				this.endRound(RoundResult.TimerExpired);
 			}
 		}

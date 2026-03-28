@@ -1,5 +1,7 @@
 import React from "@rbxts/react";
 import { useSelector } from "@rbxts/react-reflex";
+import { t } from "shared/localization";
+import { L_LEVEL_UP } from "shared/localization/keys";
 import { GameStoreState } from "shared/store/game-store";
 
 export function LevelUpOverlay() {
@@ -26,7 +28,7 @@ export function LevelUpOverlay() {
 				TextColor3={Color3.fromRGB(255, 215, 0)}
 				TextScaled={true}
 				Font={Enum.Font.GothamBold}
-				Text={`LEVEL UP!\nLv.${newLevel}`}
+				Text={`${t(L_LEVEL_UP)}\nLv.${newLevel}`}
 			/>
 		</frame>
 	);

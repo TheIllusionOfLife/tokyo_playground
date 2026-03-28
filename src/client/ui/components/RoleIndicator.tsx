@@ -1,5 +1,11 @@
 import React from "@rbxts/react";
 import { useSelector } from "@rbxts/react-reflex";
+import { t } from "shared/localization";
+import {
+	L_ROLE_HIDER,
+	L_ROLE_ONI,
+	L_ROLE_SPECTATOR,
+} from "shared/localization/keys";
 import { GameStoreState } from "shared/store/game-store";
 import { MatchPhase, PlayerRole } from "shared/types";
 
@@ -10,11 +16,11 @@ const ROLE_COLORS: Record<PlayerRole, Color3> = {
 	[PlayerRole.Spectator]: Color3.fromRGB(150, 150, 150),
 };
 
-const ROLE_LABELS: Record<PlayerRole, string> = {
+const ROLE_LABEL_KEYS: Record<PlayerRole, string> = {
 	[PlayerRole.None]: "",
-	[PlayerRole.Oni]: "ONI",
-	[PlayerRole.Hider]: "HIDER",
-	[PlayerRole.Spectator]: "SPECTATOR",
+	[PlayerRole.Oni]: L_ROLE_ONI,
+	[PlayerRole.Hider]: L_ROLE_HIDER,
+	[PlayerRole.Spectator]: L_ROLE_SPECTATOR,
 };
 
 export function RoleIndicator() {
@@ -26,7 +32,8 @@ export function RoleIndicator() {
 	}
 
 	const color = ROLE_COLORS[role];
-	const label = ROLE_LABELS[role];
+	const labelKey = ROLE_LABEL_KEYS[role];
+	const label = labelKey !== "" ? t(labelKey) : "";
 
 	return (
 		<textlabel

@@ -1,5 +1,6 @@
 import React from "@rbxts/react";
 import { useSelector } from "@rbxts/react-reflex";
+import { t } from "shared/localization";
 import { GameStoreState } from "shared/store/game-store";
 
 export function RoundIntroOverlay() {
@@ -27,7 +28,7 @@ export function RoundIntroOverlay() {
 				TextColor3={Color3.fromRGB(255, 220, 120)}
 				TextScaled={true}
 				Font={Enum.Font.GothamBold}
-				Text={intro.title}
+				Text={t(intro.title)}
 				ZIndex={21}
 			/>
 			<textlabel
@@ -37,7 +38,7 @@ export function RoundIntroOverlay() {
 				TextColor3={Color3.fromRGB(240, 240, 255)}
 				TextScaled={true}
 				Font={Enum.Font.Gotham}
-				Text={intro.subtitle}
+				Text={t(intro.subtitle)}
 				ZIndex={21}
 			/>
 		</frame>

@@ -1,6 +1,12 @@
 import React from "@rbxts/react";
 import { useSelector } from "@rbxts/react-reflex";
 import { clientEvents } from "client/network";
+import { t, tMission } from "shared/localization";
+import {
+	L_CLAIMED,
+	L_DAILY_MISSIONS,
+	L_MISSIONS,
+} from "shared/localization/keys";
 import { GameStoreState, gameStore } from "shared/store/game-store";
 import { MatchPhase, MinigameId, MissionProgressData } from "shared/types";
 
@@ -25,7 +31,7 @@ function MissionRow({ mission }: { mission: MissionProgressData }) {
 				TextColor3={Color3.fromRGB(230, 230, 230)}
 				TextScaled={true}
 				Font={Enum.Font.Gotham}
-				Text={mission.label}
+				Text={tMission(mission.id)}
 				TextXAlignment={Enum.TextXAlignment.Left}
 			/>
 			<textlabel
@@ -72,7 +78,7 @@ function MissionRow({ mission }: { mission: MissionProgressData }) {
 				Font={Enum.Font.GothamBold}
 				Text={
 					mission.rewardCollected
-						? "Claimed"
+						? t(L_CLAIMED)
 						: canClaim
 							? `+${mission.pointsReward}`
 							: `${mission.progress}/${mission.target}`
@@ -131,7 +137,7 @@ export function MissionPanel() {
 					TextColor3={Color3.fromRGB(255, 255, 150)}
 					TextScaled={true}
 					Font={Enum.Font.GothamBold}
-					Text="Missions"
+					Text={t(L_MISSIONS)}
 					Event={{
 						Activated: () =>
 							gameStore.setActiveOverlay(open ? "none" : "missions"),
@@ -180,7 +186,7 @@ export function MissionPanel() {
 						TextColor3={Color3.fromRGB(255, 255, 150)}
 						TextScaled={true}
 						Font={Enum.Font.GothamBold}
-						Text="Daily Missions"
+						Text={t(L_DAILY_MISSIONS)}
 						TextXAlignment={Enum.TextXAlignment.Left}
 						ZIndex={19}
 					/>

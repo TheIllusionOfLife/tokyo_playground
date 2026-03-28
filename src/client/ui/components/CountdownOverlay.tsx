@@ -1,5 +1,7 @@
 import React from "@rbxts/react";
 import { useSelector } from "@rbxts/react-reflex";
+import { t } from "shared/localization";
+import { L_ONI_REVEAL } from "shared/localization/keys";
 import { GameStoreState } from "shared/store/game-store";
 
 export function CountdownOverlay() {
@@ -28,7 +30,7 @@ export function CountdownOverlay() {
 					TextStrokeTransparency={0.3}
 					TextScaled={true}
 					Font={Enum.Font.GothamBold}
-					Text="The Oni is..."
+					Text={t(L_ONI_REVEAL)}
 				/>
 				<textlabel
 					Size={new UDim2(1, 0, 0.6, 0)}

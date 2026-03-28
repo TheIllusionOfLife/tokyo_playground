@@ -67,21 +67,21 @@ export const MINIGAME_CONFIGS: Record<MinigameId, MinigameConfig> = {
 
 export const MINIGAME_INTROS: Record<
 	MinigameId,
-	{ title: string; subtitle: string; durationSeconds: number }
+	{ titleKey: string; subtitleKey: string; durationSeconds: number }
 > = {
 	[MinigameId.CanKick]: {
-		title: "Street Hide-and-Seek",
-		subtitle: "Avoid the Oni and free your team with the can.",
+		titleKey: "intro_can_kick_title",
+		subtitleKey: "intro_can_kick_sub",
 		durationSeconds: 5,
 	},
 	[MinigameId.ShibuyaScramble]: {
-		title: "Shibuya Chaos",
-		subtitle: "Blend into the crowd, survive, and use the crossing.",
+		titleKey: "intro_scramble_title",
+		subtitleKey: "intro_scramble_sub",
 		durationSeconds: 5,
 	},
 	[MinigameId.HachiRide]: {
-		title: "Ride Hachi",
-		subtitle: "Collect trash, evolve fast, and steal the lead.",
+		titleKey: "intro_hachi_title",
+		subtitleKey: "intro_hachi_sub",
 		durationSeconds: 5,
 	},
 };
