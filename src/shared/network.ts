@@ -66,6 +66,8 @@ interface ServerToClientEvents {
 	queueStatusChanged(status: QueueStatusData): void;
 	roundIntroShown(intro: RoundIntroData): void;
 	oniReveal(oniUserId: number, durationSeconds: number): void;
+	canKickVisual(canPosition: Vector3): void;
+	catchHighlight(caughtUserId: number): void;
 	spiritChargeChanged(charges: number): void;
 	hachiRaceState(state: HachiRaceStateData): void;
 	hachiCostumeEquipped(equipped: boolean): void;

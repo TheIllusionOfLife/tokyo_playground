@@ -1,7 +1,12 @@
 import { Controller, OnStart } from "@flamework/core";
 import { Players, RunService, TweenService, Workspace } from "@rbxts/services";
 import { clientEvents } from "client/network";
-import { CAN_KICK_RADIUS } from "shared/constants";
+import {
+	CAN_KICK_RADIUS,
+	CAN_KICK_RISE,
+	CAN_KICK_SPIN,
+	CAN_KICK_TWEEN_DURATION,
+} from "shared/constants";
 import { MinigameId, PlayerRole } from "shared/types";
 
 @Controller()
@@ -47,6 +52,14 @@ export class CanKickController implements OnStart {
 			if (Players.LocalPlayer.UserId === kickerPlayerId) {
 				this.showScreenFlash(Color3.fromRGB(50, 200, 80));
 			}
+		});
+
+		clientEvents.canKickVisual.connect((canPosition) => {
+			this.playKickAnimation(canPosition);
+		});
+
+		clientEvents.catchHighlight.connect((caughtUserId) => {
+			this.showCatchHighlight(caughtUserId);
 		});
 
 		clientEvents.roundResultAnnounced.connect(() => {
@@ -148,6 +161,75 @@ export class CanKickController implements OnStart {
 				this.oniRevealHighlight = undefined;
 			}
 		});
+	}
+
+	private playKickAnimation(canPosition: Vector3) {
+		// Create a cosmetic copy at the can's position to animate
+		const visual = new Instance("Part");
+		visual.Shape = Enum.PartType.Cylinder;
+		visual.Size = new Vector3(4, 6, 6);
+		visual.Color = Color3.fromRGB(200, 200, 200);
+		visual.Material = Enum.Material.Metal;
+		visual.Anchored = true;
+		visual.CanCollide = false;
+		visual.CanTouch = false;
+		visual.CanQuery = false;
+		visual.CFrame = new CFrame(canPosition);
+		visual.Parent = Workspace;
+
+		// Particle burst
+		const emitter = new Instance("ParticleEmitter");
+		emitter.Rate = 0;
+		emitter.Speed = new NumberRange(10, 20);
+		emitter.Lifetime = new NumberRange(0.5, 1);
+		emitter.SpreadAngle = new Vector2(180, 180);
+		emitter.Color = new ColorSequence(Color3.fromRGB(255, 220, 80));
+		emitter.Size = new NumberSequence(1, 0);
+		emitter.Parent = visual;
+		emitter.Emit(20);
+
+		// Rise + spin via Heartbeat (CFrame tween can't do multiple rotations)
+		const startTime = os.clock();
+		const totalSpinRad = math.rad(CAN_KICK_SPIN);
+		const riseConn = RunService.Heartbeat.Connect(() => {
+			const elapsed = os.clock() - startTime;
+			if (elapsed >= CAN_KICK_TWEEN_DURATION) {
+				riseConn.Disconnect();
+				// Fall back with bounce
+				const tweenDown = TweenService.Create(
+					visual,
+					new TweenInfo(0.5, Enum.EasingStyle.Bounce, Enum.EasingDirection.Out),
+					{ CFrame: new CFrame(canPosition) },
+				);
+				tweenDown.Play();
+				tweenDown.Completed.Connect(() => visual.Destroy());
+				return;
+			}
+			const t = elapsed / CAN_KICK_TWEEN_DURATION;
+			// Quad ease-out for rise
+			const eased = 1 - (1 - t) * (1 - t);
+			const yOffset = CAN_KICK_RISE * eased;
+			const angle = totalSpinRad * t;
+			visual.CFrame = new CFrame(
+				canPosition.add(new Vector3(0, yOffset, 0)),
+			).mul(CFrame.Angles(0, angle, 0));
+		});
+	}
+
+	private showCatchHighlight(caughtUserId: number) {
+		const caughtPlayer = Players.GetPlayerByUserId(caughtUserId);
+		const character = caughtPlayer?.Character;
+		if (!character) return;
+
+		const highlight = new Instance("Highlight");
+		highlight.FillColor = Color3.fromRGB(255, 80, 80);
+		highlight.FillTransparency = 0.5;
+		highlight.OutlineColor = Color3.fromRGB(255, 50, 50);
+		highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop;
+		highlight.Adornee = character;
+		highlight.Parent = character;
+
+		task.delay(1.5, () => highlight.Destroy());
 	}
 
 	private showScreenFlash(color: Color3) {
