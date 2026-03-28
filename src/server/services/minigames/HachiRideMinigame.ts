@@ -14,6 +14,7 @@ import {
 	HACHI_BIG_SCALE,
 	HACHI_BONUS_ITEM_COUNT,
 	HACHI_BONUS_ITEM_VALUE,
+	HACHI_CITY_CENTER,
 	HACHI_COLLECTION_RADIUS,
 	HACHI_EJECT_COOLDOWN,
 	HACHI_EVOLUTION_THRESHOLDS,
@@ -22,13 +23,19 @@ import {
 	HACHI_HOTSPOT_MULTIPLIER,
 	HACHI_HOTSPOT_RADIUS,
 	HACHI_HOTSPOT_ROTATION_INTERVAL,
-	HACHI_ITEM_TAG,
 	HACHI_ITEMS_TO_SPAWN,
 	HACHI_JUMP_COOLDOWN,
 	HACHI_JUMP_VELOCITY,
-	HACHI_KEY_ITEM_TAG,
 	HACHI_MAX_SPEED_TOLERANCE,
+	HACHI_ROOFTOP_BONUS_OFFSET_Y,
+	HACHI_ROOFTOP_BUILDINGS,
 	HACHI_ROUND_DURATION,
+	HACHI_SKY_DROP_DENSE_RADIUS,
+	HACHI_SKY_DROP_FALL_DURATION,
+	HACHI_SKY_DROP_GROUND_Y,
+	HACHI_SKY_DROP_MAX_Y,
+	HACHI_SKY_DROP_MIN_Y,
+	HACHI_SKY_DROP_SPREAD_RADIUS,
 	HACHI_SPAWN_TAG,
 	HACHI_STARTING_EVOLUTION,
 	HACHI_WALK_SPEEDS,
@@ -42,6 +49,7 @@ import {
 	AnyPlayerState,
 	HachiRidePlayerState,
 	MinigameId,
+	MissionId,
 	PlayerRole,
 	RoundResult,
 } from "shared/types";
@@ -56,6 +64,7 @@ import {
 	unequipHachiCostume,
 	updateHachiWalkSpeed,
 } from "../../utils/hachiCostume";
+import { MissionService } from "../MissionService";
 import { IMinigame } from "./MinigameBase";
 
 type ServerEvents = ReturnType<typeof GlobalEvents.createServer>;
@@ -71,18 +80,6 @@ interface WallRunState {
 interface Hotspot {
 	center: Vector3;
 	label: string;
-}
-
-// Fisher-Yates shuffle for BasePart arrays
-function shuffle(arr: BasePart[]): BasePart[] {
-	const result = [...arr];
-	for (let i = result.size() - 1; i > 0; i--) {
-		const j = math.random(0, i);
-		const tmp = result[i];
-		result[i] = result[j];
-		result[j] = tmp;
-	}
-	return result;
 }
 
 export class HachiRideMinigame implements IMinigame {
@@ -118,8 +115,12 @@ export class HachiRideMinigame implements IMinigame {
 	private roundElapsed = 0;
 	private raceUpdateElapsed = 0;
 	private finalSprintStarted = false;
+	private itemLandingY = new Map<BasePart, number>();
 
-	constructor(private readonly serverEvents: ServerEvents) {
+	constructor(
+		private readonly serverEvents: ServerEvents,
+		private readonly missionService: MissionService,
+	) {
 		HachiRideMinigame.activeInstance = this;
 	}
 
@@ -138,86 +139,69 @@ export class HachiRideMinigame implements IMinigame {
 			this.playerObjects.set(player.UserId, player);
 		}
 
-		// Set up collectible items — pick HACHI_ITEMS_TO_SPAWN from all anchors
-		const allAnchors = CollectionService.GetTagged(HACHI_ITEM_TAG).filter(
-			(i): i is BasePart => i.IsA("BasePart"),
-		);
-		if (allAnchors.size() === 0) {
-			warn(
-				"[HachiRide] Missing Studio asset: HachiCollectible — check map setup",
+		// Dynamic sky-drop collectibles
+		const regularCount = HACHI_ITEMS_TO_SPAWN - HACHI_BONUS_ITEM_COUNT;
+		const regularPositions = this.generateSpawnPositions(regularCount);
+		for (const skyPos of regularPositions) {
+			const part = this.createCollectible(
+				skyPos,
+				new Vector3(2, 2, 2),
+				Color3.fromRGB(100, 200, 255),
 			);
-		}
-		const shuffled = shuffle(allAnchors);
-		const chosen = shuffled.filter((_, idx) => idx < HACHI_ITEMS_TO_SPAWN);
-		const unchosen = shuffled.filter((_, idx) => idx >= HACHI_ITEMS_TO_SPAWN);
-
-		// Hide unchosen items
-		for (const part of unchosen) {
-			part.Transparency = 1;
-			part.CanCollide = false;
-			part.CanQuery = false;
-		}
-		// Show chosen items (CanCollide=false so they don't block Hachi)
-		// First HACHI_BONUS_ITEM_COUNT items are bonus (shuffled = random)
-		const originalColors = new Map<BasePart, Color3>();
-		const originalSizes = new Map<BasePart, Vector3>();
-		const originalCFrames = new Map<BasePart, CFrame>();
-		for (let i = 0; i < chosen.size(); i++) {
-			const part = chosen[i];
-			originalCFrames.set(part, part.CFrame);
-			originalSizes.set(part, part.Size);
-			part.Transparency = 1; // Hidden until startRound
-			part.CanCollide = false;
-			part.CanQuery = false;
 			this.activeItems.push(part);
-			if (i < HACHI_BONUS_ITEM_COUNT) {
-				// Mark as bonus: bigger, gold color
-				this.bonusItems.add(part);
-				originalColors.set(part, part.Color);
-				part.Size = part.Size.mul(2.5);
-				part.Color = Color3.fromRGB(255, 215, 0);
-				part.Material = Enum.Material.Neon;
-			}
+			this.itemLandingY.set(part, HACHI_SKY_DROP_GROUND_Y);
 		}
-		this.hotspots = this.buildHotspots(chosen);
 
-		// Register cleanup: cancel active tweens, restore all anchors to hidden state
+		// Bonus items: 10 on rooftops (1 per top 10 building)
+		for (const bldg of HACHI_ROOFTOP_BUILDINGS) {
+			const xOff = (math.random() - 0.5) * 10;
+			const zOff = (math.random() - 0.5) * 10;
+			const skyPos = new Vector3(
+				bldg.x + xOff,
+				bldg.topY + HACHI_ROOFTOP_BONUS_OFFSET_Y,
+				bldg.z + zOff,
+			);
+			const part = this.createCollectible(
+				skyPos,
+				new Vector3(5, 5, 5),
+				Color3.fromRGB(255, 215, 0),
+			);
+			this.activeItems.push(part);
+			this.bonusItems.add(part);
+			this.itemLandingY.set(part, bldg.topY);
+		}
+
+		// Bonus items: 10 random across DEM area
+		const randomBonusPositions = this.generateSpawnPositions(10);
+		for (const skyPos of randomBonusPositions) {
+			const part = this.createCollectible(
+				skyPos,
+				new Vector3(5, 5, 5),
+				Color3.fromRGB(255, 215, 0),
+			);
+			this.activeItems.push(part);
+			this.bonusItems.add(part);
+			this.itemLandingY.set(part, HACHI_SKY_DROP_GROUND_Y);
+		}
+
+		this.hotspots = this.buildHotspots();
+
+		// Register cleanup: cancel tweens, destroy dynamic parts
 		matchJanitor.Add(() => {
 			for (const tween of this.activeTweens) {
 				tween.Cancel();
 			}
 			this.activeTweens = [];
-			for (const part of allAnchors) {
-				part.Transparency = 1;
-				part.CanCollide = false;
-				part.CanQuery = false;
-				// Restore original CFrame/Size for all items (animation may have changed them)
-				const origCFrame = originalCFrames.get(part);
-				if (origCFrame) part.CFrame = origCFrame;
-				const origSize = originalSizes.get(part);
-				if (origSize) part.Size = origSize;
-				// Restore original color for bonus items
-				const origColor = originalColors.get(part);
-				if (origColor) part.Color = origColor;
+			for (const part of this.activeItems) {
+				part.Destroy();
 			}
 			this.activeItems = [];
 			this.bonusItems.clear();
+			this.itemLandingY.clear();
 		});
 
-		// Key items — always visible
-		this.keyItems = CollectionService.GetTagged(HACHI_KEY_ITEM_TAG).filter(
-			(i): i is BasePart => i.IsA("BasePart"),
-		);
-		if (this.keyItems.size() === 0) {
-			warn("[HachiRide] Missing Studio asset: HachiKeyItem — check map setup");
-		}
-		for (let i = 0; i < this.keyItems.size(); i++) {
-			const item = this.keyItems[i];
-			item.Transparency = 1; // Hidden until round starts
-			item.CanCollide = false;
-			item.CanQuery = false;
-			if (i === 0) this.bonusItems.add(item); // Only first key item is bonus
-		}
+		// Key items are now the rooftop bonus items (no separate key item system)
+		this.keyItems = [];
 
 		// Spawn points (cached for reuse in assignRoles)
 		this.spawnParts = CollectionService.GetTagged(HACHI_SPAWN_TAG).filter(
@@ -387,17 +371,33 @@ export class HachiRideMinigame implements IMinigame {
 				this.serverEvents.hachiDoubleJumpGranted.fire(player);
 			}
 		}
-		// Reveal all items now
+		// Reveal items and tween them falling from sky
 		for (const item of this.activeItems) {
 			item.Transparency = 0;
-			item.CanQuery = true;
-		}
-		for (const item of this.keyItems) {
-			item.Transparency = 0;
-			item.CanQuery = true;
+			const landY = this.itemLandingY.get(item) ?? HACHI_SKY_DROP_GROUND_Y;
+			const delay = math.random() * 3;
+			task.delay(delay, () => {
+				if (!item.Parent) return;
+				const tween = TweenService.Create(
+					item,
+					new TweenInfo(
+						HACHI_SKY_DROP_FALL_DURATION,
+						Enum.EasingStyle.Bounce,
+						Enum.EasingDirection.Out,
+					),
+					{
+						Position: new Vector3(item.Position.X, landY, item.Position.Z),
+					},
+				);
+				tween.Completed.Connect(() => {
+					if (item.Parent) item.CanQuery = true;
+				});
+				tween.Play();
+				this.activeTweens.push(tween);
+			});
 		}
 		this.serverEvents.hintTextChanged.broadcast(
-			"Go! Collect as much trash as you can!",
+			"Items falling from the sky! Collect as much as you can!",
 		);
 		this.broadcastRaceState();
 	}
@@ -647,6 +647,7 @@ export class HachiRideMinigame implements IMinigame {
 					toRemove.push(item);
 					continue;
 				}
+				if (!item.CanQuery) continue; // still falling
 				if (pos.sub(item.Position).Magnitude <= HACHI_COLLECTION_RADIUS) {
 					item.CanQuery = false;
 					item.CanCollide = false;
@@ -689,7 +690,7 @@ export class HachiRideMinigame implements IMinigame {
 			? HACHI_HOTSPOT_MULTIPLIER
 			: 1;
 		const finalSprintMultiplier =
-			this.finalSprintStarted && this.keyItems.includes(item)
+			this.finalSprintStarted && this.bonusItems.has(item)
 				? HACHI_FINAL_SPRINT_MULTIPLIER
 				: 1;
 		const value =
@@ -705,6 +706,11 @@ export class HachiRideMinigame implements IMinigame {
 			this.serverEvents.hintTextChanged.fire(
 				player,
 				`BONUS! +${value} points!`,
+			);
+			this.missionService.incrementAndNotify(
+				player,
+				MissionId.CollectBonusItem,
+				1,
 			);
 		}
 		// Always fire item event — HUD needs the count update.
@@ -803,18 +809,77 @@ export class HachiRideMinigame implements IMinigame {
 		}
 	}
 
-	private buildHotspots(items: BasePart[]): Hotspot[] {
-		if (items.size() === 0) return [];
-		const labels = ["City Loop 1", "City Loop 2", "City Loop 3"];
-		const samples = [
-			items[0],
-			items[math.floor(items.size() / 2)],
-			items[items.size() - 1],
+	private createCollectible(
+		position: Vector3,
+		size: Vector3,
+		color: Color3,
+	): BasePart {
+		const part = new Instance("Part");
+		part.Shape = Enum.PartType.Ball;
+		part.Size = size;
+		part.Color = color;
+		part.Material = Enum.Material.Neon;
+		part.Anchored = true;
+		part.CanCollide = false;
+		part.CanTouch = false;
+		part.CanQuery = false;
+		part.CastShadow = false;
+		part.Transparency = 1;
+		part.Position = position;
+		part.Parent = Workspace;
+		return part;
+	}
+
+	private gaussianRandom(): number {
+		const u1 = math.max(math.random(), 1e-10);
+		const u2 = math.random();
+		return math.sqrt(-2 * math.log(u1)) * math.cos(2 * math.pi * u2);
+	}
+
+	private generateSpawnPositions(count: number): Vector3[] {
+		const positions: Vector3[] = [];
+		for (let i = 0; i < count; i++) {
+			let dx = this.gaussianRandom() * HACHI_SKY_DROP_DENSE_RADIUS;
+			let dz = this.gaussianRandom() * HACHI_SKY_DROP_DENSE_RADIUS;
+			// Clamp to spread radius
+			const dist = math.sqrt(dx * dx + dz * dz);
+			if (dist > HACHI_SKY_DROP_SPREAD_RADIUS) {
+				const scale = HACHI_SKY_DROP_SPREAD_RADIUS / dist;
+				dx *= scale;
+				dz *= scale;
+			}
+			const y = math.random(HACHI_SKY_DROP_MIN_Y, HACHI_SKY_DROP_MAX_Y);
+			positions.push(
+				new Vector3(HACHI_CITY_CENTER.X + dx, y, HACHI_CITY_CENTER.Z + dz),
+			);
+		}
+		return positions;
+	}
+
+	private buildHotspots(): Hotspot[] {
+		const groundY = HACHI_SKY_DROP_GROUND_Y;
+		return [
+			{
+				center: new Vector3(HACHI_CITY_CENTER.X, groundY, HACHI_CITY_CENTER.Z),
+				label: "Scramble Crossing",
+			},
+			{
+				center: new Vector3(
+					HACHI_CITY_CENTER.X + 150,
+					groundY,
+					HACHI_CITY_CENTER.Z + 100,
+				),
+				label: "East District",
+			},
+			{
+				center: new Vector3(
+					HACHI_CITY_CENTER.X - 150,
+					groundY,
+					HACHI_CITY_CENTER.Z - 100,
+				),
+				label: "West District",
+			},
 		];
-		return samples.map((item, index) => ({
-			center: item.Position,
-			label: labels[index] ?? `Hotspot ${index + 1}`,
-		}));
 	}
 
 	private updateHotspotState() {
@@ -837,7 +902,7 @@ export class HachiRideMinigame implements IMinigame {
 		) {
 			this.finalSprintStarted = true;
 			this.serverEvents.hintTextChanged.broadcast(
-				"Final sprint! Key items are worth triple now!",
+				"Final sprint! Bonus items are worth triple now!",
 			);
 		}
 	}
@@ -845,7 +910,10 @@ export class HachiRideMinigame implements IMinigame {
 	private isInActiveHotspot(position: Vector3) {
 		const hotspot = this.hotspots[this.activeHotspotIndex];
 		if (!hotspot) return false;
-		return position.sub(hotspot.center).Magnitude <= HACHI_HOTSPOT_RADIUS;
+		// XZ-only distance so items at any height (ground or rooftop) can trigger
+		const dx = position.X - hotspot.center.X;
+		const dz = position.Z - hotspot.center.Z;
+		return math.sqrt(dx * dx + dz * dz) <= HACHI_HOTSPOT_RADIUS;
 	}
 
 	private broadcastRaceState() {

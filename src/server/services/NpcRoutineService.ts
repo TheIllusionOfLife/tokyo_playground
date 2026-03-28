@@ -14,7 +14,7 @@ import {
 	NPC_TREAT_COOLDOWN,
 	OMIKUJI_POINTS,
 	PHOTOGRAPHER_POSE_REWARD,
-} from "shared/constants";
+} from "shared/living-shibuya-constants";
 import { GlobalEvents } from "shared/network";
 import { MissionId, NpcId, TimePhase } from "shared/types";
 import { DayNightService } from "./DayNightService";

@@ -7,7 +7,7 @@ import {
 	BON_ODORI_PARTICIPATION_POINTS,
 	BON_ODORI_PERFECT_WINDOW,
 	BON_ODORI_RADIUS,
-} from "shared/constants";
+} from "shared/living-shibuya-constants";
 import { GlobalEvents } from "shared/network";
 import { MicroEventId, MissionId } from "shared/types";
 import { MissionService } from "../MissionService";

@@ -33,7 +33,7 @@ export function FeaturedUnlockBanner() {
 	return (
 		<frame
 			key="FeaturedUnlockBanner"
-			Size={new UDim2(0, 220, 0, 52)}
+			Size={new UDim2(0, 280, 0, 56)}
 			Position={new UDim2(0, 14, 0, 100)}
 			BackgroundColor3={Color3.fromRGB(58, 34, 24)}
 			BackgroundTransparency={0.12}

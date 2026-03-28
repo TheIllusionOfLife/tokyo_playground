@@ -96,6 +96,8 @@ export class HachiRideController implements OnStart {
 			?.FindFirstChildOfClass("BillboardGui");
 		if (billboard) billboard.Enabled = false;
 
+		this.setDefaultJumpSoundEnabled(false);
+
 		// Double jump detection via Humanoid.StateChanged.
 		// Arm double jump after first real jump (not slope/small drop).
 		this.stateChangedConn = humanoid.StateChanged.Connect(
@@ -107,6 +109,7 @@ export class HachiRideController implements OnStart {
 					// First jump detected (native). Arm double if evolution allows.
 					this.lastJumpTime = os.clock();
 					this.jumpPhase = this.getActiveEvoLevel() >= 1 ? 1 : 2;
+					this.playJumpSE();
 					// Notify server so it can arm phase tracking
 					if (this.isInMinigame()) {
 						clientEvents.hachiJump.fire();
@@ -229,6 +232,8 @@ export class HachiRideController implements OnStart {
 	private onCostumeRemoved() {
 		this.costumed = false;
 
+		this.setDefaultJumpSoundEnabled(true);
+
 		this.stateChangedConn?.Disconnect();
 		this.stateChangedConn = undefined;
 		this.landedCheckConn?.Disconnect();
@@ -255,6 +260,15 @@ export class HachiRideController implements OnStart {
 			if (rootMotor) rootMotor.C0 = this.bobRootC0;
 			this.bobRootC0 = undefined;
 		}
+	}
+
+	private setDefaultJumpSoundEnabled(enabled: boolean) {
+		const character = Players.LocalPlayer.Character;
+		const hrp = character?.FindFirstChild("HumanoidRootPart") as
+			| BasePart
+			| undefined;
+		const jumpSound = hrp?.FindFirstChild("Jumping") as Sound | undefined;
+		if (jumpSound) jumpSound.Volume = enabled ? 0.65 : 0;
 	}
 
 	private jumpSE?: Sound;

@@ -19,3 +19,4 @@ Roblox Studio Version History + git tags:
 | v0.11.0 | TBD | 2026-03-22 | HUD cleanup + Hachi controls: compact HUD, GetMoveVector movement, BodyGyro rotation, 50% Hachi scale, start Lv.2, halved thresholds, no auto-start |
 | v0.12.0 | TBD | 2026-03-28 | Real Shibuya city with textures, half-size characters, visual effects, Fabric material |
 | v0.13.0 | TBD | 2026-03-28 | Hachi costume system, HUD toggle, native Humanoid movement, UI cleanup |
+| v0.14.0 | TBD | 2026-03-29 | Minigame overhaul: sky-drop collectibles, Noob crowds, car waves, kick/catch FX, mission revamp |

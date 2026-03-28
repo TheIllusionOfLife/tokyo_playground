@@ -4,7 +4,7 @@ import {
 	EVENT_HISTORY_NO_REPEAT,
 	MICRO_EVENT_MAX_INTERVAL,
 	MICRO_EVENT_MIN_INTERVAL,
-} from "shared/constants";
+} from "shared/living-shibuya-constants";
 import { GlobalEvents } from "shared/network";
 import { GameState, MicroEventId } from "shared/types";
 import { DayNightService } from "./DayNightService";

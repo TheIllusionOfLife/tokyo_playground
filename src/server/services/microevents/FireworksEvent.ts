@@ -5,7 +5,7 @@ import {
 	FIREWORKS_GROUND_PROXIMITY,
 	FIREWORKS_GROUND_REWARD,
 	FIREWORKS_VIEWPOINT_REWARD,
-} from "shared/constants";
+} from "shared/living-shibuya-constants";
 import { MicroEventId, MissionId } from "shared/types";
 import { MissionService } from "../MissionService";
 import { PlayerDataService } from "../PlayerDataService";

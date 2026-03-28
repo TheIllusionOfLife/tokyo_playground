@@ -7,7 +7,7 @@ import {
 	LIGHTING_TWEEN_DURATION,
 	NEON_SIGN_TAG,
 	SUN_SHAFT_TAG,
-} from "shared/constants";
+} from "shared/living-shibuya-constants";
 import { GlobalEvents } from "shared/network";
 import { gameStore } from "shared/store/game-store";
 import { TimePhase } from "shared/types";

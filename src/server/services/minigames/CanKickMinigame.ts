@@ -226,6 +226,7 @@ export class CanKickMinigame implements IMinigame {
 		}
 
 		this.serverEvents.playerCaught.broadcast(closestHider.UserId);
+		this.serverEvents.catchHighlight.broadcast(closestHider.UserId);
 		this.lastHintText = fireHintText(
 			this.serverEvents,
 			`${closestHider.Name} was caught!`,
@@ -308,6 +309,11 @@ export class CanKickMinigame implements IMinigame {
 		this.canRelocateElapsed = 0;
 
 		this.serverEvents.canKicked.broadcast(player.UserId);
+		if (this.canModel) {
+			this.serverEvents.canKickVisual.broadcast(
+				this.canModel.GetPivot().Position,
+			);
+		}
 		if (freedIds.size() > 0) {
 			this.serverEvents.playerFreed.broadcast(freedIds);
 		}

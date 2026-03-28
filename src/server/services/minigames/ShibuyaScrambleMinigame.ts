@@ -2,19 +2,21 @@ import { Janitor } from "@rbxts/janitor";
 import {
 	CollectionService,
 	Players,
+	ServerStorage,
 	TweenService,
 	Workspace,
 } from "@rbxts/services";
 import {
 	DEFAULT_WALK_SPEED,
+	SCRAMBLE_CAR_DODGE_RADIUS,
+	SCRAMBLE_CAR_SPAWN_INTERVAL,
+	SCRAMBLE_CAR_SPEED_DURATION,
+	SCRAMBLE_CAR_WAVE_DURATION,
 	SCRAMBLE_CROWD_NPC_COUNT,
 	SCRAMBLE_CROWD_WAVE_DURATION,
 	SCRAMBLE_CROWD_WAVE_INTERVAL,
 	SCRAMBLE_MAX_ACTIVE_SPIRIT_WAVES,
 	SCRAMBLE_ONI_COUNT_DURATION,
-	SCRAMBLE_ROOFTOP_TP_COOLDOWN,
-	SCRAMBLE_ROOFTOP_TP_DEST,
-	SCRAMBLE_ROOFTOP_TP_TAG,
 	SCRAMBLE_SLIDE_COOLDOWN,
 	SCRAMBLE_SLIDE_SPEED,
 	SCRAMBLE_SPIRIT_WAVE_DURATION,
@@ -25,6 +27,7 @@ import { GlobalEvents } from "shared/network";
 import {
 	AnyPlayerState,
 	MinigameId,
+	MissionId,
 	PlayerRole,
 	RoundResult,
 	ShibuyaScramblePlayerState,
@@ -53,9 +56,11 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 	private countdownThread?: thread;
 	private crowdThread?: thread;
 	private crowdLoopRunning = false;
-	private activeCrowdNPCs: Part[] = [];
+	private activeCrowdNPCs: Model[] = [];
+	private carThread?: thread;
+	private carLoopRunning = false;
+	private activeCarNPCs: Model[] = [];
 	private slideCooldowns = new Map<number, number>();
-	private rooftopTpCooldowns = new Map<number, number>();
 	private lastHintText = "";
 	private spiritCharges = new Map<number, number>();
 	private activeSpiritWaveCount = 0;
@@ -74,6 +79,7 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 				isTagged: false,
 				catchCount: 0,
 				rescueCount: 0,
+				carWavesSurvived: 0,
 			});
 			this.playerObjects.set(player.UserId, player);
 			this.spiritCharges.set(player.UserId, 0);
@@ -93,21 +99,6 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 				ramp.Touched.Connect((touching) =>
 					this.handleSlideTouch(touching, ramp),
 				),
-			);
-		}
-
-		// Connect rooftop teleport pad handlers
-		const tpPads = CollectionService.GetTagged(SCRAMBLE_ROOFTOP_TP_TAG).filter(
-			(i): i is BasePart => i.IsA("BasePart"),
-		);
-		if (tpPads.size() === 0) {
-			warn(
-				"[ShibuyaScramble] Missing Studio asset: ShibuyaRooftopTP — check map setup",
-			);
-		}
-		for (const pad of tpPads) {
-			matchJanitor.Add(
-				pad.Touched.Connect((touching) => this.handleRooftopTpTouch(touching)),
 			);
 		}
 
@@ -179,6 +170,7 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 					this.lastHintText,
 				);
 				this.crowdThread = task.spawn(() => this.runCrowdLoop());
+				this.carThread = task.spawn(() => this.runCarLoop());
 			},
 		);
 	}
@@ -291,7 +283,6 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 		this.playerStates.delete(userId);
 		this.playerObjects.delete(userId);
 		this.slideCooldowns.delete(userId);
-		this.rooftopTpCooldowns.delete(userId);
 		this.spiritCharges.delete(userId);
 	}
 
@@ -312,6 +303,12 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 			this.crowdThread = undefined;
 		}
 		this.despawnCrowdNPCs();
+		this.carLoopRunning = false;
+		if (this.carThread) {
+			task.cancel(this.carThread);
+			this.carThread = undefined;
+		}
+		this.despawnCarNPCs();
 	}
 
 	cleanup() {
@@ -322,11 +319,16 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 			this.crowdThread = undefined;
 		}
 		this.despawnCrowdNPCs();
+		this.carLoopRunning = false;
+		if (this.carThread) {
+			task.cancel(this.carThread);
+			this.carThread = undefined;
+		}
+		this.despawnCarNPCs();
 		this.lastHintText = "";
 		this.playerStates.clear();
 		this.playerObjects.clear();
 		this.slideCooldowns.clear();
-		this.rooftopTpCooldowns.clear();
 		this.spiritCharges.clear();
 		this.activeSpiritWaveCount = 0;
 	}
@@ -349,7 +351,10 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 	) {
 		const waypointsFolder = Workspace.FindFirstChild("CrowdWaypoints");
 		if (!waypointsFolder) return [];
-		const waveNpcs: Part[] = [];
+		const noobTemplate = ServerStorage.FindFirstChild("NoobTemplate") as
+			| Model
+			| undefined;
+		const waveNpcs: Model[] = [];
 
 		const npcsPerPath = math.floor(SCRAMBLE_CROWD_NPC_COUNT / 4);
 		for (let i = 1; i <= 4; i++) {
@@ -363,29 +368,18 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 
 			for (let j = 0; j < npcsPerPath; j++) {
 				const offset = new Vector3(
-					(math.random() - 0.5) * 4,
+					(math.random() - 0.5) * 6,
 					0,
-					(math.random() - 0.5) * 4,
+					(math.random() - 0.5) * 6,
 				);
-
-				const npcPart = new Instance("Part");
-				npcPart.Size = new Vector3(1, 3, 1);
-				npcPart.Anchored = true;
-				npcPart.CanCollide = false;
-				npcPart.CanTouch = false;
-				npcPart.CanQuery = false;
-				npcPart.Color = Color3.fromRGB(150, 150, 150);
-				npcPart.Position = startPart.Position.add(offset);
-				npcPart.Parent = Workspace;
-
-				this.activeCrowdNPCs.push(npcPart);
-				waveNpcs.push(npcPart);
-
-				TweenService.Create(
-					npcPart,
-					new TweenInfo(duration, Enum.EasingStyle.Linear),
-					{ Position: endPart.Position.add(offset) },
-				).Play();
+				const npc = this.createCrowdNpc(
+					noobTemplate,
+					startPart.Position.add(offset),
+					endPart.Position.add(offset),
+					duration,
+				);
+				this.activeCrowdNPCs.push(npc);
+				waveNpcs.push(npc);
 			}
 		}
 
@@ -401,6 +395,61 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 		return waveNpcs;
 	}
 
+	private createCrowdNpc(
+		template: Model | undefined,
+		startPos: Vector3,
+		endPos: Vector3,
+		duration: number,
+	): Model {
+		if (template) {
+			const npc = template.Clone();
+			for (const desc of npc.GetDescendants()) {
+				if (desc.IsA("BasePart")) {
+					desc.CanCollide = false;
+					desc.CanTouch = false;
+					desc.CanQuery = false;
+				}
+			}
+			const hrp = npc.FindFirstChild("HumanoidRootPart") as
+				| BasePart
+				| undefined;
+			if (hrp) {
+				hrp.Anchored = true;
+				hrp.CFrame = new CFrame(startPos);
+				npc.Parent = Workspace;
+				TweenService.Create(
+					hrp,
+					new TweenInfo(duration, Enum.EasingStyle.Linear),
+					{ CFrame: new CFrame(endPos) },
+				).Play();
+			} else {
+				npc.PivotTo(new CFrame(startPos));
+				npc.Parent = Workspace;
+			}
+			return npc;
+		}
+		// Fallback: gray Part model
+		const fallback = new Instance("Model");
+		const body = new Instance("Part");
+		body.Name = "HumanoidRootPart";
+		body.Size = new Vector3(1, 3, 1);
+		body.Anchored = true;
+		body.CanCollide = false;
+		body.CanTouch = false;
+		body.CanQuery = false;
+		body.Color = Color3.fromRGB(150, 150, 150);
+		body.CFrame = new CFrame(startPos);
+		body.Parent = fallback;
+		fallback.PrimaryPart = body;
+		fallback.Parent = Workspace;
+		TweenService.Create(
+			body,
+			new TweenInfo(duration, Enum.EasingStyle.Linear),
+			{ CFrame: new CFrame(endPos) },
+		).Play();
+		return fallback;
+	}
+
 	private despawnCrowdNPCs(npcs = this.activeCrowdNPCs) {
 		for (const npc of npcs) {
 			npc.Destroy();
@@ -410,32 +459,120 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 		);
 	}
 
-	private handleRooftopTpTouch(touching: BasePart) {
-		const character = touching.FindFirstAncestorOfClass("Model");
-		if (!character) return;
-		const player = Players.GetPlayerFromCharacter(character);
-		if (!player) return;
+	private runCarLoop() {
+		this.carLoopRunning = true;
+		while (this.carLoopRunning) {
+			task.wait(SCRAMBLE_CAR_SPAWN_INTERVAL);
+			if (!this.carLoopRunning) break;
+			const wave = this.spawnCarWave();
+			task.wait(SCRAMBLE_CAR_WAVE_DURATION);
+			if (!this.carLoopRunning) break;
+			this.awardDodgeCars(wave);
+			this.despawnCarNPCs(wave);
+		}
+	}
 
-		const state = this.playerStates.get(player.UserId);
-		if (
-			!state ||
-			state.isTagged ||
-			state.role === PlayerRole.Oni ||
-			this.oniCounting
-		)
-			return;
+	private spawnCarWave(): Model[] {
+		const carWP = ServerStorage.FindFirstChild("CarWaypoints");
+		if (!carWP) return [];
 
-		const now = os.clock();
-		if (
-			now - (this.rooftopTpCooldowns.get(player.UserId) ?? 0) <
-			SCRAMBLE_ROOFTOP_TP_COOLDOWN
-		)
-			return;
-		this.rooftopTpCooldowns.set(player.UserId, now);
+		const templateNames = ["CarTemplate_1", "CarTemplate_2", "CarTemplate_3"];
+		const wave: Model[] = [];
 
-		player.Character?.PivotTo(new CFrame(SCRAMBLE_ROOFTOP_TP_DEST));
-		// Targeted hint — broadcasting would reveal a hider's position to the Oni
-		this.serverEvents.hintTextChanged.fire(player, "You reached the rooftop!");
+		for (let i = 1; i <= 3; i++) {
+			const pathFolder = carWP.FindFirstChild(`Path${i}`);
+			if (!pathFolder) continue;
+			const startPart = pathFolder.FindFirstChild("Start") as
+				| BasePart
+				| undefined;
+			const endPart = pathFolder.FindFirstChild("End") as BasePart | undefined;
+			if (!startPart || !endPart) continue;
+
+			const templateName =
+				templateNames[math.random(0, templateNames.size() - 1)];
+			const template = ServerStorage.FindFirstChild(templateName) as
+				| Model
+				| undefined;
+			if (!template) continue;
+
+			const car = template.Clone();
+			// Only PrimaryPart anchored; rest unanchored so welded parts follow tween
+			const primary = car.PrimaryPart;
+			for (const desc of car.GetDescendants()) {
+				if (desc.IsA("BasePart")) {
+					desc.Anchored = desc === primary;
+					desc.CanCollide = false;
+					desc.CanTouch = false;
+					desc.CanQuery = false;
+				}
+			}
+
+			car.PivotTo(new CFrame(startPart.Position));
+			car.Parent = Workspace;
+
+			if (primary) {
+				TweenService.Create(
+					primary,
+					new TweenInfo(SCRAMBLE_CAR_SPEED_DURATION, Enum.EasingStyle.Linear),
+					{ CFrame: new CFrame(endPart.Position) },
+				).Play();
+			}
+
+			this.activeCarNPCs.push(car);
+			wave.push(car);
+		}
+
+		if (wave.size() > 0) {
+			this.lastHintText = fireHintText(
+				this.serverEvents,
+				"Cars crossing! Watch out!",
+				this.lastHintText,
+			);
+		}
+
+		return wave;
+	}
+
+	/** Award DodgeCars mission to hiders alive when car wave ends. */
+	private awardDodgeCars(wave: Model[]) {
+		if (wave.size() === 0) return;
+
+		for (const [userId, state] of this.playerStates) {
+			if (state.role !== PlayerRole.Hider || state.isTagged) continue;
+			const player = this.playerObjects.get(userId);
+			if (!player?.Character) continue;
+			const hrp = player.Character.FindFirstChild("HumanoidRootPart") as
+				| BasePart
+				| undefined;
+			if (!hrp) continue;
+
+			// Only award if player was near at least one car during this wave
+			let nearCar = false;
+			for (const car of wave) {
+				const primary = car.PrimaryPart;
+				if (!primary) continue;
+				if (
+					hrp.Position.sub(primary.Position).Magnitude <=
+					SCRAMBLE_CAR_DODGE_RADIUS
+				) {
+					nearCar = true;
+					break;
+				}
+			}
+			if (!nearCar) continue;
+
+			state.carWavesSurvived += 1;
+			this.missionService.incrementAndNotify(player, MissionId.DodgeCars, 1);
+		}
+	}
+
+	private despawnCarNPCs(cars = this.activeCarNPCs) {
+		for (const car of cars) {
+			car.Destroy();
+		}
+		this.activeCarNPCs = this.activeCarNPCs.filter(
+			(car) => !cars.includes(car),
+		);
 	}
 
 	private handleSlideTouch(touching: BasePart, ramp: BasePart) {
@@ -465,10 +602,6 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 				: SCRAMBLE_SLIDE_SPEED;
 		// Fire to client — matches LobbyService pattern; client applies speed locally
 		this.serverEvents.slideImpulse.fire(player, dir, speed);
-
-		if (state.role === PlayerRole.Hider) {
-			this.missionService.onSlideUsed(player);
-		}
 	}
 
 	private teleportPlayers(players: Player[], roles: Map<Player, PlayerRole>) {
