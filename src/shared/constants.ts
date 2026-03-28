@@ -403,6 +403,7 @@ export const HACHI_SPAWN_TAG = "HachiRideSpawn";
 export const HACHI_ROUND_DURATION =
 	MINIGAME_CONFIGS[MinigameId.HachiRide].roundDuration;
 export const HACHI_STARTING_EVOLUTION = 2; // start with double jump + wall run
+export const HACHI_LOBBY_MIN_LEVEL = 3; // lobby Hachi always has double jump + wall run
 export const HACHI_EVOLUTION_THRESHOLDS = [0, 5, 12, 20, 30];
 export const HACHI_WALK_SPEEDS = [50, 60, 70, 85, 105];
 export const HACHI_ITEMS_TO_SPAWN = 200;

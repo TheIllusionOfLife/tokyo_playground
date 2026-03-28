@@ -16,6 +16,7 @@ import {
 	HACHI_EJECT_SEAT_DISABLE_DURATION,
 	HACHI_JUMP_COOLDOWN,
 	HACHI_JUMP_VELOCITY,
+	HACHI_LOBBY_MIN_LEVEL,
 	HACHI_RIDE_PORTAL_TAG,
 	HACHI_RIDE_TAG,
 	HACHI_SLIDE_FORCE_RESTORE_DELAY,
@@ -399,7 +400,10 @@ export class LobbyService implements OnStart {
 			// Impulse is applied client-side (tryLocalJump) for instant feel.
 			// Server only tracks phase for double-jump gating.
 			const data = this.playerDataService.getPlayerData(player);
-			const maxLevel = data?.maxHachiLevel ?? 0;
+			const maxLevel = math.max(
+				data?.maxHachiLevel ?? 0,
+				HACHI_LOBBY_MIN_LEVEL,
+			);
 			this.lobbyJumpPhase.set(
 				player.UserId,
 				maxLevel >= 2 ? 1 : 2, // 1 = double available, 2 = used
@@ -438,7 +442,8 @@ export class LobbyService implements OnStart {
 			if (phase !== 1) return; // Must be in "double available" phase
 
 			const data = this.playerDataService.getPlayerData(player);
-			if (!data || data.maxHachiLevel < 2) return;
+			if (!data || math.max(data.maxHachiLevel, HACHI_LOBBY_MIN_LEVEL) < 2)
+				return;
 
 			const character = player.Character;
 			if (!character) return;
@@ -467,7 +472,8 @@ export class LobbyService implements OnStart {
 			if (this.matchActive) return;
 
 			const data = this.playerDataService.getPlayerData(player);
-			if (!data || data.maxHachiLevel < 3) return;
+			if (!data || math.max(data.maxHachiLevel, HACHI_LOBBY_MIN_LEVEL) < 3)
+				return;
 
 			const character = player.Character;
 			if (!character) return;

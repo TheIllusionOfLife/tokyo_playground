@@ -12,6 +12,7 @@ import {
 	HACHI_DOUBLE_JUMP_IMPULSE,
 	HACHI_JUMP_COOLDOWN,
 	HACHI_JUMP_VELOCITY,
+	HACHI_LOBBY_MIN_LEVEL,
 	HACHI_WALK_SPEEDS,
 	SE_JUMP,
 } from "shared/constants";
@@ -255,7 +256,7 @@ export class HachiRideController implements OnStart {
 			const evoLevel =
 				state.activeMinigameId === MinigameId.HachiRide
 					? state.hachiEvolutionLevel
-					: 0;
+					: HACHI_LOBBY_MIN_LEVEL;
 			const speed =
 				HACHI_WALK_SPEEDS[math.min(evoLevel, HACHI_WALK_SPEEDS.size() - 1)];
 
@@ -413,8 +414,12 @@ export class HachiRideController implements OnStart {
 			if (math.abs(body.AssemblyLinearVelocity.Y) > 15) return false;
 			this.lastJumpTime = now;
 			this.applyImpulse(body, HACHI_JUMP_VELOCITY);
-			const evoLevel = gameStore.getState().hachiEvolutionLevel;
-			this.jumpPhase = evoLevel >= 1 ? 1 : 2;
+			const state2 = gameStore.getState();
+			const evoLevel2 =
+				state2.activeMinigameId === MinigameId.HachiRide
+					? state2.hachiEvolutionLevel
+					: HACHI_LOBBY_MIN_LEVEL;
+			this.jumpPhase = evoLevel2 >= 1 ? 1 : 2;
 			return true;
 		} else if (this.jumpPhase === 1) {
 			// Double jump (midair, evolution >= 1)
