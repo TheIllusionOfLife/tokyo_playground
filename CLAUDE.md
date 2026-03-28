@@ -1,4 +1,4 @@
-# Tokyo Playground
+# Tokyo Playground: Shibuya
 
 Roblox party mini-game platform set in Tokyo (Shibuya). roblox-ts + Flamework + Rojo.
 
@@ -20,6 +20,9 @@ Roblox party mini-game platform set in Tokyo (Shibuya). roblox-ts + Flamework + 
 - Data: ProfileService (`@rbxts/profileservice`)
 - Linting: Biome (not ESLint). `useImportType` is OFF (Flamework needs runtime imports)
 - TypeScript pinned to 5.5.3 (must match Flamework)
+- Localization: `src/shared/localization/` with `t(key)` function. EN/JA tables. Client detects locale via `Players.LocalPlayer.LocaleId`. Add new strings to `keys.ts`, `en.ts`, `ja.ts`.
+- Analytics: `AnalyticsService` fires events via Roblox `AnalyticsService.FireCustomEvent`. Schema in `shared/analytics.ts`.
+- Game public info (descriptions, tags): `GAME_INFO.md`
 
 ## MCP / Studio Gotchas
 - `execute_luau` runs **client-side** (`IsServer=false, IsClient=true`). Use `return` (not `print`) to get output — the tool returns the last expression, not stdout.
