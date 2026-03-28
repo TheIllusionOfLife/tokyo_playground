@@ -12,7 +12,7 @@ import {
 } from "shared/types";
 
 // Defaults
-export const DEFAULT_WALK_SPEED = 32;
+export const DEFAULT_WALK_SPEED = 30;
 export const CHARACTER_SCALE = 0.5; // half-size characters (makes city feel larger)
 export const DEFAULT_JUMP_HEIGHT = 7.2; // standard jump height
 
@@ -410,7 +410,7 @@ export const HACHI_ITEMS_TO_SPAWN = 200;
 export const HACHI_COLLECTION_RADIUS = 8;
 export const HACHI_DEFAULT_SCALE = CHARACTER_SCALE; // matches character scale
 export const HACHI_BIG_SCALE = 1.5;
-export const HACHI_DOUBLE_JUMP_IMPULSE = 170; // 240 * sqrt(0.5) for half jump apex
+export const HACHI_DOUBLE_JUMP_IMPULSE = HACHI_JUMP_VELOCITY; // same height as first jump
 export const HACHI_WALL_RUN_SPEED = 75;
 export const HACHI_WALL_RUN_RAYCAST = 3;
 export const HACHI_WALL_RUN_MAX_DUR = 3;
