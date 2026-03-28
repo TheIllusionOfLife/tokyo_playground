@@ -378,7 +378,6 @@ export class HachiRideMinigame implements IMinigame {
 			const delay = math.random() * 3;
 			task.delay(delay, () => {
 				if (!item.Parent) return;
-				item.CanQuery = true;
 				const tween = TweenService.Create(
 					item,
 					new TweenInfo(
@@ -390,6 +389,9 @@ export class HachiRideMinigame implements IMinigame {
 						Position: new Vector3(item.Position.X, landY, item.Position.Z),
 					},
 				);
+				tween.Completed.Connect(() => {
+					if (item.Parent) item.CanQuery = true;
+				});
 				tween.Play();
 				this.activeTweens.push(tween);
 			});
@@ -645,6 +647,7 @@ export class HachiRideMinigame implements IMinigame {
 					toRemove.push(item);
 					continue;
 				}
+				if (!item.CanQuery) continue; // still falling
 				if (pos.sub(item.Position).Magnitude <= HACHI_COLLECTION_RADIUS) {
 					item.CanQuery = false;
 					item.CanCollide = false;
@@ -687,7 +690,7 @@ export class HachiRideMinigame implements IMinigame {
 			? HACHI_HOTSPOT_MULTIPLIER
 			: 1;
 		const finalSprintMultiplier =
-			this.finalSprintStarted && this.keyItems.includes(item)
+			this.finalSprintStarted && this.bonusItems.has(item)
 				? HACHI_FINAL_SPRINT_MULTIPLIER
 				: 1;
 		const value =
@@ -890,7 +893,7 @@ export class HachiRideMinigame implements IMinigame {
 		) {
 			this.finalSprintStarted = true;
 			this.serverEvents.hintTextChanged.broadcast(
-				"Final sprint! Key items are worth triple now!",
+				"Final sprint! Bonus items are worth triple now!",
 			);
 		}
 	}
