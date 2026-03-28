@@ -10,7 +10,6 @@ import {
 	CAT_APPROACH_SPEED,
 	FOOD_STALL_TAG,
 	HACHI_PAIR_INTERACTION_RADIUS,
-	HACHI_RIDE_TAG,
 	MOOD_DECAY_DURATION,
 	MUSICIAN_TAG,
 	SE_HACHI_BARK,
@@ -147,21 +146,22 @@ export class HachiAmbientController implements OnStart {
 			HACHI_PAIR_INTERACTION_RADIUS * HACHI_PAIR_INTERACTION_RADIUS;
 		const localPos = localBody.Position;
 
-		for (const hachi of CollectionService.GetTagged(HACHI_RIDE_TAG)) {
-			if (!hachi.IsA("Model")) continue;
-			const body = hachi.FindFirstChild("Body") as BasePart | undefined;
+		// Check other players' Hachi costumes for pair proximity
+		for (const player of Players.GetPlayers()) {
+			if (player === Players.LocalPlayer) continue;
+			const character = player.Character;
+			if (!character) continue;
+			const hachiModel = character.FindFirstChild("HachiCostume");
+			if (!hachiModel) continue;
+			const body = hachiModel.FindFirstChild("Body") as BasePart | undefined;
 			if (!body || body === localBody) continue;
-
-			// Only react to occupied Hachis (skip parked/empty ones)
-			const seat = hachi.FindFirstChildWhichIsA("VehicleSeat");
-			if (!seat || !seat.Occupant) continue;
 
 			const delta = localPos.sub(body.Position);
 			if (delta.Dot(delta) < radiusSq) {
-				if (!this.isOnCooldown("HachiPair", hachi)) {
+				if (!this.isOnCooldown("HachiPair", hachiModel)) {
 					this.setMood(HachiMood.Excited);
 					this.playSfx(SE_HACHI_BARK, 0.4);
-					this.setCooldown("HachiPair", hachi, 45);
+					this.setCooldown("HachiPair", hachiModel, 45);
 				}
 				return;
 			}
@@ -217,11 +217,9 @@ export class HachiAmbientController implements OnStart {
 	private getLocalHachiBody(): BasePart | undefined {
 		const character = Players.LocalPlayer.Character;
 		if (!character) return undefined;
-		const humanoid = character.FindFirstChildOfClass("Humanoid");
-		if (!humanoid?.SeatPart) return undefined;
-		const hachiModel = humanoid.SeatPart.Parent;
+		// Find costume model parented to character (equipped by server)
+		const hachiModel = character.FindFirstChild("HachiCostume");
 		if (!hachiModel) return undefined;
-		if (!CollectionService.HasTag(hachiModel, HACHI_RIDE_TAG)) return undefined;
 		return hachiModel.FindFirstChild("Body") as BasePart | undefined;
 	}
 }

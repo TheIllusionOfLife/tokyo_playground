@@ -68,6 +68,7 @@ interface ServerToClientEvents {
 	oniReveal(oniUserId: number, durationSeconds: number): void;
 	spiritChargeChanged(charges: number): void;
 	hachiRaceState(state: HachiRaceStateData): void;
+	hachiCostumeEquipped(equipped: boolean): void;
 	roundSummary(summaryText: string, winnerName: string): void;
 
 	// ── Living Shibuya: Day/Night ────────────────────────────────────────
@@ -141,6 +142,7 @@ interface ClientToServerEvents {
 	obstacleCourseFinish(): void; // fix H2: no client-supplied time; server computes elapsed
 
 	// ── Living Shibuya: Lobby Hachi Abilities ────────────────────────────
+	hachiToggleCostume(equip: boolean): void;
 	hachiLobbyDoubleJump(): void; // fix M1: separate from match hachiDoubleJump
 	hachiLobbyWallRun(wallNormal: Vector3): void;
 }
