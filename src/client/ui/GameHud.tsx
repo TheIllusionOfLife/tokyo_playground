@@ -5,6 +5,7 @@ import { CountdownOverlay } from "./components/CountdownOverlay";
 import { EventFeed } from "./components/EventFeed";
 import { FeaturedUnlockBanner } from "./components/FeaturedUnlockBanner";
 import { HachiHud } from "./components/HachiHud";
+import { HachiToggleButton } from "./components/HachiToggleButton";
 import { HintText } from "./components/HintText";
 import { LevelUpOverlay } from "./components/LevelUpOverlay";
 import { MicroEventIndicator } from "./components/MicroEventIndicator";
@@ -36,6 +37,7 @@ export function GameHud() {
 			<RoundIntroOverlay />
 			<RoleIndicator />
 			<HachiHud />
+			<HachiToggleButton />
 			<HintText />
 			<TodayGoalChip />
 			<FeaturedUnlockBanner />

@@ -421,10 +421,6 @@ export const HACHI_WIN_ITEM_BONUS = 20;
 export const HACHI_JUMP_VELOCITY = 106; // 150 * sqrt(0.5) for half jump apex
 export const HACHI_JUMP_COOLDOWN = 0.1; // seconds between jump requests
 export const HACHI_EJECT_COOLDOWN = 1.0; // seconds between eject requests
-export const HACHI_SLIDE_FORCE_RESTORE_DELAY = 0.5; // seconds to hold MaxForce=0 after impulse
-export const HACHI_EJECT_SEAT_DISABLE_DURATION = 0.1; // seconds VehicleSeat stays disabled on eject
-export const HACHI_TURN_SPEED = 20; // rad/sec rotation speed
-export const HACHI_DECEL_RATE = 0.85; // per-frame velocity multiplier when no input
 export const HACHI_HOTSPOT_RADIUS = 18;
 export const HACHI_HOTSPOT_ROTATION_INTERVAL = 20;
 export const HACHI_HOTSPOT_MULTIPLIER = 2;
