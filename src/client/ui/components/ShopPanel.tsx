@@ -134,7 +134,7 @@ export function ShopPanel() {
 						TextColor3={Color3.fromRGB(255, 210, 100)}
 						TextScaled={true}
 						Font={Enum.Font.GothamBold}
-						Text="$ Shop"
+						Text="Shop"
 						Event={{
 							Activated: () =>
 								gameStore.setActiveOverlay(open ? "none" : "shop"),

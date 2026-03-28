@@ -125,7 +125,7 @@ export function MissionPanel() {
 				TextColor3={Color3.fromRGB(255, 255, 150)}
 				TextScaled={true}
 				Font={Enum.Font.GothamBold}
-				Text="★ Missions"
+				Text="Missions"
 				Event={{
 					Activated: () =>
 						gameStore.setActiveOverlay(open ? "none" : "missions"),
