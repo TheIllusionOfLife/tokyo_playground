@@ -228,8 +228,7 @@ export class HachiRideController implements OnStart {
 		this.jumpPhase = 2;
 		this.doubleJumpConsumed = true;
 
-		const h =
-			Players.LocalPlayer.Character?.FindFirstChildOfClass("Humanoid");
+		const h = Players.LocalPlayer.Character?.FindFirstChildOfClass("Humanoid");
 		const hrp = Players.LocalPlayer.Character?.FindFirstChild(
 			"HumanoidRootPart",
 		) as BasePart | undefined;

@@ -1,5 +1,5 @@
 import { OnStart, Service } from "@flamework/core";
-import { AnalyticsService as RobloxAnalytics, Players } from "@rbxts/services";
+import { Players, AnalyticsService as RobloxAnalytics } from "@rbxts/services";
 import { AnalyticsEvent } from "shared/analytics";
 
 @Service()
@@ -32,9 +32,7 @@ export class AnalyticsService implements OnStart {
 		task.spawn(() => {
 			while (true) {
 				task.wait(300);
-				const playerIds = new Set(
-					Players.GetPlayers().map((p) => p.UserId),
-				);
+				const playerIds = new Set(Players.GetPlayers().map((p) => p.UserId));
 				for (const [userId] of this.joinTimes) {
 					if (!playerIds.has(userId)) {
 						this.joinTimes.delete(userId);
@@ -48,7 +46,9 @@ export class AnalyticsService implements OnStart {
 
 	fire(event: AnalyticsEvent) {
 		const customFields: Record<string, unknown> = {};
-		for (const [key, val] of pairs(event as unknown as Record<string, unknown>)) {
+		for (const [key, val] of pairs(
+			event as unknown as Record<string, unknown>,
+		)) {
 			if (key !== "name") {
 				customFields[key as string] = val;
 			}
@@ -65,7 +65,9 @@ export class AnalyticsService implements OnStart {
 
 	fireForPlayer(player: Player, event: AnalyticsEvent) {
 		const customFields: Record<string, unknown> = {};
-		for (const [key, val] of pairs(event as unknown as Record<string, unknown>)) {
+		for (const [key, val] of pairs(
+			event as unknown as Record<string, unknown>,
+		)) {
 			if (key !== "name") {
 				customFields[key as string] = val;
 			}
