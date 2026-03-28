@@ -85,6 +85,8 @@ export class LobbyService implements OnStart {
 				humanoid.UseJumpPower = false;
 				humanoid.JumpHeight = DEFAULT_JUMP_HEIGHT;
 				// Half-size characters: set scale NumberValues
+				// BodyTypeScale and BodyProportionScale control body shape
+				// (R15 vs Rthro), not size. Only scale the 4 size values.
 				const scaleNames = [
 					"BodyHeightScale",
 					"BodyWidthScale",
