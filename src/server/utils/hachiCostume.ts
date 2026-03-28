@@ -89,8 +89,11 @@ export function equipHachiCostume(
 	weld.Name = "HachiMountWeld";
 	weld.Part0 = hrp;
 	weld.Part1 = body;
-	// C0 offset: move Hachi below HRP so character sits on top
-	weld.C0 = new CFrame(0, -(bodyHalfHeight + hrp.Size.Y / 2), 0);
+	// C0 offset: move Hachi below HRP so character sits on top.
+	// Rotate 180° around Y so Hachi's forward matches the character's forward.
+	weld.C0 = new CFrame(0, -(bodyHalfHeight + hrp.Size.Y / 2), 0).mul(
+		CFrame.Angles(0, math.pi, 0),
+	);
 	weld.Parent = body;
 
 	// Set Humanoid movement properties
