@@ -48,6 +48,14 @@ export class MissionService implements OnStart {
 		const data = this.playerDataService.getPlayerData(player);
 		if (!data) return;
 
+		// Purge stale missions no longer in the active pool
+		const validIds = new Set(ALL_MISSION_IDS);
+		const hadStale = data.missions.slots.some((slot) => !validIds.has(slot.id));
+		if (hadStale) {
+			data.missions.slots = [];
+			print(`[MissionService] Purged stale missions for ${player.Name}`);
+		}
+
 		// Assign 3 daily missions: 1 exploration + 1 minigame + 1 from full pool
 		if (data.missions.slots.size() === 0) {
 			const chosen = new Set<MissionId>();
