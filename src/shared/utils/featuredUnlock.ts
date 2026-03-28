@@ -45,10 +45,20 @@ export function getFeaturedUnlock(
 		};
 	}
 
+	const remaining = target.price - shopBalance;
+	if (remaining <= 0) {
+		return {
+			name: target.name,
+			description: "Ready to buy! Open Shop to get it.",
+			progressCurrent: target.price,
+			progressTarget: target.price,
+		};
+	}
+
 	return {
 		name: target.name,
-		description: `Earn ${math.max(0, target.price - shopBalance)} more points to buy this reward.`,
-		progressCurrent: math.min(shopBalance, target.price),
+		description: `Earn ${remaining} more points to buy this reward.`,
+		progressCurrent: shopBalance,
 		progressTarget: target.price,
 	};
 }
