@@ -2,11 +2,16 @@ import { Janitor } from "@rbxts/janitor";
 import {
 	CollectionService,
 	Players,
+	ServerStorage,
 	TweenService,
 	Workspace,
 } from "@rbxts/services";
 import {
 	DEFAULT_WALK_SPEED,
+	SCRAMBLE_CAR_DODGE_RADIUS,
+	SCRAMBLE_CAR_SPAWN_INTERVAL,
+	SCRAMBLE_CAR_SPEED_DURATION,
+	SCRAMBLE_CAR_WAVE_DURATION,
 	SCRAMBLE_CROWD_NPC_COUNT,
 	SCRAMBLE_CROWD_WAVE_DURATION,
 	SCRAMBLE_CROWD_WAVE_INTERVAL,
@@ -22,6 +27,7 @@ import { GlobalEvents } from "shared/network";
 import {
 	AnyPlayerState,
 	MinigameId,
+	MissionId,
 	PlayerRole,
 	RoundResult,
 	ShibuyaScramblePlayerState,
@@ -50,7 +56,10 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 	private countdownThread?: thread;
 	private crowdThread?: thread;
 	private crowdLoopRunning = false;
-	private activeCrowdNPCs: Part[] = [];
+	private activeCrowdNPCs: Model[] = [];
+	private carThread?: thread;
+	private carLoopRunning = false;
+	private activeCarNPCs: Model[] = [];
 	private slideCooldowns = new Map<number, number>();
 	private lastHintText = "";
 	private spiritCharges = new Map<number, number>();
@@ -161,6 +170,7 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 					this.lastHintText,
 				);
 				this.crowdThread = task.spawn(() => this.runCrowdLoop());
+				this.carThread = task.spawn(() => this.runCarLoop());
 			},
 		);
 	}
@@ -293,6 +303,12 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 			this.crowdThread = undefined;
 		}
 		this.despawnCrowdNPCs();
+		this.carLoopRunning = false;
+		if (this.carThread) {
+			task.cancel(this.carThread);
+			this.carThread = undefined;
+		}
+		this.despawnCarNPCs();
 	}
 
 	cleanup() {
@@ -303,6 +319,12 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 			this.crowdThread = undefined;
 		}
 		this.despawnCrowdNPCs();
+		this.carLoopRunning = false;
+		if (this.carThread) {
+			task.cancel(this.carThread);
+			this.carThread = undefined;
+		}
+		this.despawnCarNPCs();
 		this.lastHintText = "";
 		this.playerStates.clear();
 		this.playerObjects.clear();
@@ -329,7 +351,10 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 	) {
 		const waypointsFolder = Workspace.FindFirstChild("CrowdWaypoints");
 		if (!waypointsFolder) return [];
-		const waveNpcs: Part[] = [];
+		const noobTemplate = ServerStorage.FindFirstChild("NoobTemplate") as
+			| Model
+			| undefined;
+		const waveNpcs: Model[] = [];
 
 		const npcsPerPath = math.floor(SCRAMBLE_CROWD_NPC_COUNT / 4);
 		for (let i = 1; i <= 4; i++) {
@@ -343,29 +368,66 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 
 			for (let j = 0; j < npcsPerPath; j++) {
 				const offset = new Vector3(
-					(math.random() - 0.5) * 4,
+					(math.random() - 0.5) * 6,
 					0,
-					(math.random() - 0.5) * 4,
+					(math.random() - 0.5) * 6,
 				);
 
-				const npcPart = new Instance("Part");
-				npcPart.Size = new Vector3(1, 3, 1);
-				npcPart.Anchored = true;
-				npcPart.CanCollide = false;
-				npcPart.CanTouch = false;
-				npcPart.CanQuery = false;
-				npcPart.Color = Color3.fromRGB(150, 150, 150);
-				npcPart.Position = startPart.Position.add(offset);
-				npcPart.Parent = Workspace;
-
-				this.activeCrowdNPCs.push(npcPart);
-				waveNpcs.push(npcPart);
-
-				TweenService.Create(
-					npcPart,
-					new TweenInfo(duration, Enum.EasingStyle.Linear),
-					{ Position: endPart.Position.add(offset) },
-				).Play();
+				if (noobTemplate) {
+					const npc = noobTemplate.Clone();
+					// Make non-interactive
+					for (const desc of npc.GetDescendants()) {
+						if (desc.IsA("BasePart")) {
+							desc.CanCollide = false;
+							desc.CanTouch = false;
+							desc.CanQuery = false;
+						}
+					}
+					const hrp = npc.FindFirstChild("HumanoidRootPart") as
+						| BasePart
+						| undefined;
+					if (hrp) {
+						hrp.Anchored = true;
+						hrp.CFrame = new CFrame(startPart.Position.add(offset));
+						npc.Parent = Workspace;
+						TweenService.Create(
+							hrp,
+							new TweenInfo(duration, Enum.EasingStyle.Linear),
+							{
+								CFrame: new CFrame(endPart.Position.add(offset)),
+							},
+						).Play();
+					} else {
+						npc.PivotTo(new CFrame(startPart.Position.add(offset)));
+						npc.Parent = Workspace;
+					}
+					this.activeCrowdNPCs.push(npc);
+					waveNpcs.push(npc);
+				} else {
+					// Fallback: gray Part
+					const fallback = new Instance("Model");
+					const body = new Instance("Part");
+					body.Name = "HumanoidRootPart";
+					body.Size = new Vector3(1, 3, 1);
+					body.Anchored = true;
+					body.CanCollide = false;
+					body.CanTouch = false;
+					body.CanQuery = false;
+					body.Color = Color3.fromRGB(150, 150, 150);
+					body.CFrame = new CFrame(startPart.Position.add(offset));
+					body.Parent = fallback;
+					fallback.PrimaryPart = body;
+					fallback.Parent = Workspace;
+					TweenService.Create(
+						body,
+						new TweenInfo(duration, Enum.EasingStyle.Linear),
+						{
+							CFrame: new CFrame(endPart.Position.add(offset)),
+						},
+					).Play();
+					this.activeCrowdNPCs.push(fallback);
+					waveNpcs.push(fallback);
+				}
 			}
 		}
 
@@ -387,6 +449,103 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 		}
 		this.activeCrowdNPCs = this.activeCrowdNPCs.filter(
 			(npc) => !npcs.includes(npc),
+		);
+	}
+
+	private runCarLoop() {
+		this.carLoopRunning = true;
+		while (this.carLoopRunning) {
+			task.wait(SCRAMBLE_CAR_SPAWN_INTERVAL);
+			if (!this.carLoopRunning) break;
+			const wave = this.spawnCarWave();
+			task.wait(SCRAMBLE_CAR_WAVE_DURATION);
+			if (!this.carLoopRunning) break;
+			this.awardDodgeCars(wave);
+			this.despawnCarNPCs(wave);
+		}
+	}
+
+	private spawnCarWave(): Model[] {
+		const carWP = ServerStorage.FindFirstChild("CarWaypoints");
+		if (!carWP) return [];
+
+		const templateNames = ["CarTemplate_1", "CarTemplate_2", "CarTemplate_3"];
+		const wave: Model[] = [];
+
+		for (let i = 1; i <= 3; i++) {
+			const pathFolder = carWP.FindFirstChild(`Path${i}`);
+			if (!pathFolder) continue;
+			const startPart = pathFolder.FindFirstChild("Start") as
+				| BasePart
+				| undefined;
+			const endPart = pathFolder.FindFirstChild("End") as BasePart | undefined;
+			if (!startPart || !endPart) continue;
+
+			const templateName =
+				templateNames[math.random(0, templateNames.size() - 1)];
+			const template = ServerStorage.FindFirstChild(templateName) as
+				| Model
+				| undefined;
+			if (!template) continue;
+
+			const car = template.Clone();
+			// Only PrimaryPart anchored; rest unanchored so welded parts follow tween
+			const primary = car.PrimaryPart;
+			for (const desc of car.GetDescendants()) {
+				if (desc.IsA("BasePart")) {
+					desc.Anchored = desc === primary;
+					desc.CanCollide = false;
+					desc.CanTouch = false;
+					desc.CanQuery = false;
+				}
+			}
+
+			car.PivotTo(new CFrame(startPart.Position));
+			car.Parent = Workspace;
+
+			if (primary) {
+				TweenService.Create(
+					primary,
+					new TweenInfo(SCRAMBLE_CAR_SPEED_DURATION, Enum.EasingStyle.Linear),
+					{ CFrame: new CFrame(endPart.Position) },
+				).Play();
+			}
+
+			this.activeCarNPCs.push(car);
+			wave.push(car);
+		}
+
+		if (wave.size() > 0) {
+			this.lastHintText = fireHintText(
+				this.serverEvents,
+				"Cars crossing! Watch out!",
+				this.lastHintText,
+			);
+		}
+
+		return wave;
+	}
+
+	/** Award DodgeCars mission to hiders alive when car wave ends. */
+	private awardDodgeCars(wave: Model[]) {
+		if (wave.size() === 0) return;
+
+		for (const [userId, state] of this.playerStates) {
+			if (state.role !== PlayerRole.Hider || state.isTagged) continue;
+			const player = this.playerObjects.get(userId);
+			if (!player) continue;
+
+			state.carWavesSurvived += 1;
+			this.missionService.incrementAndNotify(player, MissionId.DodgeCars, 1);
+		}
+	}
+
+	private despawnCarNPCs(cars = this.activeCarNPCs) {
+		for (const car of cars) {
+			car.Destroy();
+		}
+		this.activeCarNPCs = this.activeCarNPCs.filter(
+			(car) => !cars.includes(car),
 		);
 	}
 
@@ -417,10 +576,6 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 				: SCRAMBLE_SLIDE_SPEED;
 		// Fire to client — matches LobbyService pattern; client applies speed locally
 		this.serverEvents.slideImpulse.fire(player, dir, speed);
-
-		if (state.role === PlayerRole.Hider) {
-			this.missionService.onSlideUsed(player);
-		}
 	}
 
 	private teleportPlayers(players: Player[], roles: Map<Player, PlayerRole>) {

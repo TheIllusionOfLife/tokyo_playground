@@ -155,12 +155,6 @@ export class MissionService implements OnStart {
 		this.serverEvents.missionUpdate.fire(player, missions);
 	}
 
-	onSlideUsed(player: Player) {
-		this.incrementAndNotify(player, MissionId.ReachRooftop, 1);
-		const missions = this.buildProgressData(player);
-		this.serverEvents.missionUpdate.fire(player, missions);
-	}
-
 	onCanKicked(player: Player) {
 		this.incrementAndNotify(player, MissionId.KickCan, 1);
 		const missions = this.buildProgressData(player);
