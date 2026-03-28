@@ -150,20 +150,6 @@ export function ShopPanel() {
 			{/* Full-screen overlay when open */}
 			{open ? (
 				<>
-					{/* Semi-transparent backdrop */}
-					<textbutton
-						key="ShopBackdrop"
-						Size={new UDim2(1, 0, 1, 0)}
-						Position={new UDim2(0, 0, 0, 0)}
-						BackgroundColor3={Color3.fromRGB(0, 0, 0)}
-						BackgroundTransparency={0.5}
-						BorderSizePixel={0}
-						Text=""
-						ZIndex={18}
-						Event={{
-							Activated: () => gameStore.setActiveOverlay("none"),
-						}}
-					/>
 					{/* Centered shop card */}
 					<frame
 						key="ShopOverlay"
