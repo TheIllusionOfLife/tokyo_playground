@@ -79,6 +79,9 @@ for p in parts:
 parts = non_empty
 
 # Step 6: Export
+if not parts:
+    print("WARNING: No non-empty meshes after split. Skipping export.")
+    raise SystemExit(1)
 bpy.ops.object.select_all(action='DESELECT')
 for p in parts:
     p.select_set(True)

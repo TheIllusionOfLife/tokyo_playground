@@ -101,12 +101,13 @@ if not sample:
     print("ERROR: No meshes selected for golden sample")
     raise SystemExit(1)
 
-# Apply same scaling as blender_batch_export.py
+# Passthrough scaling (SCALE=1.0, no transform applied).
+# blender_batch_export.py uses SCALE=2.0 (legacy tiling pipeline).
 # Step 1: Set origins to geometry center
 bpy.ops.object.select_all(action='DESELECT')
 for obj in sample.values():
     obj.select_set(True)
-bpy.context.view_layer.objects.active = list(sample.values())[0]
+bpy.context.view_layer.objects.active = next(iter(sample.values()))
 bpy.ops.object.origin_set(type='ORIGIN_GEOMETRY', center='BOUNDS')
 
 # Step 2: Scale from world origin

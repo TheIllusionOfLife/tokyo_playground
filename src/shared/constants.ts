@@ -35,7 +35,7 @@ export const CAN_KICK_RADIUS = 10;
 export const ONI_COUNT_DURATION = 10;
 export const CAN_RELOCATE_INTERVAL = 35;
 export const CAN_RATTLE_TARGET = 3;
-export const CAN_FREED_SPEED_BOOST = 24;
+export const CAN_FREED_SPEED_BOOST = 48;
 export const CAN_FREED_SPEED_BOOST_DURATION = 3;
 
 // Cooldowns
@@ -442,7 +442,7 @@ export const SCRAMBLE_CROWD_WAVE_INTERVAL = 20;
 export const SCRAMBLE_CROWD_WAVE_DURATION = 10;
 export const SCRAMBLE_CROWD_NPC_COUNT = 12;
 export const SCRAMBLE_MAX_ACTIVE_SPIRIT_WAVES = 1;
-export const SCRAMBLE_SLIDE_SPEED = 400;
+export const SCRAMBLE_SLIDE_SPEED = 800;
 export const SCRAMBLE_SLIDE_COOLDOWN = 8;
 export const SCRAMBLE_TAG_BONUS_PER_TAG = 5;
 export const SCRAMBLE_SPIRIT_WAVE_DURATION = 5;
