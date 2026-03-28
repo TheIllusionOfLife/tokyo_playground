@@ -219,7 +219,9 @@ export class LobbyService implements OnStart {
 					data?.maxHachiLevel ?? 0,
 					HACHI_LOBBY_MIN_LEVEL,
 				);
-				equipHachiCostume(player, clone, evoLevel);
+				if (!equipHachiCostume(player, clone, evoLevel)) {
+					clone.Destroy();
+				}
 			} else {
 				unequipHachiCostume(player);
 			}

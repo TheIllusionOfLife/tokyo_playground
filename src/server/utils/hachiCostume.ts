@@ -88,12 +88,17 @@ export function equipHachiCostume(
 	// Clear any stale mount state (respawn, lobby→minigame transition)
 	forceUnmount(player);
 
-	// Strip objects that are no longer needed
-	hachiModel.FindFirstChildWhichIsA("VehicleSeat")?.Destroy();
-	hachiModel.FindFirstChildOfClass("BodyVelocity")?.Destroy();
-	hachiModel.FindFirstChildOfClass("BodyGyro")?.Destroy();
+	// Strip all legacy physics objects and prompts from the entire model
 	for (const desc of hachiModel.GetDescendants()) {
-		if (desc.IsA("ProximityPrompt")) desc.Destroy();
+		if (
+			desc.IsA("VehicleSeat") ||
+			desc.IsA("BodyVelocity") ||
+			desc.IsA("BodyGyro") ||
+			desc.IsA("BodyForce") ||
+			desc.IsA("ProximityPrompt")
+		) {
+			desc.Destroy();
+		}
 	}
 
 	// Make all Hachi parts cosmetic-only (no physics impact on Humanoid)
