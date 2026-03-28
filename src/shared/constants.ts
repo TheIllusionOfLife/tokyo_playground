@@ -12,7 +12,9 @@ import {
 } from "shared/types";
 
 // Defaults
-export const DEFAULT_WALK_SPEED = 32;
+export const DEFAULT_WALK_SPEED = 16;
+export const CHARACTER_SCALE = 0.5; // half-size characters (makes city feel larger)
+export const DEFAULT_JUMP_HEIGHT = 3.6; // halved from default 7.2 for half-scale characters
 
 // Lobby & Match Flow
 export const LOBBY_INTERMISSION = 8;
@@ -33,7 +35,7 @@ export const CAN_KICK_RADIUS = 10;
 export const ONI_COUNT_DURATION = 10;
 export const CAN_RELOCATE_INTERVAL = 35;
 export const CAN_RATTLE_TARGET = 3;
-export const CAN_FREED_SPEED_BOOST = 48;
+export const CAN_FREED_SPEED_BOOST = 24;
 export const CAN_FREED_SPEED_BOOST_DURATION = 3;
 
 // Cooldowns
@@ -402,20 +404,20 @@ export const HACHI_ROUND_DURATION =
 	MINIGAME_CONFIGS[MinigameId.HachiRide].roundDuration;
 export const HACHI_STARTING_EVOLUTION = 2; // start with double jump + wall run
 export const HACHI_EVOLUTION_THRESHOLDS = [0, 5, 12, 20, 30];
-export const HACHI_WALK_SPEEDS = [100, 120, 140, 170, 210];
+export const HACHI_WALK_SPEEDS = [50, 60, 70, 85, 105];
 export const HACHI_ITEMS_TO_SPAWN = 200;
 export const HACHI_COLLECTION_RADIUS = 8;
 export const HACHI_DEFAULT_SCALE = 0.5; // default Hachi size is half the template
 export const HACHI_BIG_SCALE = 1.5;
-export const HACHI_DOUBLE_JUMP_IMPULSE = 240; // 139 × √3 — yields ~3× jump height
-export const HACHI_WALL_RUN_SPEED = 150;
+export const HACHI_DOUBLE_JUMP_IMPULSE = 120; // halved for half-scale world
+export const HACHI_WALL_RUN_SPEED = 75;
 export const HACHI_WALL_RUN_RAYCAST = 3;
 export const HACHI_WALL_RUN_MAX_DUR = 3;
 export const HACHI_ITEM_POINT_VALUE = 1;
 export const HACHI_BONUS_ITEM_COUNT = 20;
 export const HACHI_BONUS_ITEM_VALUE = 5;
 export const HACHI_WIN_ITEM_BONUS = 20;
-export const HACHI_JUMP_VELOCITY = 150; // 87 × √3 — yields ~3× jump height
+export const HACHI_JUMP_VELOCITY = 75; // halved for half-scale world
 export const HACHI_JUMP_COOLDOWN = 0.1; // seconds between jump requests
 export const HACHI_EJECT_COOLDOWN = 1.0; // seconds between eject requests
 export const HACHI_SLIDE_FORCE_RESTORE_DELAY = 0.5; // seconds to hold MaxForce=0 after impulse
@@ -439,7 +441,7 @@ export const SCRAMBLE_CROWD_WAVE_INTERVAL = 20;
 export const SCRAMBLE_CROWD_WAVE_DURATION = 10;
 export const SCRAMBLE_CROWD_NPC_COUNT = 12;
 export const SCRAMBLE_MAX_ACTIVE_SPIRIT_WAVES = 1;
-export const SCRAMBLE_SLIDE_SPEED = 800;
+export const SCRAMBLE_SLIDE_SPEED = 400;
 export const SCRAMBLE_SLIDE_COOLDOWN = 8;
 export const SCRAMBLE_TAG_BONUS_PER_TAG = 5;
 export const SCRAMBLE_SPIRIT_WAVE_DURATION = 5;
@@ -658,7 +660,7 @@ export const NPC_SPAWN_FADE_DURATION = 1.0;
 export const NPC_TREAT_COOLDOWN = 120;
 export const NPC_DAILY_INTERACTION_BONUS = 10;
 export const NPC_STREAMING_RADIUS = 80;
-export const CAT_APPROACH_SPEED = 4;
+export const CAT_APPROACH_SPEED = 2;
 export const PHOTOGRAPHER_POSE_REWARD = 5;
 export const OMIKUJI_POINTS = [5, 8, 12, 18, 25]; // 凶→大吉 (5 tiers)
 
@@ -769,7 +771,7 @@ export const GOLDEN_HOUR_DURATION = 180;
 export const AMBIENT_CHECK_INTERVAL = 0.5;
 export const MOOD_DECAY_DURATION = 60;
 export const SLEEP_IDLE_THRESHOLD = 8;
-export const TONGUE_OUT_SPEED_THRESHOLD = 150;
+export const TONGUE_OUT_SPEED_THRESHOLD = 75;
 export const HACHI_PAIR_INTERACTION_RADIUS = 8;
 
 // ── Tags (Living Shibuya) ────────────────────────────────────────────────

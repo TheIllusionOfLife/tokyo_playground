@@ -7,6 +7,8 @@ import {
 } from "@rbxts/services";
 import {
 	CAN_KICK_PORTAL_TAG,
+	CHARACTER_SCALE,
+	DEFAULT_JUMP_HEIGHT,
 	DEFAULT_WALK_SPEED,
 	HACHI_DEFAULT_SCALE,
 	HACHI_DOUBLE_JUMP_IMPULSE,
@@ -78,9 +80,22 @@ export class LobbyService implements OnStart {
 			player.CharacterAdded.Connect((character) => {
 				// Small delay to let character load
 				task.wait(0.5);
-				// Set walk speed to project default (Roblox default is 16)
 				const humanoid = character.FindFirstChildOfClass("Humanoid");
-				if (humanoid) humanoid.WalkSpeed = DEFAULT_WALK_SPEED;
+				if (humanoid) {
+					humanoid.WalkSpeed = DEFAULT_WALK_SPEED;
+					humanoid.JumpHeight = DEFAULT_JUMP_HEIGHT;
+					// Half-size characters: set scale NumberValues
+					const scaleNames = [
+						"BodyHeightScale",
+						"BodyWidthScale",
+						"BodyDepthScale",
+						"HeadScale",
+					];
+					for (const name of scaleNames) {
+						const nv = humanoid.FindFirstChild(name) as NumberValue | undefined;
+						if (nv) nv.Value = CHARACTER_SCALE;
+					}
+				}
 				if (this.matchActive) return;
 				if (player.Character) {
 					this.teleportToLobby(player);
