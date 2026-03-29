@@ -330,7 +330,6 @@ export const HACHI_SLIDE_RAMP_PROXIMITY = 20; // studs — server-side ramp owne
 export const BOUNDARY_AABB_MIN = new Vector3(-11900, -50, 32400);
 export const BOUNDARY_AABB_MAX = new Vector3(-9400, 500, 34500);
 export const BOUNDARY_WARNING_RATIO = 0.85; // start fog at 85% toward edge
-export const BOUNDARY_CHECK_INTERVAL = 1; // seconds between server checks
 
 export const ZONE_TAG = "Zone";
 export const ZONE_DEBOUNCE = 30; // seconds before re-showing same zone

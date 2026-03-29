@@ -66,7 +66,9 @@ export class AmbientCityService implements OnStart {
 	}
 
 	private spawnCrowdWave(): Model[] {
-		const waypointsFolder = Workspace.FindFirstChild("CrowdWaypoints");
+		const waypointsFolder =
+			Workspace.FindFirstChild("CrowdWaypoints") ??
+			ServerStorage.FindFirstChild("CrowdWaypoints");
 		if (!waypointsFolder) return [];
 		const noobTemplate = ServerStorage.FindFirstChild("NoobTemplate") as
 			| Model
