@@ -1,77 +1,79 @@
 import { Controller, OnStart } from "@flamework/core";
-import { Lighting } from "@rbxts/services";
+import { Lighting, RunService } from "@rbxts/services";
 import { clientEvents } from "client/network";
 import { gameStore } from "shared/store/game-store";
 
-const WARNING_TEXT = "You're leaving the area!";
+const WARNING_TEXT = "Returning to the area...";
 const FOG_LERP_SPEED = 0.15;
 
 @Controller()
 export class BoundaryController implements OnStart {
-	private targetDensity = 0;
-	private currentDensity = 0;
+	private targetExtraDensity = 0;
+	private currentExtraDensity = 0;
 	private atmosphere?: Atmosphere;
+	private baseDensity = 0;
+	private baseColor = Color3.fromRGB(200, 210, 220);
 	private warningActive = false;
 
 	onStart() {
-		this.atmosphere =
-			Lighting.FindFirstChildOfClass("Atmosphere") ??
-			(() => {
-				const atm = new Instance("Atmosphere");
-				atm.Parent = Lighting;
-				return atm;
-			})();
+		this.atmosphere = Lighting.FindFirstChildOfClass("Atmosphere");
+		if (!this.atmosphere) {
+			this.atmosphere = new Instance("Atmosphere");
+			this.atmosphere.Parent = Lighting;
+		}
+		// Save the base atmosphere values so we can add on top
+		this.baseDensity = this.atmosphere.Density;
+		this.baseColor = this.atmosphere.Color;
 
 		clientEvents.boundaryWarning.connect((ratio) => {
 			this.handleWarning(ratio);
 		});
 
-		game.GetService("RunService").Heartbeat.Connect(() => {
+		RunService.Heartbeat.Connect(() => {
 			this.updateFog();
 		});
 	}
 
 	private handleWarning(ratio: number) {
 		if (ratio >= 0.85) {
-			// Map 0.85..1.0 to density 0..0.8
 			const t = math.clamp((ratio - 0.85) / 0.15, 0, 1);
-			this.targetDensity = t * 0.8;
+			this.targetExtraDensity = t * 0.6;
 
 			if (!this.warningActive) {
 				this.warningActive = true;
-				this.showHint(WARNING_TEXT);
+				gameStore.setHintText(WARNING_TEXT);
 			}
 		} else {
-			this.targetDensity = 0;
-			this.warningActive = false;
+			this.targetExtraDensity = 0;
+			if (this.warningActive) {
+				this.warningActive = false;
+				gameStore.setHintText("");
+			}
 		}
 	}
 
 	private updateFog() {
 		if (!this.atmosphere) return;
-		this.currentDensity +=
-			(this.targetDensity - this.currentDensity) * FOG_LERP_SPEED;
-		if (math.abs(this.currentDensity - this.targetDensity) < 0.001) {
-			this.currentDensity = this.targetDensity;
+		this.currentExtraDensity +=
+			(this.targetExtraDensity - this.currentExtraDensity) * FOG_LERP_SPEED;
+		if (math.abs(this.currentExtraDensity - this.targetExtraDensity) < 0.001) {
+			this.currentExtraDensity = this.targetExtraDensity;
 		}
-		this.atmosphere.Density = this.currentDensity;
-		if (this.currentDensity > 0.01) {
-			const redShift = math.clamp(this.currentDensity / 0.8, 0, 1);
+		// Add extra density on top of base
+		this.atmosphere.Density = this.baseDensity + this.currentExtraDensity;
+
+		if (this.currentExtraDensity > 0.01) {
+			const redShift = math.clamp(this.currentExtraDensity / 0.6, 0, 1);
 			this.atmosphere.Color = Color3.fromRGB(
-				math.floor(200 + 55 * redShift),
-				math.floor(210 - 80 * redShift),
-				math.floor(220 - 120 * redShift),
+				math.floor(
+					this.baseColor.R * 255 +
+						(255 - this.baseColor.R * 255) * redShift * 0.3,
+				),
+				math.floor(this.baseColor.G * 255 * (1 - redShift * 0.4)),
+				math.floor(this.baseColor.B * 255 * (1 - redShift * 0.5)),
 			);
 		} else {
-			this.atmosphere.Color = Color3.fromRGB(200, 210, 220);
+			this.atmosphere.Color = this.baseColor;
 		}
-	}
-
-	private showHint(text: string) {
-		gameStore.setHintText(text);
-		task.delay(3, () => {
-			if (this.warningActive) return; // still in warning zone
-			gameStore.setHintText("");
-		});
 	}
 }

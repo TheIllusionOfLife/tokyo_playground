@@ -12,6 +12,8 @@ import { edgeRatio_XZ } from "shared/utils/proximityUtils";
 const VOID_Y_THRESHOLD = -10;
 /** Check boundary every 0.25s for responsive teleport-back. */
 const CHECK_INTERVAL = 0.25;
+/** Only store lastValidPos when well inside boundary (avoids edge positions). */
+const SAFE_RATIO = 0.7;
 
 @Service()
 export class BoundaryService implements OnStart {
@@ -64,12 +66,17 @@ export class BoundaryService implements OnStart {
 			const ratio = edgeRatio_XZ(pos, BOUNDARY_AABB_MIN, BOUNDARY_AABB_MAX);
 
 			if (ratio >= 1) {
+				// Beyond boundary: teleport back
 				this.teleportBack(player, character);
 				this.serverEvents.boundaryWarning.fire(player, 1);
 			} else if (ratio >= BOUNDARY_WARNING_RATIO) {
+				// In warning zone: notify client for fog + hint
 				this.serverEvents.boundaryWarning.fire(player, ratio);
 			} else {
-				this.lastValidPos.set(player.UserId, pos);
+				// Safe zone: only store position when well inside boundary
+				if (ratio < SAFE_RATIO) {
+					this.lastValidPos.set(player.UserId, pos);
+				}
 				if (ratio < BOUNDARY_WARNING_RATIO - 0.05) {
 					this.serverEvents.boundaryWarning.fire(player, 0);
 				}
@@ -80,13 +87,15 @@ export class BoundaryService implements OnStart {
 	private teleportBack(player: Player, character: Model) {
 		const lastValid = this.lastValidPos.get(player.UserId);
 		if (lastValid) {
-			character.PivotTo(new CFrame(lastValid.add(new Vector3(0, 3, 0))));
+			character.PivotTo(new CFrame(lastValid.add(new Vector3(0, 5, 0))));
+			this.serverEvents.boundaryWarning.fire(player, 0);
 		} else {
 			// Fallback: teleport to spawn
 			const spawn = game.Workspace.FindFirstChildWhichIsA("SpawnLocation");
 			if (spawn) {
 				character.PivotTo(spawn.CFrame.add(new Vector3(0, 3, 0)));
 			}
+			this.serverEvents.boundaryWarning.fire(player, 0);
 		}
 	}
 }
