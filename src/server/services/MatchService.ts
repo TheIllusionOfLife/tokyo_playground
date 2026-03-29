@@ -262,7 +262,7 @@ export class MatchService implements OnStart {
 		// Check if players dropped below minimum during Preparing phase
 		if (this.matchPlayers.size() < MINIGAME_CONFIGS[minigameId].minPlayers) {
 			print("[MatchService] Below minimum players during prepare — cancelling");
-			this.cleanup();
+			this.forceCleanup();
 			return;
 		}
 
