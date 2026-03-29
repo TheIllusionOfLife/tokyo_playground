@@ -105,6 +105,12 @@ export enum MissionId {
 	WinHachiRide = "WinHachiRide",
 	CollectBonusItem = "CollectBonusItem",
 	DodgeCars = "DodgeCars",
+	PlayWithFriends = "PlayWithFriends",
+	UseEmote = "UseEmote",
+	PlayAllGames = "PlayAllGames",
+	CatchStreak = "CatchStreak",
+	CollectHachiItems30 = "CollectHachiItems30",
+	WinTwoInARow = "WinTwoInARow",
 }
 
 export enum ItemId {
@@ -118,6 +124,11 @@ export enum ItemId {
 	EmoteCheer = "EmoteCheer",
 	EmoteWave = "EmoteWave",
 	EmoteFlip = "EmoteFlip",
+	// New shop items
+	TrailCherryBlossom = "TrailCherryBlossom",
+	TrailMidnightSpark = "TrailMidnightSpark",
+	EmoteCherryBlast = "EmoteCherryBlast",
+	EmoteThunderClap = "EmoteThunderClap",
 	// Living Shibuya stamp set rewards
 	HatAlleyCatEars = "HatAlleyCatEars",
 	TrailCloudWalk = "TrailCloudWalk",
@@ -306,6 +317,8 @@ export interface PlayerData {
 	// Living Shibuya: Micro-Events
 	badges: string[];
 	obstacleBestTime: number;
+	// Daily login
+	lastLoginDay: number;
 }
 
 export const DEFAULT_PLAYER_DATA: PlayerData = {
@@ -327,4 +340,5 @@ export const DEFAULT_PLAYER_DATA: PlayerData = {
 	lastNpcInteractionDay: 0,
 	badges: [],
 	obstacleBestTime: 0,
+	lastLoginDay: 0,
 };

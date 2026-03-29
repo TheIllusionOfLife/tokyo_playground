@@ -76,7 +76,7 @@ function ShopCard({
 				TextColor3={Color3.fromRGB(150, 150, 200)}
 				TextScaled={true}
 				Font={Enum.Font.Gotham}
-				Text={`${item.category} • ${item.price}pts`}
+				Text={`${item.category === "Emote" ? "Effect" : item.category} • ${item.price}pts`}
 			/>
 			<textbutton
 				Size={new UDim2(1, -8, 0, 28)}

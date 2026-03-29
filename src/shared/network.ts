@@ -72,6 +72,8 @@ interface ServerToClientEvents {
 	hachiRaceState(state: HachiRaceStateData): void;
 	hachiCostumeEquipped(equipped: boolean): void;
 	roundSummary(summaryText: string, winnerName: string): void;
+	emoteTriggered(playerId: number, itemId: string): void;
+	dailyLoginBonus(points: number): void;
 
 	// ── Living Shibuya: Day/Night ────────────────────────────────────────
 	timeOfDayChanged(phase: TimePhase, normalizedTime: number): void;
@@ -147,6 +149,7 @@ interface ClientToServerEvents {
 	obstacleCourseFinish(): void; // fix H2: no client-supplied time; server computes elapsed
 
 	// ── Living Shibuya: Lobby Hachi Abilities ────────────────────────────
+	requestPlayEmote(): void;
 	hachiToggleCostume(equip: boolean): void;
 	hachiLobbyDoubleJump(): void; // fix M1: separate from match hachiDoubleJump
 	hachiLobbyWallRun(wallNormal: Vector3): void;

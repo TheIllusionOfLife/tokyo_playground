@@ -17,6 +17,7 @@ import {
 } from "shared/living-shibuya-constants";
 import { GlobalEvents } from "shared/network";
 import { NpcId, TimePhase } from "shared/types";
+import { getCurrentDay } from "shared/utils/dayKey";
 import { DayNightService } from "./DayNightService";
 import { PlayerDataService } from "./PlayerDataService";
 
@@ -249,7 +250,7 @@ export class NpcRoutineService implements OnStart {
 		// Daily check
 		const data = this.playerDataService.getPlayerData(player);
 		if (!data) return;
-		const today = math.floor(os.time() / 86400);
+		const today = getCurrentDay();
 		if (data.lastOmikujiDay >= today) return;
 
 		data.lastOmikujiDay = today;
@@ -275,7 +276,7 @@ export class NpcRoutineService implements OnStart {
 	private getDailyInteractionPoints(player: Player, npcId: NpcId): number {
 		const data = this.playerDataService.getPlayerData(player);
 		if (!data) return 3;
-		const today = math.floor(os.time() / 86400);
+		const today = getCurrentDay();
 		if (data.lastNpcInteractionDay < today) {
 			data.lastNpcInteractionDay = today;
 			data.npcFirstInteractions = [];

@@ -125,6 +125,29 @@ export const EN: Record<string, string> = {
 	mission_CollectBonusItem: "Collect a Bonus Item",
 	mission_DodgeCars: "Survive a Car Wave",
 
+	// New shop item names
+	item_cherry_blossom_trail: "Cherry Blossom Trail",
+	item_midnight_spark_trail: "Midnight Spark Trail",
+	item_cherry_blast: "Cherry Blast",
+	item_thunder_clap: "Thunder Clap",
+
+	// Shop category labels
+	shop_category_effect: "Effect",
+
+	// Daily login
+	daily_login_bonus: "Daily Login Bonus!",
+
+	// New mission labels
+	mission_PlayWithFriends: "Play with a Friend",
+	mission_UseEmote: "Use an Effect 3 Times",
+	mission_PlayAllGames: "Play All 3 Games",
+	mission_CatchStreak: "Catch 3 in One Round",
+	mission_CollectHachiItems30: "Collect 30 Items on Hachi",
+	mission_WinTwoInARow: "Win 2 Games in a Row",
+
+	// Emote / Celebration Effects
+	emote_trigger: "EFFECT",
+
 	// Boundary
 	boundary_warning: "You're leaving the area!",
 	boundary_return: "Returning to the area...",
