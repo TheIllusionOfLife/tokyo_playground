@@ -332,6 +332,10 @@ export const BOUNDARY_AABB_MAX = new Vector3(-9400, 500, 34500);
 export const BOUNDARY_WARNING_RATIO = 0.85; // start fog at 85% toward edge
 export const BOUNDARY_CHECK_INTERVAL = 1; // seconds between server checks
 
+export const ZONE_TAG = "Zone";
+export const ZONE_DEBOUNCE = 30; // seconds before re-showing same zone
+export const ZONE_DISPLAY_DURATION = 3; // seconds to show zone popup
+
 export const CAN_KICK_PORTAL_TAG = "CanKickPortal";
 export const SCRAMBLE_PORTAL_TAG = "ShibuyaScramblePortal";
 export const HACHI_COSTUME_NAME = "HachiCostume";
