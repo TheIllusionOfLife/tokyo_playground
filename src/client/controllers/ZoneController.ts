@@ -14,6 +14,7 @@ export class ZoneController implements OnStart {
 	private zoneParts: BasePart[] = [];
 	private lastShown = new Map<string, number>(); // zoneName → timestamp
 	private currentZone = "";
+	private zoneShownAt = 0; // os.clock() when popup was shown
 	private elapsed = 0;
 
 	onStart() {
@@ -38,6 +39,8 @@ export class ZoneController implements OnStart {
 		Players.LocalPlayer.CharacterAdded.Connect(() => {
 			task.wait(1);
 			this.currentZone = "";
+			this.zoneShownAt = 0;
+			gameStore.setCurrentZone("");
 			this.check();
 		});
 	}
@@ -50,6 +53,16 @@ export class ZoneController implements OnStart {
 
 		const pos = hrp.Position;
 		const now = os.clock();
+
+		// Auto-hide popup after display duration
+		if (
+			this.currentZone !== "" &&
+			this.zoneShownAt > 0 &&
+			now - this.zoneShownAt >= ZONE_DISPLAY_DURATION
+		) {
+			gameStore.setCurrentZone("");
+			// Keep this.currentZone so we don't re-trigger debounce
+		}
 
 		let nearestZone = "";
 		let nearestDistSq = math.huge;
@@ -70,16 +83,13 @@ export class ZoneController implements OnStart {
 			const lastTime = this.lastShown.get(nearestZone) ?? 0;
 			if (now - lastTime >= ZONE_DEBOUNCE) {
 				this.currentZone = nearestZone;
+				this.zoneShownAt = now;
 				this.lastShown.set(nearestZone, now);
 				gameStore.setCurrentZone(nearestZone);
-				task.delay(ZONE_DISPLAY_DURATION, () => {
-					if (this.currentZone === nearestZone) {
-						gameStore.setCurrentZone("");
-					}
-				});
 			}
 		} else if (nearestZone === "" && this.currentZone !== "") {
 			this.currentZone = "";
+			this.zoneShownAt = 0;
 			gameStore.setCurrentZone("");
 		}
 	}
