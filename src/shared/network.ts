@@ -109,6 +109,9 @@ interface ServerToClientEvents {
 	bonOdoriNote(direction: number, beatTime: number): void;
 	foodTruckFound(playerName: string, slotsRemaining: number): void;
 
+	// ── Boundary ────────────────────────────────────────────────────────
+	boundaryWarning(ratio: number): void;
+
 	// ── Living Shibuya: Weather ──────────────────────────────────────────
 	weatherChanged(weather: string): void;
 
