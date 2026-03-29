@@ -49,8 +49,10 @@ export function getPlayerHachi(player: Player): Model | undefined {
 /**
  * Force-clear any stale mounted state for a player.
  * Call before equipping to handle respawn/transition scenarios.
+ * Pass `notifyClient = true` to fire the S→C event so the client
+ * resets its `hachiCostumed` store (e.g. after death in lobby).
  */
-export function forceUnmount(player: Player): void {
+export function forceUnmount(player: Player, notifyClient = false): void {
 	const track = sitTracks.get(player.UserId);
 	if (track) {
 		track.Stop();
@@ -59,6 +61,9 @@ export function forceUnmount(player: Player): void {
 	const model = mountedPlayers.get(player.UserId);
 	if (model && model.Parent) model.Destroy();
 	mountedPlayers.delete(player.UserId);
+	if (notifyClient) {
+		serverEvents.hachiCostumeEquipped.fire(player, false);
+	}
 }
 
 /**

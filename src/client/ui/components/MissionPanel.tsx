@@ -18,7 +18,7 @@ function MissionRow({ mission }: { mission: MissionProgressData }) {
 	return (
 		<frame
 			key={mission.id}
-			Size={new UDim2(1, -8, 0, 58)}
+			Size={new UDim2(1, -8, 0, 50)}
 			BackgroundColor3={Color3.fromRGB(35, 35, 50)}
 			BackgroundTransparency={0.2}
 			BorderSizePixel={0}
@@ -153,7 +153,7 @@ export function MissionPanel() {
 			{open ? (
 				<frame
 					key="MissionOverlay"
-					Size={new UDim2(0, 320, 0, 240)}
+					Size={new UDim2(0, 280, 0, 200)}
 					Position={new UDim2(0.5, 0, 0.5, 0)}
 					AnchorPoint={new Vector2(0.5, 0.5)}
 					BackgroundColor3={Color3.fromRGB(20, 20, 40)}
