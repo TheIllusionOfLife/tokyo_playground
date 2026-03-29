@@ -1,9 +1,15 @@
 import { OnStart, Service } from "@flamework/core";
 import { Players, ServerStorage } from "@rbxts/services";
-import { SHOP_CATALOG } from "shared/constants";
+import {
+	EMOTE_COOLDOWN,
+	SHOP_CATALOG,
+	STAMP_REWARD_CATALOG,
+} from "shared/constants";
 
 import { GlobalEvents } from "shared/network";
-import { ItemCategory, ItemId } from "shared/types";
+import { GameState, ItemCategory, ItemId, MissionId } from "shared/types";
+import { GameStateService } from "./GameStateService";
+import { MissionService } from "./MissionService";
 import { PlayerDataService } from "./PlayerDataService";
 
 const COSMETICS_FOLDER = "Cosmetics";
@@ -32,6 +38,22 @@ const TRAIL_STYLES: Partial<Record<ItemId, TrailStyle>> = {
 		widthScale: new NumberSequence([
 			new NumberSequenceKeypoint(0, 0.5),
 			new NumberSequenceKeypoint(1, 0.05),
+		]),
+	},
+	[ItemId.TrailCherryBlossom]: {
+		lifetime: 1.5,
+		lightEmission: 0.4,
+		widthScale: new NumberSequence([
+			new NumberSequenceKeypoint(0, 1.2),
+			new NumberSequenceKeypoint(1, 0.3),
+		]),
+	},
+	[ItemId.TrailMidnightSpark]: {
+		lifetime: 0.3,
+		lightEmission: 1,
+		widthScale: new NumberSequence([
+			new NumberSequenceKeypoint(0, 0.6),
+			new NumberSequenceKeypoint(1, 0.02),
 		]),
 	},
 };
@@ -64,6 +86,16 @@ const TRAIL_COLORS: Partial<Record<ItemId, ColorSequence>> = {
 		new ColorSequenceKeypoint(0.3, Color3.fromRGB(255, 150, 0)),
 		new ColorSequenceKeypoint(1, Color3.fromRGB(255, 100, 0)),
 	]),
+	[ItemId.TrailCherryBlossom]: new ColorSequence([
+		new ColorSequenceKeypoint(0, Color3.fromRGB(255, 180, 200)),
+		new ColorSequenceKeypoint(0.5, Color3.fromRGB(255, 150, 180)),
+		new ColorSequenceKeypoint(1, Color3.fromRGB(255, 220, 230)),
+	]),
+	[ItemId.TrailMidnightSpark]: new ColorSequence([
+		new ColorSequenceKeypoint(0, Color3.fromRGB(100, 50, 200)),
+		new ColorSequenceKeypoint(0.5, Color3.fromRGB(60, 20, 150)),
+		new ColorSequenceKeypoint(1, Color3.fromRGB(180, 100, 255)),
+	]),
 };
 
 @Service()
@@ -71,11 +103,20 @@ export class EquipService implements OnStart {
 	private readonly serverEvents = GlobalEvents.createServer({});
 	private readonly charAddedConns = new Map<number, RBXScriptConnection>();
 	private readonly equipCooldowns = new Map<number, number>();
+	private readonly emoteCooldowns = new Map<number, number>();
 
-	constructor(private readonly playerDataService: PlayerDataService) {}
+	constructor(
+		private readonly playerDataService: PlayerDataService,
+		private readonly gameStateService: GameStateService,
+		private readonly missionService: MissionService,
+	) {}
 
 	onStart() {
 		print("[EquipService] Started");
+
+		this.serverEvents.requestPlayEmote.connect((player) => {
+			this.handlePlayEmote(player);
+		});
 
 		this.serverEvents.requestEquip.connect((player, itemId) => {
 			const now = os.clock();
@@ -105,6 +146,7 @@ export class EquipService implements OnStart {
 				this.charAddedConns.delete(player.UserId);
 			}
 			this.equipCooldowns.delete(player.UserId);
+			this.emoteCooldowns.delete(player.UserId);
 		});
 	}
 
@@ -129,7 +171,9 @@ export class EquipService implements OnStart {
 	}
 
 	private handleEquipRequest(player: Player, itemId: ItemId) {
-		const catalogItem = SHOP_CATALOG.find((item) => item.id === itemId);
+		const catalogItem =
+			SHOP_CATALOG.find((item) => item.id === itemId) ??
+			STAMP_REWARD_CATALOG.find((item) => item.id === itemId);
 		if (!catalogItem) return;
 
 		const category = catalogItem.category;
@@ -177,7 +221,32 @@ export class EquipService implements OnStart {
 		} else if (category === ItemCategory.Trail) {
 			this.applyTrail(character, itemId);
 		}
-		// Emotes deferred (requires uploaded animation IDs)
+		// Emotes are celebration effects: no visual on spawn, triggered via requestPlayEmote
+	}
+
+	private handlePlayEmote(player: Player) {
+		// Lobby-only gate
+		if (this.gameStateService.getCurrentState() !== GameState.Lobby) return;
+
+		// Cooldown check
+		const now = os.clock();
+		if (now - (this.emoteCooldowns.get(player.UserId) ?? 0) < EMOTE_COOLDOWN)
+			return;
+
+		// Check player has an emote equipped
+		const equippedItems = this.playerDataService.getEquippedItems(player);
+		const equippedEmote = equippedItems[ItemCategory.Emote];
+		if (equippedEmote === undefined) return;
+
+		this.emoteCooldowns.set(player.UserId, now);
+
+		// Track UseEmote mission
+		this.missionService.incrementAndNotify(player, MissionId.UseEmote, 1);
+
+		// Broadcast to all players
+		for (const p of Players.GetPlayers()) {
+			this.serverEvents.emoteTriggered.fire(p, player.UserId, equippedEmote);
+		}
 	}
 
 	private removeCosmetic(player: Player, category: ItemCategory) {

@@ -125,6 +125,29 @@ export const JA: Record<string, string> = {
 	mission_CollectBonusItem: "ボーナスアイテムを集める",
 	mission_DodgeCars: "車ウェーブを生き残る",
 
+	// New shop item names
+	item_cherry_blossom_trail: "桜トレイル",
+	item_midnight_spark_trail: "ミッドナイトスパーク",
+	item_cherry_blast: "チェリーブラスト",
+	item_thunder_clap: "サンダークラップ",
+
+	// Shop category labels
+	shop_category_effect: "エフェクト",
+
+	// Daily login
+	daily_login_bonus: "ログインボーナス!",
+
+	// New mission labels
+	mission_PlayWithFriends: "フレンドと遊ぶ",
+	mission_UseEmote: "エフェクトを3回使う",
+	mission_PlayAllGames: "3種類すべて遊ぶ",
+	mission_CatchStreak: "1ラウンドで3人捕まえる",
+	mission_CollectHachiItems30: "ハチで30個集める",
+	mission_WinTwoInARow: "2連勝する",
+
+	// Emote / Celebration Effects
+	emote_trigger: "エフェクト",
+
 	// Boundary
 	boundary_warning: "エリアの端に近づいています!",
 	boundary_return: "エリアに戻ります...",

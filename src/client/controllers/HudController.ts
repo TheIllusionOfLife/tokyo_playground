@@ -151,6 +151,10 @@ export class HudController implements OnStart {
 			task.delay(3, () => gameStore.hideLevelUp());
 		});
 
+		clientEvents.dailyLoginBonus.connect((points) => {
+			gameStore.pushFeedMessage(`+${points} login bonus!`);
+		});
+
 		clientEvents.hachiCostumeEquipped.connect((equipped) => {
 			gameStore.setHachiCostumed(equipped);
 		});

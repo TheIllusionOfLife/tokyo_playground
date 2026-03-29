@@ -126,6 +126,29 @@ export const L_MISSION_WIN_HACHI = "mission_WinHachiRide";
 export const L_MISSION_COLLECT_BONUS = "mission_CollectBonusItem";
 export const L_MISSION_DODGE_CARS = "mission_DodgeCars";
 
+// New shop item names
+export const L_ITEM_CHERRY_BLOSSOM_TRAIL = "item_cherry_blossom_trail";
+export const L_ITEM_MIDNIGHT_SPARK_TRAIL = "item_midnight_spark_trail";
+export const L_ITEM_CHERRY_BLAST = "item_cherry_blast";
+export const L_ITEM_THUNDER_CLAP = "item_thunder_clap";
+
+// Shop category labels
+export const L_SHOP_CATEGORY_EFFECT = "shop_category_effect";
+
+// Daily login
+export const L_DAILY_LOGIN_BONUS = "daily_login_bonus";
+
+// New mission labels
+export const L_MISSION_PLAY_WITH_FRIENDS = "mission_PlayWithFriends";
+export const L_MISSION_USE_EMOTE = "mission_UseEmote";
+export const L_MISSION_PLAY_ALL_GAMES = "mission_PlayAllGames";
+export const L_MISSION_CATCH_STREAK = "mission_CatchStreak";
+export const L_MISSION_COLLECT_HACHI_30 = "mission_CollectHachiItems30";
+export const L_MISSION_WIN_TWO_IN_A_ROW = "mission_WinTwoInARow";
+
+// Emote / Celebration Effects
+export const L_EMOTE_TRIGGER = "emote_trigger";
+
 // Boundary
 export const L_BOUNDARY_WARNING = "boundary_warning";
 export const L_BOUNDARY_RETURN = "boundary_return";

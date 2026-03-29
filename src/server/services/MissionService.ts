@@ -1,4 +1,5 @@
 import { OnStart, Service } from "@flamework/core";
+import { Players } from "@rbxts/services";
 import {
 	ALL_MISSION_IDS,
 	MINIGAME_MISSION_IDS,
@@ -7,17 +8,21 @@ import {
 import { GlobalEvents } from "shared/network";
 import {
 	AnyPlayerState,
+	ItemCategory,
 	MinigameId,
 	MissionId,
 	MissionProgressData,
 	MissionSlot,
 	PlayerRole,
 } from "shared/types";
+import { getCurrentDay } from "shared/utils/dayKey";
 import { PlayerDataService } from "./PlayerDataService";
 
 @Service()
 export class MissionService implements OnStart {
 	private readonly serverEvents = GlobalEvents.createServer({});
+	// Transient per-session tracking for PlayAllGames (not persisted)
+	private readonly gamesPlayedToday = new Map<number, Set<MinigameId>>();
 
 	constructor(private readonly playerDataService: PlayerDataService) {}
 
@@ -34,14 +39,14 @@ export class MissionService implements OnStart {
 		this.serverEvents.collectMissionReward.connect((player, id) => {
 			this.handleCollectReward(player, id);
 		});
-	}
 
-	getCurrentDay(): number {
-		return math.floor(os.time() / 86400);
+		Players.PlayerRemoving.Connect((player) => {
+			this.gamesPlayedToday.delete(player.UserId);
+		});
 	}
 
 	onPlayerJoined(player: Player) {
-		const day = this.getCurrentDay();
+		const day = getCurrentDay();
 		this.playerDataService.checkAndResetMissions(player, day);
 
 		const data = this.playerDataService.getPlayerData(player);
@@ -59,15 +64,30 @@ export class MissionService implements OnStart {
 		if (data.missions.slots.size() === 0) {
 			const chosen = new Set<MissionId>();
 
+			// Eligibility filter: skip UseEmote if player owns no emotes
+			const ownedItems = this.playerDataService.getOwnedItems(player);
+			const hasEmote = ownedItems.some((itemId) => {
+				const prefix = tostring(itemId);
+				return prefix.sub(1, 5) === "Emote";
+			});
+			const isEligible = (id: MissionId) => {
+				if (id === MissionId.UseEmote && !hasEmote) return false;
+				return true;
+			};
+
 			// Slot 1: guaranteed minigame mission
-			const minigamePool = MINIGAME_MISSION_IDS.filter((id) => !chosen.has(id));
+			const minigamePool = MINIGAME_MISSION_IDS.filter(
+				(id) => !chosen.has(id) && isEligible(id),
+			);
 			if (minigamePool.size() > 0) {
 				const pick = minigamePool[math.random(0, minigamePool.size() - 1)];
 				chosen.add(pick);
 			}
 
 			// Slots 2-3: from full pool (no duplicates)
-			const fullPool = ALL_MISSION_IDS.filter((id) => !chosen.has(id));
+			const fullPool = ALL_MISSION_IDS.filter(
+				(id) => !chosen.has(id) && isEligible(id),
+			);
 			for (let i = chosen.size(); i < 3 && fullPool.size() > 0; i++) {
 				const idx = math.random(0, fullPool.size() - 1);
 				chosen.add(fullPool[idx]);
@@ -139,6 +159,11 @@ export class MissionService implements OnStart {
 					MissionId.CollectHachiItems,
 					state.itemCount,
 				);
+				this.incrementAndNotify(
+					player,
+					MissionId.CollectHachiItems30,
+					state.itemCount,
+				);
 			}
 			if (state.evolutionLevel >= 3) {
 				this.incrementAndNotify(player, MissionId.ReachHachiLevel3, 1);
@@ -147,6 +172,34 @@ export class MissionService implements OnStart {
 				this.incrementAndNotify(player, MissionId.WinHachiRide, 1);
 			}
 		}
+
+		// CatchStreak: 3+ catches in one round
+		if (state.catchCount >= 3) {
+			this.incrementAndNotify(player, MissionId.CatchStreak, 1);
+		}
+
+		// PlayAllGames: track distinct minigame types played
+		let played = this.gamesPlayedToday.get(player.UserId);
+		if (!played) {
+			played = new Set<MinigameId>();
+			this.gamesPlayedToday.set(player.UserId, played);
+		}
+		const prevSize = played.size();
+		played.add(state.minigameId);
+		if (played.size() > prevSize) {
+			this.incrementAndNotify(player, MissionId.PlayAllGames, 1);
+		}
+
+		// WinTwoInARow: streakCount is already updated before this call
+		if (won) {
+			const streakCount = this.playerDataService.getStreakCount(player);
+			if (streakCount >= 2) {
+				this.incrementAndNotify(player, MissionId.WinTwoInARow, 1);
+			}
+		}
+
+		// PlayWithFriends: pairwise IsFriendsWith check
+		this.checkPlayWithFriends(player);
 
 		const missions = this.buildProgressData(player);
 		this.serverEvents.missionUpdate.fire(player, missions);
@@ -200,6 +253,18 @@ export class MissionService implements OnStart {
 			});
 		}
 		return result;
+	}
+
+	private checkPlayWithFriends(player: Player) {
+		// Check if any other player in the server is a friend
+		const others = Players.GetPlayers().filter((p) => p !== player);
+		for (const other of others) {
+			const [ok, isFriend] = pcall(() => player.IsFriendsWith(other.UserId));
+			if (ok && isFriend) {
+				this.incrementAndNotify(player, MissionId.PlayWithFriends, 1);
+				break;
+			}
+		}
 	}
 
 	/** Increment mission progress and notify client if newly completed. Public for cross-service use. */
