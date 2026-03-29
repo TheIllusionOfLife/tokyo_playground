@@ -1,4 +1,4 @@
-# Tokyo Playground
+# Tokyo Playground: Shibuya
 
 Roblox party mini-game platform set in Tokyo (Shibuya). roblox-ts + Flamework + Rojo.
 
@@ -20,13 +20,16 @@ Roblox party mini-game platform set in Tokyo (Shibuya). roblox-ts + Flamework + 
 - Data: ProfileService (`@rbxts/profileservice`)
 - Linting: Biome (not ESLint). `useImportType` is OFF (Flamework needs runtime imports)
 - TypeScript pinned to 5.5.3 (must match Flamework)
+- Localization: `src/shared/localization/` with `t(key)` function. EN/JA tables. Client detects locale via `Players.LocalPlayer.LocaleId`. Add new strings to `keys.ts`, `en.ts`, `ja.ts`.
+- Analytics: `AnalyticsService` fires events via Roblox `AnalyticsService.FireCustomEvent`. Schema in `shared/analytics.ts`.
+- Game public info (descriptions, tags): `GAME_INFO.md`
 
 ## MCP / Studio Gotchas
 - `execute_luau` runs **client-side** (`IsServer=false, IsClient=true`). Use `return` (not `print`) to get output — the tool returns the last expression, not stdout.
 - `execute_luau` **cannot write** protected properties: `Lighting.Technology` (deprecated, replaced by `LightingStyle`+`PrioritizeLightingQuality`), `StreamingMinRadius`, `StreamingTargetRadius`, `StreamOutBehavior`, `ModelStreamingBehavior`. Set these manually in Studio Properties panel.
 - `execute_luau` **times out** on 3000+ MeshPart operations (e.g., setting PCD collision). Batch into groups of 500.
 - **FBX import is GUI-only.** No Luau API or MCP tool exists for importing local FBX files. Must use File > Import 3D manually.
-- City is `Workspace.city_and_roads` (11,382 MeshParts, Material=Fabric). Buildings use PCD collision. Roads use Default collision. Furniture is non-collidable. All parts: `CanTouch=false`, `CanQuery=false`, `DoubleSided=true`.
+- City is `Workspace.city_and_roads` (11,382 MeshParts, Material=SmoothPlastic). Buildings use PCD collision. Roads use Default collision. Furniture is non-collidable. All parts: `CanTouch=false`, `CanQuery=false`, `DoubleSided=true`. ReproducedRoad parts: `CanCollide=false`, `CanTouch=false`, `AudioCanCollide=false` (visual only).
 - **Character scaling**: Set `UseJumpPower=false` before setting `JumpHeight` (Roblox defaults to `UseJumpPower=true`, which makes `JumpHeight` silently ignored).
 - **Blender `mesh.separate`** requires Edit Mode. Calling from Object Mode is a silent no-op.
 - Flamework networking uses `ModuleScript`-based remotes — no raw `RemoteEvent`s are visible via `GetDescendants()`.

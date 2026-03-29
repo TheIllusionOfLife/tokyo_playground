@@ -1,13 +1,20 @@
 import React from "@rbxts/react";
 import { useSelector } from "@rbxts/react-reflex";
+import { t } from "shared/localization";
+import {
+	L_GAME_CAN_KICK,
+	L_GAME_HACHI_RIDE,
+	L_GAME_SCRAMBLE,
+	L_NEXT_FEATURED,
+} from "shared/localization/keys";
 import { GameStoreState } from "shared/store/game-store";
 import { MatchPhase, MinigameId } from "shared/types";
 import { formatQueueStatusDetail } from "shared/utils/queueStatus";
 
-const MINIGAME_LABELS: Record<MinigameId, string> = {
-	[MinigameId.CanKick]: "Can Kick",
-	[MinigameId.ShibuyaScramble]: "Shibuya Scramble",
-	[MinigameId.HachiRide]: "Hachi Ride",
+const MINIGAME_LABEL_KEYS: Record<MinigameId, string> = {
+	[MinigameId.CanKick]: L_GAME_CAN_KICK,
+	[MinigameId.ShibuyaScramble]: L_GAME_SCRAMBLE,
+	[MinigameId.HachiRide]: L_GAME_HACHI_RIDE,
 };
 
 export function QueueStatusCard() {
@@ -35,7 +42,7 @@ export function QueueStatusCard() {
 				TextColor3={Color3.fromRGB(255, 230, 120)}
 				TextScaled={true}
 				Font={Enum.Font.GothamBold}
-				Text="Next Featured Game"
+				Text={t(L_NEXT_FEATURED)}
 			/>
 			<textlabel
 				Size={new UDim2(1, -16, 0, 24)}
@@ -44,7 +51,7 @@ export function QueueStatusCard() {
 				TextColor3={Color3.fromRGB(255, 255, 255)}
 				TextScaled={true}
 				Font={Enum.Font.GothamBold}
-				Text={MINIGAME_LABELS[queueStatus.featuredMinigameId]}
+				Text={t(MINIGAME_LABEL_KEYS[queueStatus.featuredMinigameId])}
 			/>
 			<textlabel
 				Size={new UDim2(1, -16, 0, 16)}

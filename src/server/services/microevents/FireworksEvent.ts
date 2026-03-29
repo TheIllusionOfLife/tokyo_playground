@@ -6,8 +6,7 @@ import {
 	FIREWORKS_GROUND_REWARD,
 	FIREWORKS_VIEWPOINT_REWARD,
 } from "shared/living-shibuya-constants";
-import { MicroEventId, MissionId } from "shared/types";
-import { MissionService } from "../MissionService";
+import { MicroEventId } from "shared/types";
 import { PlayerDataService } from "../PlayerDataService";
 import { IMicroEvent } from "./MicroEventBase";
 
@@ -23,10 +22,7 @@ export class FireworksEvent implements IMicroEvent {
 	private rewarded = new Set<number>();
 	private proxCheckAccum = 0;
 
-	constructor(
-		private readonly playerDataService: PlayerDataService,
-		private readonly missionService: MissionService,
-	) {}
+	constructor(private readonly playerDataService: PlayerDataService) {}
 
 	start() {
 		this.viewpoints = CollectionService.GetTagged(
@@ -72,7 +68,7 @@ export class FireworksEvent implements IMicroEvent {
 					player,
 					FIREWORKS_VIEWPOINT_REWARD,
 				);
-				this.grantBadgeAndMission(player);
+				this.grantBadge(player);
 			} else {
 				for (const vp of this.viewpoints) {
 					const delta = hrp.Position.sub(vp.Position);
@@ -82,7 +78,7 @@ export class FireworksEvent implements IMicroEvent {
 							player,
 							FIREWORKS_GROUND_REWARD,
 						);
-						this.grantBadgeAndMission(player);
+						this.grantBadge(player);
 						break;
 					}
 				}
@@ -90,12 +86,11 @@ export class FireworksEvent implements IMicroEvent {
 		}
 	}
 
-	private grantBadgeAndMission(player: Player) {
+	private grantBadge(player: Player) {
 		const data = this.playerDataService.getPlayerData(player);
 		if (data && !data.badges.includes("FirstHanabi")) {
 			data.badges.push("FirstHanabi");
 		}
-		this.missionService.incrementAndNotify(player, MissionId.WatchFireworks, 1);
 	}
 
 	isFinished(): boolean {

@@ -99,23 +99,12 @@ export enum MissionId {
 	EarnPoints = "EarnPoints",
 	SurviveScramble = "SurviveScramble",
 	TagInScramble = "TagInScramble",
-	ReachRooftop = "ReachRooftop",
+
 	CollectHachiItems = "CollectHachiItems",
 	ReachHachiLevel3 = "ReachHachiLevel3",
 	WinHachiRide = "WinHachiRide",
 	CollectBonusItem = "CollectBonusItem",
 	DodgeCars = "DodgeCars",
-	// Living Shibuya missions
-	DiscoverStamps = "DiscoverStamps",
-	CompleteStampSet = "CompleteStampSet",
-	VisitFoodTruck = "VisitFoodTruck",
-	WatchFireworks = "WatchFireworks",
-	AttendBonOdori = "AttendBonOdori",
-	GetPhotographed = "GetPhotographed",
-	DrawOmikuji = "DrawOmikuji",
-	CompleteObstacleCourse = "CompleteObstacleCourse",
-	VisitCatColony = "VisitCatColony",
-	WatchStreetArt = "WatchStreetArt",
 }
 
 export enum ItemId {

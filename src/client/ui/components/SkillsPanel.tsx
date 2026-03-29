@@ -1,38 +1,53 @@
 import React from "@rbxts/react";
 import { useSelector } from "@rbxts/react-reflex";
 import { HACHI_EVOLUTION_THRESHOLDS } from "shared/constants";
+import { t } from "shared/localization";
+import {
+	L_SKILL_BIG_HACHI,
+	L_SKILL_BIG_HACHI_DESC,
+	L_SKILL_DOUBLE_JUMP,
+	L_SKILL_DOUBLE_JUMP_DESC,
+	L_SKILL_FLUFFY_HACHI,
+	L_SKILL_FLUFFY_HACHI_DESC,
+	L_SKILL_JUMP,
+	L_SKILL_JUMP_DESC,
+	L_SKILL_PTS_FMT,
+	L_SKILL_UNLOCKED,
+	L_SKILL_WALL_RUN,
+	L_SKILL_WALL_RUN_DESC,
+} from "shared/localization/keys";
 import { GameStoreState, gameStore } from "shared/store/game-store";
 import { MatchPhase, MinigameId } from "shared/types";
 
 const SKILLS = [
 	{
 		level: 0,
-		name: "Jump",
-		desc: "Press Space to jump",
+		nameKey: L_SKILL_JUMP,
+		descKey: L_SKILL_JUMP_DESC,
 		items: HACHI_EVOLUTION_THRESHOLDS[0],
 	},
 	{
 		level: 1,
-		name: "Double Jump",
-		desc: "Press Space mid-air",
+		nameKey: L_SKILL_DOUBLE_JUMP,
+		descKey: L_SKILL_DOUBLE_JUMP_DESC,
 		items: HACHI_EVOLUTION_THRESHOLDS[1],
 	},
 	{
 		level: 2,
-		name: "Wall Run",
-		desc: "Jump near walls",
+		nameKey: L_SKILL_WALL_RUN,
+		descKey: L_SKILL_WALL_RUN_DESC,
 		items: HACHI_EVOLUTION_THRESHOLDS[2],
 	},
 	{
 		level: 3,
-		name: "Big Hachi",
-		desc: "Bigger and faster",
+		nameKey: L_SKILL_BIG_HACHI,
+		descKey: L_SKILL_BIG_HACHI_DESC,
 		items: HACHI_EVOLUTION_THRESHOLDS[3],
 	},
 	{
 		level: 4,
-		name: "Fluffy Hachi",
-		desc: "Maximum cuteness",
+		nameKey: L_SKILL_FLUFFY_HACHI,
+		descKey: L_SKILL_FLUFFY_HACHI_DESC,
 		items: HACHI_EVOLUTION_THRESHOLDS[4],
 	},
 ];
@@ -151,7 +166,7 @@ export function SkillsPanel() {
 									TextColor3={Color3.fromRGB(255, 255, 255)}
 									TextScaled={true}
 									Font={Enum.Font.GothamBold}
-									Text={skill.name}
+									Text={t(skill.nameKey)}
 									TextXAlignment={Enum.TextXAlignment.Left}
 								/>
 								<textlabel
@@ -161,7 +176,7 @@ export function SkillsPanel() {
 									TextColor3={Color3.fromRGB(180, 180, 200)}
 									TextScaled={true}
 									Font={Enum.Font.Gotham}
-									Text={skill.desc}
+									Text={t(skill.descKey)}
 									TextXAlignment={Enum.TextXAlignment.Left}
 								/>
 								<textlabel
@@ -175,7 +190,11 @@ export function SkillsPanel() {
 									}
 									TextScaled={true}
 									Font={Enum.Font.Gotham}
-									Text={unlocked ? "Unlocked" : `${skill.items} pts`}
+									Text={
+										unlocked
+											? t(L_SKILL_UNLOCKED)
+											: string.format(t(L_SKILL_PTS_FMT), skill.items)
+									}
 								/>
 							</frame>
 						);

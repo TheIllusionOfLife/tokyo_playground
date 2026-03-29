@@ -25,6 +25,7 @@ import {
 	type HachiRoundOutcome,
 } from "shared/utils/hachiOutcome";
 import { unequipHachiCostume } from "../utils/hachiCostume";
+import { AnalyticsService } from "./AnalyticsService";
 import { GameStateService } from "./GameStateService";
 import { LobbyService } from "./LobbyService";
 import { MinigameService } from "./MinigameService";
@@ -67,6 +68,7 @@ export class MatchService implements OnStart {
 		private readonly rewardService: RewardService,
 		private readonly missionService: MissionService,
 		private readonly lobbyService: LobbyService,
+		private readonly analyticsService: AnalyticsService,
 	) {}
 
 	onStart() {
@@ -240,10 +242,12 @@ export class MatchService implements OnStart {
 		let oniPlayer: Player | undefined;
 		for (const [player, role] of roles) {
 			this.serverEvents.roleAssigned.fire(player, role, minigameId);
-			this.serverEvents.roundIntroShown.fire(
-				player,
-				MINIGAME_INTROS[minigameId],
-			);
+			const introConfig = MINIGAME_INTROS[minigameId];
+			this.serverEvents.roundIntroShown.fire(player, {
+				title: introConfig.titleKey,
+				subtitle: introConfig.subtitleKey,
+				durationSeconds: introConfig.durationSeconds,
+			});
 			if (role === PlayerRole.Oni) {
 				oniPlayer = player;
 			}
@@ -255,8 +259,20 @@ export class MatchService implements OnStart {
 			task.wait(2);
 		}
 
+		// Check if players dropped below minimum during Preparing phase
+		if (this.matchPlayers.size() < MINIGAME_CONFIGS[minigameId].minPlayers) {
+			print("[MatchService] Below minimum players during prepare — cancelling");
+			this.forceCleanup();
+			return;
+		}
+
 		// In Progress
 		this.transitionPhase(MatchPhase.InProgress);
+		this.analyticsService.fire({
+			name: "match_start",
+			gameType: minigameId,
+			playerCount: this.matchPlayers.size(),
+		});
 
 		const config = MINIGAME_CONFIGS[minigameId];
 		let timeRemaining = config.roundDuration;
@@ -441,6 +457,25 @@ export class MatchService implements OnStart {
 			roundDuration,
 			hachiRoundOutcome,
 		);
+		// Analytics: fire after winner is determined
+		const elapsedDuration = math.floor(
+			MINIGAME_CONFIGS[this.currentMinigameId].roundDuration -
+				math.max(0, this.matchTimeRemaining),
+		);
+		const winnerId =
+			this.currentMinigameId === MinigameId.HachiRide
+				? (hachiRoundOutcome?.winningPlayerIds[0] ?? 0)
+				: entries.size() > 0
+					? (Players.GetPlayers().find((p) => p.Name === entries[0].playerName)
+							?.UserId ?? 0)
+					: 0;
+		this.analyticsService.fire({
+			name: "round_end",
+			gameType: this.currentMinigameId,
+			winnerId,
+			duration: elapsedDuration,
+		});
+
 		this.serverEvents.roundSummary.broadcast(summaryText, winnerName);
 
 		this.serverEvents.scoreboard.broadcast(entries);
@@ -571,10 +606,26 @@ export class MatchService implements OnStart {
 		// Remove from minigame state so win condition reflects reality
 		this.activeMinigame.removePlayer(player.UserId);
 
-		if ((this.currentPhase as MatchPhase) !== MatchPhase.InProgress) return;
+		const phase = this.currentPhase as MatchPhase;
+		if (
+			phase !== MatchPhase.InProgress &&
+			phase !== MatchPhase.Preparing &&
+			phase !== MatchPhase.Countdown
+		) {
+			return;
+		}
 
 		// Reset streak on early leave
 		this.playerDataService.resetStreak(player);
+		this.analyticsService.fireForPlayer(player, {
+			name: "player_leave_mid_match",
+			playerId: player.UserId,
+			matchId: this.currentMinigameId,
+		});
+
+		// During Preparing/Countdown, the pre-InProgress check in runMatch
+		// handles cancellation. endRound() only works during InProgress.
+		if (phase !== MatchPhase.InProgress) return;
 
 		if (playerState?.role === PlayerRole.Oni) {
 			print("[MatchService] Oni left — Hiders win!");
@@ -584,6 +635,13 @@ export class MatchService implements OnStart {
 			const result = this.activeMinigame.checkWinCondition();
 			if (result !== undefined) {
 				this.endRound(result);
+			} else if (
+				this.matchPlayers.size() > 0 &&
+				this.matchPlayers.size() <
+					MINIGAME_CONFIGS[this.currentMinigameId].minPlayers
+			) {
+				print("[MatchService] Below minimum players — ending round gracefully");
+				this.endRound(RoundResult.TimerExpired);
 			}
 		}
 	}

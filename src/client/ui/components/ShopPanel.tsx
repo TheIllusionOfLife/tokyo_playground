@@ -1,6 +1,15 @@
 import React from "@rbxts/react";
 import { useSelector } from "@rbxts/react-reflex";
 import { clientEvents } from "client/network";
+import { t } from "shared/localization";
+import {
+	L_SHOP,
+	L_SHOP_BALANCE,
+	L_SHOP_BUY,
+	L_SHOP_EQUIP,
+	L_SHOP_NEED_PTS,
+	L_SHOP_UNEQUIP,
+} from "shared/localization/keys";
 import { GameStoreState, gameStore } from "shared/store/game-store";
 import { MatchPhase, MinigameId, ShopItemData } from "shared/types";
 
@@ -21,11 +30,11 @@ function ShopCard({
 	let active: boolean;
 
 	if (item.owned && item.equipped) {
-		buttonText = "UNEQUIP";
+		buttonText = t(L_SHOP_UNEQUIP);
 		buttonColor = Color3.fromRGB(80, 160, 200);
 		active = true;
 	} else if (item.owned) {
-		buttonText = "EQUIP";
+		buttonText = t(L_SHOP_EQUIP);
 		buttonColor = Color3.fromRGB(80, 200, 180);
 		active = true;
 	} else if (!levelMet) {
@@ -33,11 +42,11 @@ function ShopCard({
 		buttonColor = Color3.fromRGB(80, 50, 50);
 		active = false;
 	} else if (!canAfford) {
-		buttonText = "Need pts";
+		buttonText = t(L_SHOP_NEED_PTS);
 		buttonColor = Color3.fromRGB(80, 50, 50);
 		active = false;
 	} else {
-		buttonText = "BUY";
+		buttonText = t(L_SHOP_BUY);
 		buttonColor = Color3.fromRGB(80, 200, 120);
 		active = true;
 	}
@@ -134,7 +143,7 @@ export function ShopPanel() {
 						TextColor3={Color3.fromRGB(255, 210, 100)}
 						TextScaled={true}
 						Font={Enum.Font.GothamBold}
-						Text="Shop"
+						Text={t(L_SHOP)}
 						Event={{
 							Activated: () =>
 								gameStore.setActiveOverlay(open ? "none" : "shop"),
@@ -187,7 +196,7 @@ export function ShopPanel() {
 							TextColor3={Color3.fromRGB(255, 200, 80)}
 							TextScaled={true}
 							Font={Enum.Font.GothamBold}
-							Text={`Balance: ${shopBalance} pts`}
+							Text={t(L_SHOP_BALANCE).gsub("%%d", tostring(shopBalance))[0]}
 							TextXAlignment={Enum.TextXAlignment.Left}
 							ZIndex={19}
 						/>

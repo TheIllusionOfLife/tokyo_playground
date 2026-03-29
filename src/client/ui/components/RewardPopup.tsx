@@ -1,5 +1,13 @@
 import React from "@rbxts/react";
 import { useSelector } from "@rbxts/react-reflex";
+import { t } from "shared/localization";
+import {
+	L_REWARD_BASE,
+	L_REWARD_ROLE_BONUS,
+	L_REWARD_TOTAL,
+	L_REWARD_WIN_BONUS,
+	L_REWARDS,
+} from "shared/localization/keys";
 import { GameStoreState } from "shared/store/game-store";
 
 export function RewardPopup() {
@@ -36,12 +44,24 @@ export function RewardPopup() {
 				TextColor3={Color3.fromRGB(255, 220, 100)}
 				TextScaled={true}
 				Font={Enum.Font.GothamBold}
-				Text="REWARDS"
+				Text={t(L_REWARDS)}
 				LayoutOrder={0}
 			/>
-			<RewardLine label="Base" value={breakdown.baseReward} order={1} />
-			<RewardLine label="Win Bonus" value={breakdown.winBonus} order={2} />
-			<RewardLine label="Role Bonus" value={breakdown.roleBonus} order={3} />
+			<RewardLine
+				label={t(L_REWARD_BASE)}
+				value={breakdown.baseReward}
+				order={1}
+			/>
+			<RewardLine
+				label={t(L_REWARD_WIN_BONUS)}
+				value={breakdown.winBonus}
+				order={2}
+			/>
+			<RewardLine
+				label={t(L_REWARD_ROLE_BONUS)}
+				value={breakdown.roleBonus}
+				order={3}
+			/>
 			<textlabel
 				key="Total"
 				Size={new UDim2(0.9, 0, 0.2, 0)}
@@ -49,7 +69,7 @@ export function RewardPopup() {
 				TextColor3={Color3.fromRGB(100, 255, 100)}
 				TextScaled={true}
 				Font={Enum.Font.GothamBold}
-				Text={`TOTAL  +${breakdown.totalPoints}`}
+				Text={`${t(L_REWARD_TOTAL)}  +${breakdown.totalPoints}`}
 				LayoutOrder={4}
 			/>
 		</frame>

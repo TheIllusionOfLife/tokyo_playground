@@ -1,6 +1,13 @@
 import React from "@rbxts/react";
 import { useSelector } from "@rbxts/react-reflex";
 import { clientEvents } from "client/network";
+import { t } from "shared/localization";
+import {
+	L_ACTION_CATCH,
+	L_ACTION_KICK,
+	L_ACTION_RATTLE,
+	L_ACTION_SPIRIT_WAVE,
+} from "shared/localization/keys";
 import { GameStoreState } from "shared/store/game-store";
 import { MatchPhase, MinigameId, PlayerRole } from "shared/types";
 
@@ -48,12 +55,12 @@ export function ActionButton() {
 				? Color3.fromRGB(220, 50, 50)
 				: Color3.fromRGB(50, 130, 220);
 	const buttonText = canShowSpiritWave
-		? "SPIRIT WAVE!"
+		? t(L_ACTION_SPIRIT_WAVE)
 		: canShowCanRattle
-			? "RATTLE!"
+			? t(L_ACTION_RATTLE)
 			: isOni
-				? "CATCH!"
-				: "KICK!";
+				? t(L_ACTION_CATCH)
+				: t(L_ACTION_KICK);
 
 	return (
 		<textbutton

@@ -1,7 +1,6 @@
 import { OnStart, Service } from "@flamework/core";
 import {
 	ALL_MISSION_IDS,
-	EXPLORATION_MISSION_IDS,
 	MINIGAME_MISSION_IDS,
 	MISSION_DEFS,
 } from "shared/constants";
@@ -56,28 +55,18 @@ export class MissionService implements OnStart {
 			print(`[MissionService] Purged stale missions for ${player.Name}`);
 		}
 
-		// Assign 3 daily missions: 1 exploration + 1 minigame + 1 from full pool
+		// Assign 3 daily missions: 1 guaranteed minigame + 2 from full pool
 		if (data.missions.slots.size() === 0) {
 			const chosen = new Set<MissionId>();
 
-			// Slot 1: guaranteed exploration mission
-			const explorationPool = EXPLORATION_MISSION_IDS.filter(
-				(id) => !chosen.has(id),
-			);
-			if (explorationPool.size() > 0) {
-				const pick =
-					explorationPool[math.random(0, explorationPool.size() - 1)];
-				chosen.add(pick);
-			}
-
-			// Slot 2: guaranteed minigame mission
+			// Slot 1: guaranteed minigame mission
 			const minigamePool = MINIGAME_MISSION_IDS.filter((id) => !chosen.has(id));
 			if (minigamePool.size() > 0) {
 				const pick = minigamePool[math.random(0, minigamePool.size() - 1)];
 				chosen.add(pick);
 			}
 
-			// Slot 3: from full pool (no duplicates)
+			// Slots 2-3: from full pool (no duplicates)
 			const fullPool = ALL_MISSION_IDS.filter((id) => !chosen.has(id));
 			for (let i = chosen.size(); i < 3 && fullPool.size() > 0; i++) {
 				const idx = math.random(0, fullPool.size() - 1);

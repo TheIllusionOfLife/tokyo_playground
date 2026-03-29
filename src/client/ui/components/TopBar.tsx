@@ -1,15 +1,24 @@
 import React from "@rbxts/react";
 import { useSelector } from "@rbxts/react-reflex";
+import { t } from "shared/localization";
+import {
+	L_PHASE_GET_READY,
+	L_PHASE_IN_PROGRESS,
+	L_PHASE_PREPARING,
+	L_PHASE_RESULTS,
+	L_PHASE_ROUND_OVER,
+	L_PHASE_WAITING,
+} from "shared/localization/keys";
 import { GameStoreState } from "shared/store/game-store";
 import { MatchPhase } from "shared/types";
 
-const PHASE_LABELS: Record<string, string> = {
-	[MatchPhase.WaitingForPlayers]: "Waiting for Players",
-	[MatchPhase.Countdown]: "Get Ready!",
-	[MatchPhase.Preparing]: "Preparing...",
-	[MatchPhase.InProgress]: "In Progress",
-	[MatchPhase.RoundOver]: "Round Over",
-	[MatchPhase.Rewarding]: "Results",
+const PHASE_LABELS: Record<string, () => string> = {
+	[MatchPhase.WaitingForPlayers]: () => t(L_PHASE_WAITING),
+	[MatchPhase.Countdown]: () => t(L_PHASE_GET_READY),
+	[MatchPhase.Preparing]: () => t(L_PHASE_PREPARING),
+	[MatchPhase.InProgress]: () => t(L_PHASE_IN_PROGRESS),
+	[MatchPhase.RoundOver]: () => t(L_PHASE_ROUND_OVER),
+	[MatchPhase.Rewarding]: () => t(L_PHASE_RESULTS),
 };
 
 function formatTime(seconds: number): string {
@@ -29,7 +38,7 @@ export function TopBar() {
 	if (matchPhase === MatchPhase.WaitingForPlayers) return undefined!;
 
 	const isInProgress = matchPhase === MatchPhase.InProgress;
-	const phaseText = PHASE_LABELS[matchPhase] ?? matchPhase;
+	const phaseText = PHASE_LABELS[matchPhase]?.() ?? matchPhase;
 
 	// InProgress: show only the timer number, 2x size, centered
 	if (isInProgress) {

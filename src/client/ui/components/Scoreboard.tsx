@@ -1,5 +1,13 @@
 import React from "@rbxts/react";
 import { useSelector } from "@rbxts/react-reflex";
+import { t } from "shared/localization";
+import {
+	L_PLAYER,
+	L_PTS,
+	L_ROLE,
+	L_STATS,
+	L_WINS,
+} from "shared/localization/keys";
 import { GameStoreState } from "shared/store/game-store";
 import { MatchPhase, PlayerRole, ScoreboardEntry } from "shared/types";
 
@@ -46,7 +54,7 @@ export function Scoreboard() {
 					TextStrokeTransparency={0.2}
 					TextScaled={true}
 					Font={Enum.Font.GothamBlack}
-					Text={`${winnerName} WINS!`}
+					Text={`${winnerName} ${t(L_WINS)}`}
 					LayoutOrder={-2}
 				/>
 			)}
@@ -66,10 +74,10 @@ export function Scoreboard() {
 			)}
 			<ScoreRow
 				rank="#"
-				playerName="Player"
-				role="Role"
-				stat="Stats"
-				points="Pts"
+				playerName={t(L_PLAYER)}
+				role={t(L_ROLE)}
+				stat={t(L_STATS)}
+				points={t(L_PTS)}
 				color={Color3.fromRGB(255, 220, 100)}
 				order={0}
 			/>

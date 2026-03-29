@@ -1,5 +1,5 @@
 import { Controller, OnStart } from "@flamework/core";
-import { SoundService } from "@rbxts/services";
+import { ContentProvider, SoundService } from "@rbxts/services";
 import { clientEvents } from "client/network";
 import {
 	BGM_TRACK_ID,
@@ -37,6 +37,26 @@ export class BGMController implements OnStart {
 		this.ambient.Volume = 0.03;
 		this.ambient.Parent = SoundService;
 		this.ambient.Play();
+
+		// Pre-populate SE cache and preload assets to avoid first-play silence
+		const seIds = [
+			SE_ITEM_PICKUP,
+			SE_BONUS_PICKUP,
+			SE_EVOLVE,
+			SE_CATCH,
+			SE_CHEER,
+			SE_TICK,
+			SE_HEARTBEAT,
+		];
+		const toPreload: Sound[] = [];
+		for (const id of seIds) {
+			const s = new Instance("Sound");
+			s.SoundId = id;
+			s.Parent = SoundService;
+			this.seCache.set(id, s);
+			toPreload.push(s);
+		}
+		task.spawn(() => ContentProvider.PreloadAsync(toPreload));
 
 		// Fade ambient during active matches and stop all SFX on return to lobby
 		clientEvents.matchPhaseChanged.connect((phase) => {

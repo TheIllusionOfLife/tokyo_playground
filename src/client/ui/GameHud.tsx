@@ -7,6 +7,7 @@ import { FeaturedUnlockBanner } from "./components/FeaturedUnlockBanner";
 import { HachiHud } from "./components/HachiHud";
 import { HachiToggleButton } from "./components/HachiToggleButton";
 import { HintText } from "./components/HintText";
+import { InviteButton } from "./components/InviteButton";
 import { LevelUpOverlay } from "./components/LevelUpOverlay";
 import { MicroEventIndicator } from "./components/MicroEventIndicator";
 import { MissionPanel } from "./components/MissionPanel";
@@ -20,6 +21,7 @@ import { RoundIntroOverlay } from "./components/RoundIntroOverlay";
 import { Scoreboard } from "./components/Scoreboard";
 import { ShopPanel } from "./components/ShopPanel";
 import { SkillsPanel } from "./components/SkillsPanel";
+import { SpectatorOverlay } from "./components/SpectatorOverlay";
 import { StampCardPanel } from "./components/StampCardPanel";
 import { StampDiscoveryPopup } from "./components/StampDiscoveryPopup";
 import { TodayGoalChip } from "./components/TodayGoalChip";
@@ -49,6 +51,8 @@ export function GameHud() {
 			<LevelUpOverlay />
 			<MissionPanel />
 			<ShopPanel />
+			<InviteButton />
+			<SpectatorOverlay />
 			<SkillsPanel />
 			{/* Living Shibuya */}
 			<StampCardPanel />

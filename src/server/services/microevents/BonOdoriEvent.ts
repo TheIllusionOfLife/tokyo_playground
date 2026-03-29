@@ -9,8 +9,7 @@ import {
 	BON_ODORI_RADIUS,
 } from "shared/living-shibuya-constants";
 import { GlobalEvents } from "shared/network";
-import { MicroEventId, MissionId } from "shared/types";
-import { MissionService } from "../MissionService";
+import { MicroEventId } from "shared/types";
 import { PlayerDataService } from "../PlayerDataService";
 import { IMicroEvent } from "./MicroEventBase";
 
@@ -38,7 +37,6 @@ export class BonOdoriEvent implements IMicroEvent {
 	constructor(
 		private readonly serverEvents: ServerEvents,
 		private readonly playerDataService: PlayerDataService,
-		private readonly missionService: MissionService,
 	) {}
 
 	start() {
@@ -146,11 +144,6 @@ export class BonOdoriEvent implements IMicroEvent {
 			const score = this.playerScores.get(userId) ?? 0;
 			const totalPts = BON_ODORI_PARTICIPATION_POINTS + score;
 			this.playerDataService.addPlayPoints(player, totalPts);
-			this.missionService.incrementAndNotify(
-				player,
-				MissionId.AttendBonOdori,
-				1,
-			);
 		}
 		this.playerScores.clear();
 		this.participated.clear();

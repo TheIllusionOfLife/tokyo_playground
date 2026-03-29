@@ -1,6 +1,8 @@
 import React, { useEffect, useRef } from "@rbxts/react";
 import { useSelector } from "@rbxts/react-reflex";
 import { clientEvents } from "client/network";
+import { t } from "shared/localization";
+import { L_HACHI_DISMOUNT, L_HACHI_RIDE } from "shared/localization/keys";
 import { GameStoreState } from "shared/store/game-store";
 import { MatchPhase, MinigameId } from "shared/types";
 
@@ -55,7 +57,7 @@ export function HachiToggleButton() {
 	const bgColor = mounted
 		? Color3.fromRGB(180, 80, 40)
 		: Color3.fromRGB(255, 160, 20);
-	const labelText = mounted ? "Dismount" : "Ride Hachi";
+	const labelText = mounted ? t(L_HACHI_DISMOUNT) : t(L_HACHI_RIDE);
 
 	return (
 		<frame
