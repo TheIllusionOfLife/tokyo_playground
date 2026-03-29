@@ -80,6 +80,7 @@ export class ZoneController implements OnStart {
 			}
 		} else if (nearestZone === "" && this.currentZone !== "") {
 			this.currentZone = "";
+			gameStore.setCurrentZone("");
 		}
 	}
 }
