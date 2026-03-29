@@ -128,6 +128,7 @@ export const L_MISSION_DODGE_CARS = "mission_DodgeCars";
 
 // Boundary
 export const L_BOUNDARY_WARNING = "boundary_warning";
+export const L_BOUNDARY_RETURN = "boundary_return";
 
 // Zone names
 export const L_ZONE_SHIBUYA_SKY = "zone_ShibuyaSky";

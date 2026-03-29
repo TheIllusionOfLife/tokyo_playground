@@ -68,7 +68,8 @@ export class BoundaryService implements OnStart {
 			if (ratio >= 1) {
 				// Beyond boundary: teleport back
 				this.teleportBack(player, character);
-				this.serverEvents.boundaryWarning.fire(player, 1);
+				// Send ratio=2 to signal "teleported" (distinct from warning)
+				this.serverEvents.boundaryWarning.fire(player, 2);
 			} else if (ratio >= BOUNDARY_WARNING_RATIO) {
 				// In warning zone: notify client for fog + hint
 				this.serverEvents.boundaryWarning.fire(player, ratio);

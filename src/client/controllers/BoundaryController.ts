@@ -3,7 +3,10 @@ import { Lighting, RunService } from "@rbxts/services";
 import { clientEvents } from "client/network";
 import { BOUNDARY_WARNING_RATIO } from "shared/constants";
 import { t } from "shared/localization";
-import { L_BOUNDARY_WARNING } from "shared/localization/keys";
+import {
+	L_BOUNDARY_RETURN,
+	L_BOUNDARY_WARNING,
+} from "shared/localization/keys";
 import { gameStore } from "shared/store/game-store";
 
 const FOG_LERP_SPEED = 0.15;
@@ -37,15 +40,24 @@ export class BoundaryController implements OnStart {
 	}
 
 	private handleWarning(ratio: number) {
-		if (ratio >= BOUNDARY_WARNING_RATIO) {
+		if (ratio >= 2) {
+			// Player was teleported back
+			this.targetExtraDensity = 0;
+			this.warningActive = false;
+			gameStore.setHintText(t(L_BOUNDARY_RETURN));
+			task.delay(2, () => {
+				if (!this.warningActive) gameStore.setHintText("");
+			});
+		} else if (ratio >= BOUNDARY_WARNING_RATIO) {
+			// In warning zone: show warning + fog
 			const range = 1 - BOUNDARY_WARNING_RATIO;
 			const fogT = math.clamp((ratio - BOUNDARY_WARNING_RATIO) / range, 0, 1);
 			this.targetExtraDensity = fogT * 0.6;
 
 			if (!this.warningActive) {
 				this.warningActive = true;
-				gameStore.setHintText(t(L_BOUNDARY_WARNING));
 			}
+			gameStore.setHintText(t(L_BOUNDARY_WARNING));
 		} else {
 			this.targetExtraDensity = 0;
 			if (this.warningActive) {

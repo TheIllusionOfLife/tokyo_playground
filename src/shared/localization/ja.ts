@@ -126,7 +126,8 @@ export const JA: Record<string, string> = {
 	mission_DodgeCars: "車ウェーブを生き残る",
 
 	// Boundary
-	boundary_warning: "エリアに戻ります...",
+	boundary_warning: "エリアの端に近づいています!",
+	boundary_return: "エリアに戻ります...",
 
 	// Zones
 	zone_ShibuyaSky: "渋谷スカイ",

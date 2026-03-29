@@ -126,7 +126,8 @@ export const EN: Record<string, string> = {
 	mission_DodgeCars: "Survive a Car Wave",
 
 	// Boundary
-	boundary_warning: "Returning to the area...",
+	boundary_warning: "You're leaving the area!",
+	boundary_return: "Returning to the area...",
 
 	// Zones
 	zone_ShibuyaSky: "Shibuya Sky",
