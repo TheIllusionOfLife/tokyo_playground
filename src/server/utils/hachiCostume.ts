@@ -173,6 +173,14 @@ export function equipHachiCostume(
 	// Track mounted state
 	mountedPlayers.set(player.UserId, hachiModel);
 
+	// Play bark sound effect
+	const bark = new Instance("Sound");
+	bark.SoundId = "rbxassetid://5765933021";
+	bark.Volume = 0.5;
+	bark.Parent = hrp;
+	bark.Play();
+	bark.Ended.Once(() => bark.Destroy());
+
 	// Notify client
 	serverEvents.hachiCostumeEquipped.fire(player, true);
 

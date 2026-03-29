@@ -3,6 +3,8 @@ import { ServerStorage, TweenService, Workspace } from "@rbxts/services";
 
 const TRAIN_INTERVAL = 60; // seconds between spawns
 const TWEEN_SPEED = 80; // studs per second
+/** Train model's length runs along local X, not Z. Rotate 90 deg so lookAt aligns correctly. */
+const TRAIN_YAW_OFFSET = CFrame.Angles(0, math.rad(90), 0);
 
 @Service()
 export class TrainService implements OnStart {
@@ -90,7 +92,9 @@ export class TrainService implements OnStart {
 		// Position at first waypoint, facing second
 		const startPos = this.waypoints[0].Position;
 		const nextPos = this.waypoints[1].Position;
-		train.PrimaryPart.CFrame = CFrame.lookAt(startPos, nextPos);
+		train.PrimaryPart.CFrame = CFrame.lookAt(startPos, nextPos).mul(
+			TRAIN_YAW_OFFSET,
+		);
 		train.Parent = Workspace;
 		this.activeTrain = train;
 
@@ -112,7 +116,7 @@ export class TrainService implements OnStart {
 			const tween = TweenService.Create(
 				primary,
 				new TweenInfo(duration, Enum.EasingStyle.Linear),
-				{ CFrame: CFrame.lookAt(targetPos, lookTarget) },
+				{ CFrame: CFrame.lookAt(targetPos, lookTarget).mul(TRAIN_YAW_OFFSET) },
 			);
 			tween.Play();
 			tween.Completed.Wait();
