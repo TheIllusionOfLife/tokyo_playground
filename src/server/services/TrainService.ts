@@ -50,7 +50,7 @@ export class TrainService implements OnStart {
 	private runLoop(primary: BasePart) {
 		const startCFrame = primary.CFrame;
 		// Travel along the train's RightVector (the model's length axis)
-		const travelDir = startCFrame.RightVector.mul(-1);
+		const travelDir = startCFrame.RightVector;
 		const endCFrame = startCFrame.add(travelDir.mul(TRAVEL_DISTANCE));
 		const duration = TRAVEL_DISTANCE / TWEEN_SPEED;
 
