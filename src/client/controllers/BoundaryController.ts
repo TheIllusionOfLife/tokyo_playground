@@ -1,9 +1,11 @@
 import { Controller, OnStart } from "@flamework/core";
 import { Lighting, RunService } from "@rbxts/services";
 import { clientEvents } from "client/network";
+import { BOUNDARY_WARNING_RATIO } from "shared/constants";
+import { t } from "shared/localization";
+import { L_BOUNDARY_WARNING } from "shared/localization/keys";
 import { gameStore } from "shared/store/game-store";
 
-const WARNING_TEXT = "Returning to the area...";
 const FOG_LERP_SPEED = 0.15;
 
 @Controller()
@@ -35,13 +37,14 @@ export class BoundaryController implements OnStart {
 	}
 
 	private handleWarning(ratio: number) {
-		if (ratio >= 0.85) {
-			const t = math.clamp((ratio - 0.85) / 0.15, 0, 1);
-			this.targetExtraDensity = t * 0.6;
+		if (ratio >= BOUNDARY_WARNING_RATIO) {
+			const range = 1 - BOUNDARY_WARNING_RATIO;
+			const fogT = math.clamp((ratio - BOUNDARY_WARNING_RATIO) / range, 0, 1);
+			this.targetExtraDensity = fogT * 0.6;
 
 			if (!this.warningActive) {
 				this.warningActive = true;
-				gameStore.setHintText(WARNING_TEXT);
+				gameStore.setHintText(t(L_BOUNDARY_WARNING));
 			}
 		} else {
 			this.targetExtraDensity = 0;

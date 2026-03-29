@@ -8,14 +8,15 @@ const TRAVEL_DISTANCE = 400; // studs to travel along the train's forward axis
 @Service()
 export class TrainService implements OnStart {
 	onStart() {
-		const train = Workspace.FindFirstChild("Subway Train") as Model | undefined;
-		if (!train) {
+		const trainInst = Workspace.FindFirstChild("Subway Train");
+		if (!trainInst?.IsA("Model")) {
 			warn("[TrainService] Subway Train not found in Workspace");
 			return;
 		}
 
+		const train = trainInst;
 		if (!train.PrimaryPart) {
-			for (const child of train.GetChildren()) {
+			for (const child of train.GetDescendants()) {
 				if (child.IsA("BasePart")) {
 					train.PrimaryPart = child;
 					break;

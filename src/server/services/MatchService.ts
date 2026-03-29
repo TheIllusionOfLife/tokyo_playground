@@ -226,6 +226,11 @@ export class MatchService implements OnStart {
 		this.boundaryService.setMatchActive(true);
 		this.ambientCityService.stop();
 
+		// Reset boundary fog/hint for all players entering the match
+		for (const player of Players.GetPlayers()) {
+			this.serverEvents.boundaryWarning.fire(player, 0);
+		}
+
 		// Force-unequip lobby Hachi costumes before match starts
 		// (prevents carrying boosted WalkSpeed/JumpHeight into non-Hachi minigames)
 		for (const player of Players.GetPlayers()) {

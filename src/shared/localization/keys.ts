@@ -126,6 +126,9 @@ export const L_MISSION_WIN_HACHI = "mission_WinHachiRide";
 export const L_MISSION_COLLECT_BONUS = "mission_CollectBonusItem";
 export const L_MISSION_DODGE_CARS = "mission_DodgeCars";
 
+// Boundary
+export const L_BOUNDARY_WARNING = "boundary_warning";
+
 // Zone names
 export const L_ZONE_SHIBUYA_SKY = "zone_ShibuyaSky";
 export const L_ZONE_SHIBUYA_CROSSING = "zone_ShibuyaCrossing";

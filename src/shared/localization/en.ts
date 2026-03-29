@@ -125,6 +125,9 @@ export const EN: Record<string, string> = {
 	mission_CollectBonusItem: "Collect a Bonus Item",
 	mission_DodgeCars: "Survive a Car Wave",
 
+	// Boundary
+	boundary_warning: "Returning to the area...",
+
 	// Zones
 	zone_ShibuyaSky: "Shibuya Sky",
 	zone_ShibuyaCrossing: "Shibuya Crossing",

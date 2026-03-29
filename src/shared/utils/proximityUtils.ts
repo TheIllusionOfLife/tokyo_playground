@@ -32,7 +32,7 @@ export function edgeRatio_XZ(
 	if (halfX <= 0 || halfZ <= 0) return 1;
 	const dx = math.abs(point.X - centerX) / halfX;
 	const dz = math.abs(point.Z - centerZ) / halfZ;
-	return math.max(dx, dz);
+	return math.min(math.max(dx, dz), 1);
 }
 
 /** Squared distance between two points in XZ plane. */

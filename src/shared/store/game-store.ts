@@ -264,6 +264,7 @@ export const gameStore = createProducer(initialState, {
 		hachiCostumed: false,
 		hachiItemCount: 0,
 		hachiEvolutionLevel: 0,
+		currentZone: "",
 		spectating: false,
 		spectateTargetName: "",
 		queueStatus: state.queueStatus,

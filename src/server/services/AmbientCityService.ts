@@ -10,6 +10,7 @@ const CAR_WAVE_DURATION = 10; // seconds for cars to cross
 @Service()
 export class AmbientCityService implements OnStart {
 	private running = false;
+	private loopGeneration = 0;
 	private activeCrowdNPCs: Model[] = [];
 	private activeCarNPCs: Model[] = [];
 
@@ -21,8 +22,10 @@ export class AmbientCityService implements OnStart {
 	start() {
 		if (this.running) return;
 		this.running = true;
-		task.spawn(() => this.runCrowdLoop());
-		task.spawn(() => this.runCarLoop());
+		this.loopGeneration += 1;
+		const gen = this.loopGeneration;
+		task.spawn(() => this.runCrowdLoop(gen));
+		task.spawn(() => this.runCarLoop(gen));
 	}
 
 	stop() {
@@ -43,21 +46,21 @@ export class AmbientCityService implements OnStart {
 		this.activeCarNPCs = [];
 	}
 
-	private runCrowdLoop() {
-		while (this.running) {
+	private runCrowdLoop(gen: number) {
+		while (this.running && this.loopGeneration === gen) {
 			task.wait(CROWD_WAVE_INTERVAL);
-			if (!this.running) break;
+			if (!this.running || this.loopGeneration !== gen) break;
 			const wave = this.spawnCrowdWave();
 			task.wait(CROWD_WAVE_DURATION + 2);
-			if (!this.running) break;
+			if (!this.running || this.loopGeneration !== gen) break;
 			this.despawnNPCs(wave, this.activeCrowdNPCs);
 		}
 	}
 
-	private runCarLoop() {
-		while (this.running) {
+	private runCarLoop(gen: number) {
+		while (this.running && this.loopGeneration === gen) {
 			task.wait(CAR_WAVE_INTERVAL);
-			if (!this.running) break;
+			if (!this.running || this.loopGeneration !== gen) break;
 			const wave = this.spawnCarWave();
 			task.wait(CAR_WAVE_DURATION + 2);
 			if (!this.running) break;

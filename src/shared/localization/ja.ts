@@ -125,6 +125,9 @@ export const JA: Record<string, string> = {
 	mission_CollectBonusItem: "ボーナスアイテムを集める",
 	mission_DodgeCars: "車ウェーブを生き残る",
 
+	// Boundary
+	boundary_warning: "エリアに戻ります...",
+
 	// Zones
 	zone_ShibuyaSky: "渋谷スカイ",
 	zone_ShibuyaCrossing: "渋谷スクランブル交差点",
