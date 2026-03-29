@@ -176,7 +176,7 @@ export function equipHachiCostume(
 	// Play bark sound effect
 	const bark = new Instance("Sound");
 	bark.SoundId = "rbxassetid://132514715";
-	bark.Volume = 0.5;
+	bark.Volume = 0.25;
 	bark.Parent = hrp;
 	bark.Play();
 	bark.Ended.Once(() => bark.Destroy());
