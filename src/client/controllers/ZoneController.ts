@@ -6,7 +6,6 @@ import {
 	ZONE_TAG,
 } from "shared/constants";
 import { gameStore } from "shared/store/game-store";
-import { squaredDistXZ } from "shared/utils/proximityUtils";
 
 const CHECK_INTERVAL = 0.5; // seconds between zone checks
 
@@ -58,7 +57,8 @@ export class ZoneController implements OnStart {
 		for (const part of this.zoneParts) {
 			if (!part.Parent) continue;
 			const radius = (part.GetAttribute("ZoneRadius") as number) ?? 30;
-			const distSq = squaredDistXZ(pos, part.Position);
+			const delta = pos.sub(part.Position);
+			const distSq = delta.X * delta.X + delta.Y * delta.Y + delta.Z * delta.Z;
 			if (distSq < radius * radius && distSq < nearestDistSq) {
 				const zoneName = (part.GetAttribute("ZoneName") as string) ?? part.Name;
 				nearestDistSq = distSq;
