@@ -243,20 +243,18 @@ export class HachiRideController implements OnStart {
 		this.jumpPhase = 2;
 		this.doubleJumpConsumed = true;
 
-		if (hrp && h) {
-			h.PlatformStand = true;
-			hrp.AssemblyLinearVelocity = new Vector3(
-				hrp.AssemblyLinearVelocity.X,
-				HACHI_DOUBLE_JUMP_IMPULSE,
-				hrp.AssemblyLinearVelocity.Z,
-			);
-			task.defer(() => {
-				if (h.Parent) {
-					h.PlatformStand = false;
-					h.ChangeState(Enum.HumanoidStateType.Jumping);
-				}
-			});
-		}
+		h.PlatformStand = true;
+		hrp.AssemblyLinearVelocity = new Vector3(
+			hrp.AssemblyLinearVelocity.X,
+			HACHI_DOUBLE_JUMP_IMPULSE,
+			hrp.AssemblyLinearVelocity.Z,
+		);
+		task.defer(() => {
+			if (h.Parent) {
+				h.PlatformStand = false;
+				h.ChangeState(Enum.HumanoidStateType.Jumping);
+			}
+		});
 
 		if (this.isInMinigame()) {
 			clientEvents.hachiDoubleJump.fire();

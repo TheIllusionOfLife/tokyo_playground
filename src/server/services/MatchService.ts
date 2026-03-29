@@ -259,6 +259,13 @@ export class MatchService implements OnStart {
 			task.wait(2);
 		}
 
+		// Check if players dropped below minimum during Preparing phase
+		if (this.matchPlayers.size() < MINIGAME_CONFIGS[minigameId].minPlayers) {
+			print("[MatchService] Below minimum players during prepare — cancelling");
+			this.cleanup();
+			return;
+		}
+
 		// In Progress
 		this.transitionPhase(MatchPhase.InProgress);
 		this.analyticsService.fire({
@@ -316,15 +323,6 @@ export class MatchService implements OnStart {
 		// Stop countdown immediately so its tail never fires during results display
 		this.activeMinigame?.stopCountdown();
 		this.serverEvents.roundResultAnnounced.broadcast(result);
-		const roundConfig = MINIGAME_CONFIGS[this.currentMinigameId];
-		this.analyticsService.fire({
-			name: "round_end",
-			gameType: this.currentMinigameId,
-			winnerId: 0,
-			duration: math.floor(
-				roundConfig.roundDuration - math.max(0, this.matchTimeRemaining),
-			),
-		});
 
 		const minigame = this.activeMinigame!;
 		const playerStates = minigame.getPlayerStates();
@@ -459,6 +457,25 @@ export class MatchService implements OnStart {
 			roundDuration,
 			hachiRoundOutcome,
 		);
+		// Analytics: fire after winner is determined
+		const elapsedDuration = math.floor(
+			MINIGAME_CONFIGS[this.currentMinigameId].roundDuration -
+				math.max(0, this.matchTimeRemaining),
+		);
+		const winnerId =
+			this.currentMinigameId === MinigameId.HachiRide
+				? (hachiRoundOutcome?.winningPlayerIds[0] ?? 0)
+				: entries.size() > 0
+					? (Players.GetPlayers().find((p) => p.Name === entries[0].playerName)
+							?.UserId ?? 0)
+					: 0;
+		this.analyticsService.fire({
+			name: "round_end",
+			gameType: this.currentMinigameId,
+			winnerId,
+			duration: elapsedDuration,
+		});
+
 		this.serverEvents.roundSummary.broadcast(summaryText, winnerName);
 
 		this.serverEvents.scoreboard.broadcast(entries);
@@ -600,11 +617,15 @@ export class MatchService implements OnStart {
 
 		// Reset streak on early leave
 		this.playerDataService.resetStreak(player);
-		this.analyticsService.fire({
+		this.analyticsService.fireForPlayer(player, {
 			name: "player_leave_mid_match",
 			playerId: player.UserId,
 			matchId: this.currentMinigameId,
 		});
+
+		// During Preparing/Countdown, the pre-InProgress check in runMatch
+		// handles cancellation. endRound() only works during InProgress.
+		if (phase !== MatchPhase.InProgress) return;
 
 		if (playerState?.role === PlayerRole.Oni) {
 			print("[MatchService] Oni left — Hiders win!");

@@ -193,7 +193,7 @@ export function SkillsPanel() {
 									Text={
 										unlocked
 											? t(L_SKILL_UNLOCKED)
-											: t(L_SKILL_PTS_FMT).gsub("%%d", tostring(skill.items))[0]
+											: string.format(t(L_SKILL_PTS_FMT), skill.items)
 									}
 								/>
 							</frame>

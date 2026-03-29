@@ -28,6 +28,13 @@ export class AnalyticsService implements OnStart {
 			}
 		});
 
+		// Bootstrap players who joined before this service initialized
+		for (const player of Players.GetPlayers()) {
+			if (!this.joinTimes.has(player.UserId)) {
+				this.joinTimes.set(player.UserId, os.clock());
+			}
+		}
+
 		print("[AnalyticsService] Started");
 	}
 

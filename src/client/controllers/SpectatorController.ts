@@ -48,8 +48,11 @@ export class SpectatorController implements OnStart {
 
 	private enterSpectatorMode() {
 		if (this.active) return;
-		this.active = true;
 
+		const camera = Workspace.CurrentCamera;
+		if (!camera) return;
+
+		this.active = true;
 		gameStore.setSpectating(true);
 
 		const targets = this.getSpectateTargets();
@@ -60,8 +63,6 @@ export class SpectatorController implements OnStart {
 			this.streamAroundTarget();
 		}
 
-		const camera = Workspace.CurrentCamera;
-		if (!camera) return;
 		camera.CameraType = Enum.CameraType.Scriptable;
 
 		this.renderConn = RunService.RenderStepped.Connect((dt) => {
