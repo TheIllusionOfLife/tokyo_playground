@@ -49,8 +49,10 @@ export function getPlayerHachi(player: Player): Model | undefined {
 /**
  * Force-clear any stale mounted state for a player.
  * Call before equipping to handle respawn/transition scenarios.
+ * Pass `notifyClient = true` to fire the S→C event so the client
+ * resets its `hachiCostumed` store (e.g. after death in lobby).
  */
-export function forceUnmount(player: Player): void {
+export function forceUnmount(player: Player, notifyClient = false): void {
 	const track = sitTracks.get(player.UserId);
 	if (track) {
 		track.Stop();
@@ -59,6 +61,9 @@ export function forceUnmount(player: Player): void {
 	const model = mountedPlayers.get(player.UserId);
 	if (model && model.Parent) model.Destroy();
 	mountedPlayers.delete(player.UserId);
+	if (notifyClient) {
+		serverEvents.hachiCostumeEquipped.fire(player, false);
+	}
 }
 
 /**
@@ -75,6 +80,7 @@ export function equipHachiCostume(
 	player: Player,
 	hachiModel: Model,
 	evolutionLevel: number,
+	playBark = false,
 ): boolean {
 	const character = player.Character;
 	if (!character) return false;
@@ -167,6 +173,16 @@ export function equipHachiCostume(
 
 	// Track mounted state
 	mountedPlayers.set(player.UserId, hachiModel);
+
+	// Play bark sound effect (only on explicit mount, not auto-equip)
+	if (playBark) {
+		const bark = new Instance("Sound");
+		bark.SoundId = "rbxassetid://132514715";
+		bark.Volume = 0.25;
+		bark.Parent = hrp;
+		bark.Play();
+		bark.Ended.Once(() => bark.Destroy());
+	}
 
 	// Notify client
 	serverEvents.hachiCostumeEquipped.fire(player, true);

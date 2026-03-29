@@ -25,7 +25,9 @@ import {
 	type HachiRoundOutcome,
 } from "shared/utils/hachiOutcome";
 import { unequipHachiCostume } from "../utils/hachiCostume";
+import { AmbientCityService } from "./AmbientCityService";
 import { AnalyticsService } from "./AnalyticsService";
+import { BoundaryService } from "./BoundaryService";
 import { GameStateService } from "./GameStateService";
 import { LobbyService } from "./LobbyService";
 import { MinigameService } from "./MinigameService";
@@ -69,6 +71,8 @@ export class MatchService implements OnStart {
 		private readonly missionService: MissionService,
 		private readonly lobbyService: LobbyService,
 		private readonly analyticsService: AnalyticsService,
+		private readonly ambientCityService: AmbientCityService,
+		private readonly boundaryService: BoundaryService,
 	) {}
 
 	onStart() {
@@ -199,6 +203,8 @@ export class MatchService implements OnStart {
 		this.playerCooldowns.clear();
 		this.currentPhase = MatchPhase.WaitingForPlayers;
 		this.lobbyService.setMatchActive(false);
+		this.boundaryService.setMatchActive(false);
+		this.ambientCityService.start();
 		this.gameStateService.transitionTo(GameState.Lobby);
 	}
 
@@ -217,6 +223,13 @@ export class MatchService implements OnStart {
 		this.playerCooldowns.clear();
 		this.currentMinigameId = minigameId;
 		this.lobbyService.setMatchActive(true);
+		this.boundaryService.setMatchActive(true);
+		this.ambientCityService.stop();
+
+		// Reset boundary fog/hint for all players entering the match
+		for (const player of Players.GetPlayers()) {
+			this.serverEvents.boundaryWarning.fire(player, 0);
+		}
 
 		// Force-unequip lobby Hachi costumes before match starts
 		// (prevents carrying boosted WalkSpeed/JumpHeight into non-Hachi minigames)
@@ -502,6 +515,8 @@ export class MatchService implements OnStart {
 		this.matchPlayers.clear();
 		this.playerCooldowns.clear();
 		this.lobbyService.setMatchActive(false);
+		this.boundaryService.setMatchActive(false);
+		this.ambientCityService.start();
 		task.wait(CLEANUP_DURATION);
 	}
 

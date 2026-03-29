@@ -124,4 +124,15 @@ export const JA: Record<string, string> = {
 	mission_WinHachiRide: "ハチ公ライドで勝つ",
 	mission_CollectBonusItem: "ボーナスアイテムを集める",
 	mission_DodgeCars: "車ウェーブを生き残る",
+
+	// Boundary
+	boundary_warning: "エリアの端に近づいています!",
+	boundary_return: "エリアに戻ります...",
+
+	// Zones
+	zone_ShibuyaSky: "渋谷スカイ",
+	zone_ShibuyaCrossing: "渋谷スクランブル交差点",
+	zone_HachikoSquare: "ハチ公前広場",
+	zone_CenterGai: "センター街",
+	zone_SkySlideHub: "スカイスライドハブ",
 };

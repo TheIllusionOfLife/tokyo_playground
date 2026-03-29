@@ -71,6 +71,8 @@ export interface GameStoreState {
 	bonOdoriState?: { score: number; combo: number };
 	maxHachiLevel: number;
 	badges: string[];
+	// Zones
+	currentZone: string;
 	// Spectator
 	spectating: boolean;
 	spectateTargetName: string;
@@ -110,6 +112,7 @@ const initialState: GameStoreState = {
 	bonOdoriState: undefined,
 	maxHachiLevel: 0,
 	badges: [],
+	currentZone: "",
 	spectating: false,
 	spectateTargetName: "",
 };
@@ -261,6 +264,7 @@ export const gameStore = createProducer(initialState, {
 		hachiCostumed: false,
 		hachiItemCount: 0,
 		hachiEvolutionLevel: 0,
+		currentZone: "",
 		spectating: false,
 		spectateTargetName: "",
 		queueStatus: state.queueStatus,
@@ -354,5 +358,9 @@ export const gameStore = createProducer(initialState, {
 	setSpectateTargetName: (state, spectateTargetName: string) => ({
 		...state,
 		spectateTargetName,
+	}),
+	setCurrentZone: (state, currentZone: string) => ({
+		...state,
+		currentZone,
 	}),
 });

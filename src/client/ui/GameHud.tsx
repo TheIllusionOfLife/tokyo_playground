@@ -26,6 +26,7 @@ import { StampCardPanel } from "./components/StampCardPanel";
 import { StampDiscoveryPopup } from "./components/StampDiscoveryPopup";
 import { TodayGoalChip } from "./components/TodayGoalChip";
 import { TopBar } from "./components/TopBar";
+import { ZonePopup } from "./components/ZonePopup";
 
 export function GameHud() {
 	return (
@@ -61,6 +62,7 @@ export function GameHud() {
 			<MicroEventIndicator />
 			<BonOdoriRhythmLane />
 			<ObstacleCourseTimer />
+			<ZonePopup />
 		</screengui>
 	);
 }

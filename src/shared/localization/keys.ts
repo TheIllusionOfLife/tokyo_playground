@@ -125,3 +125,14 @@ export const L_MISSION_REACH_HACHI_LV3 = "mission_ReachHachiLevel3";
 export const L_MISSION_WIN_HACHI = "mission_WinHachiRide";
 export const L_MISSION_COLLECT_BONUS = "mission_CollectBonusItem";
 export const L_MISSION_DODGE_CARS = "mission_DodgeCars";
+
+// Boundary
+export const L_BOUNDARY_WARNING = "boundary_warning";
+export const L_BOUNDARY_RETURN = "boundary_return";
+
+// Zone names
+export const L_ZONE_SHIBUYA_SKY = "zone_ShibuyaSky";
+export const L_ZONE_SHIBUYA_CROSSING = "zone_ShibuyaCrossing";
+export const L_ZONE_HACHIKO_SQUARE = "zone_HachikoSquare";
+export const L_ZONE_CENTER_GAI = "zone_CenterGai";
+export const L_ZONE_SKY_SLIDE_HUB = "zone_SkySlideHub";

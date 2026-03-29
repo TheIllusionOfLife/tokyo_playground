@@ -81,6 +81,8 @@ export class LobbyService implements OnStart {
 		Players.PlayerAdded.Connect((player) => {
 			player.CharacterAdded.Connect((character) => {
 				task.wait(0.5);
+				// Clear stale Hachi mount state from previous life (e.g. died while riding)
+				forceUnmount(player, true);
 				const humanoid = character.WaitForChild("Humanoid") as Humanoid;
 				humanoid.WalkSpeed = DEFAULT_WALK_SPEED;
 				humanoid.UseJumpPower = false;
@@ -181,7 +183,7 @@ export class LobbyService implements OnStart {
 					data?.maxHachiLevel ?? 0,
 					HACHI_LOBBY_MIN_LEVEL,
 				);
-				if (!equipHachiCostume(player, clone, evoLevel)) {
+				if (!equipHachiCostume(player, clone, evoLevel, true)) {
 					clone.Destroy();
 				}
 			} else {

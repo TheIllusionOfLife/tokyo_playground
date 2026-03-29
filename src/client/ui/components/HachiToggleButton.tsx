@@ -64,7 +64,7 @@ export function HachiToggleButton() {
 			key="HachiToggleButton"
 			ref={outerRef}
 			Size={new UDim2(0, 160, 0, 60)}
-			Position={new UDim2(1, -10, 0, 110)}
+			Position={new UDim2(1, -10, 0, 140)}
 			AnchorPoint={new Vector2(1, 0)}
 			BackgroundTransparency={1}
 			BorderSizePixel={0}
