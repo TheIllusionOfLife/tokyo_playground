@@ -80,6 +80,7 @@ export function equipHachiCostume(
 	player: Player,
 	hachiModel: Model,
 	evolutionLevel: number,
+	playBark = false,
 ): boolean {
 	const character = player.Character;
 	if (!character) return false;
@@ -173,13 +174,15 @@ export function equipHachiCostume(
 	// Track mounted state
 	mountedPlayers.set(player.UserId, hachiModel);
 
-	// Play bark sound effect
-	const bark = new Instance("Sound");
-	bark.SoundId = "rbxassetid://132514715";
-	bark.Volume = 0.25;
-	bark.Parent = hrp;
-	bark.Play();
-	bark.Ended.Once(() => bark.Destroy());
+	// Play bark sound effect (only on explicit mount, not auto-equip)
+	if (playBark) {
+		const bark = new Instance("Sound");
+		bark.SoundId = "rbxassetid://132514715";
+		bark.Volume = 0.25;
+		bark.Parent = hrp;
+		bark.Play();
+		bark.Ended.Once(() => bark.Destroy());
+	}
 
 	// Notify client
 	serverEvents.hachiCostumeEquipped.fire(player, true);
