@@ -20,3 +20,4 @@
 | v0.14.0 | 2026-03-29 | Minigame overhaul: sky-drop collectibles, Noob crowds, car waves, kick/catch FX, mission revamp |
 | v0.15.0 | 2026-03-29 | Pre-release polish: bug fixes, localization, analytics, social features |
 | v0.16.0 | 2026-03-29 | Mobile playtest fixes: boundary system, zone popups, ambient city life, train, SkySlide corridors |
+| v0.17.0 | 2026-03-30 | Content quality pass: 16-item shop, Kitsune series, 5 new missions, economy rebalance |
