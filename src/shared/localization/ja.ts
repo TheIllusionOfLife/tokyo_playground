@@ -107,7 +107,7 @@ export const JA: Record<string, string> = {
 	intro_scramble_title: "渋谷カオス",
 	intro_scramble_sub: "群衆に紛れて生き残れ。スクランブル交差点を使え。",
 	intro_hachi_title: "ハチ公ライド",
-	intro_hachi_sub: "ゴミを集めて進化して、1位を奪え。",
+	intro_hachi_sub: "コインを集めて進化して、1位を奪え。",
 
 	// Mission labels
 	mission_PlayGames: "3回遊ぶ",

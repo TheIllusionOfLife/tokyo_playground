@@ -375,7 +375,7 @@ export class HachiRideMinigame implements IMinigame {
 		}
 
 		this.serverEvents.hintTextChanged.broadcast(
-			"Mount Hachi and jump! Collect trash! 3... 2... 1...",
+			"Mount Hachi and jump! Collect coins! 3... 2... 1...",
 		);
 		return roles;
 	}
