@@ -21,9 +21,9 @@ Reviewed against Tokyo Playground: Shibuya codebase.
 ## Adopt Now
 
 ### SLIM (Scalable Lightweight Interactive Models)
-- **Action:** Enable TeamCreate (File > Game Settings > Security). Set `city_and_roads.LevelOfDetail = SLIM`.
+- **Action:** Enable TeamCreate (File > Game Settings > Security). Enable "SLIM" in File > Beta Features. Set `city_and_roads.LevelOfDetail = Enum.ModelLevelOfDetail.SLIM` in Properties panel or server Script. Requires `Workspace.StreamingEnabled = true`.
 - **Why:** Current StreamingMesh shows untextured blobs at distance. SLIM preserves textures and shape.
-- **Prereq:** TeamCreate must be enabled first (cloud LOD generation).
+- **Prereqs:** TeamCreate enabled, StreamingEnabled = true, SLIM Beta Feature enabled.
 
 ### Light Range 120 Studs
 - **Action:** Audit city PointLights/SpotLights. Replace clusters of 60-range lights with single 120-range lights.

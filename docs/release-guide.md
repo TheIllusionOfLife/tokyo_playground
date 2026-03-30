@@ -43,7 +43,7 @@
 - [ ] Social links added to `GAME_INFO.md`
 
 ### Attribution
-- [ ] PLATEAU attribution in game description: "City data: Project PLATEAU (MLIT Japan). CC BY 4.0."
+- [ ] PLATEAU attribution in game description: "City data from Project PLATEAU by Ministry of Land, Infrastructure, Transport and Tourism (MLIT), Japan. Licensed under CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/). Source: https://www.mlit.go.jp/plateau/"
 
 ---
 

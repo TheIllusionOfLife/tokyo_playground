@@ -1,10 +1,11 @@
-import React from "@rbxts/react";
+import React, { useRef } from "@rbxts/react";
 import { useSelector } from "@rbxts/react-reflex";
 import { clientEvents } from "client/network";
 import { GameStoreState } from "shared/store/game-store";
 import { MatchPhase, MinigameId } from "shared/types";
 
 export function HachiPlayButton() {
+	const lastClickRef = useRef(0);
 	const matchPhase = useSelector((state: GameStoreState) => state.matchPhase);
 	const activeMinigameId = useSelector(
 		(state: GameStoreState) => state.activeMinigameId,
@@ -62,6 +63,9 @@ export function HachiPlayButton() {
 				ZIndex={10}
 				Event={{
 					Activated: () => {
+						const now = os.clock();
+						if (now - lastClickRef.current < 3) return;
+						lastClickRef.current = now;
 						clientEvents.requestMinigameStart.fire(MinigameId.HachiRide);
 					},
 				}}

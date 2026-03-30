@@ -14,9 +14,17 @@ import {
 	HACHI_ANTICHEAT_STRIKE_DECAY,
 	HACHI_ANTICHEAT_STRIKE_LIMIT,
 	HACHI_BIG_SCALE,
+	HACHI_BLDG_MAX_X,
+	HACHI_BLDG_MAX_Z,
+	HACHI_BLDG_MIN_X,
+	HACHI_BLDG_MIN_Z,
 	HACHI_BONUS_ITEM_COUNT,
 	HACHI_BONUS_ITEM_VALUE,
 	HACHI_CITY_CENTER,
+	HACHI_CITY_MAX_X,
+	HACHI_CITY_MAX_Z,
+	HACHI_CITY_MIN_X,
+	HACHI_CITY_MIN_Z,
 	HACHI_COIN_MESH_ID,
 	HACHI_COIN_TEXTURE_ID,
 	HACHI_COLLECTION_RADIUS,
@@ -35,21 +43,13 @@ import {
 	HACHI_SKY_DROP_BUILDING_BIAS,
 	HACHI_SKY_DROP_CENTER_BIAS,
 	HACHI_SKY_DROP_DENSE_RADIUS,
-	HACHI_BLDG_MIN_X,
-	HACHI_BLDG_MAX_X,
-	HACHI_BLDG_MIN_Z,
-	HACHI_BLDG_MAX_Z,
 	HACHI_SKY_DROP_FALL_DURATION,
 	HACHI_SKY_DROP_GROUND_Y,
 	HACHI_SKY_DROP_MAX_Y,
 	HACHI_SKY_DROP_MIN_Y,
-	HACHI_CITY_MIN_X,
-	HACHI_CITY_MAX_X,
-	HACHI_CITY_MIN_Z,
-	HACHI_CITY_MAX_Z,
+	HACHI_SPAWN_TAG,
 	HACHI_STAR_MESH_ID,
 	HACHI_STAR_TEXTURE_ID,
-	HACHI_SPAWN_TAG,
 	HACHI_STARTING_EVOLUTION,
 	HACHI_WALK_SPEEDS,
 	HACHI_WALL_RUN_MAX_DUR,
@@ -153,12 +153,7 @@ export class HachiRideMinigame implements IMinigame {
 				bldg.topY + HACHI_ROOFTOP_BONUS_OFFSET_Y,
 				bldg.z + zOff,
 			);
-			const part = this.createCollectible(
-				skyPos,
-				new Vector3(5, 5, 5),
-				Color3.fromRGB(255, 215, 0),
-				true,
-			);
+			const part = this.createCollectible(skyPos, new Vector3(5, 5, 5), true);
 			this.activeItems.push(part);
 			this.bonusItems.add(part);
 			this.itemLandingY.set(part, bldg.topY);
@@ -167,14 +162,12 @@ export class HachiRideMinigame implements IMinigame {
 		// Generate all candidate positions, then randomly select a subset
 		const rooftopCount = HACHI_ROOFTOP_BUILDINGS.size();
 		const regularTotal = HACHI_ITEMS_TO_SPAWN - HACHI_BONUS_ITEM_COUNT;
-		const randomBonusTotal =
-			HACHI_BONUS_ITEM_COUNT - rooftopCount; // 80 - 10 = 70
+		const randomBonusTotal = HACHI_BONUS_ITEM_COUNT - rooftopCount; // 80 - 10 = 70
 
 		// Build pool of candidate items (regular + random bonus)
 		interface CandidateItem {
 			pos: Vector3;
 			sizeVal: Vector3;
-			color: Color3;
 			isBonus: boolean;
 			landingY: number;
 		}
@@ -186,20 +179,17 @@ export class HachiRideMinigame implements IMinigame {
 			candidates.push({
 				pos: skyPos,
 				sizeVal: new Vector3(2, 2, 2),
-				color: Color3.fromRGB(100, 200, 255),
 				isBonus: false,
 				landingY: this.raycastLandingY(skyPos.X, skyPos.Z),
 			});
 		}
 
 		// Random bonus items
-		const randomBonusPositions =
-			this.generateSpawnPositions(randomBonusTotal);
+		const randomBonusPositions = this.generateSpawnPositions(randomBonusTotal);
 		for (const skyPos of randomBonusPositions) {
 			candidates.push({
 				pos: skyPos,
 				sizeVal: new Vector3(5, 5, 5),
-				color: Color3.fromRGB(255, 215, 0),
 				isBonus: true,
 				landingY: this.raycastLandingY(skyPos.X, skyPos.Z),
 			});
@@ -212,7 +202,7 @@ export class HachiRideMinigame implements IMinigame {
 		);
 		for (let i = 0; i < activeCount; i++) {
 			const c = candidates[i];
-			const part = this.createCollectible(c.pos, c.sizeVal, c.color, c.isBonus);
+			const part = this.createCollectible(c.pos, c.sizeVal, c.isBonus);
 			this.activeItems.push(part);
 			if (c.isBonus) this.bonusItems.add(part);
 			this.itemLandingY.set(part, c.landingY);
@@ -301,8 +291,7 @@ export class HachiRideMinigame implements IMinigame {
 				// Clear stale Hachi state, ensure normal human speed
 				forceUnmount(player);
 				this.hachiModels.delete(player.UserId);
-				const humanoid =
-					player.Character.FindFirstChildOfClass("Humanoid");
+				const humanoid = player.Character.FindFirstChildOfClass("Humanoid");
 				if (humanoid) {
 					humanoid.WalkSpeed = DEFAULT_WALK_SPEED;
 					humanoid.UseJumpPower = false;
@@ -708,9 +697,7 @@ export class HachiRideMinigame implements IMinigame {
 	) {
 		const isBonus = this.bonusItems.has(item);
 		const finalSprintMultiplier =
-			this.finalSprintStarted && isBonus
-				? HACHI_FINAL_SPRINT_MULTIPLIER
-				: 1;
+			this.finalSprintStarted && isBonus ? HACHI_FINAL_SPRINT_MULTIPLIER : 1;
 		const value =
 			(isBonus ? HACHI_BONUS_ITEM_VALUE : 1) * finalSprintMultiplier;
 		state.itemCount += value;
@@ -828,7 +815,6 @@ export class HachiRideMinigame implements IMinigame {
 	private createCollectible(
 		position: Vector3,
 		size: Vector3,
-		color: Color3,
 		isBonus = false,
 	): BasePart {
 		const part = new Instance("Part");
@@ -841,9 +827,7 @@ export class HachiRideMinigame implements IMinigame {
 		part.CastShadow = false;
 		// Rotate coins upright (disc mesh is flat on Y axis)
 		if (!isBonus) {
-			part.CFrame = new CFrame(position).mul(
-				CFrame.Angles(math.rad(90), 0, 0),
-			);
+			part.CFrame = new CFrame(position).mul(CFrame.Angles(math.rad(90), 0, 0));
 		} else {
 			part.Position = position;
 		}
@@ -851,9 +835,7 @@ export class HachiRideMinigame implements IMinigame {
 		const mesh = new Instance("SpecialMesh");
 		mesh.MeshType = Enum.MeshType.FileMesh;
 		mesh.MeshId = isBonus ? HACHI_STAR_MESH_ID : HACHI_COIN_MESH_ID;
-		mesh.TextureId = isBonus
-			? HACHI_STAR_TEXTURE_ID
-			: HACHI_COIN_TEXTURE_ID;
+		mesh.TextureId = isBonus ? HACHI_STAR_TEXTURE_ID : HACHI_COIN_TEXTURE_ID;
 		// Scale mesh to match the Part size (native mesh is ~2 studs for coin, ~5 for star)
 		const nativeSize = isBonus ? 5 : 2;
 		const scaleFactor = size.X / nativeSize;
@@ -915,7 +897,7 @@ export class HachiRideMinigame implements IMinigame {
 		const buildingCount = math.floor(count * HACHI_SKY_DROP_BUILDING_BIAS);
 		const uniformCount = count - centerCount - buildingCount;
 
-		// 50% uniform across full DEM bounds
+		// 40% uniform across full DEM bounds
 		for (let i = 0; i < uniformCount; i++) {
 			const x =
 				HACHI_CITY_MIN_X +

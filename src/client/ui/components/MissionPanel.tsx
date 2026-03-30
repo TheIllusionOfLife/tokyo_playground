@@ -72,9 +72,7 @@ function MissionRow({ mission }: { mission: MissionProgressData }) {
 				TextScaled={true}
 				Font={Enum.Font.GothamBold}
 				Text={
-					mission.rewardCollected
-						? t(L_CLAIMED)
-						: `+${mission.pointsReward}`
+					mission.rewardCollected ? t(L_CLAIMED) : `+${mission.pointsReward}`
 				}
 				Active={canClaim}
 				Event={{
@@ -105,12 +103,39 @@ export function MissionPanel() {
 		(state: GameStoreState) => state.missionClaimReady,
 	);
 
-	// Hide during HachiRide InProgress (overlaps with rank/skills/points)
-	if (
+	const isHachiInProgress =
 		activeMinigameId === MinigameId.HachiRide &&
-		matchPhase === MatchPhase.InProgress
-	) {
-		return undefined!;
+		matchPhase === MatchPhase.InProgress;
+
+	// During HachiRide, only show the claim toast (not the full panel)
+	if (isHachiInProgress) {
+		return (
+			<>
+				{claimReady ? (
+					<textbutton
+						key="MissionClaimToast"
+						Size={new UDim2(0, 250, 0, 46)}
+						Position={new UDim2(0.5, -125, 0.78, 0)}
+						BackgroundColor3={Color3.fromRGB(48, 126, 76)}
+						BorderSizePixel={0}
+						TextColor3={Color3.fromRGB(255, 255, 255)}
+						TextScaled={true}
+						Font={Enum.Font.GothamBold}
+						Text={`Mission Ready! Claim +${claimReady.pointsReward}`}
+						ZIndex={22}
+						Event={{
+							Activated: () => {
+								clientEvents.collectMissionReward.fire(claimReady.id);
+							},
+						}}
+					>
+						<uicorner CornerRadius={new UDim(0, 10)} />
+					</textbutton>
+				) : (
+					undefined!
+				)}
+			</>
+		);
 	}
 
 	return (

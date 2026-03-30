@@ -6,6 +6,12 @@ const TWEEN_SPEED = 60; // studs per second
 const TRAVEL_DISTANCE = 950; // studs from start to city edge
 const FADE_STUDS = 80; // studs over which the train fades out at the end
 
+interface PartState {
+	part: BasePart;
+	originalTransparency: number;
+	originalCanCollide: boolean;
+}
+
 @Service()
 export class TrainService implements OnStart {
 	onStart() {
@@ -44,34 +50,47 @@ export class TrainService implements OnStart {
 			}
 		}
 
-		// Collect all BaseParts for transparency fade
-		const allParts: BasePart[] = [];
+		// Cache original transparency and collision per part
+		const partStates: PartState[] = [];
 		for (const desc of train.GetDescendants()) {
 			if (desc.IsA("BasePart")) {
-				allParts.push(desc);
+				partStates.push({
+					part: desc,
+					originalTransparency: desc.Transparency,
+					originalCanCollide: desc.CanCollide,
+				});
 			}
 		}
 
 		print("[TrainService] Started — one-directional train with fade");
-		task.spawn(() => this.runLoop(primary, allParts));
+		task.spawn(() => this.runLoop(primary, partStates));
 	}
 
-	private setTransparency(parts: BasePart[], alpha: number) {
-		for (const part of parts) {
-			part.Transparency = alpha;
+	private setFade(partStates: PartState[], alpha: number) {
+		for (const ps of partStates) {
+			// Interpolate from original transparency toward fully hidden
+			ps.part.Transparency =
+				ps.originalTransparency + (1 - ps.originalTransparency) * alpha;
 		}
 	}
 
-	private runLoop(primary: BasePart, allParts: BasePart[]) {
+	private setCollision(partStates: PartState[], enabled: boolean) {
+		for (const ps of partStates) {
+			ps.part.CanCollide = enabled ? ps.originalCanCollide : false;
+		}
+	}
+
+	private runLoop(primary: BasePart, partStates: PartState[]) {
 		const startCFrame = primary.CFrame;
 		const travelDir = startCFrame.RightVector;
 		const exitCFrame = startCFrame.add(travelDir.mul(TRAVEL_DISTANCE));
 		const duration = TRAVEL_DISTANCE / TWEEN_SPEED;
 
 		while (primary.Parent) {
-			// Start visible at initial position
+			// Start visible at initial position with original transparency
 			primary.CFrame = startCFrame;
-			this.setTransparency(allParts, 0);
+			this.setFade(partStates, 0);
+			this.setCollision(partStates, true);
 
 			// Tween from start toward city edge
 			const tween = TweenService.Create(
@@ -91,18 +110,16 @@ export class TrainService implements OnStart {
 				const traveled = (os.clock() - startTime) * TWEEN_SPEED;
 				if (traveled > TRAVEL_DISTANCE - FADE_STUDS) {
 					const remaining = TRAVEL_DISTANCE - traveled;
-					this.setTransparency(
-						allParts,
-						1 - math.max(remaining, 0) / FADE_STUDS,
-					);
+					this.setFade(partStates, 1 - math.max(remaining, 0) / FADE_STUDS);
 				}
 			});
 
 			tween.Completed.Wait();
 			conn.Disconnect();
 
-			// Hide and teleport back to start
-			this.setTransparency(allParts, 1);
+			// Hide, disable collision, and teleport back to start
+			this.setFade(partStates, 1);
+			this.setCollision(partStates, false);
 			primary.CFrame = startCFrame;
 
 			task.wait(TRAIN_INTERVAL);
