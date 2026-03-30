@@ -159,4 +159,8 @@ export const EN: Record<string, string> = {
 	zone_HachikoSquare: "Hachiko Square",
 	zone_CenterGai: "Center-gai",
 	zone_SkySlideHub: "Sky Slide Hub",
+	zone_Dogenzaka: "Dogenzaka",
+	zone_SpainZaka: "Spain-zaka",
+	zone_MiyashitaPark: "Miyashita Park",
+	zone_ShibuyaStation: "Shibuya Station",
 };

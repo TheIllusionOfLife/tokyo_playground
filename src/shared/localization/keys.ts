@@ -150,3 +150,7 @@ export const L_ZONE_SHIBUYA_CROSSING = "zone_ShibuyaCrossing";
 export const L_ZONE_HACHIKO_SQUARE = "zone_HachikoSquare";
 export const L_ZONE_CENTER_GAI = "zone_CenterGai";
 export const L_ZONE_SKY_SLIDE_HUB = "zone_SkySlideHub";
+export const L_ZONE_DOGENZAKA = "zone_Dogenzaka";
+export const L_ZONE_SPAIN_ZAKA = "zone_SpainZaka";
+export const L_ZONE_MIYASHITA_PARK = "zone_MiyashitaPark";
+export const L_ZONE_SHIBUYA_STATION = "zone_ShibuyaStation";
