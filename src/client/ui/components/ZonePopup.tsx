@@ -9,7 +9,9 @@ export function ZonePopup() {
 	if (currentZone === "") return undefined!;
 
 	const zoneKey = `zone_${currentZone}`;
-	const displayName = t(zoneKey);
+	const localized = t(zoneKey);
+	// Fall back to raw ZoneName attribute if no localization entry exists
+	const displayName = localized === zoneKey ? currentZone : localized;
 
 	return (
 		<frame
