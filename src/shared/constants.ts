@@ -12,7 +12,7 @@ export const CHARACTER_SCALE = 0.5; // half-size characters (makes city feel lar
 export const DEFAULT_JUMP_HEIGHT = 7.2; // standard jump height
 
 // Lobby & Match Flow
-export const LOBBY_INTERMISSION = 8;
+export const LOBBY_INTERMISSION = 4;
 export const RESULTS_DISPLAY_DURATION = 5;
 export const CLEANUP_DURATION = 3;
 

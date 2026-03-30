@@ -56,7 +56,7 @@ export function HachiPlayButton() {
 				BackgroundColor3={Color3.fromRGB(255, 160, 20)}
 				BorderSizePixel={0}
 				TextColor3={Color3.fromRGB(255, 255, 255)}
-				Text={"\u{25B6}"}
+				Text={"\u{1F43E}"}
 				TextScaled={true}
 				Font={Enum.Font.GothamBold}
 				ZIndex={10}
@@ -73,10 +73,10 @@ export function HachiPlayButton() {
 					Transparency={0.1}
 				/>
 				<uipadding
-					PaddingLeft={new UDim(0, 4)}
-					PaddingRight={new UDim(0, 0)}
-					PaddingTop={new UDim(0, 8)}
-					PaddingBottom={new UDim(0, 8)}
+					PaddingLeft={new UDim(0, 6)}
+					PaddingRight={new UDim(0, 6)}
+					PaddingTop={new UDim(0, 6)}
+					PaddingBottom={new UDim(0, 6)}
 				/>
 			</textbutton>
 			{/* Label below */}
@@ -88,7 +88,7 @@ export function HachiPlayButton() {
 				TextColor3={Color3.fromRGB(255, 220, 80)}
 				TextScaled={true}
 				Font={Enum.Font.FredokaOne}
-				Text="PLAY"
+				Text="JOIN"
 				ZIndex={10}
 			/>
 		</frame>
