@@ -235,8 +235,6 @@ export interface HachiRaceStateData {
 	leaderName: string;
 	leaderScore: number;
 	nextThreshold: number;
-	hotspotLabel: string;
-	hotspotTimeLeft: number;
 }
 
 export interface MissionProgressData {

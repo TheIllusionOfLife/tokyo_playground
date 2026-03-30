@@ -1,9 +1,10 @@
 import { OnStart, Service } from "@flamework/core";
-import { TweenService, Workspace } from "@rbxts/services";
+import { RunService, TweenService, Workspace } from "@rbxts/services";
 
-const TRAIN_INTERVAL = 10; // seconds to wait at each end before returning
+const TRAIN_INTERVAL = 12; // seconds to wait before next pass
 const TWEEN_SPEED = 60; // studs per second
-const TRAVEL_DISTANCE = 400; // studs to travel along the train's forward axis
+const TRAVEL_DISTANCE = 1900; // total one-way travel (beyond city edges on both sides)
+const FADE_STUDS = 80; // studs over which the train fades in/out
 
 @Service()
 export class TrainService implements OnStart {
@@ -34,7 +35,6 @@ export class TrainService implements OnStart {
 		for (const desc of train.GetDescendants()) {
 			if (desc.IsA("BasePart") && desc !== primary) {
 				desc.Anchored = false;
-				// Add weld if not already welded
 				if (!desc.FindFirstChildOfClass("WeldConstraint")) {
 					const weld = new Instance("WeldConstraint");
 					weld.Part0 = primary;
@@ -44,45 +44,78 @@ export class TrainService implements OnStart {
 			}
 		}
 
-		print("[TrainService] Started — animating Subway Train back and forth");
-		task.spawn(() => this.runLoop(primary));
+		// Collect all BaseParts for transparency fade
+		const allParts: BasePart[] = [];
+		for (const desc of train.GetDescendants()) {
+			if (desc.IsA("BasePart")) {
+				allParts.push(desc);
+			}
+		}
+
+		print("[TrainService] Started — one-directional train with fade");
+		task.spawn(() => this.runLoop(primary, allParts));
 	}
 
-	private runLoop(primary: BasePart) {
+	private setTransparency(parts: BasePart[], alpha: number) {
+		for (const part of parts) {
+			part.Transparency = alpha;
+		}
+	}
+
+	private runLoop(primary: BasePart, allParts: BasePart[]) {
 		const startCFrame = primary.CFrame;
-		// Travel along the train's RightVector (the model's length axis)
 		const travelDir = startCFrame.RightVector;
-		const endCFrame = startCFrame.add(travelDir.mul(TRAVEL_DISTANCE));
+		// Entry point: half travel distance behind start
+		const entryCFrame = startCFrame.sub(travelDir.mul(TRAVEL_DISTANCE / 2));
+		const exitCFrame = startCFrame.add(travelDir.mul(TRAVEL_DISTANCE / 2));
 		const duration = TRAVEL_DISTANCE / TWEEN_SPEED;
 
 		while (primary.Parent) {
-			// Move forward
-			const tweenFwd = TweenService.Create(
+			// Teleport to entry point, fully hidden
+			primary.CFrame = entryCFrame;
+			this.setTransparency(allParts, 1);
+
+			// Tween across entire distance
+			const tween = TweenService.Create(
 				primary,
 				new TweenInfo(
 					duration,
-					Enum.EasingStyle.Quad,
+					Enum.EasingStyle.Linear,
 					Enum.EasingDirection.InOut,
 				),
-				{ CFrame: endCFrame },
+				{ CFrame: exitCFrame },
 			);
-			tweenFwd.Play();
-			tweenFwd.Completed.Wait();
+			tween.Play();
 
-			task.wait(TRAIN_INTERVAL);
+			// Fade in/out via Heartbeat during the tween
+			const startTime = os.clock();
+			const conn = RunService.Heartbeat.Connect(() => {
+				const elapsed = os.clock() - startTime;
+				const traveled = elapsed * TWEEN_SPEED;
 
-			// Move back
-			const tweenBack = TweenService.Create(
-				primary,
-				new TweenInfo(
-					duration,
-					Enum.EasingStyle.Quad,
-					Enum.EasingDirection.InOut,
-				),
-				{ CFrame: startCFrame },
-			);
-			tweenBack.Play();
-			tweenBack.Completed.Wait();
+				// Fade in over first FADE_STUDS
+				if (traveled < FADE_STUDS) {
+					this.setTransparency(allParts, 1 - traveled / FADE_STUDS);
+				}
+				// Fade out over last FADE_STUDS
+				else if (traveled > TRAVEL_DISTANCE - FADE_STUDS) {
+					const remaining = TRAVEL_DISTANCE - traveled;
+					this.setTransparency(
+						allParts,
+						1 - math.max(remaining, 0) / FADE_STUDS,
+					);
+				}
+				// Fully visible in the middle
+				else {
+					this.setTransparency(allParts, 0);
+				}
+			});
+
+			tween.Completed.Wait();
+			conn.Disconnect();
+
+			// Ensure fully hidden after tween completes
+			this.setTransparency(allParts, 1);
 
 			task.wait(TRAIN_INTERVAL);
 		}

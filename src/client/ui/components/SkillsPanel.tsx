@@ -72,8 +72,7 @@ export function SkillsPanel() {
 		activeMinigameId === MinigameId.HachiRide &&
 		matchPhase === MatchPhase.InProgress;
 
-	// Reset stale overlay when panel becomes invisible so
-	// TodayGoalChip/FeaturedUnlockBanner don't stay suppressed.
+	// Reset stale overlay when panel becomes invisible.
 	React.useEffect(() => {
 		if (!visible && activeOverlay === "skills") {
 			gameStore.setActiveOverlay("none");

@@ -24,29 +24,21 @@ function MissionRow({ mission }: { mission: MissionProgressData }) {
 			BorderSizePixel={0}
 		>
 			<uicorner CornerRadius={new UDim(0, 4)} />
+			{/* Mission label with inline progress */}
 			<textlabel
-				Size={new UDim2(0.65, 0, 0.52, 0)}
+				Size={new UDim2(0.65, 0, 0.58, 0)}
 				Position={new UDim2(0.02, 0, 0.04, 0)}
 				BackgroundTransparency={1}
 				TextColor3={Color3.fromRGB(230, 230, 230)}
 				TextScaled={true}
 				Font={Enum.Font.Gotham}
-				Text={tMission(mission.id)}
+				Text={`${tMission(mission.id)}  ${mission.progress}/${mission.target}`}
 				TextXAlignment={Enum.TextXAlignment.Left}
 			/>
-			<textlabel
-				Size={new UDim2(0.65, 0, 0.28, 0)}
-				Position={new UDim2(0.02, 0, 0.58, 0)}
-				BackgroundTransparency={1}
-				TextColor3={Color3.fromRGB(160, 160, 180)}
-				TextScaled={true}
-				Font={Enum.Font.Gotham}
-				Text={`${mission.progress} / ${mission.target}`}
-				TextXAlignment={Enum.TextXAlignment.Left}
-			/>
+			{/* Progress bar */}
 			<frame
 				Size={new UDim2(0.65, 0, 0.1, 0)}
-				Position={new UDim2(0.02, 0, 0.88, 0)}
+				Position={new UDim2(0.02, 0, 0.72, 0)}
 				BackgroundColor3={Color3.fromRGB(40, 40, 60)}
 				BorderSizePixel={0}
 			>
@@ -59,6 +51,7 @@ function MissionRow({ mission }: { mission: MissionProgressData }) {
 					<uicorner CornerRadius={new UDim(0, 2)} />
 				</frame>
 			</frame>
+			{/* Points button: always shows pts, gray when in-progress, green when claimable */}
 			<textbutton
 				Size={new UDim2(0.28, 0, 0.68, 0)}
 				Position={new UDim2(0.7, 0, 0.16, 0)}
@@ -70,18 +63,18 @@ function MissionRow({ mission }: { mission: MissionProgressData }) {
 							: Color3.fromRGB(50, 50, 65)
 				}
 				TextColor3={
-					canClaim
-						? Color3.fromRGB(255, 255, 255)
-						: Color3.fromRGB(120, 120, 140)
+					mission.rewardCollected
+						? Color3.fromRGB(120, 120, 140)
+						: canClaim
+							? Color3.fromRGB(255, 255, 255)
+							: Color3.fromRGB(100, 100, 120)
 				}
 				TextScaled={true}
 				Font={Enum.Font.GothamBold}
 				Text={
 					mission.rewardCollected
 						? t(L_CLAIMED)
-						: canClaim
-							? `+${mission.pointsReward}`
-							: `${mission.progress}/${mission.target}`
+						: `+${mission.pointsReward}`
 				}
 				Active={canClaim}
 				Event={{
@@ -107,6 +100,9 @@ export function MissionPanel() {
 	const matchPhase = useSelector((state: GameStoreState) => state.matchPhase);
 	const activeMinigameId = useSelector(
 		(state: GameStoreState) => state.activeMinigameId,
+	);
+	const claimReady = useSelector(
+		(state: GameStoreState) => state.missionClaimReady,
 	);
 
 	// Hide during HachiRide InProgress (overlaps with rank/skills/points)
@@ -207,6 +203,30 @@ export function MissionPanel() {
 						))}
 					</frame>
 				</frame>
+			) : (
+				undefined!
+			)}
+			{/* Mission claim toast (moved from TodayGoalChip) */}
+			{claimReady ? (
+				<textbutton
+					key="MissionClaimToast"
+					Size={new UDim2(0, 250, 0, 46)}
+					Position={new UDim2(0.5, -125, 0.78, 0)}
+					BackgroundColor3={Color3.fromRGB(48, 126, 76)}
+					BorderSizePixel={0}
+					TextColor3={Color3.fromRGB(255, 255, 255)}
+					TextScaled={true}
+					Font={Enum.Font.GothamBold}
+					Text={`Mission Ready! Claim +${claimReady.pointsReward}`}
+					ZIndex={22}
+					Event={{
+						Activated: () => {
+							clientEvents.collectMissionReward.fire(claimReady.id);
+						},
+					}}
+				>
+					<uicorner CornerRadius={new UDim(0, 10)} />
+				</textbutton>
 			) : (
 				undefined!
 			)}
