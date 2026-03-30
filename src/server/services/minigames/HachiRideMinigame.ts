@@ -864,14 +864,16 @@ export class HachiRideMinigame implements IMinigame {
 	}
 
 	/** Raycast downward to find the surface Y at a given XZ position. */
+	/** Raycast downward to find the surface Y at a given XZ position. */
 	private raycastLandingY(x: number, z: number): number {
 		const origin = new Vector3(x, HACHI_SKY_DROP_MAX_Y + 50, z);
 		const direction = new Vector3(0, -(HACHI_SKY_DROP_MAX_Y + 100), 0);
 		const result = Workspace.Raycast(origin, direction);
+		// Float 2 studs above the surface to avoid clipping into geometry
 		if (result) {
-			return result.Position.Y;
+			return result.Position.Y + 2;
 		}
-		return HACHI_SKY_DROP_GROUND_Y;
+		return HACHI_SKY_DROP_GROUND_Y + 2;
 	}
 
 	private generateSpawnPositions(count: number): Vector3[] {
