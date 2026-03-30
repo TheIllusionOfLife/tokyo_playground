@@ -153,7 +153,7 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 		this.setOniWalkSpeed(0);
 		this.lastHintText = fireHintText(
 			this.serverEvents,
-			"Oni is counting... Hide!",
+			"hint_oni_counting",
 			this.lastHintText,
 		);
 
@@ -166,7 +166,7 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 				this.setOniWalkSpeed(DEFAULT_WALK_SPEED);
 				this.lastHintText = fireHintText(
 					this.serverEvents,
-					"Oni is hunting! Run and hide!",
+					"hint_oni_hunting",
 					this.lastHintText,
 				);
 				this.crowdThread = task.spawn(() => this.runCrowdLoop());
@@ -221,7 +221,7 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 
 		const wave = this.spawnCrowdWave(
 			SCRAMBLE_SPIRIT_WAVE_DURATION,
-			"Crowd Spirit! Extra cover for the hiders!",
+			"hint_spirit_wave",
 		);
 		if (wave.size() === 0) return;
 
@@ -347,7 +347,7 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 
 	private spawnCrowdWave(
 		duration = SCRAMBLE_CROWD_WAVE_DURATION,
-		hintText = "Crowd crossing — use them!",
+		hintText = "hint_crowd_crossing",
 	) {
 		const waypointsFolder = Workspace.FindFirstChild("CrowdWaypoints");
 		if (!waypointsFolder) return [];
@@ -401,6 +401,9 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 		endPos: Vector3,
 		duration: number,
 	): Model {
+		const rawDir = endPos.sub(startPos);
+		const dir = rawDir.Magnitude > 0.1 ? rawDir : new Vector3(0, 0, 1);
+
 		if (template) {
 			const npc = template.Clone();
 			for (const desc of npc.GetDescendants()) {
@@ -415,15 +418,15 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 				| undefined;
 			if (hrp) {
 				hrp.Anchored = true;
-				hrp.CFrame = new CFrame(startPos);
+				hrp.CFrame = CFrame.lookAt(startPos, startPos.add(dir));
 				npc.Parent = Workspace;
 				TweenService.Create(
 					hrp,
 					new TweenInfo(duration, Enum.EasingStyle.Linear),
-					{ CFrame: new CFrame(endPos) },
+					{ CFrame: CFrame.lookAt(endPos, endPos.add(dir)) },
 				).Play();
 			} else {
-				npc.PivotTo(new CFrame(startPos));
+				npc.PivotTo(CFrame.lookAt(startPos, startPos.add(dir)));
 				npc.Parent = Workspace;
 			}
 			return npc;
@@ -438,25 +441,40 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 		body.CanTouch = false;
 		body.CanQuery = false;
 		body.Color = Color3.fromRGB(150, 150, 150);
-		body.CFrame = new CFrame(startPos);
+		body.CFrame = CFrame.lookAt(startPos, startPos.add(dir));
 		body.Parent = fallback;
 		fallback.PrimaryPart = body;
 		fallback.Parent = Workspace;
 		TweenService.Create(
 			body,
 			new TweenInfo(duration, Enum.EasingStyle.Linear),
-			{ CFrame: new CFrame(endPos) },
+			{ CFrame: CFrame.lookAt(endPos, endPos.add(dir)) },
 		).Play();
 		return fallback;
 	}
 
 	private despawnCrowdNPCs(npcs = this.activeCrowdNPCs) {
-		for (const npc of npcs) {
-			npc.Destroy();
-		}
+		// Remove from tracking immediately so next-wave timing isn't blocked
 		this.activeCrowdNPCs = this.activeCrowdNPCs.filter(
 			(npc) => !npcs.includes(npc),
 		);
+		// Fade out then destroy
+		for (const npc of npcs) {
+			for (const desc of npc.GetDescendants()) {
+				if (desc.IsA("BasePart")) {
+					TweenService.Create(desc, new TweenInfo(1, Enum.EasingStyle.Linear), {
+						Transparency: 1,
+					}).Play();
+				} else if (desc.IsA("ParticleEmitter") || desc.IsA("Trail")) {
+					desc.Enabled = false;
+				}
+			}
+		}
+		task.delay(1.1, () => {
+			for (const npc of npcs) {
+				if (npc.Parent) npc.Destroy();
+			}
+		});
 	}
 
 	private runCarLoop() {
@@ -507,14 +525,23 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 				}
 			}
 
-			car.PivotTo(new CFrame(startPart.Position));
+			const rawDir = endPart.Position.sub(startPart.Position);
+			const carDir = rawDir.Magnitude > 0.1 ? rawDir : new Vector3(0, 0, 1);
+			car.PivotTo(
+				CFrame.lookAt(startPart.Position, startPart.Position.add(carDir)),
+			);
 			car.Parent = Workspace;
 
 			if (primary) {
 				TweenService.Create(
 					primary,
 					new TweenInfo(SCRAMBLE_CAR_SPEED_DURATION, Enum.EasingStyle.Linear),
-					{ CFrame: new CFrame(endPart.Position) },
+					{
+						CFrame: CFrame.lookAt(
+							endPart.Position,
+							endPart.Position.add(carDir),
+						),
+					},
 				).Play();
 			}
 
@@ -525,7 +552,7 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 		if (wave.size() > 0) {
 			this.lastHintText = fireHintText(
 				this.serverEvents,
-				"Cars crossing! Watch out!",
+				"hint_cars_crossing",
 				this.lastHintText,
 			);
 		}
@@ -567,12 +594,27 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 	}
 
 	private despawnCarNPCs(cars = this.activeCarNPCs) {
-		for (const car of cars) {
-			car.Destroy();
-		}
+		// Remove from tracking immediately
 		this.activeCarNPCs = this.activeCarNPCs.filter(
 			(car) => !cars.includes(car),
 		);
+		// Fade out then destroy
+		for (const car of cars) {
+			for (const desc of car.GetDescendants()) {
+				if (desc.IsA("BasePart")) {
+					TweenService.Create(desc, new TweenInfo(1, Enum.EasingStyle.Linear), {
+						Transparency: 1,
+					}).Play();
+				} else if (desc.IsA("ParticleEmitter") || desc.IsA("Trail")) {
+					desc.Enabled = false;
+				}
+			}
+		}
+		task.delay(1.1, () => {
+			for (const car of cars) {
+				if (car.Parent) car.Destroy();
+			}
+		});
 	}
 
 	private handleSlideTouch(touching: BasePart, ramp: BasePart) {

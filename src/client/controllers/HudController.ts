@@ -55,7 +55,7 @@ export class HudController implements OnStart {
 		});
 
 		clientEvents.hintTextChanged.connect((hint) => {
-			gameStore.setHintText(hint);
+			gameStore.setHintText(t(hint));
 		});
 
 		clientEvents.countdownTick.connect((secondsLeft) => {

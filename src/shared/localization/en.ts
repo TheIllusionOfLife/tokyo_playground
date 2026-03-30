@@ -153,6 +153,23 @@ export const EN: Record<string, string> = {
 	boundary_warning: "You're leaving the area!",
 	boundary_return: "Returning to the area...",
 
+	// Hachi play button
+	hachi_play: "PLAY",
+
+	// Hint texts
+	hint_oni_counting: "Oni is counting... Hide!",
+	hint_oni_hunting: "Oni is hunting! Run and hide!",
+	hint_spirit_wave: "Crowd Spirit! Extra cover for the hiders!",
+	hint_crowd_crossing: "Crowd crossing — use them!",
+	hint_cars_crossing: "Cars crossing! Watch out!",
+	hint_can_moved: "The can rolled to a new alley!",
+	hint_starting_can_kick: "Starting Can Kick...",
+	hint_starting_scramble: "Starting Shibuya Scramble...",
+	hint_hachi_start: "Mount Hachi and jump! Collect coins! 3... 2... 1...",
+	hint_items_falling: "Items falling from the sky! Collect as much as you can!",
+	hint_keep_collecting: "Keep collecting!",
+	hint_final_sprint: "Final sprint! Bonus items are worth triple now!",
+
 	// Zones
 	zone_ShibuyaSky: "Shibuya Sky",
 	zone_ShibuyaCrossing: "Shibuya Crossing",

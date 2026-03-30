@@ -138,7 +138,7 @@ export class CanKickMinigame implements IMinigame {
 
 		this.lastHintText = fireHintText(
 			this.serverEvents,
-			"Oni is counting... Hide!",
+			"hint_oni_counting",
 			this.lastHintText,
 		);
 
@@ -157,7 +157,7 @@ export class CanKickMinigame implements IMinigame {
 				);
 				this.lastHintText = fireHintText(
 					this.serverEvents,
-					"Oni is hunting! Run and hide!",
+					"hint_oni_hunting",
 					this.lastHintText,
 				);
 			},
@@ -177,7 +177,7 @@ export class CanKickMinigame implements IMinigame {
 		this.canModel.PivotTo(new CFrame(nextPosition));
 		this.lastHintText = fireHintText(
 			this.serverEvents,
-			"The can rolled to a new alley!",
+			"hint_can_moved",
 			this.lastHintText,
 		);
 	}

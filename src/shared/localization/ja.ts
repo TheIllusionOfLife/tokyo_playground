@@ -153,6 +153,23 @@ export const JA: Record<string, string> = {
 	boundary_warning: "エリアの端に近づいています!",
 	boundary_return: "エリアに戻ります...",
 
+	// Hachi play button
+	hachi_play: "プレイ",
+
+	// Hint texts
+	hint_oni_counting: "オニが数えている…隠れて!",
+	hint_oni_hunting: "オニが追いかけてくる! 逃げて隠れろ!",
+	hint_spirit_wave: "クラウドスピリット! 隠れる側の援護!",
+	hint_crowd_crossing: "群衆が横断中 — 紛れろ!",
+	hint_cars_crossing: "車が来る! 気をつけろ!",
+	hint_can_moved: "缶が新しい路地に転がった!",
+	hint_starting_can_kick: "缶蹴り開始...",
+	hint_starting_scramble: "渋谷スクランブル開始...",
+	hint_hachi_start: "ハチに乗ってジャンプ! コインを集めろ! 3... 2... 1...",
+	hint_items_falling: "空からアイテムが降ってくる! たくさん集めろ!",
+	hint_keep_collecting: "どんどん集めろ!",
+	hint_final_sprint: "ラストスパート! ボーナスアイテム3倍!",
+
 	// Zones
 	zone_ShibuyaSky: "渋谷スカイ",
 	zone_ShibuyaCrossing: "渋谷スクランブル交差点",

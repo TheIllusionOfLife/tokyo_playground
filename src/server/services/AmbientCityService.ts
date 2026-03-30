@@ -4,8 +4,9 @@ import { ServerStorage, TweenService, Workspace } from "@rbxts/services";
 const CROWD_WAVE_INTERVAL = 18; // seconds between crowd waves
 const CROWD_WAVE_DURATION = 12; // seconds for NPCs to cross
 const CROWD_NPCS_PER_PATH = 2; // reduced for lobby performance
-const CAR_WAVE_INTERVAL = 25; // seconds between car waves
 const CAR_WAVE_DURATION = 10; // seconds for cars to cross
+const TRAFFIC_GAP = 2; // seconds between car and crowd phases
+const FADE_OUT_DURATION = 1; // seconds for NPC fade-out
 
 @Service()
 export class AmbientCityService implements OnStart {
@@ -24,8 +25,7 @@ export class AmbientCityService implements OnStart {
 		this.running = true;
 		this.loopGeneration += 1;
 		const gen = this.loopGeneration;
-		task.spawn(() => this.runCrowdLoop(gen));
-		task.spawn(() => this.runCarLoop(gen));
+		task.spawn(() => this.runTrafficLoop(gen));
 	}
 
 	stop() {
@@ -46,25 +46,26 @@ export class AmbientCityService implements OnStart {
 		this.activeCarNPCs = [];
 	}
 
-	private runCrowdLoop(gen: number) {
+	/** Alternating traffic loop: cars → gap → pedestrians → gap → repeat */
+	private runTrafficLoop(gen: number) {
 		while (this.running && this.loopGeneration === gen) {
-			task.wait(CROWD_WAVE_INTERVAL);
+			// Car phase
+			const carWave = this.spawnCarWave();
+			task.wait(CAR_WAVE_DURATION);
 			if (!this.running || this.loopGeneration !== gen) break;
-			const wave = this.spawnCrowdWave();
-			task.wait(CROWD_WAVE_DURATION + 2);
-			if (!this.running || this.loopGeneration !== gen) break;
-			this.despawnNPCs(wave, this.activeCrowdNPCs);
-		}
-	}
+			this.fadeAndDestroy(carWave, this.activeCarNPCs);
 
-	private runCarLoop(gen: number) {
-		while (this.running && this.loopGeneration === gen) {
-			task.wait(CAR_WAVE_INTERVAL);
+			task.wait(TRAFFIC_GAP);
 			if (!this.running || this.loopGeneration !== gen) break;
-			const wave = this.spawnCarWave();
-			task.wait(CAR_WAVE_DURATION + 2);
-			if (!this.running) break;
-			this.despawnNPCs(wave, this.activeCarNPCs);
+
+			// Crowd phase
+			const crowdWave = this.spawnCrowdWave();
+			task.wait(CROWD_WAVE_DURATION);
+			if (!this.running || this.loopGeneration !== gen) break;
+			this.fadeAndDestroy(crowdWave, this.activeCrowdNPCs);
+
+			task.wait(TRAFFIC_GAP);
+			if (!this.running || this.loopGeneration !== gen) break;
 		}
 	}
 
@@ -142,14 +143,20 @@ export class AmbientCityService implements OnStart {
 			}
 		}
 
-		car.PivotTo(new CFrame(startPart.Position));
+		const rawDir = endPart.Position.sub(startPart.Position);
+		const carDir = rawDir.Magnitude > 0.1 ? rawDir : new Vector3(0, 0, 1);
+		car.PivotTo(
+			CFrame.lookAt(startPart.Position, startPart.Position.add(carDir)),
+		);
 		car.Parent = Workspace;
 
 		if (primary) {
 			TweenService.Create(
 				primary,
 				new TweenInfo(CAR_WAVE_DURATION, Enum.EasingStyle.Linear),
-				{ CFrame: new CFrame(endPart.Position) },
+				{
+					CFrame: CFrame.lookAt(endPart.Position, endPart.Position.add(carDir)),
+				},
 			).Play();
 		}
 
@@ -164,6 +171,9 @@ export class AmbientCityService implements OnStart {
 		endPos: Vector3,
 		duration: number,
 	): Model {
+		const rawDir = endPos.sub(startPos);
+		const dir = rawDir.Magnitude > 0.1 ? rawDir : new Vector3(0, 0, 1);
+
 		if (template) {
 			const npc = template.Clone();
 			for (const desc of npc.GetDescendants()) {
@@ -179,15 +189,15 @@ export class AmbientCityService implements OnStart {
 				| undefined;
 			if (hrp) {
 				hrp.Anchored = true;
-				hrp.CFrame = new CFrame(startPos);
+				hrp.CFrame = CFrame.lookAt(startPos, startPos.add(dir));
 				npc.Parent = Workspace;
 				TweenService.Create(
 					hrp,
 					new TweenInfo(duration, Enum.EasingStyle.Linear),
-					{ CFrame: new CFrame(endPos) },
+					{ CFrame: CFrame.lookAt(endPos, endPos.add(dir)) },
 				).Play();
 			} else {
-				npc.PivotTo(new CFrame(startPos));
+				npc.PivotTo(CFrame.lookAt(startPos, startPos.add(dir)));
 				npc.Parent = Workspace;
 			}
 			return npc;
@@ -203,26 +213,46 @@ export class AmbientCityService implements OnStart {
 		body.CanQuery = false;
 		body.CastShadow = false;
 		body.Color = Color3.fromRGB(150, 150, 150);
-		body.CFrame = new CFrame(startPos);
+		body.CFrame = CFrame.lookAt(startPos, startPos.add(dir));
 		body.Parent = fallback;
 		fallback.PrimaryPart = body;
 		fallback.Parent = Workspace;
 		TweenService.Create(
 			body,
 			new TweenInfo(duration, Enum.EasingStyle.Linear),
-			{ CFrame: new CFrame(endPos) },
+			{ CFrame: CFrame.lookAt(endPos, endPos.add(dir)) },
 		).Play();
 		return fallback;
 	}
 
-	private despawnNPCs(wave: Model[], activeList: Model[]) {
-		for (const npc of wave) {
-			if (npc.Parent) npc.Destroy();
-		}
-		// Remove from active list
+	/** Fade out NPCs/cars over 1s, then destroy. Removes from tracking immediately. */
+	private fadeAndDestroy(wave: Model[], activeList: Model[]) {
+		// Remove from active list immediately so next-wave timing isn't blocked
 		const waveSet = new Set(wave);
 		const remaining = activeList.filter((n) => !waveSet.has(n));
 		activeList.clear();
 		for (const n of remaining) activeList.push(n);
+
+		// Fade out all parts
+		for (const model of wave) {
+			for (const desc of model.GetDescendants()) {
+				if (desc.IsA("BasePart")) {
+					TweenService.Create(
+						desc,
+						new TweenInfo(FADE_OUT_DURATION, Enum.EasingStyle.Linear),
+						{ Transparency: 1 },
+					).Play();
+				} else if (desc.IsA("ParticleEmitter") || desc.IsA("Trail")) {
+					desc.Enabled = false;
+				}
+			}
+		}
+
+		// Destroy after fade completes
+		task.delay(FADE_OUT_DURATION + 0.1, () => {
+			for (const model of wave) {
+				if (model.Parent) model.Destroy();
+			}
+		});
 	}
 }

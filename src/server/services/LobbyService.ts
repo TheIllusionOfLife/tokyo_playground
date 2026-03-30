@@ -226,7 +226,10 @@ export class LobbyService implements OnStart {
 					);
 					return;
 				}
-				this.serverEvents.hintTextChanged.fire(player, "Starting Can Kick...");
+				this.serverEvents.hintTextChanged.fire(
+					player,
+					"hint_starting_can_kick",
+				);
 				this.onStartRequested(MinigameId.CanKick);
 			});
 		}
@@ -246,7 +249,7 @@ export class LobbyService implements OnStart {
 					}
 					this.serverEvents.hintTextChanged.fire(
 						player,
-						"Starting Shibuya Scramble...",
+						"hint_starting_scramble",
 					);
 					this.onStartRequested(MinigameId.ShibuyaScramble);
 				});

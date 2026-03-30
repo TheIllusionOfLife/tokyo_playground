@@ -144,6 +144,23 @@ export const L_MISSION_WIN_TWO_IN_A_ROW = "mission_WinTwoInARow";
 export const L_BOUNDARY_WARNING = "boundary_warning";
 export const L_BOUNDARY_RETURN = "boundary_return";
 
+// Hachi play button
+export const L_HACHI_PLAY = "hachi_play";
+
+// Hint texts
+export const L_HINT_ONI_COUNTING = "hint_oni_counting";
+export const L_HINT_ONI_HUNTING = "hint_oni_hunting";
+export const L_HINT_SPIRIT_WAVE = "hint_spirit_wave";
+export const L_HINT_CROWD_CROSSING = "hint_crowd_crossing";
+export const L_HINT_CARS_CROSSING = "hint_cars_crossing";
+export const L_HINT_CAN_MOVED = "hint_can_moved";
+export const L_HINT_STARTING_CAN_KICK = "hint_starting_can_kick";
+export const L_HINT_STARTING_SCRAMBLE = "hint_starting_scramble";
+export const L_HINT_HACHI_START = "hint_hachi_start";
+export const L_HINT_ITEMS_FALLING = "hint_items_falling";
+export const L_HINT_KEEP_COLLECTING = "hint_keep_collecting";
+export const L_HINT_FINAL_SPRINT = "hint_final_sprint";
+
 // Zone names
 export const L_ZONE_SHIBUYA_SKY = "zone_ShibuyaSky";
 export const L_ZONE_SHIBUYA_CROSSING = "zone_ShibuyaCrossing";

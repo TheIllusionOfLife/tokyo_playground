@@ -1,5 +1,6 @@
 import React from "@rbxts/react";
 import { useSelector } from "@rbxts/react-reflex";
+import { t } from "shared/localization";
 import { GameStoreState } from "shared/store/game-store";
 
 /**
@@ -28,7 +29,7 @@ export function ObstacleCourseTimer() {
 				TextColor3={Color3.fromRGB(150, 255, 150)}
 				TextScaled={true}
 				Font={Enum.Font.GothamBold}
-				Text="Obstacle Course Active"
+				Text={t("obstacle_active")}
 			/>
 		</frame>
 	);

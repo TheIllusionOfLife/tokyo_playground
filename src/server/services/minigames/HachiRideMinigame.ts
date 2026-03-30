@@ -362,9 +362,7 @@ export class HachiRideMinigame implements IMinigame {
 			}
 		}
 
-		this.serverEvents.hintTextChanged.broadcast(
-			"Mount Hachi and jump! Collect coins! 3... 2... 1...",
-		);
+		this.serverEvents.hintTextChanged.broadcast("hint_hachi_start");
 		return roles;
 	}
 
@@ -410,9 +408,7 @@ export class HachiRideMinigame implements IMinigame {
 				this.activeTweens.push(tween);
 			});
 		}
-		this.serverEvents.hintTextChanged.broadcast(
-			"Items falling from the sky! Collect as much as you can!",
-		);
+		this.serverEvents.hintTextChanged.broadcast("hint_items_falling");
 		this.broadcastRaceState();
 	}
 
@@ -789,7 +785,7 @@ export class HachiRideMinigame implements IMinigame {
 		// Also show level-up in generic hint after a delay
 		task.delay(3, () => {
 			if (!this.roundStarted) return;
-			this.serverEvents.hintTextChanged.fire(player, "Keep collecting!");
+			this.serverEvents.hintTextChanged.fire(player, "hint_keep_collecting");
 		});
 
 		print(
@@ -897,7 +893,7 @@ export class HachiRideMinigame implements IMinigame {
 		const buildingCount = math.floor(count * HACHI_SKY_DROP_BUILDING_BIAS);
 		const uniformCount = count - centerCount - buildingCount;
 
-		// 40% uniform across full DEM bounds
+		// 15% uniform across full DEM bounds
 		for (let i = 0; i < uniformCount; i++) {
 			const x =
 				HACHI_CITY_MIN_X +
@@ -909,7 +905,7 @@ export class HachiRideMinigame implements IMinigame {
 			positions.push(new Vector3(x, y, z));
 		}
 
-		// 35% within building area (more likely to land on rooftops)
+		// 70% within building area (more likely to land on rooftops)
 		for (let i = 0; i < buildingCount; i++) {
 			const x =
 				HACHI_BLDG_MIN_X +
@@ -921,7 +917,7 @@ export class HachiRideMinigame implements IMinigame {
 			positions.push(new Vector3(x, y, z));
 		}
 
-		// 15% center-biased within dense radius
+		// 15% center-biased within dense radius (unchanged)
 		for (let i = 0; i < centerCount; i++) {
 			const angle = math.random() * math.pi * 2;
 			const r = math.random() * HACHI_SKY_DROP_DENSE_RADIUS;
@@ -952,9 +948,7 @@ export class HachiRideMinigame implements IMinigame {
 			timeRemaining <= HACHI_FINAL_SPRINT_WINDOW
 		) {
 			this.finalSprintStarted = true;
-			this.serverEvents.hintTextChanged.broadcast(
-				"Final sprint! Bonus items are worth triple now!",
-			);
+			this.serverEvents.hintTextChanged.broadcast("hint_final_sprint");
 		}
 	}
 
