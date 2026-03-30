@@ -3,8 +3,8 @@ import { RunService, TweenService, Workspace } from "@rbxts/services";
 
 const TRAIN_INTERVAL = 12; // seconds to wait before next pass
 const TWEEN_SPEED = 60; // studs per second
-const TRAVEL_DISTANCE = 1900; // total one-way travel (beyond city edges on both sides)
-const FADE_STUDS = 80; // studs over which the train fades in/out
+const TRAVEL_DISTANCE = 950; // studs from start to city edge
+const FADE_STUDS = 80; // studs over which the train fades out at the end
 
 @Service()
 export class TrainService implements OnStart {
@@ -65,17 +65,15 @@ export class TrainService implements OnStart {
 	private runLoop(primary: BasePart, allParts: BasePart[]) {
 		const startCFrame = primary.CFrame;
 		const travelDir = startCFrame.RightVector;
-		// Entry point: half travel distance behind start
-		const entryCFrame = startCFrame.sub(travelDir.mul(TRAVEL_DISTANCE / 2));
-		const exitCFrame = startCFrame.add(travelDir.mul(TRAVEL_DISTANCE / 2));
+		const exitCFrame = startCFrame.add(travelDir.mul(TRAVEL_DISTANCE));
 		const duration = TRAVEL_DISTANCE / TWEEN_SPEED;
 
 		while (primary.Parent) {
-			// Teleport to entry point, fully hidden
-			primary.CFrame = entryCFrame;
-			this.setTransparency(allParts, 1);
+			// Start visible at initial position
+			primary.CFrame = startCFrame;
+			this.setTransparency(allParts, 0);
 
-			// Tween across entire distance
+			// Tween from start toward city edge
 			const tween = TweenService.Create(
 				primary,
 				new TweenInfo(
@@ -87,35 +85,25 @@ export class TrainService implements OnStart {
 			);
 			tween.Play();
 
-			// Fade in/out via Heartbeat during the tween
+			// Fade out near the end via Heartbeat
 			const startTime = os.clock();
 			const conn = RunService.Heartbeat.Connect(() => {
-				const elapsed = os.clock() - startTime;
-				const traveled = elapsed * TWEEN_SPEED;
-
-				// Fade in over first FADE_STUDS
-				if (traveled < FADE_STUDS) {
-					this.setTransparency(allParts, 1 - traveled / FADE_STUDS);
-				}
-				// Fade out over last FADE_STUDS
-				else if (traveled > TRAVEL_DISTANCE - FADE_STUDS) {
+				const traveled = (os.clock() - startTime) * TWEEN_SPEED;
+				if (traveled > TRAVEL_DISTANCE - FADE_STUDS) {
 					const remaining = TRAVEL_DISTANCE - traveled;
 					this.setTransparency(
 						allParts,
 						1 - math.max(remaining, 0) / FADE_STUDS,
 					);
 				}
-				// Fully visible in the middle
-				else {
-					this.setTransparency(allParts, 0);
-				}
 			});
 
 			tween.Completed.Wait();
 			conn.Disconnect();
 
-			// Ensure fully hidden after tween completes
+			// Hide and teleport back to start
 			this.setTransparency(allParts, 1);
+			primary.CFrame = startCFrame;
 
 			task.wait(TRAIN_INTERVAL);
 		}
