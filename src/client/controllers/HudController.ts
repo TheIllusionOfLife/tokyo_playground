@@ -12,6 +12,8 @@ import {
 } from "@rbxts/services";
 import { clientEvents } from "client/network";
 import { SCRAMBLE_SLIDE_COOLDOWN, SE_SLIDE } from "shared/constants";
+import { t } from "shared/localization";
+import { L_DAILY_LOGIN_BONUS } from "shared/localization/keys";
 import { gameStore } from "shared/store/game-store";
 import { MatchPhase, MinigameId, MissionId } from "shared/types";
 import { getFeaturedUnlock } from "shared/utils/featuredUnlock";
@@ -152,7 +154,7 @@ export class HudController implements OnStart {
 		});
 
 		clientEvents.dailyLoginBonus.connect((points) => {
-			gameStore.pushFeedMessage(`+${points} login bonus!`);
+			gameStore.pushFeedMessage(`+${points} ${t(L_DAILY_LOGIN_BONUS)}`);
 		});
 
 		clientEvents.hachiCostumeEquipped.connect((equipped) => {

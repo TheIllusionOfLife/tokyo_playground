@@ -157,20 +157,20 @@ export class MissionService implements OnStart {
 			}
 		}
 
-		// CatchStreak: 3+ catches in one round
-		if (state.catchCount >= 3) {
+		// CatchStreak: 3+ real catches in one round (exclude HachiRide where catchCount is item score)
+		if (state.minigameId !== MinigameId.HachiRide && state.catchCount >= 3) {
 			this.incrementAndNotify(player, MissionId.CatchStreak, 1);
 		}
 
-		// PlayAllGames: track distinct minigame types played
+		// PlayAllGames: track distinct minigame types played per session
+		// Increment atomically when all 3 types have been played (target: 1)
 		let played = this.gamesPlayedToday.get(player.UserId);
 		if (!played) {
 			played = new Set<MinigameId>();
 			this.gamesPlayedToday.set(player.UserId, played);
 		}
-		const prevSize = played.size();
 		played.add(state.minigameId);
-		if (played.size() > prevSize) {
+		if (played.size() >= 3) {
 			this.incrementAndNotify(player, MissionId.PlayAllGames, 1);
 		}
 
@@ -182,8 +182,14 @@ export class MissionService implements OnStart {
 			}
 		}
 
-		// PlayWithFriends: pairwise IsFriendsWith check
-		this.checkPlayWithFriends(player);
+		// PlayWithFriends: only check if mission is assigned (avoid unnecessary HTTP calls)
+		const data = this.playerDataService.getPlayerData(player);
+		if (
+			data &&
+			data.missions.slots.some((s) => s.id === MissionId.PlayWithFriends)
+		) {
+			this.checkPlayWithFriends(player);
+		}
 
 		const missions = this.buildProgressData(player);
 		this.serverEvents.missionUpdate.fire(player, missions);

@@ -266,6 +266,19 @@ export class EquipService implements OnStart {
 			return;
 		}
 
+		// Remove existing avatar accessories in the same slot to prevent visual stacking
+		const newAccType = template.AccessoryType;
+		for (const child of character.GetChildren()) {
+			if (
+				child.IsA("Accessory") &&
+				child.AccessoryType === newAccType &&
+				!child.FindFirstChild(EQUIPPED_ACCESSORY_TAG) &&
+				!child.FindFirstChild(EQUIPPED_HAT_TAG)
+			) {
+				child.Destroy();
+			}
+		}
+
 		const accessory = template.Clone();
 		const tag = new Instance("BoolValue");
 		tag.Name = EQUIPPED_ACCESSORY_TAG;

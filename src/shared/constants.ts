@@ -23,6 +23,7 @@ export const ONI_CATCH_BONUS = 5;
 export const HIDER_RESCUE_BONUS = 15;
 export const CAN_KICK_BONUS = 20;
 export const LOSS_MULTIPLIER = 0.6;
+export const DAILY_LOGIN_BONUS_POINTS = 20;
 
 // Can Kick
 export const ONI_CATCH_RADIUS = 8;
@@ -160,7 +161,7 @@ export const MISSION_DEFS: Record<
 	},
 	[MissionId.PlayAllGames]: {
 		label: "Play All 3 Games",
-		target: 3,
+		target: 1,
 		pointsReward: 65,
 	},
 	[MissionId.CatchStreak]: {
@@ -265,7 +266,7 @@ export const SHOP_CATALOG: Omit<ShopItemData, "owned" | "equipped">[] = [
 		id: ItemId.TrailCherryBlossom,
 		name: "Cherry Blossom Trail",
 		category: ItemCategory.Trail,
-		price: 80,
+		price: 100,
 		levelRequired: 1,
 	},
 	{

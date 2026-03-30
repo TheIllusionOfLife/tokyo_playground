@@ -2,7 +2,11 @@ import { OnStart, Service } from "@flamework/core";
 import ProfileService from "@rbxts/profileservice";
 import { Profile } from "@rbxts/profileservice/globals";
 import { Players } from "@rbxts/services";
-import { LEVEL_THRESHOLDS, MISSION_DEFS } from "shared/constants";
+import {
+	DAILY_LOGIN_BONUS_POINTS,
+	LEVEL_THRESHOLDS,
+	MISSION_DEFS,
+} from "shared/constants";
 import { GlobalEvents } from "shared/network";
 import {
 	DEFAULT_PLAYER_DATA,
@@ -102,7 +106,7 @@ export class PlayerDataService implements OnStart {
 			? data.lastLoginDay
 			: 0;
 		if (lastLogin < today) {
-			const bonusPoints = 20;
+			const bonusPoints = DAILY_LOGIN_BONUS_POINTS;
 			data.lastLoginDay = today;
 			this.addPlayPoints(player, bonusPoints);
 			const level = this.getPlaygroundLevel(player);
