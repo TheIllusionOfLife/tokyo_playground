@@ -30,8 +30,13 @@ import {
 	HACHI_ROOFTOP_BUILDINGS,
 	HACHI_ROUND_DURATION,
 	HACHI_SKY_DROP_ACTIVE_RATIO,
+	HACHI_SKY_DROP_BUILDING_BIAS,
 	HACHI_SKY_DROP_CENTER_BIAS,
 	HACHI_SKY_DROP_DENSE_RADIUS,
+	HACHI_BLDG_MIN_X,
+	HACHI_BLDG_MAX_X,
+	HACHI_BLDG_MIN_Z,
+	HACHI_BLDG_MAX_Z,
 	HACHI_SKY_DROP_FALL_DURATION,
 	HACHI_SKY_DROP_GROUND_Y,
 	HACHI_SKY_DROP_MAX_Y,
@@ -899,7 +904,6 @@ export class HachiRideMinigame implements IMinigame {
 	}
 
 	/** Raycast downward to find the surface Y at a given XZ position. */
-	/** Raycast downward to find the surface Y at a given XZ position. */
 	private raycastLandingY(x: number, z: number): number {
 		const origin = new Vector3(x, HACHI_SKY_DROP_MAX_Y + 50, z);
 		const direction = new Vector3(0, -(HACHI_SKY_DROP_MAX_Y + 100), 0);
@@ -914,9 +918,10 @@ export class HachiRideMinigame implements IMinigame {
 	private generateSpawnPositions(count: number): Vector3[] {
 		const positions: Vector3[] = [];
 		const centerCount = math.floor(count * HACHI_SKY_DROP_CENTER_BIAS);
-		const uniformCount = count - centerCount;
+		const buildingCount = math.floor(count * HACHI_SKY_DROP_BUILDING_BIAS);
+		const uniformCount = count - centerCount - buildingCount;
 
-		// Uniform positions across full city bounds
+		// 50% uniform across full DEM bounds
 		for (let i = 0; i < uniformCount; i++) {
 			const x =
 				HACHI_CITY_MIN_X +
@@ -928,7 +933,19 @@ export class HachiRideMinigame implements IMinigame {
 			positions.push(new Vector3(x, y, z));
 		}
 
-		// Center-biased positions within dense radius
+		// 35% within building area (more likely to land on rooftops)
+		for (let i = 0; i < buildingCount; i++) {
+			const x =
+				HACHI_BLDG_MIN_X +
+				math.random() * (HACHI_BLDG_MAX_X - HACHI_BLDG_MIN_X);
+			const z =
+				HACHI_BLDG_MIN_Z +
+				math.random() * (HACHI_BLDG_MAX_Z - HACHI_BLDG_MIN_Z);
+			const y = math.random(HACHI_SKY_DROP_MIN_Y, HACHI_SKY_DROP_MAX_Y);
+			positions.push(new Vector3(x, y, z));
+		}
+
+		// 15% center-biased within dense radius
 		for (let i = 0; i < centerCount; i++) {
 			const angle = math.random() * math.pi * 2;
 			const r = math.random() * HACHI_SKY_DROP_DENSE_RADIUS;
