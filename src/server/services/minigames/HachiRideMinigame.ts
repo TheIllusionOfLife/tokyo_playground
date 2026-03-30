@@ -398,6 +398,8 @@ export class HachiRideMinigame implements IMinigame {
 		// Reveal items and tween them falling from sky
 		for (const item of this.activeItems) {
 			item.Transparency = 0;
+			const shine = item.FindFirstChild("Shine") as ParticleEmitter | undefined;
+			if (shine) shine.Enabled = true;
 			const landY = this.itemLandingY.get(item) ?? HACHI_SKY_DROP_GROUND_Y;
 			const delay = math.random() * 3;
 			task.delay(delay, () => {
@@ -858,6 +860,39 @@ export class HachiRideMinigame implements IMinigame {
 		const scaleFactor = size.X / nativeSize;
 		mesh.Scale = new Vector3(scaleFactor, scaleFactor, scaleFactor);
 		mesh.Parent = part;
+
+		// Shining particle effect
+		const emitter = new Instance("ParticleEmitter");
+		emitter.Name = "Shine";
+		emitter.Rate = isBonus ? 8 : 4;
+		emitter.Lifetime = new NumberRange(0.4, 0.8);
+		emitter.Speed = new NumberRange(1, 3);
+		emitter.SpreadAngle = new Vector2(180, 180);
+		emitter.LightEmission = 1;
+		emitter.LightInfluence = 0;
+		emitter.Brightness = isBonus ? 2 : 1.5;
+		emitter.Size = new NumberSequence([
+			new NumberSequenceKeypoint(0, isBonus ? 0.8 : 0.4),
+			new NumberSequenceKeypoint(0.5, isBonus ? 0.3 : 0.15),
+			new NumberSequenceKeypoint(1, 0),
+		]);
+		emitter.Transparency = new NumberSequence([
+			new NumberSequenceKeypoint(0, 0.2),
+			new NumberSequenceKeypoint(0.5, 0.5),
+			new NumberSequenceKeypoint(1, 1),
+		]);
+		emitter.Color = isBonus
+			? new ColorSequence(
+					Color3.fromRGB(255, 220, 50),
+					Color3.fromRGB(255, 180, 0),
+				)
+			: new ColorSequence(
+					Color3.fromRGB(150, 220, 255),
+					Color3.fromRGB(80, 160, 255),
+				);
+		emitter.RotSpeed = new NumberRange(-120, 120);
+		emitter.Enabled = false; // enabled when item is revealed
+		emitter.Parent = part;
 
 		part.Parent = Workspace;
 		return part;
