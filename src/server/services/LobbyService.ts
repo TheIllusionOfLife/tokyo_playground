@@ -130,6 +130,7 @@ export class LobbyService implements OnStart {
 		this.setupPortals();
 		this.setupHachiRide();
 		this.setupHachiRidePortal();
+		this.setupMinigameStartRequest();
 		this.setupHachiSlideHandler();
 		this.setupHachiAnimation();
 		this.setupLobbyHachiJump();
@@ -156,6 +157,14 @@ export class LobbyService implements OnStart {
 				});
 		}
 		print(`[LobbyService] Set up ${portals.size()} Hachi Ride portals`);
+	}
+
+	private setupMinigameStartRequest() {
+		this.serverEvents.requestMinigameStart.connect((_player, minigameId) => {
+			if (this.matchActive) return;
+			if (!this.onStartRequested) return;
+			this.onStartRequested(minigameId);
+		});
 	}
 
 	/** Scale lobby Hachi models as visual props (no VehicleSeat setup needed). */

@@ -5,6 +5,7 @@ import { CountdownOverlay } from "./components/CountdownOverlay";
 import { EventFeed } from "./components/EventFeed";
 
 import { HachiHud } from "./components/HachiHud";
+import { HachiPlayButton } from "./components/HachiPlayButton";
 import { HachiToggleButton } from "./components/HachiToggleButton";
 import { HintText } from "./components/HintText";
 import { InviteButton } from "./components/InviteButton";
@@ -41,6 +42,7 @@ export function GameHud() {
 			<RoleIndicator />
 			<HachiHud />
 			<HachiToggleButton />
+			<HachiPlayButton />
 			<HintText />
 			<EventFeed />
 			<CountdownOverlay />

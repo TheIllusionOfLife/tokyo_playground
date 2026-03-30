@@ -831,7 +831,7 @@ export class HachiRideMinigame implements IMinigame {
 		isBonus = false,
 	): BasePart {
 		const part = new Instance("Part");
-		part.Size = new Vector3(0.05, 0.05, 0.05);
+		part.Size = size;
 		part.Transparency = 1;
 		part.Anchored = true;
 		part.CanCollide = false;
@@ -846,7 +846,10 @@ export class HachiRideMinigame implements IMinigame {
 		mesh.TextureId = isBonus
 			? HACHI_STAR_TEXTURE_ID
 			: HACHI_COIN_TEXTURE_ID;
-		mesh.Scale = size;
+		// Scale mesh to match the Part size (native mesh is ~2 studs for coin, ~5 for star)
+		const nativeSize = isBonus ? 5 : 2;
+		const scaleFactor = size.X / nativeSize;
+		mesh.Scale = new Vector3(scaleFactor, scaleFactor, scaleFactor);
 		mesh.Parent = part;
 
 		part.Parent = Workspace;
