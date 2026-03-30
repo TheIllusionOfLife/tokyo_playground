@@ -72,6 +72,7 @@ interface ServerToClientEvents {
 	hachiRaceState(state: HachiRaceStateData): void;
 	hachiCostumeEquipped(equipped: boolean): void;
 	roundSummary(summaryText: string, winnerName: string): void;
+	dailyLoginBonus(points: number): void;
 
 	// ── Living Shibuya: Day/Night ────────────────────────────────────────
 	timeOfDayChanged(phase: TimePhase, normalizedTime: number): void;

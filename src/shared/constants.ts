@@ -23,6 +23,7 @@ export const ONI_CATCH_BONUS = 5;
 export const HIDER_RESCUE_BONUS = 15;
 export const CAN_KICK_BONUS = 20;
 export const LOSS_MULTIPLIER = 0.6;
+export const DAILY_LOGIN_BONUS_POINTS = 20;
 
 // Can Kick
 export const ONI_CATCH_RADIUS = 8;
@@ -38,7 +39,7 @@ export const ACTION_COOLDOWN = 0.5;
 
 // Leveling — cumulative points needed per level
 export const LEVEL_THRESHOLDS: number[] = [
-	0, 50, 150, 350, 700, 1200, 2000, 3200, 5000, 8000,
+	0, 50, 200, 500, 1000, 1800, 3000, 4500, 7000, 10000,
 ];
 
 interface MinigameConfig {
@@ -153,6 +154,31 @@ export const MISSION_DEFS: Record<
 		target: 1,
 		pointsReward: 35,
 	},
+	[MissionId.PlayWithFriends]: {
+		label: "Play with a Friend",
+		target: 1,
+		pointsReward: 55,
+	},
+	[MissionId.PlayAllGames]: {
+		label: "Play All 3 Games",
+		target: 1,
+		pointsReward: 65,
+	},
+	[MissionId.CatchStreak]: {
+		label: "Catch 3 in One Round",
+		target: 1,
+		pointsReward: 70,
+	},
+	[MissionId.CollectHachiItems30]: {
+		label: "Collect 30 Items on Hachi",
+		target: 30,
+		pointsReward: 55,
+	},
+	[MissionId.WinTwoInARow]: {
+		label: "Win 2 Games in a Row",
+		target: 1,
+		pointsReward: 80,
+	},
 };
 
 export const ALL_MISSION_IDS: MissionId[] = [
@@ -170,6 +196,11 @@ export const ALL_MISSION_IDS: MissionId[] = [
 	MissionId.WinHachiRide,
 	MissionId.CollectBonusItem,
 	MissionId.DodgeCars,
+	MissionId.PlayWithFriends,
+	MissionId.PlayAllGames,
+	MissionId.CatchStreak,
+	MissionId.CollectHachiItems30,
+	MissionId.WinTwoInARow,
 ];
 
 /** Minigame-specific missions for daily slot selection. */
@@ -182,6 +213,10 @@ export const MINIGAME_MISSION_IDS: MissionId[] = [
 	MissionId.WinHachiRide,
 	MissionId.CollectBonusItem,
 	MissionId.DodgeCars,
+	MissionId.PlayAllGames,
+	MissionId.CatchStreak,
+	MissionId.CollectHachiItems30,
+	MissionId.WinTwoInARow,
 ];
 
 export const SHOP_CATALOG: Omit<ShopItemData, "owned" | "equipped">[] = [
@@ -189,71 +224,115 @@ export const SHOP_CATALOG: Omit<ShopItemData, "owned" | "equipped">[] = [
 		id: ItemId.HatCone,
 		name: "Alley Cone Cap",
 		category: ItemCategory.Hat,
-		price: 50,
+		price: 100,
 		levelRequired: 1,
 	},
 	{
 		id: ItemId.HatCrown,
 		name: "Scramble Crown",
 		category: ItemCategory.Hat,
-		price: 150,
+		price: 350,
 		levelRequired: 3,
 	},
 	{
 		id: ItemId.HatBucket,
 		name: "Station Bucket Hat",
 		category: ItemCategory.Hat,
-		price: 80,
+		price: 180,
 		levelRequired: 2,
 	},
 	{
 		id: ItemId.TrailStar,
 		name: "Neon Paw Trail",
 		category: ItemCategory.Trail,
-		price: 100,
+		price: 200,
 		levelRequired: 2,
 	},
 	{
 		id: ItemId.TrailRainbow,
 		name: "Crossing Lights Trail",
 		category: ItemCategory.Trail,
-		price: 200,
+		price: 500,
 		levelRequired: 4,
 	},
 	{
 		id: ItemId.TrailFlame,
 		name: "Lantern Flame Trail",
 		category: ItemCategory.Trail,
-		price: 120,
+		price: 300,
 		levelRequired: 3,
 	},
 	{
-		id: ItemId.EmoteDance,
-		name: "Festival Dance",
-		category: ItemCategory.Emote,
-		price: 60,
+		id: ItemId.TrailCherryBlossom,
+		name: "Cherry Blossom Trail",
+		category: ItemCategory.Trail,
+		price: 100,
 		levelRequired: 1,
 	},
 	{
-		id: ItemId.EmoteCheer,
-		name: "Conductor Cheer",
-		category: ItemCategory.Emote,
-		price: 70,
-		levelRequired: 1,
-	},
-	{
-		id: ItemId.EmoteWave,
-		name: "Tourist Wave",
-		category: ItemCategory.Emote,
-		price: 40,
-		levelRequired: 1,
-	},
-	{
-		id: ItemId.EmoteFlip,
-		name: "Rooftop Flip",
-		category: ItemCategory.Emote,
-		price: 250,
+		id: ItemId.TrailMidnightSpark,
+		name: "Midnight Spark Trail",
+		category: ItemCategory.Trail,
+		price: 600,
 		levelRequired: 5,
+	},
+	// Hats (assets now exist)
+	{
+		id: ItemId.HatKitsuneMask,
+		name: "Kitsune Mask",
+		category: ItemCategory.Hat,
+		price: 400,
+		levelRequired: 4,
+	},
+	{
+		id: ItemId.HatTokyoTower,
+		name: "Tokyo Tower Cap",
+		category: ItemCategory.Hat,
+		price: 650,
+		levelRequired: 5,
+	},
+	// Kitsune series
+	{
+		id: ItemId.KitsuneBack,
+		name: "Kitsune Tail",
+		category: ItemCategory.Back,
+		price: 350,
+		levelRequired: 3,
+	},
+	{
+		id: ItemId.KitsuneFace,
+		name: "Kitsune Whiskers",
+		category: ItemCategory.Face,
+		price: 200,
+		levelRequired: 2,
+	},
+	{
+		id: ItemId.KitsuneFront,
+		name: "Kitsune Omamori",
+		category: ItemCategory.Front,
+		price: 250,
+		levelRequired: 3,
+	},
+	{
+		id: ItemId.KitsuneNeck,
+		name: "Shrine Bell Collar",
+		category: ItemCategory.Neck,
+		price: 300,
+		levelRequired: 3,
+	},
+	{
+		id: ItemId.KitsuneShoulder,
+		name: "Fox Fire Mantle",
+		category: ItemCategory.Shoulder,
+		price: 500,
+		levelRequired: 4,
+	},
+	{
+		id: ItemId.KitsuneWaist,
+		name: "Fox Obi Sash",
+		category: ItemCategory.Waist,
+		price: 400,
+		levelRequired: 4,
 	},
 ];
 
@@ -282,13 +361,6 @@ export const STAMP_REWARD_CATALOG: Omit<ShopItemData, "owned" | "equipped">[] =
 			levelRequired: 0,
 		},
 		{
-			id: ItemId.EmoteOmamoriPrayer,
-			name: "Omamori Prayer",
-			category: ItemCategory.Emote,
-			price: 0,
-			levelRequired: 0,
-		},
-		{
 			id: ItemId.TrailTrainSpark,
 			name: "Train Spark",
 			category: ItemCategory.Trail,
@@ -299,13 +371,6 @@ export const STAMP_REWARD_CATALOG: Omit<ShopItemData, "owned" | "equipped">[] =
 			id: ItemId.HatSunsetCrown,
 			name: "Sunset Crown",
 			category: ItemCategory.Hat,
-			price: 0,
-			levelRequired: 0,
-		},
-		{
-			id: ItemId.TitleShibuyaExplorer,
-			name: "Shibuya Explorer",
-			category: ItemCategory.Emote,
 			price: 0,
 			levelRequired: 0,
 		},

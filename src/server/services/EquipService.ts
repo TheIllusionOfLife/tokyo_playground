@@ -1,6 +1,6 @@
 import { OnStart, Service } from "@flamework/core";
 import { Players, ServerStorage } from "@rbxts/services";
-import { SHOP_CATALOG } from "shared/constants";
+import { SHOP_CATALOG, STAMP_REWARD_CATALOG } from "shared/constants";
 
 import { GlobalEvents } from "shared/network";
 import { ItemCategory, ItemId } from "shared/types";
@@ -9,7 +9,18 @@ import { PlayerDataService } from "./PlayerDataService";
 const COSMETICS_FOLDER = "Cosmetics";
 const EQUIPPED_HAT_TAG = "EquippedHat";
 const EQUIPPED_TRAIL_TAG = "EquippedTrail";
+const EQUIPPED_ACCESSORY_TAG = "EquippedAccessory"; // tag for non-hat accessories
 const EQUIP_COOLDOWN = 0.5; // seconds between equip requests
+
+// Accessory categories that use the clone-from-ServerStorage pattern
+const ACCESSORY_CATEGORIES = new Set<ItemCategory>([
+	ItemCategory.Back,
+	ItemCategory.Face,
+	ItemCategory.Front,
+	ItemCategory.Neck,
+	ItemCategory.Shoulder,
+	ItemCategory.Waist,
+]);
 
 interface TrailStyle {
 	lifetime?: number;
@@ -32,6 +43,22 @@ const TRAIL_STYLES: Partial<Record<ItemId, TrailStyle>> = {
 		widthScale: new NumberSequence([
 			new NumberSequenceKeypoint(0, 0.5),
 			new NumberSequenceKeypoint(1, 0.05),
+		]),
+	},
+	[ItemId.TrailCherryBlossom]: {
+		lifetime: 1.5,
+		lightEmission: 0.4,
+		widthScale: new NumberSequence([
+			new NumberSequenceKeypoint(0, 1.2),
+			new NumberSequenceKeypoint(1, 0.3),
+		]),
+	},
+	[ItemId.TrailMidnightSpark]: {
+		lifetime: 0.3,
+		lightEmission: 1,
+		widthScale: new NumberSequence([
+			new NumberSequenceKeypoint(0, 0.6),
+			new NumberSequenceKeypoint(1, 0.02),
 		]),
 	},
 };
@@ -63,6 +90,16 @@ const TRAIL_COLORS: Partial<Record<ItemId, ColorSequence>> = {
 		new ColorSequenceKeypoint(0, Color3.fromRGB(255, 200, 50)),
 		new ColorSequenceKeypoint(0.3, Color3.fromRGB(255, 150, 0)),
 		new ColorSequenceKeypoint(1, Color3.fromRGB(255, 100, 0)),
+	]),
+	[ItemId.TrailCherryBlossom]: new ColorSequence([
+		new ColorSequenceKeypoint(0, Color3.fromRGB(255, 180, 200)),
+		new ColorSequenceKeypoint(0.5, Color3.fromRGB(255, 150, 180)),
+		new ColorSequenceKeypoint(1, Color3.fromRGB(255, 220, 230)),
+	]),
+	[ItemId.TrailMidnightSpark]: new ColorSequence([
+		new ColorSequenceKeypoint(0, Color3.fromRGB(100, 50, 200)),
+		new ColorSequenceKeypoint(0.5, Color3.fromRGB(60, 20, 150)),
+		new ColorSequenceKeypoint(1, Color3.fromRGB(180, 100, 255)),
 	]),
 };
 
@@ -129,7 +166,9 @@ export class EquipService implements OnStart {
 	}
 
 	private handleEquipRequest(player: Player, itemId: ItemId) {
-		const catalogItem = SHOP_CATALOG.find((item) => item.id === itemId);
+		const catalogItem =
+			SHOP_CATALOG.find((item) => item.id === itemId) ??
+			STAMP_REWARD_CATALOG.find((item) => item.id === itemId);
 		if (!catalogItem) return;
 
 		const category = catalogItem.category;
@@ -176,8 +215,9 @@ export class EquipService implements OnStart {
 			this.applyHat(character, itemId);
 		} else if (category === ItemCategory.Trail) {
 			this.applyTrail(character, itemId);
+		} else if (ACCESSORY_CATEGORIES.has(category)) {
+			this.applyAccessory(character, itemId, category);
 		}
-		// Emotes deferred (requires uploaded animation IDs)
 	}
 
 	private removeCosmetic(player: Player, category: ItemCategory) {
@@ -185,19 +225,71 @@ export class EquipService implements OnStart {
 		if (!character) return;
 
 		if (category === ItemCategory.Hat) {
-			// Remove any previously equipped hat
 			for (const child of character.GetChildren()) {
 				if (child.IsA("Accessory") && child.FindFirstChild(EQUIPPED_HAT_TAG)) {
 					child.Destroy();
 				}
 			}
 		} else if (category === ItemCategory.Trail) {
-			// Remove any previously equipped trail
 			for (const child of character.GetDescendants()) {
 				if (child.IsA("Trail") && child.Name === EQUIPPED_TRAIL_TAG) {
 					child.Destroy();
 				}
 			}
+		} else if (ACCESSORY_CATEGORIES.has(category)) {
+			// Remove accessory tagged with this category
+			for (const child of character.GetChildren()) {
+				if (
+					child.IsA("Accessory") &&
+					child.FindFirstChild(EQUIPPED_ACCESSORY_TAG) &&
+					child.GetAttribute("EquipCategory") === category
+				) {
+					child.Destroy();
+				}
+			}
+		}
+	}
+
+	private applyAccessory(
+		character: Model,
+		itemId: ItemId,
+		category: ItemCategory,
+	) {
+		const cosmeticsFolder = ServerStorage.FindFirstChild(COSMETICS_FOLDER);
+		if (!cosmeticsFolder) {
+			warn("[EquipService] Missing ServerStorage.Cosmetics folder");
+			return;
+		}
+		const template = cosmeticsFolder.FindFirstChild(itemId);
+		if (!template || !template.IsA("Accessory")) {
+			warn(`[EquipService] Missing accessory: ${itemId}`);
+			return;
+		}
+
+		// Remove existing avatar accessories in the same slot to prevent visual stacking
+		const newAccType = template.AccessoryType;
+		for (const child of character.GetChildren()) {
+			if (
+				child.IsA("Accessory") &&
+				child.AccessoryType === newAccType &&
+				!child.FindFirstChild(EQUIPPED_ACCESSORY_TAG) &&
+				!child.FindFirstChild(EQUIPPED_HAT_TAG)
+			) {
+				child.Destroy();
+			}
+		}
+
+		const accessory = template.Clone();
+		const tag = new Instance("BoolValue");
+		tag.Name = EQUIPPED_ACCESSORY_TAG;
+		tag.Parent = accessory;
+		accessory.SetAttribute("EquipCategory", category);
+
+		const humanoid = character.FindFirstChildOfClass("Humanoid");
+		if (humanoid) {
+			humanoid.AddAccessory(accessory);
+		} else {
+			accessory.Parent = character;
 		}
 	}
 
@@ -219,7 +311,13 @@ export class EquipService implements OnStart {
 		const tag = new Instance("BoolValue");
 		tag.Name = EQUIPPED_HAT_TAG;
 		tag.Parent = hat;
-		hat.Parent = character;
+
+		const humanoid = character.FindFirstChildOfClass("Humanoid");
+		if (humanoid) {
+			humanoid.AddAccessory(hat);
+		} else {
+			hat.Parent = character;
+		}
 	}
 
 	private applyTrail(character: Model, itemId: ItemId) {

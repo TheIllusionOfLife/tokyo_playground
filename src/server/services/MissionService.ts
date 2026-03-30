@@ -1,4 +1,5 @@
 import { OnStart, Service } from "@flamework/core";
+import { Players } from "@rbxts/services";
 import {
 	ALL_MISSION_IDS,
 	MINIGAME_MISSION_IDS,
@@ -13,11 +14,15 @@ import {
 	MissionSlot,
 	PlayerRole,
 } from "shared/types";
+import { getCurrentDay } from "shared/utils/dayKey";
 import { PlayerDataService } from "./PlayerDataService";
 
 @Service()
 export class MissionService implements OnStart {
 	private readonly serverEvents = GlobalEvents.createServer({});
+	// Transient per-session tracking for PlayAllGames (not persisted)
+	private readonly gamesPlayedToday = new Map<number, Set<MinigameId>>();
+	private readonly playAllGamesCredited = new Set<number>(); // players already credited this session
 
 	constructor(private readonly playerDataService: PlayerDataService) {}
 
@@ -34,14 +39,15 @@ export class MissionService implements OnStart {
 		this.serverEvents.collectMissionReward.connect((player, id) => {
 			this.handleCollectReward(player, id);
 		});
-	}
 
-	getCurrentDay(): number {
-		return math.floor(os.time() / 86400);
+		Players.PlayerRemoving.Connect((player) => {
+			this.gamesPlayedToday.delete(player.UserId);
+			this.playAllGamesCredited.delete(player.UserId);
+		});
 	}
 
 	onPlayerJoined(player: Player) {
-		const day = this.getCurrentDay();
+		const day = getCurrentDay();
 		this.playerDataService.checkAndResetMissions(player, day);
 
 		const data = this.playerDataService.getPlayerData(player);
@@ -139,6 +145,11 @@ export class MissionService implements OnStart {
 					MissionId.CollectHachiItems,
 					state.itemCount,
 				);
+				this.incrementAndNotify(
+					player,
+					MissionId.CollectHachiItems30,
+					state.itemCount,
+				);
 			}
 			if (state.evolutionLevel >= 3) {
 				this.incrementAndNotify(player, MissionId.ReachHachiLevel3, 1);
@@ -146,6 +157,45 @@ export class MissionService implements OnStart {
 			if (won) {
 				this.incrementAndNotify(player, MissionId.WinHachiRide, 1);
 			}
+		}
+
+		// CatchStreak: 3+ real catches in one round (exclude HachiRide where catchCount is item score)
+		if (state.minigameId !== MinigameId.HachiRide && state.catchCount >= 3) {
+			this.incrementAndNotify(player, MissionId.CatchStreak, 1);
+		}
+
+		// PlayAllGames: track distinct minigame types played per session
+		// Increment once when all 3 types have been played (target: 1)
+		if (!this.playAllGamesCredited.has(player.UserId)) {
+			let played = this.gamesPlayedToday.get(player.UserId);
+			if (!played) {
+				played = new Set<MinigameId>();
+				this.gamesPlayedToday.set(player.UserId, played);
+			}
+			const prevSize = played.size();
+			played.add(state.minigameId);
+			if (prevSize < 3 && played.size() >= 3) {
+				this.incrementAndNotify(player, MissionId.PlayAllGames, 1);
+				this.playAllGamesCredited.add(player.UserId);
+			}
+		}
+
+		// WinTwoInARow: streakCount is already updated before this call
+		// Use >= 2 (not === 2) so mission works regardless of when it's assigned mid-streak
+		if (won) {
+			const streakCount = this.playerDataService.getStreakCount(player);
+			if (streakCount >= 2) {
+				this.incrementAndNotify(player, MissionId.WinTwoInARow, 1);
+			}
+		}
+
+		// PlayWithFriends: only check if mission is assigned (avoid unnecessary HTTP calls)
+		const data = this.playerDataService.getPlayerData(player);
+		if (
+			data &&
+			data.missions.slots.some((s) => s.id === MissionId.PlayWithFriends)
+		) {
+			this.checkPlayWithFriends(player);
 		}
 
 		const missions = this.buildProgressData(player);
@@ -200,6 +250,18 @@ export class MissionService implements OnStart {
 			});
 		}
 		return result;
+	}
+
+	private checkPlayWithFriends(player: Player) {
+		// Check if any other player in the server is a friend
+		const others = Players.GetPlayers().filter((p) => p !== player);
+		for (const other of others) {
+			const [ok, isFriend] = pcall(() => player.IsFriendsWith(other.UserId));
+			if (ok && isFriend) {
+				this.incrementAndNotify(player, MissionId.PlayWithFriends, 1);
+				break;
+			}
+		}
 	}
 
 	/** Increment mission progress and notify client if newly completed. Public for cross-service use. */

@@ -125,6 +125,30 @@ export const JA: Record<string, string> = {
 	mission_CollectBonusItem: "ボーナスアイテムを集める",
 	mission_DodgeCars: "車ウェーブを生き残る",
 
+	// New shop item names
+	item_cherry_blossom_trail: "桜トレイル",
+	item_midnight_spark_trail: "ミッドナイトスパーク",
+
+	// Kitsune series + new hats
+	item_kitsune_mask: "キツネ面",
+	item_tokyo_tower: "東京タワーキャップ",
+	item_kitsune_back: "キツネの尻尾",
+	item_kitsune_face: "キツネのヒゲ",
+	item_kitsune_front: "キツネお守り",
+	item_kitsune_neck: "神社の鈴首輪",
+	item_kitsune_shoulder: "狐火マント",
+	item_kitsune_waist: "狐帯サッシュ",
+
+	// Daily login
+	daily_login_bonus: "ログインボーナス!",
+
+	// New mission labels
+	mission_PlayWithFriends: "フレンドと遊ぶ",
+	mission_PlayAllGames: "3種類すべて遊ぶ",
+	mission_CatchStreak: "1ラウンドで3人捕まえる",
+	mission_CollectHachiItems30: "ハチで30個集める",
+	mission_WinTwoInARow: "2連勝する",
+
 	// Boundary
 	boundary_warning: "エリアの端に近づいています!",
 	boundary_return: "エリアに戻ります...",

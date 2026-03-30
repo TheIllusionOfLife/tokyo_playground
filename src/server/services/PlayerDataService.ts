@@ -2,7 +2,11 @@ import { OnStart, Service } from "@flamework/core";
 import ProfileService from "@rbxts/profileservice";
 import { Profile } from "@rbxts/profileservice/globals";
 import { Players } from "@rbxts/services";
-import { LEVEL_THRESHOLDS, MISSION_DEFS } from "shared/constants";
+import {
+	DAILY_LOGIN_BONUS_POINTS,
+	LEVEL_THRESHOLDS,
+	MISSION_DEFS,
+} from "shared/constants";
 import { GlobalEvents } from "shared/network";
 import {
 	DEFAULT_PLAYER_DATA,
@@ -13,6 +17,7 @@ import {
 	PlayerMissions,
 	RewardBreakdown,
 } from "shared/types";
+import { getCurrentDay } from "shared/utils/dayKey";
 
 const PROFILE_STORE_KEY = "PlayerData_v1";
 
@@ -93,6 +98,25 @@ export class PlayerDataService implements OnStart {
 		// Notify all registered callbacks (e.g. MissionService) that profile is ready
 		for (const cb of this.profileLoadedCallbacks) {
 			cb(player);
+		}
+
+		// Daily login bonus
+		const today = getCurrentDay();
+		const lastLogin = typeIs(data.lastLoginDay, "number")
+			? data.lastLoginDay
+			: 0;
+		if (lastLogin < today) {
+			const bonusPoints = DAILY_LOGIN_BONUS_POINTS;
+			data.lastLoginDay = today;
+			this.addPlayPoints(player, bonusPoints);
+			const level = this.getPlaygroundLevel(player);
+			this.serverEvents.playPointsUpdate.fire(
+				player,
+				data.totalPlayPoints,
+				level,
+				data.shopBalance,
+			);
+			this.serverEvents.dailyLoginBonus.fire(player, bonusPoints);
 		}
 
 		// fix M3: dedicated sync for Living Shibuya progress

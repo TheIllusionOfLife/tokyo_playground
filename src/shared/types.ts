@@ -105,6 +105,11 @@ export enum MissionId {
 	WinHachiRide = "WinHachiRide",
 	CollectBonusItem = "CollectBonusItem",
 	DodgeCars = "DodgeCars",
+	PlayWithFriends = "PlayWithFriends",
+	PlayAllGames = "PlayAllGames",
+	CatchStreak = "CatchStreak",
+	CollectHachiItems30 = "CollectHachiItems30",
+	WinTwoInARow = "WinTwoInARow",
 }
 
 export enum ItemId {
@@ -114,25 +119,36 @@ export enum ItemId {
 	TrailStar = "TrailStar",
 	TrailRainbow = "TrailRainbow",
 	TrailFlame = "TrailFlame",
-	EmoteDance = "EmoteDance",
-	EmoteCheer = "EmoteCheer",
-	EmoteWave = "EmoteWave",
-	EmoteFlip = "EmoteFlip",
+	// New shop items
+	TrailCherryBlossom = "TrailCherryBlossom",
+	TrailMidnightSpark = "TrailMidnightSpark",
+	// Kitsune series (+ hats with assets)
+	HatKitsuneMask = "HatKitsuneMask",
+	HatTokyoTower = "HatTokyoTower",
+	KitsuneBack = "KitsuneBack",
+	KitsuneFace = "KitsuneFace",
+	KitsuneFront = "KitsuneFront",
+	KitsuneNeck = "KitsuneNeck",
+	KitsuneShoulder = "KitsuneShoulder",
+	KitsuneWaist = "KitsuneWaist",
 	// Living Shibuya stamp set rewards
 	HatAlleyCatEars = "HatAlleyCatEars",
 	TrailCloudWalk = "TrailCloudWalk",
 	HatNeonVisor = "HatNeonVisor",
-	EmoteOmamoriPrayer = "EmoteOmamoriPrayer",
 	TrailTrainSpark = "TrailTrainSpark",
 	HatSunsetCrown = "HatSunsetCrown",
-	TitleShibuyaExplorer = "TitleShibuyaExplorer",
 	SkinGoldenHachi = "SkinGoldenHachi",
 }
 
 export enum ItemCategory {
 	Hat = "Hat",
 	Trail = "Trail",
-	Emote = "Emote",
+	Back = "Back",
+	Face = "Face",
+	Front = "Front",
+	Neck = "Neck",
+	Shoulder = "Shoulder",
+	Waist = "Waist",
 }
 
 export interface CanKickPlayerState {
@@ -306,6 +322,8 @@ export interface PlayerData {
 	// Living Shibuya: Micro-Events
 	badges: string[];
 	obstacleBestTime: number;
+	// Daily login
+	lastLoginDay: number;
 }
 
 export const DEFAULT_PLAYER_DATA: PlayerData = {
@@ -327,4 +345,5 @@ export const DEFAULT_PLAYER_DATA: PlayerData = {
 	lastNpcInteractionDay: 0,
 	badges: [],
 	obstacleBestTime: 0,
+	lastLoginDay: 0,
 };
