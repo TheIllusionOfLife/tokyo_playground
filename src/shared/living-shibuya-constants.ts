@@ -128,7 +128,7 @@ export const STAMP_SET_DEFINITIONS: Record<StampSetId, StampSetData> = {
 			"shrine_bell",
 			"shrine_garden",
 		],
-		rewardItemId: ItemId.EmoteOmamoriPrayer,
+		rewardItemId: ItemId.HatNeonVisor, // placeholder (stamps inactive)
 		displayName: "Shrine Path (参道)",
 	},
 	[StampSetId.Station]: {
@@ -156,7 +156,7 @@ export const STAMP_SET_DEFINITIONS: Record<StampSetId, StampSetData> = {
 			"seasonal_autumn",
 			"seasonal_winter",
 		],
-		rewardItemId: ItemId.TitleShibuyaExplorer,
+		rewardItemId: ItemId.HatAlleyCatEars, // placeholder (stamps inactive)
 		displayName: "Seasonal (四季)",
 	},
 	[StampSetId.CompleteRally]: {

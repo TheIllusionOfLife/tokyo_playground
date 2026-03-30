@@ -1,15 +1,9 @@
 import { OnStart, Service } from "@flamework/core";
 import { Players, ServerStorage } from "@rbxts/services";
-import {
-	EMOTE_COOLDOWN,
-	SHOP_CATALOG,
-	STAMP_REWARD_CATALOG,
-} from "shared/constants";
+import { SHOP_CATALOG, STAMP_REWARD_CATALOG } from "shared/constants";
 
 import { GlobalEvents } from "shared/network";
-import { GameState, ItemCategory, ItemId, MissionId } from "shared/types";
-import { GameStateService } from "./GameStateService";
-import { MissionService } from "./MissionService";
+import { ItemCategory, ItemId } from "shared/types";
 import { PlayerDataService } from "./PlayerDataService";
 
 const COSMETICS_FOLDER = "Cosmetics";
@@ -114,20 +108,11 @@ export class EquipService implements OnStart {
 	private readonly serverEvents = GlobalEvents.createServer({});
 	private readonly charAddedConns = new Map<number, RBXScriptConnection>();
 	private readonly equipCooldowns = new Map<number, number>();
-	private readonly emoteCooldowns = new Map<number, number>();
 
-	constructor(
-		private readonly playerDataService: PlayerDataService,
-		private readonly gameStateService: GameStateService,
-		private readonly missionService: MissionService,
-	) {}
+	constructor(private readonly playerDataService: PlayerDataService) {}
 
 	onStart() {
 		print("[EquipService] Started");
-
-		this.serverEvents.requestPlayEmote.connect((player) => {
-			this.handlePlayEmote(player);
-		});
 
 		this.serverEvents.requestEquip.connect((player, itemId) => {
 			const now = os.clock();
@@ -157,7 +142,6 @@ export class EquipService implements OnStart {
 				this.charAddedConns.delete(player.UserId);
 			}
 			this.equipCooldowns.delete(player.UserId);
-			this.emoteCooldowns.delete(player.UserId);
 		});
 	}
 
@@ -233,32 +217,6 @@ export class EquipService implements OnStart {
 			this.applyTrail(character, itemId);
 		} else if (ACCESSORY_CATEGORIES.has(category)) {
 			this.applyAccessory(character, itemId, category);
-		}
-		// Emotes are celebration effects: no visual on spawn, triggered via requestPlayEmote
-	}
-
-	private handlePlayEmote(player: Player) {
-		// Lobby-only gate
-		if (this.gameStateService.getCurrentState() !== GameState.Lobby) return;
-
-		// Cooldown check
-		const now = os.clock();
-		if (now - (this.emoteCooldowns.get(player.UserId) ?? 0) < EMOTE_COOLDOWN)
-			return;
-
-		// Check player has an emote equipped
-		const equippedItems = this.playerDataService.getEquippedItems(player);
-		const equippedEmote = equippedItems[ItemCategory.Emote];
-		if (equippedEmote === undefined) return;
-
-		this.emoteCooldowns.set(player.UserId, now);
-
-		// Track UseEmote mission
-		this.missionService.incrementAndNotify(player, MissionId.UseEmote, 1);
-
-		// Broadcast to all players
-		for (const p of Players.GetPlayers()) {
-			this.serverEvents.emoteTriggered.fire(p, player.UserId, equippedEmote);
 		}
 	}
 

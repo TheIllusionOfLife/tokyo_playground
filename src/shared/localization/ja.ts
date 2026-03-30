@@ -128,8 +128,6 @@ export const JA: Record<string, string> = {
 	// New shop item names
 	item_cherry_blossom_trail: "桜トレイル",
 	item_midnight_spark_trail: "ミッドナイトスパーク",
-	item_cherry_blast: "チェリーブラスト",
-	item_thunder_clap: "サンダークラップ",
 
 	// Kitsune series + new hats
 	item_kitsune_mask: "キツネ面",
@@ -141,22 +139,15 @@ export const JA: Record<string, string> = {
 	item_kitsune_shoulder: "狐火マント",
 	item_kitsune_waist: "狐帯サッシュ",
 
-	// Shop category labels
-	shop_category_effect: "エフェクト",
-
 	// Daily login
 	daily_login_bonus: "ログインボーナス!",
 
 	// New mission labels
 	mission_PlayWithFriends: "フレンドと遊ぶ",
-	mission_UseEmote: "エフェクトを3回使う",
 	mission_PlayAllGames: "3種類すべて遊ぶ",
 	mission_CatchStreak: "1ラウンドで3人捕まえる",
 	mission_CollectHachiItems30: "ハチで30個集める",
 	mission_WinTwoInARow: "2連勝する",
-
-	// Emote / Celebration Effects
-	emote_trigger: "エフェクト",
 
 	// Boundary
 	boundary_warning: "エリアの端に近づいています!",

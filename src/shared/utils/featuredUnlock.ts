@@ -9,26 +9,20 @@ export type FeaturedUnlock = FeaturedUnlockData;
 const FEATURED_UNLOCK_ORDER: ItemId[] = [
 	ItemId.HatCone,
 	ItemId.TrailCherryBlossom,
-	ItemId.EmoteWave,
 	ItemId.KitsuneFace,
 	ItemId.TrailStar,
-	ItemId.EmoteDance,
 	ItemId.HatBucket,
-	ItemId.EmoteCheer,
 	ItemId.KitsuneNeck,
 	ItemId.HatCrown,
 	ItemId.TrailFlame,
 	ItemId.KitsuneBack,
 	ItemId.KitsuneFront,
-	ItemId.EmoteCherryBlast,
 	ItemId.HatKitsuneMask,
 	ItemId.KitsuneWaist,
-	ItemId.EmoteThunderClap,
 	ItemId.KitsuneShoulder,
 	ItemId.TrailRainbow,
 	ItemId.TrailMidnightSpark,
 	ItemId.HatTokyoTower,
-	ItemId.EmoteFlip,
 ];
 
 export function getFeaturedUnlock(

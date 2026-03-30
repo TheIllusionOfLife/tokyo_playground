@@ -2,7 +2,6 @@ import React from "@rbxts/react";
 import { ActionButton } from "./components/ActionButton";
 import { BonOdoriRhythmLane } from "./components/BonOdoriRhythmLane";
 import { CountdownOverlay } from "./components/CountdownOverlay";
-import { EmoteButton } from "./components/EmoteButton";
 import { EventFeed } from "./components/EventFeed";
 import { FeaturedUnlockBanner } from "./components/FeaturedUnlockBanner";
 import { HachiHud } from "./components/HachiHud";
@@ -50,7 +49,6 @@ export function GameHud() {
 			<RewardPopup />
 			<Scoreboard />
 			<ActionButton />
-			<EmoteButton />
 			<LevelUpOverlay />
 			<MissionPanel />
 			<ShopPanel />

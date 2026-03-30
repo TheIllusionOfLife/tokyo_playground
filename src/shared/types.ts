@@ -106,7 +106,6 @@ export enum MissionId {
 	CollectBonusItem = "CollectBonusItem",
 	DodgeCars = "DodgeCars",
 	PlayWithFriends = "PlayWithFriends",
-	UseEmote = "UseEmote",
 	PlayAllGames = "PlayAllGames",
 	CatchStreak = "CatchStreak",
 	CollectHachiItems30 = "CollectHachiItems30",
@@ -120,15 +119,9 @@ export enum ItemId {
 	TrailStar = "TrailStar",
 	TrailRainbow = "TrailRainbow",
 	TrailFlame = "TrailFlame",
-	EmoteDance = "EmoteDance",
-	EmoteCheer = "EmoteCheer",
-	EmoteWave = "EmoteWave",
-	EmoteFlip = "EmoteFlip",
 	// New shop items
 	TrailCherryBlossom = "TrailCherryBlossom",
 	TrailMidnightSpark = "TrailMidnightSpark",
-	EmoteCherryBlast = "EmoteCherryBlast",
-	EmoteThunderClap = "EmoteThunderClap",
 	// Kitsune series (+ hats with assets)
 	HatKitsuneMask = "HatKitsuneMask",
 	HatTokyoTower = "HatTokyoTower",
@@ -142,17 +135,14 @@ export enum ItemId {
 	HatAlleyCatEars = "HatAlleyCatEars",
 	TrailCloudWalk = "TrailCloudWalk",
 	HatNeonVisor = "HatNeonVisor",
-	EmoteOmamoriPrayer = "EmoteOmamoriPrayer",
 	TrailTrainSpark = "TrailTrainSpark",
 	HatSunsetCrown = "HatSunsetCrown",
-	TitleShibuyaExplorer = "TitleShibuyaExplorer",
 	SkinGoldenHachi = "SkinGoldenHachi",
 }
 
 export enum ItemCategory {
 	Hat = "Hat",
 	Trail = "Trail",
-	Emote = "Emote",
 	Back = "Back",
 	Face = "Face",
 	Front = "Front",

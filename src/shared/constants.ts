@@ -158,11 +158,6 @@ export const MISSION_DEFS: Record<
 		target: 1,
 		pointsReward: 55,
 	},
-	[MissionId.UseEmote]: {
-		label: "Use an Effect 3 Times",
-		target: 3,
-		pointsReward: 30,
-	},
 	[MissionId.PlayAllGames]: {
 		label: "Play All 3 Games",
 		target: 3,
@@ -201,7 +196,6 @@ export const ALL_MISSION_IDS: MissionId[] = [
 	MissionId.CollectBonusItem,
 	MissionId.DodgeCars,
 	MissionId.PlayWithFriends,
-	MissionId.UseEmote,
 	MissionId.PlayAllGames,
 	MissionId.CatchStreak,
 	MissionId.CollectHachiItems30,
@@ -268,34 +262,6 @@ export const SHOP_CATALOG: Omit<ShopItemData, "owned" | "equipped">[] = [
 		levelRequired: 3,
 	},
 	{
-		id: ItemId.EmoteDance,
-		name: "Festival Dance",
-		category: ItemCategory.Emote,
-		price: 120,
-		levelRequired: 1,
-	},
-	{
-		id: ItemId.EmoteCheer,
-		name: "Conductor Cheer",
-		category: ItemCategory.Emote,
-		price: 150,
-		levelRequired: 1,
-	},
-	{
-		id: ItemId.EmoteWave,
-		name: "Tourist Wave",
-		category: ItemCategory.Emote,
-		price: 80,
-		levelRequired: 1,
-	},
-	{
-		id: ItemId.EmoteFlip,
-		name: "Rooftop Flip",
-		category: ItemCategory.Emote,
-		price: 700,
-		levelRequired: 5,
-	},
-	{
 		id: ItemId.TrailCherryBlossom,
 		name: "Cherry Blossom Trail",
 		category: ItemCategory.Trail,
@@ -309,21 +275,7 @@ export const SHOP_CATALOG: Omit<ShopItemData, "owned" | "equipped">[] = [
 		price: 600,
 		levelRequired: 5,
 	},
-	{
-		id: ItemId.EmoteCherryBlast,
-		name: "Cherry Blast",
-		category: ItemCategory.Emote,
-		price: 300,
-		levelRequired: 3,
-	},
-	{
-		id: ItemId.EmoteThunderClap,
-		name: "Thunder Clap",
-		category: ItemCategory.Emote,
-		price: 450,
-		levelRequired: 4,
-	},
-	// Deferred hats (assets now exist)
+	// Hats (assets now exist)
 	{
 		id: ItemId.HatKitsuneMask,
 		name: "Kitsune Mask",
@@ -408,13 +360,6 @@ export const STAMP_REWARD_CATALOG: Omit<ShopItemData, "owned" | "equipped">[] =
 			levelRequired: 0,
 		},
 		{
-			id: ItemId.EmoteOmamoriPrayer,
-			name: "Omamori Prayer",
-			category: ItemCategory.Emote,
-			price: 0,
-			levelRequired: 0,
-		},
-		{
 			id: ItemId.TrailTrainSpark,
 			name: "Train Spark",
 			category: ItemCategory.Trail,
@@ -429,13 +374,6 @@ export const STAMP_REWARD_CATALOG: Omit<ShopItemData, "owned" | "equipped">[] =
 			levelRequired: 0,
 		},
 		{
-			id: ItemId.TitleShibuyaExplorer,
-			name: "Shibuya Explorer",
-			category: ItemCategory.Emote,
-			price: 0,
-			levelRequired: 0,
-		},
-		{
 			id: ItemId.SkinGoldenHachi,
 			name: "Golden Hachi",
 			category: ItemCategory.Trail,
@@ -443,136 +381,6 @@ export const STAMP_REWARD_CATALOG: Omit<ShopItemData, "owned" | "equipped">[] =
 			levelRequired: 0,
 		},
 	];
-
-// Celebration Effects (emote visual data, rendered client-side)
-export interface CelebrationEffectData {
-	particleColor: ColorSequence;
-	particleRate: number;
-	particleLifetime: NumberRange;
-	particleSpeed: NumberRange;
-	particleSpreadAngle: Vector2;
-	particleSize: NumberSequence;
-	duration: number;
-}
-
-export const CELEBRATION_EFFECTS: Partial<
-	Record<ItemId, CelebrationEffectData>
-> = {
-	[ItemId.EmoteWave]: {
-		particleColor: new ColorSequence(
-			Color3.fromRGB(255, 220, 50),
-			Color3.fromRGB(255, 255, 200),
-		),
-		particleRate: 60,
-		particleLifetime: new NumberRange(0.8, 1.5),
-		particleSpeed: new NumberRange(8, 15),
-		particleSpreadAngle: new Vector2(30, 360),
-		particleSize: new NumberSequence([
-			new NumberSequenceKeypoint(0, 0.4),
-			new NumberSequenceKeypoint(1, 0),
-		]),
-		duration: 2,
-	},
-	[ItemId.EmoteDance]: {
-		particleColor: new ColorSequence([
-			new ColorSequenceKeypoint(0, Color3.fromRGB(255, 50, 50)),
-			new ColorSequenceKeypoint(0.25, Color3.fromRGB(255, 200, 50)),
-			new ColorSequenceKeypoint(0.5, Color3.fromRGB(50, 255, 50)),
-			new ColorSequenceKeypoint(0.75, Color3.fromRGB(50, 100, 255)),
-			new ColorSequenceKeypoint(1, Color3.fromRGB(200, 50, 255)),
-		]),
-		particleRate: 80,
-		particleLifetime: new NumberRange(1, 2),
-		particleSpeed: new NumberRange(10, 20),
-		particleSpreadAngle: new Vector2(360, 360),
-		particleSize: new NumberSequence([
-			new NumberSequenceKeypoint(0, 0.5),
-			new NumberSequenceKeypoint(1, 0),
-		]),
-		duration: 3,
-	},
-	[ItemId.EmoteCheer]: {
-		particleColor: new ColorSequence(
-			Color3.fromRGB(255, 200, 50),
-			Color3.fromRGB(255, 150, 0),
-		),
-		particleRate: 70,
-		particleLifetime: new NumberRange(0.6, 1.2),
-		particleSpeed: new NumberRange(12, 22),
-		particleSpreadAngle: new Vector2(360, 360),
-		particleSize: new NumberSequence([
-			new NumberSequenceKeypoint(0, 0.6),
-			new NumberSequenceKeypoint(0.5, 0.3),
-			new NumberSequenceKeypoint(1, 0),
-		]),
-		duration: 2,
-	},
-	[ItemId.EmoteFlip]: {
-		particleColor: new ColorSequence(
-			Color3.fromRGB(50, 200, 255),
-			Color3.fromRGB(100, 150, 255),
-		),
-		particleRate: 100,
-		particleLifetime: new NumberRange(0.4, 1),
-		particleSpeed: new NumberRange(15, 25),
-		particleSpreadAngle: new Vector2(180, 180),
-		particleSize: new NumberSequence([
-			new NumberSequenceKeypoint(0, 0.7),
-			new NumberSequenceKeypoint(1, 0),
-		]),
-		duration: 2.5,
-	},
-	[ItemId.EmoteOmamoriPrayer]: {
-		particleColor: new ColorSequence(
-			Color3.fromRGB(255, 180, 200),
-			Color3.fromRGB(255, 240, 245),
-		),
-		particleRate: 40,
-		particleLifetime: new NumberRange(1.5, 3),
-		particleSpeed: new NumberRange(2, 6),
-		particleSpreadAngle: new Vector2(60, 360),
-		particleSize: new NumberSequence([
-			new NumberSequenceKeypoint(0, 0.5),
-			new NumberSequenceKeypoint(0.7, 0.4),
-			new NumberSequenceKeypoint(1, 0),
-		]),
-		duration: 3,
-	},
-	[ItemId.EmoteCherryBlast]: {
-		particleColor: new ColorSequence([
-			new ColorSequenceKeypoint(0, Color3.fromRGB(255, 150, 180)),
-			new ColorSequenceKeypoint(0.5, Color3.fromRGB(255, 200, 220)),
-			new ColorSequenceKeypoint(1, Color3.fromRGB(255, 100, 150)),
-		]),
-		particleRate: 90,
-		particleLifetime: new NumberRange(1, 2.5),
-		particleSpeed: new NumberRange(8, 18),
-		particleSpreadAngle: new Vector2(360, 360),
-		particleSize: new NumberSequence([
-			new NumberSequenceKeypoint(0, 0.6),
-			new NumberSequenceKeypoint(0.5, 0.4),
-			new NumberSequenceKeypoint(1, 0),
-		]),
-		duration: 3,
-	},
-	[ItemId.EmoteThunderClap]: {
-		particleColor: new ColorSequence(
-			Color3.fromRGB(255, 255, 200),
-			Color3.fromRGB(200, 200, 255),
-		),
-		particleRate: 120,
-		particleLifetime: new NumberRange(0.2, 0.6),
-		particleSpeed: new NumberRange(20, 35),
-		particleSpreadAngle: new Vector2(360, 360),
-		particleSize: new NumberSequence([
-			new NumberSequenceKeypoint(0, 0.8),
-			new NumberSequenceKeypoint(1, 0),
-		]),
-		duration: 1.5,
-	},
-};
-
-export const EMOTE_COOLDOWN = 3; // seconds between emote uses
 
 // Shop
 export const SHOP_CATALOG_COOLDOWN = 2; // seconds between catalog requests

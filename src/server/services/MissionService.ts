@@ -8,7 +8,6 @@ import {
 import { GlobalEvents } from "shared/network";
 import {
 	AnyPlayerState,
-	ItemCategory,
 	MinigameId,
 	MissionId,
 	MissionProgressData,
@@ -64,30 +63,15 @@ export class MissionService implements OnStart {
 		if (data.missions.slots.size() === 0) {
 			const chosen = new Set<MissionId>();
 
-			// Eligibility filter: skip UseEmote if player owns no emotes
-			const ownedItems = this.playerDataService.getOwnedItems(player);
-			const hasEmote = ownedItems.some((itemId) => {
-				const prefix = tostring(itemId);
-				return prefix.sub(1, 5) === "Emote";
-			});
-			const isEligible = (id: MissionId) => {
-				if (id === MissionId.UseEmote && !hasEmote) return false;
-				return true;
-			};
-
 			// Slot 1: guaranteed minigame mission
-			const minigamePool = MINIGAME_MISSION_IDS.filter(
-				(id) => !chosen.has(id) && isEligible(id),
-			);
+			const minigamePool = MINIGAME_MISSION_IDS.filter((id) => !chosen.has(id));
 			if (minigamePool.size() > 0) {
 				const pick = minigamePool[math.random(0, minigamePool.size() - 1)];
 				chosen.add(pick);
 			}
 
 			// Slots 2-3: from full pool (no duplicates)
-			const fullPool = ALL_MISSION_IDS.filter(
-				(id) => !chosen.has(id) && isEligible(id),
-			);
+			const fullPool = ALL_MISSION_IDS.filter((id) => !chosen.has(id));
 			for (let i = chosen.size(); i < 3 && fullPool.size() > 0; i++) {
 				const idx = math.random(0, fullPool.size() - 1);
 				chosen.add(fullPool[idx]);
