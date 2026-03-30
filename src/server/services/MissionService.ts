@@ -177,7 +177,7 @@ export class MissionService implements OnStart {
 		// WinTwoInARow: streakCount is already updated before this call
 		if (won) {
 			const streakCount = this.playerDataService.getStreakCount(player);
-			if (streakCount >= 2) {
+			if (streakCount === 2) {
 				this.incrementAndNotify(player, MissionId.WinTwoInARow, 1);
 			}
 		}

@@ -284,7 +284,13 @@ export class EquipService implements OnStart {
 		tag.Name = EQUIPPED_ACCESSORY_TAG;
 		tag.Parent = accessory;
 		accessory.SetAttribute("EquipCategory", category);
-		accessory.Parent = character;
+
+		const humanoid = character.FindFirstChildOfClass("Humanoid");
+		if (humanoid) {
+			humanoid.AddAccessory(accessory);
+		} else {
+			accessory.Parent = character;
+		}
 	}
 
 	private applyHat(character: Model, itemId: ItemId) {
@@ -305,7 +311,13 @@ export class EquipService implements OnStart {
 		const tag = new Instance("BoolValue");
 		tag.Name = EQUIPPED_HAT_TAG;
 		tag.Parent = hat;
-		hat.Parent = character;
+
+		const humanoid = character.FindFirstChildOfClass("Humanoid");
+		if (humanoid) {
+			humanoid.AddAccessory(hat);
+		} else {
+			hat.Parent = character;
+		}
 	}
 
 	private applyTrail(character: Model, itemId: ItemId) {
