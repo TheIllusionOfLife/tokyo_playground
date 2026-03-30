@@ -129,6 +129,15 @@ export enum ItemId {
 	TrailMidnightSpark = "TrailMidnightSpark",
 	EmoteCherryBlast = "EmoteCherryBlast",
 	EmoteThunderClap = "EmoteThunderClap",
+	// Kitsune series (+ hats with assets)
+	HatKitsuneMask = "HatKitsuneMask",
+	HatTokyoTower = "HatTokyoTower",
+	KitsuneBack = "KitsuneBack",
+	KitsuneFace = "KitsuneFace",
+	KitsuneFront = "KitsuneFront",
+	KitsuneNeck = "KitsuneNeck",
+	KitsuneShoulder = "KitsuneShoulder",
+	KitsuneWaist = "KitsuneWaist",
 	// Living Shibuya stamp set rewards
 	HatAlleyCatEars = "HatAlleyCatEars",
 	TrailCloudWalk = "TrailCloudWalk",
@@ -144,6 +153,12 @@ export enum ItemCategory {
 	Hat = "Hat",
 	Trail = "Trail",
 	Emote = "Emote",
+	Back = "Back",
+	Face = "Face",
+	Front = "Front",
+	Neck = "Neck",
+	Shoulder = "Shoulder",
+	Waist = "Waist",
 }
 
 export interface CanKickPlayerState {

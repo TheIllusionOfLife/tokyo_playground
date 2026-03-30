@@ -15,7 +15,18 @@ import { PlayerDataService } from "./PlayerDataService";
 const COSMETICS_FOLDER = "Cosmetics";
 const EQUIPPED_HAT_TAG = "EquippedHat";
 const EQUIPPED_TRAIL_TAG = "EquippedTrail";
+const EQUIPPED_ACCESSORY_TAG = "EquippedAccessory"; // tag for non-hat accessories
 const EQUIP_COOLDOWN = 0.5; // seconds between equip requests
+
+// Accessory categories that use the clone-from-ServerStorage pattern
+const ACCESSORY_CATEGORIES = new Set<ItemCategory>([
+	ItemCategory.Back,
+	ItemCategory.Face,
+	ItemCategory.Front,
+	ItemCategory.Neck,
+	ItemCategory.Shoulder,
+	ItemCategory.Waist,
+]);
 
 interface TrailStyle {
 	lifetime?: number;
@@ -220,6 +231,8 @@ export class EquipService implements OnStart {
 			this.applyHat(character, itemId);
 		} else if (category === ItemCategory.Trail) {
 			this.applyTrail(character, itemId);
+		} else if (ACCESSORY_CATEGORIES.has(category)) {
+			this.applyAccessory(character, itemId, category);
 		}
 		// Emotes are celebration effects: no visual on spawn, triggered via requestPlayEmote
 	}
@@ -254,20 +267,53 @@ export class EquipService implements OnStart {
 		if (!character) return;
 
 		if (category === ItemCategory.Hat) {
-			// Remove any previously equipped hat
 			for (const child of character.GetChildren()) {
 				if (child.IsA("Accessory") && child.FindFirstChild(EQUIPPED_HAT_TAG)) {
 					child.Destroy();
 				}
 			}
 		} else if (category === ItemCategory.Trail) {
-			// Remove any previously equipped trail
 			for (const child of character.GetDescendants()) {
 				if (child.IsA("Trail") && child.Name === EQUIPPED_TRAIL_TAG) {
 					child.Destroy();
 				}
 			}
+		} else if (ACCESSORY_CATEGORIES.has(category)) {
+			// Remove accessory tagged with this category
+			for (const child of character.GetChildren()) {
+				if (
+					child.IsA("Accessory") &&
+					child.FindFirstChild(EQUIPPED_ACCESSORY_TAG) &&
+					child.GetAttribute("EquipCategory") === category
+				) {
+					child.Destroy();
+				}
+			}
 		}
+	}
+
+	private applyAccessory(
+		character: Model,
+		itemId: ItemId,
+		category: ItemCategory,
+	) {
+		const cosmeticsFolder = ServerStorage.FindFirstChild(COSMETICS_FOLDER);
+		if (!cosmeticsFolder) {
+			warn("[EquipService] Missing ServerStorage.Cosmetics folder");
+			return;
+		}
+		const template = cosmeticsFolder.FindFirstChild(itemId);
+		if (!template || !template.IsA("Accessory")) {
+			warn(`[EquipService] Missing accessory: ${itemId}`);
+			return;
+		}
+
+		const accessory = template.Clone();
+		const tag = new Instance("BoolValue");
+		tag.Name = EQUIPPED_ACCESSORY_TAG;
+		tag.Parent = accessory;
+		accessory.SetAttribute("EquipCategory", category);
+		accessory.Parent = character;
 	}
 
 	private applyHat(character: Model, itemId: ItemId) {

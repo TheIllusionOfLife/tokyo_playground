@@ -131,6 +131,16 @@ export const EN: Record<string, string> = {
 	item_cherry_blast: "Cherry Blast",
 	item_thunder_clap: "Thunder Clap",
 
+	// Kitsune series + new hats
+	item_kitsune_mask: "Kitsune Mask",
+	item_tokyo_tower: "Tokyo Tower Cap",
+	item_kitsune_back: "Kitsune Tail",
+	item_kitsune_face: "Kitsune Whiskers",
+	item_kitsune_front: "Kitsune Omamori",
+	item_kitsune_neck: "Shrine Bell Collar",
+	item_kitsune_shoulder: "Fox Fire Mantle",
+	item_kitsune_waist: "Fox Obi Sash",
+
 	// Shop category labels
 	shop_category_effect: "Effect",
 

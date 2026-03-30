@@ -28,3 +28,6 @@ plateau_importer_fixed.zip
 iphone_13_mini_first_screenshot.png
 .DS_Store
 package-lock.json
+
+# Publish assets (icons, thumbnails, videos)
+assets/publish/

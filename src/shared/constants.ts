@@ -323,6 +323,64 @@ export const SHOP_CATALOG: Omit<ShopItemData, "owned" | "equipped">[] = [
 		price: 450,
 		levelRequired: 4,
 	},
+	// Deferred hats (assets now exist)
+	{
+		id: ItemId.HatKitsuneMask,
+		name: "Kitsune Mask",
+		category: ItemCategory.Hat,
+		price: 400,
+		levelRequired: 4,
+	},
+	{
+		id: ItemId.HatTokyoTower,
+		name: "Tokyo Tower Cap",
+		category: ItemCategory.Hat,
+		price: 650,
+		levelRequired: 5,
+	},
+	// Kitsune series
+	{
+		id: ItemId.KitsuneBack,
+		name: "Kitsune Tail",
+		category: ItemCategory.Back,
+		price: 350,
+		levelRequired: 3,
+	},
+	{
+		id: ItemId.KitsuneFace,
+		name: "Kitsune Whiskers",
+		category: ItemCategory.Face,
+		price: 200,
+		levelRequired: 2,
+	},
+	{
+		id: ItemId.KitsuneFront,
+		name: "Kitsune Omamori",
+		category: ItemCategory.Front,
+		price: 250,
+		levelRequired: 3,
+	},
+	{
+		id: ItemId.KitsuneNeck,
+		name: "Shrine Bell Collar",
+		category: ItemCategory.Neck,
+		price: 300,
+		levelRequired: 3,
+	},
+	{
+		id: ItemId.KitsuneShoulder,
+		name: "Fox Fire Mantle",
+		category: ItemCategory.Shoulder,
+		price: 500,
+		levelRequired: 4,
+	},
+	{
+		id: ItemId.KitsuneWaist,
+		name: "Fox Obi Sash",
+		category: ItemCategory.Waist,
+		price: 400,
+		levelRequired: 4,
+	},
 ];
 
 // Stamp set reward items (unlocked by stamps, not purchased)
