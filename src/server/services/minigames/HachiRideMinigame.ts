@@ -838,7 +838,14 @@ export class HachiRideMinigame implements IMinigame {
 		part.CanTouch = false;
 		part.CanQuery = false;
 		part.CastShadow = false;
-		part.Position = position;
+		// Rotate coins upright (disc mesh is flat on Y axis)
+		if (!isBonus) {
+			part.CFrame = new CFrame(position).mul(
+				CFrame.Angles(math.rad(90), 0, 0),
+			);
+		} else {
+			part.Position = position;
+		}
 
 		const mesh = new Instance("SpecialMesh");
 		mesh.MeshType = Enum.MeshType.FileMesh;
