@@ -2,7 +2,7 @@
 
 ## Prompt
 
-> Create a hat accessory named "HatKitsuneMask" and place it in ServerStorage.Cosmetics. Delete the original model from Workspace after placing. A traditional Japanese white fox (kitsune) mask worn tilted on top of the head. Red markings around the eyes and forehead. Festival aesthetic. Low-poly, mobile-friendly.
+> Create a hat accessory named "HatKitsuneMask" and place it in ServerStorage.Cosmetics. A traditional Japanese white fox (kitsune) mask worn tilted on top of the head. Red markings around the eyes and forehead. Festival aesthetic. Low-poly, mobile-friendly.
 
 ## Verify
 - [ ] `ServerStorage.Cosmetics.HatKitsuneMask` exists as `Accessory`
