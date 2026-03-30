@@ -446,9 +446,10 @@ export const HACHI_SKY_DROP_DENSE_RADIUS = 400; // center-bias radius (wider spr
 export const HACHI_SKY_DROP_CENTER_BIAS = 0.2; // 20% items within dense radius, 80% uniform
 export const HACHI_SKY_DROP_ACTIVE_RATIO = 0.5; // fraction of items that actually fall per round
 export const HACHI_CITY_CENTER = new Vector3(-10608, 0, 33375);
-export const HACHI_CITY_MIN_X = -11688;
-export const HACHI_CITY_MAX_X = -9625;
-export const HACHI_CITY_MIN_Z = 32617;
+// DEM bounds (_533935_dem_6697_op_gml)
+export const HACHI_CITY_MIN_X = -11679;
+export const HACHI_CITY_MAX_X = -9631;
+export const HACHI_CITY_MIN_Z = 32634;
 export const HACHI_CITY_MAX_Z = 34286;
 export const HACHI_ROOFTOP_BONUS_OFFSET_Y = 50;
 export const HACHI_ROOFTOP_BUILDINGS: { topY: number; x: number; z: number }[] =
