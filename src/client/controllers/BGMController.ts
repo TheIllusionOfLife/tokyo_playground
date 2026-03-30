@@ -8,7 +8,6 @@ import {
 	SE_CATCH,
 	SE_CHEER,
 	SE_EVOLVE,
-	SE_HEARTBEAT,
 	SE_ITEM_PICKUP,
 	SE_TICK,
 } from "shared/constants";
@@ -46,7 +45,6 @@ export class BGMController implements OnStart {
 			SE_CATCH,
 			SE_CHEER,
 			SE_TICK,
-			SE_HEARTBEAT,
 		];
 		const toPreload: Sound[] = [];
 		for (const id of seIds) {
@@ -88,12 +86,10 @@ export class BGMController implements OnStart {
 		clientEvents.canKicked.connect(() => this.playSE(SE_CHEER, 0.5));
 		clientEvents.roundResultAnnounced.connect(() => this.playSE(SE_CHEER, 0.6));
 
-		// Countdown tick: normal tick above 10s, heartbeat in last 10s
+		// Countdown tick in last 30s
 		clientEvents.roundTimerUpdate.connect((timeRemaining) => {
 			if (timeRemaining <= 0) return;
-			if (timeRemaining <= 10) {
-				this.playSE(SE_HEARTBEAT, 0.4);
-			} else if (timeRemaining <= 30) {
+			if (timeRemaining <= 30) {
 				this.playSE(SE_TICK, 0.3);
 			}
 		});

@@ -63,6 +63,102 @@ const TRAIL_STYLES: Partial<Record<ItemId, TrailStyle>> = {
 	},
 };
 
+// Trail particle meshes (AI-generated, emitted alongside Trail)
+interface TrailParticle {
+	meshId: string;
+	textureId: string;
+	color: ColorSequence;
+	rate: number;
+	lifetime: NumberRange;
+	speed: NumberRange;
+	size: NumberSequence;
+	rotSpeed: NumberRange;
+}
+
+const TRAIL_PARTICLES: Partial<Record<ItemId, TrailParticle>> = {
+	[ItemId.TrailStar]: {
+		meshId: "rbxassetid://138401429655126",
+		textureId: "rbxassetid://95146990943551",
+		color: new ColorSequence(
+			Color3.fromRGB(255, 230, 100),
+			Color3.fromRGB(255, 180, 50),
+		),
+		rate: 6,
+		lifetime: new NumberRange(0.6, 1.0),
+		speed: new NumberRange(1, 3),
+		size: new NumberSequence([
+			new NumberSequenceKeypoint(0, 0.4),
+			new NumberSequenceKeypoint(1, 0),
+		]),
+		rotSpeed: new NumberRange(-90, 90),
+	},
+	[ItemId.TrailCherryBlossom]: {
+		meshId: "rbxassetid://113685548871910",
+		textureId: "rbxassetid://103125221812825",
+		color: new ColorSequence(
+			Color3.fromRGB(255, 180, 200),
+			Color3.fromRGB(255, 220, 230),
+		),
+		rate: 8,
+		lifetime: new NumberRange(1.0, 1.8),
+		speed: new NumberRange(0.5, 2),
+		size: new NumberSequence([
+			new NumberSequenceKeypoint(0, 0.5),
+			new NumberSequenceKeypoint(1, 0.2),
+		]),
+		rotSpeed: new NumberRange(-120, 120),
+	},
+	[ItemId.TrailFlame]: {
+		meshId: "rbxassetid://121452065855629",
+		textureId: "rbxassetid://132445177887663",
+		color: new ColorSequence(
+			Color3.fromRGB(255, 100, 0),
+			Color3.fromRGB(255, 50, 0),
+		),
+		rate: 10,
+		lifetime: new NumberRange(0.3, 0.6),
+		speed: new NumberRange(2, 5),
+		size: new NumberSequence([
+			new NumberSequenceKeypoint(0, 0.5),
+			new NumberSequenceKeypoint(1, 0),
+		]),
+		rotSpeed: new NumberRange(-45, 45),
+	},
+	[ItemId.TrailMidnightSpark]: {
+		meshId: "rbxassetid://98112913644461",
+		textureId: "rbxassetid://97862077014638",
+		color: new ColorSequence(
+			Color3.fromRGB(100, 50, 200),
+			Color3.fromRGB(180, 100, 255),
+		),
+		rate: 12,
+		lifetime: new NumberRange(0.2, 0.4),
+		speed: new NumberRange(3, 8),
+		size: new NumberSequence([
+			new NumberSequenceKeypoint(0, 0.3),
+			new NumberSequenceKeypoint(1, 0),
+		]),
+		rotSpeed: new NumberRange(-180, 180),
+	},
+	[ItemId.TrailRainbow]: {
+		meshId: "rbxassetid://108284978831991",
+		textureId: "rbxassetid://125107947901149",
+		color: new ColorSequence([
+			new ColorSequenceKeypoint(0, Color3.fromRGB(255, 0, 0)),
+			new ColorSequenceKeypoint(0.5, Color3.fromRGB(0, 255, 0)),
+			new ColorSequenceKeypoint(1, Color3.fromRGB(0, 100, 255)),
+		]),
+		rate: 6,
+		lifetime: new NumberRange(0.5, 1.0),
+		speed: new NumberRange(1, 3),
+		size: new NumberSequence([
+			new NumberSequenceKeypoint(0, 0.4),
+			new NumberSequenceKeypoint(1, 0.1),
+		]),
+		rotSpeed: new NumberRange(-60, 60),
+	},
+};
+
 // Trail colors per item
 const TRAIL_COLORS: Partial<Record<ItemId, ColorSequence>> = {
 	[ItemId.TrailStar]: new ColorSequence(
@@ -231,8 +327,12 @@ export class EquipService implements OnStart {
 				}
 			}
 		} else if (category === ItemCategory.Trail) {
+			const particleName = EQUIPPED_TRAIL_TAG + "_particles";
 			for (const child of character.GetDescendants()) {
-				if (child.IsA("Trail") && child.Name === EQUIPPED_TRAIL_TAG) {
+				if (
+					(child.IsA("Trail") && child.Name === EQUIPPED_TRAIL_TAG) ||
+					(child.IsA("ParticleEmitter") && child.Name === particleName)
+				) {
 					child.Destroy();
 				}
 			}
@@ -374,5 +474,27 @@ export class EquipService implements OnStart {
 		}
 
 		trail.Parent = hrp;
+
+		// Add particle emitter alongside trail if configured
+		const particleCfg = TRAIL_PARTICLES[itemId];
+		if (particleCfg) {
+			const emitter = new Instance("ParticleEmitter");
+			emitter.Name = EQUIPPED_TRAIL_TAG + "_particles";
+			emitter.Color = particleCfg.color;
+			emitter.Rate = particleCfg.rate;
+			emitter.Lifetime = particleCfg.lifetime;
+			emitter.Speed = particleCfg.speed;
+			emitter.Size = particleCfg.size;
+			emitter.RotSpeed = particleCfg.rotSpeed;
+			emitter.Texture = particleCfg.textureId;
+			emitter.SpreadAngle = new Vector2(30, 30);
+			emitter.LightEmission = 0.6;
+			emitter.Transparency = new NumberSequence([
+				new NumberSequenceKeypoint(0, 0),
+				new NumberSequenceKeypoint(0.8, 0.3),
+				new NumberSequenceKeypoint(1, 1),
+			]);
+			emitter.Parent = att0;
+		}
 	}
 }

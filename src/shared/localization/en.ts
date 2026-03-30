@@ -107,7 +107,7 @@ export const EN: Record<string, string> = {
 	intro_scramble_title: "Shibuya Chaos",
 	intro_scramble_sub: "Blend into the crowd, survive, and use the crossing.",
 	intro_hachi_title: "Ride Hachi",
-	intro_hachi_sub: "Collect trash, evolve fast, and steal the lead.",
+	intro_hachi_sub: "Collect coins, evolve fast, and steal the lead.",
 
 	// Mission labels
 	mission_PlayGames: "Play 3 Games",
@@ -159,4 +159,8 @@ export const EN: Record<string, string> = {
 	zone_HachikoSquare: "Hachiko Square",
 	zone_CenterGai: "Center-gai",
 	zone_SkySlideHub: "Sky Slide Hub",
+	zone_Dogenzaka: "Dogenzaka",
+	zone_Hikarie: "Shibuya Hikarie",
+	zone_MiyashitaPark: "Miyashita Park",
+	zone_ShibuyaStation: "Shibuya Station",
 };

@@ -147,6 +147,9 @@ interface ClientToServerEvents {
 	obstacleCourseCheckpoint(checkpointIndex: number): void;
 	obstacleCourseFinish(): void; // fix H2: no client-supplied time; server computes elapsed
 
+	// ── Minigame start request ───────────────────────────────────────────
+	requestMinigameStart(minigameId: MinigameId): void;
+
 	// ── Living Shibuya: Lobby Hachi Abilities ────────────────────────────
 	hachiToggleCostume(equip: boolean): void;
 	hachiLobbyDoubleJump(): void; // fix M1: separate from match hachiDoubleJump

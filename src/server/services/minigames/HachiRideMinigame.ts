@@ -7,22 +7,31 @@ import {
 	Workspace,
 } from "@rbxts/services";
 import {
+	DEFAULT_JUMP_HEIGHT,
+	DEFAULT_WALK_SPEED,
 	HACHI_ANTICHEAT_CHECK_INTERVAL,
 	HACHI_ANTICHEAT_GRACE_STUDS,
 	HACHI_ANTICHEAT_STRIKE_DECAY,
 	HACHI_ANTICHEAT_STRIKE_LIMIT,
 	HACHI_BIG_SCALE,
+	HACHI_BLDG_MAX_X,
+	HACHI_BLDG_MAX_Z,
+	HACHI_BLDG_MIN_X,
+	HACHI_BLDG_MIN_Z,
 	HACHI_BONUS_ITEM_COUNT,
 	HACHI_BONUS_ITEM_VALUE,
 	HACHI_CITY_CENTER,
+	HACHI_CITY_MAX_X,
+	HACHI_CITY_MAX_Z,
+	HACHI_CITY_MIN_X,
+	HACHI_CITY_MIN_Z,
+	HACHI_COIN_MESH_ID,
+	HACHI_COIN_TEXTURE_ID,
 	HACHI_COLLECTION_RADIUS,
 	HACHI_EJECT_COOLDOWN,
 	HACHI_EVOLUTION_THRESHOLDS,
 	HACHI_FINAL_SPRINT_MULTIPLIER,
 	HACHI_FINAL_SPRINT_WINDOW,
-	HACHI_HOTSPOT_MULTIPLIER,
-	HACHI_HOTSPOT_RADIUS,
-	HACHI_HOTSPOT_ROTATION_INTERVAL,
 	HACHI_ITEMS_TO_SPAWN,
 	HACHI_JUMP_COOLDOWN,
 	HACHI_JUMP_VELOCITY,
@@ -30,13 +39,17 @@ import {
 	HACHI_ROOFTOP_BONUS_OFFSET_Y,
 	HACHI_ROOFTOP_BUILDINGS,
 	HACHI_ROUND_DURATION,
+	HACHI_SKY_DROP_ACTIVE_RATIO,
+	HACHI_SKY_DROP_BUILDING_BIAS,
+	HACHI_SKY_DROP_CENTER_BIAS,
 	HACHI_SKY_DROP_DENSE_RADIUS,
 	HACHI_SKY_DROP_FALL_DURATION,
 	HACHI_SKY_DROP_GROUND_Y,
 	HACHI_SKY_DROP_MAX_Y,
 	HACHI_SKY_DROP_MIN_Y,
-	HACHI_SKY_DROP_SPREAD_RADIUS,
 	HACHI_SPAWN_TAG,
+	HACHI_STAR_MESH_ID,
+	HACHI_STAR_TEXTURE_ID,
 	HACHI_STARTING_EVOLUTION,
 	HACHI_WALK_SPEEDS,
 	HACHI_WALL_RUN_MAX_DUR,
@@ -77,11 +90,6 @@ interface WallRunState {
 	origWalkSpeed: number;
 }
 
-interface Hotspot {
-	center: Vector3;
-	label: string;
-}
-
 export class HachiRideMinigame implements IMinigame {
 	static activeInstance?: HachiRideMinigame;
 	readonly id = MinigameId.HachiRide;
@@ -109,9 +117,6 @@ export class HachiRideMinigame implements IMinigame {
 	private slideCooldowns = new Map<number, number>();
 	private roundStarted = false;
 	private respawnGrace = new Map<number, number>();
-	private hotspots: Hotspot[] = [];
-	private activeHotspotIndex = 0;
-	private hotspotElapsed = 0;
 	private roundElapsed = 0;
 	private raceUpdateElapsed = 0;
 	private finalSprintStarted = false;
@@ -139,20 +144,7 @@ export class HachiRideMinigame implements IMinigame {
 			this.playerObjects.set(player.UserId, player);
 		}
 
-		// Dynamic sky-drop collectibles
-		const regularCount = HACHI_ITEMS_TO_SPAWN - HACHI_BONUS_ITEM_COUNT;
-		const regularPositions = this.generateSpawnPositions(regularCount);
-		for (const skyPos of regularPositions) {
-			const part = this.createCollectible(
-				skyPos,
-				new Vector3(2, 2, 2),
-				Color3.fromRGB(100, 200, 255),
-			);
-			this.activeItems.push(part);
-			this.itemLandingY.set(part, HACHI_SKY_DROP_GROUND_Y);
-		}
-
-		// Bonus items: 10 on rooftops (1 per top 10 building)
+		// Rooftop bonus items: always spawn (10, one per top building)
 		for (const bldg of HACHI_ROOFTOP_BUILDINGS) {
 			const xOff = (math.random() - 0.5) * 10;
 			const zOff = (math.random() - 0.5) * 10;
@@ -161,30 +153,60 @@ export class HachiRideMinigame implements IMinigame {
 				bldg.topY + HACHI_ROOFTOP_BONUS_OFFSET_Y,
 				bldg.z + zOff,
 			);
-			const part = this.createCollectible(
-				skyPos,
-				new Vector3(5, 5, 5),
-				Color3.fromRGB(255, 215, 0),
-			);
+			const part = this.createCollectible(skyPos, new Vector3(5, 5, 5), true);
 			this.activeItems.push(part);
 			this.bonusItems.add(part);
 			this.itemLandingY.set(part, bldg.topY);
 		}
 
-		// Bonus items: 10 random across DEM area
-		const randomBonusPositions = this.generateSpawnPositions(10);
-		for (const skyPos of randomBonusPositions) {
-			const part = this.createCollectible(
-				skyPos,
-				new Vector3(5, 5, 5),
-				Color3.fromRGB(255, 215, 0),
-			);
-			this.activeItems.push(part);
-			this.bonusItems.add(part);
-			this.itemLandingY.set(part, HACHI_SKY_DROP_GROUND_Y);
+		// Generate all candidate positions, then randomly select a subset
+		const rooftopCount = HACHI_ROOFTOP_BUILDINGS.size();
+		const regularTotal = HACHI_ITEMS_TO_SPAWN - HACHI_BONUS_ITEM_COUNT;
+		const randomBonusTotal = HACHI_BONUS_ITEM_COUNT - rooftopCount; // 80 - 10 = 70
+
+		// Build pool of candidate items (regular + random bonus)
+		interface CandidateItem {
+			pos: Vector3;
+			sizeVal: Vector3;
+			isBonus: boolean;
+			landingY: number;
+		}
+		const candidates: CandidateItem[] = [];
+
+		// Regular items
+		const regularPositions = this.generateSpawnPositions(regularTotal);
+		for (const skyPos of regularPositions) {
+			candidates.push({
+				pos: skyPos,
+				sizeVal: new Vector3(2, 2, 2),
+				isBonus: false,
+				landingY: this.raycastLandingY(skyPos.X, skyPos.Z),
+			});
 		}
 
-		this.hotspots = this.buildHotspots();
+		// Random bonus items
+		const randomBonusPositions = this.generateSpawnPositions(randomBonusTotal);
+		for (const skyPos of randomBonusPositions) {
+			candidates.push({
+				pos: skyPos,
+				sizeVal: new Vector3(5, 5, 5),
+				isBonus: true,
+				landingY: this.raycastLandingY(skyPos.X, skyPos.Z),
+			});
+		}
+
+		// Shuffle and take active ratio (50%)
+		this.shuffle(candidates);
+		const activeCount = math.floor(
+			candidates.size() * HACHI_SKY_DROP_ACTIVE_RATIO,
+		);
+		for (let i = 0; i < activeCount; i++) {
+			const c = candidates[i];
+			const part = this.createCollectible(c.pos, c.sizeVal, c.isBonus);
+			this.activeItems.push(part);
+			if (c.isBonus) this.bonusItems.add(part);
+			this.itemLandingY.set(part, c.landingY);
+		}
 
 		// Register cleanup: cancel tweens, destroy dynamic parts
 		matchJanitor.Add(() => {
@@ -251,13 +273,12 @@ export class HachiRideMinigame implements IMinigame {
 			}
 		}
 
-		// Re-spawn mid-match deaths: re-equip costume on new character
+		// Re-spawn mid-match deaths: lose Hachi, reset to normal speed
 		for (const player of players) {
 			const conn = player.CharacterAdded.Connect(() => {
 				if (!this.roundStarted) return;
 				this.respawnGrace.set(player.UserId, os.clock());
 				task.wait(0.5);
-				// Re-check after yield: round may have ended during the wait
 				if (!this.roundStarted) return;
 				if (!player.Character) return;
 				const spawnPart = spawnParts[0];
@@ -267,22 +288,14 @@ export class HachiRideMinigame implements IMinigame {
 					);
 					this.resetAnticheatBaseline(player.UserId, spawnPart.Position);
 				}
-				// Clear stale mount state and re-equip Hachi costume
-				if (!template) return;
+				// Clear stale Hachi state, ensure normal human speed
 				forceUnmount(player);
-				const state = this.playerStates.get(player.UserId);
-				const clone = template.Clone();
-				clone.Name = `Hachi_${player.UserId}`;
-				if (
-					equipHachiCostume(
-						player,
-						clone,
-						state?.evolutionLevel ?? HACHI_STARTING_EVOLUTION,
-					)
-				) {
-					this.hachiModels.set(player.UserId, clone);
-				} else {
-					clone.Destroy();
+				this.hachiModels.delete(player.UserId);
+				const humanoid = player.Character.FindFirstChildOfClass("Humanoid");
+				if (humanoid) {
+					humanoid.WalkSpeed = DEFAULT_WALK_SPEED;
+					humanoid.UseJumpPower = false;
+					humanoid.JumpHeight = DEFAULT_JUMP_HEIGHT;
 				}
 			});
 			matchJanitor.Add(conn);
@@ -350,7 +363,7 @@ export class HachiRideMinigame implements IMinigame {
 		}
 
 		this.serverEvents.hintTextChanged.broadcast(
-			"Mount Hachi and jump! Collect trash! 3... 2... 1...",
+			"Mount Hachi and jump! Collect coins! 3... 2... 1...",
 		);
 		return roles;
 	}
@@ -358,7 +371,6 @@ export class HachiRideMinigame implements IMinigame {
 	startRound() {
 		this.roundStarted = true;
 		this.roundElapsed = 0;
-		this.hotspotElapsed = 0;
 		this.raceUpdateElapsed = 0;
 		this.finalSprintStarted = false;
 		// Notify clients of starting evolution level
@@ -374,6 +386,8 @@ export class HachiRideMinigame implements IMinigame {
 		// Reveal items and tween them falling from sky
 		for (const item of this.activeItems) {
 			item.Transparency = 0;
+			const shine = item.FindFirstChild("Shine") as ParticleEmitter | undefined;
+			if (shine) shine.Enabled = true;
 			const landY = this.itemLandingY.get(item) ?? HACHI_SKY_DROP_GROUND_Y;
 			const delay = math.random() * 3;
 			task.delay(delay, () => {
@@ -405,14 +419,13 @@ export class HachiRideMinigame implements IMinigame {
 	tick(dt: number) {
 		if (!this.roundStarted) return;
 		this.roundElapsed += dt;
-		this.hotspotElapsed += dt;
 		this.raceUpdateElapsed += dt;
 		this.checkItemCollection();
 		this.resetLandedJumps();
 		this.detectWallRun(dt);
 		this.tickHachiAnimation(dt);
 		this.checkSpeedViolations(dt);
-		this.updateHotspotState();
+		this.updateFinalSprintState();
 		if (this.raceUpdateElapsed >= 1) {
 			this.raceUpdateElapsed = 0;
 			this.broadcastRaceState();
@@ -522,9 +535,6 @@ export class HachiRideMinigame implements IMinigame {
 		this.respawnGrace.clear();
 		this.keyItems = [];
 		this.spawnParts = [];
-		this.hotspots = [];
-		this.activeHotspotIndex = 0;
-		this.hotspotElapsed = 0;
 		this.roundElapsed = 0;
 		this.raceUpdateElapsed = 0;
 		this.finalSprintStarted = false;
@@ -686,17 +696,10 @@ export class HachiRideMinigame implements IMinigame {
 		item: BasePart,
 	) {
 		const isBonus = this.bonusItems.has(item);
-		const hotspotMultiplier = this.isInActiveHotspot(item.Position)
-			? HACHI_HOTSPOT_MULTIPLIER
-			: 1;
 		const finalSprintMultiplier =
-			this.finalSprintStarted && this.bonusItems.has(item)
-				? HACHI_FINAL_SPRINT_MULTIPLIER
-				: 1;
+			this.finalSprintStarted && isBonus ? HACHI_FINAL_SPRINT_MULTIPLIER : 1;
 		const value =
-			(isBonus ? HACHI_BONUS_ITEM_VALUE : 1) *
-			hotspotMultiplier *
-			finalSprintMultiplier;
+			(isBonus ? HACHI_BONUS_ITEM_VALUE : 1) * finalSprintMultiplier;
 		state.itemCount += value;
 		state.catchCount = state.itemCount; // mirror for scoreboard
 		if (isBonus) {
@@ -812,89 +815,137 @@ export class HachiRideMinigame implements IMinigame {
 	private createCollectible(
 		position: Vector3,
 		size: Vector3,
-		color: Color3,
+		isBonus = false,
 	): BasePart {
 		const part = new Instance("Part");
-		part.Shape = Enum.PartType.Ball;
 		part.Size = size;
-		part.Color = color;
-		part.Material = Enum.Material.Neon;
+		part.Transparency = 1;
 		part.Anchored = true;
 		part.CanCollide = false;
 		part.CanTouch = false;
 		part.CanQuery = false;
 		part.CastShadow = false;
-		part.Transparency = 1;
-		part.Position = position;
+		// Rotate coins upright (disc mesh is flat on Y axis)
+		if (!isBonus) {
+			part.CFrame = new CFrame(position).mul(CFrame.Angles(math.rad(90), 0, 0));
+		} else {
+			part.Position = position;
+		}
+
+		const mesh = new Instance("SpecialMesh");
+		mesh.MeshType = Enum.MeshType.FileMesh;
+		mesh.MeshId = isBonus ? HACHI_STAR_MESH_ID : HACHI_COIN_MESH_ID;
+		mesh.TextureId = isBonus ? HACHI_STAR_TEXTURE_ID : HACHI_COIN_TEXTURE_ID;
+		// Scale mesh to match the Part size (native mesh is ~2 studs for coin, ~5 for star)
+		const nativeSize = isBonus ? 5 : 2;
+		const scaleFactor = size.X / nativeSize;
+		mesh.Scale = new Vector3(scaleFactor, scaleFactor, scaleFactor);
+		mesh.Parent = part;
+
+		// Shining particle effect
+		const emitter = new Instance("ParticleEmitter");
+		emitter.Name = "Shine";
+		emitter.Rate = isBonus ? 8 : 4;
+		emitter.Lifetime = new NumberRange(0.4, 0.8);
+		emitter.Speed = new NumberRange(1, 3);
+		emitter.SpreadAngle = new Vector2(180, 180);
+		emitter.LightEmission = 1;
+		emitter.LightInfluence = 0;
+		emitter.Brightness = isBonus ? 2 : 1.5;
+		emitter.Size = new NumberSequence([
+			new NumberSequenceKeypoint(0, isBonus ? 0.8 : 0.4),
+			new NumberSequenceKeypoint(0.5, isBonus ? 0.3 : 0.15),
+			new NumberSequenceKeypoint(1, 0),
+		]);
+		emitter.Transparency = new NumberSequence([
+			new NumberSequenceKeypoint(0, 0.2),
+			new NumberSequenceKeypoint(0.5, 0.5),
+			new NumberSequenceKeypoint(1, 1),
+		]);
+		emitter.Color = isBonus
+			? new ColorSequence(
+					Color3.fromRGB(255, 220, 50),
+					Color3.fromRGB(255, 180, 0),
+				)
+			: new ColorSequence(
+					Color3.fromRGB(150, 220, 255),
+					Color3.fromRGB(80, 160, 255),
+				);
+		emitter.RotSpeed = new NumberRange(-120, 120);
+		emitter.Enabled = false; // enabled when item is revealed
+		emitter.Parent = part;
+
 		part.Parent = Workspace;
 		return part;
 	}
 
-	private gaussianRandom(): number {
-		const u1 = math.max(math.random(), 1e-10);
-		const u2 = math.random();
-		return math.sqrt(-2 * math.log(u1)) * math.cos(2 * math.pi * u2);
+	/** Raycast downward to find the surface Y at a given XZ position. */
+	private raycastLandingY(x: number, z: number): number {
+		const origin = new Vector3(x, HACHI_SKY_DROP_MAX_Y + 50, z);
+		const direction = new Vector3(0, -(HACHI_SKY_DROP_MAX_Y + 100), 0);
+		const result = Workspace.Raycast(origin, direction);
+		// Float 2 studs above the surface to avoid clipping into geometry
+		if (result) {
+			return result.Position.Y + 2;
+		}
+		return HACHI_SKY_DROP_GROUND_Y + 2;
 	}
 
 	private generateSpawnPositions(count: number): Vector3[] {
 		const positions: Vector3[] = [];
-		for (let i = 0; i < count; i++) {
-			let dx = this.gaussianRandom() * HACHI_SKY_DROP_DENSE_RADIUS;
-			let dz = this.gaussianRandom() * HACHI_SKY_DROP_DENSE_RADIUS;
-			// Clamp to spread radius
-			const dist = math.sqrt(dx * dx + dz * dz);
-			if (dist > HACHI_SKY_DROP_SPREAD_RADIUS) {
-				const scale = HACHI_SKY_DROP_SPREAD_RADIUS / dist;
-				dx *= scale;
-				dz *= scale;
-			}
+		const centerCount = math.floor(count * HACHI_SKY_DROP_CENTER_BIAS);
+		const buildingCount = math.floor(count * HACHI_SKY_DROP_BUILDING_BIAS);
+		const uniformCount = count - centerCount - buildingCount;
+
+		// 40% uniform across full DEM bounds
+		for (let i = 0; i < uniformCount; i++) {
+			const x =
+				HACHI_CITY_MIN_X +
+				math.random() * (HACHI_CITY_MAX_X - HACHI_CITY_MIN_X);
+			const z =
+				HACHI_CITY_MIN_Z +
+				math.random() * (HACHI_CITY_MAX_Z - HACHI_CITY_MIN_Z);
 			const y = math.random(HACHI_SKY_DROP_MIN_Y, HACHI_SKY_DROP_MAX_Y);
-			positions.push(
-				new Vector3(HACHI_CITY_CENTER.X + dx, y, HACHI_CITY_CENTER.Z + dz),
-			);
+			positions.push(new Vector3(x, y, z));
 		}
+
+		// 35% within building area (more likely to land on rooftops)
+		for (let i = 0; i < buildingCount; i++) {
+			const x =
+				HACHI_BLDG_MIN_X +
+				math.random() * (HACHI_BLDG_MAX_X - HACHI_BLDG_MIN_X);
+			const z =
+				HACHI_BLDG_MIN_Z +
+				math.random() * (HACHI_BLDG_MAX_Z - HACHI_BLDG_MIN_Z);
+			const y = math.random(HACHI_SKY_DROP_MIN_Y, HACHI_SKY_DROP_MAX_Y);
+			positions.push(new Vector3(x, y, z));
+		}
+
+		// 15% center-biased within dense radius
+		for (let i = 0; i < centerCount; i++) {
+			const angle = math.random() * math.pi * 2;
+			const r = math.random() * HACHI_SKY_DROP_DENSE_RADIUS;
+			const x = HACHI_CITY_CENTER.X + math.cos(angle) * r;
+			const z = HACHI_CITY_CENTER.Z + math.sin(angle) * r;
+			const y = math.random(HACHI_SKY_DROP_MIN_Y, HACHI_SKY_DROP_MAX_Y);
+			positions.push(new Vector3(x, y, z));
+		}
+
 		return positions;
 	}
 
-	private buildHotspots(): Hotspot[] {
-		const groundY = HACHI_SKY_DROP_GROUND_Y;
-		return [
-			{
-				center: new Vector3(HACHI_CITY_CENTER.X, groundY, HACHI_CITY_CENTER.Z),
-				label: "Scramble Crossing",
-			},
-			{
-				center: new Vector3(
-					HACHI_CITY_CENTER.X + 150,
-					groundY,
-					HACHI_CITY_CENTER.Z + 100,
-				),
-				label: "East District",
-			},
-			{
-				center: new Vector3(
-					HACHI_CITY_CENTER.X - 150,
-					groundY,
-					HACHI_CITY_CENTER.Z - 100,
-				),
-				label: "West District",
-			},
-		];
+	/** Fisher-Yates shuffle, returns the same array mutated. */
+	private shuffle<T>(arr: T[]): T[] {
+		for (let i = arr.size() - 1; i > 0; i--) {
+			const j = math.floor(math.random() * (i + 1));
+			const tmp = arr[i];
+			arr[i] = arr[j];
+			arr[j] = tmp;
+		}
+		return arr;
 	}
 
-	private updateHotspotState() {
-		if (
-			this.hotspots.size() > 0 &&
-			this.hotspotElapsed >= HACHI_HOTSPOT_ROTATION_INTERVAL
-		) {
-			this.hotspotElapsed = 0;
-			this.activeHotspotIndex =
-				(this.activeHotspotIndex + 1) % this.hotspots.size();
-			this.serverEvents.hintTextChanged.broadcast(
-				`Hotspot moved to ${this.hotspots[this.activeHotspotIndex].label}!`,
-			);
-		}
-
+	private updateFinalSprintState() {
 		const timeRemaining = HACHI_ROUND_DURATION - this.roundElapsed;
 		if (
 			!this.finalSprintStarted &&
@@ -907,15 +958,6 @@ export class HachiRideMinigame implements IMinigame {
 		}
 	}
 
-	private isInActiveHotspot(position: Vector3) {
-		const hotspot = this.hotspots[this.activeHotspotIndex];
-		if (!hotspot) return false;
-		// XZ-only distance so items at any height (ground or rooftop) can trigger
-		const dx = position.X - hotspot.center.X;
-		const dz = position.Z - hotspot.center.Z;
-		return math.sqrt(dx * dx + dz * dz) <= HACHI_HOTSPOT_RADIUS;
-	}
-
 	private broadcastRaceState() {
 		if (!this.roundStarted) return;
 
@@ -924,12 +966,6 @@ export class HachiRideMinigame implements IMinigame {
 			names.set(userId, player.Name);
 		}
 
-		const hotspot = this.hotspots[this.activeHotspotIndex];
-		const hotspotTimeLeft = math.max(
-			0,
-			math.ceil(HACHI_HOTSPOT_ROTATION_INTERVAL - this.hotspotElapsed),
-		);
-
 		for (const [userId, player] of this.playerObjects) {
 			const snapshot = buildHachiRaceSnapshot(
 				this.playerStates,
@@ -937,11 +973,7 @@ export class HachiRideMinigame implements IMinigame {
 				userId,
 				HACHI_EVOLUTION_THRESHOLDS,
 			);
-			this.serverEvents.hachiRaceState.fire(player, {
-				...snapshot,
-				hotspotLabel: hotspot?.label ?? "City Loop",
-				hotspotTimeLeft,
-			});
+			this.serverEvents.hachiRaceState.fire(player, snapshot);
 		}
 	}
 

@@ -130,6 +130,7 @@ export class LobbyService implements OnStart {
 		this.setupPortals();
 		this.setupHachiRide();
 		this.setupHachiRidePortal();
+		this.setupMinigameStartRequest();
 		this.setupHachiSlideHandler();
 		this.setupHachiAnimation();
 		this.setupLobbyHachiJump();
@@ -156,6 +157,26 @@ export class LobbyService implements OnStart {
 				});
 		}
 		print(`[LobbyService] Set up ${portals.size()} Hachi Ride portals`);
+	}
+
+	private readonly startRequestCooldowns = new Map<number, number>();
+
+	private setupMinigameStartRequest() {
+		const validIds = new Set<string>([
+			MinigameId.CanKick,
+			MinigameId.ShibuyaScramble,
+			MinigameId.HachiRide,
+		]);
+		this.serverEvents.requestMinigameStart.connect((player, minigameId) => {
+			if (this.matchActive) return;
+			if (!this.onStartRequested) return;
+			if (!validIds.has(minigameId as string)) return;
+			const now = os.clock();
+			const last = this.startRequestCooldowns.get(player.UserId) ?? 0;
+			if (now - last < 3) return;
+			this.startRequestCooldowns.set(player.UserId, now);
+			this.onStartRequested(minigameId);
+		});
 	}
 
 	/** Scale lobby Hachi models as visual props (no VehicleSeat setup needed). */

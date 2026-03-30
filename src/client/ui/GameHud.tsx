@@ -3,8 +3,9 @@ import { ActionButton } from "./components/ActionButton";
 import { BonOdoriRhythmLane } from "./components/BonOdoriRhythmLane";
 import { CountdownOverlay } from "./components/CountdownOverlay";
 import { EventFeed } from "./components/EventFeed";
-import { FeaturedUnlockBanner } from "./components/FeaturedUnlockBanner";
+
 import { HachiHud } from "./components/HachiHud";
+import { HachiPlayButton } from "./components/HachiPlayButton";
 import { HachiToggleButton } from "./components/HachiToggleButton";
 import { HintText } from "./components/HintText";
 import { InviteButton } from "./components/InviteButton";
@@ -24,7 +25,7 @@ import { SkillsPanel } from "./components/SkillsPanel";
 import { SpectatorOverlay } from "./components/SpectatorOverlay";
 import { StampCardPanel } from "./components/StampCardPanel";
 import { StampDiscoveryPopup } from "./components/StampDiscoveryPopup";
-import { TodayGoalChip } from "./components/TodayGoalChip";
+
 import { TopBar } from "./components/TopBar";
 import { ZonePopup } from "./components/ZonePopup";
 
@@ -41,9 +42,8 @@ export function GameHud() {
 			<RoleIndicator />
 			<HachiHud />
 			<HachiToggleButton />
+			<HachiPlayButton />
 			<HintText />
-			<TodayGoalChip />
-			<FeaturedUnlockBanner />
 			<EventFeed />
 			<CountdownOverlay />
 			<RewardPopup />

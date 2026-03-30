@@ -107,7 +107,7 @@ export const JA: Record<string, string> = {
 	intro_scramble_title: "渋谷カオス",
 	intro_scramble_sub: "群衆に紛れて生き残れ。スクランブル交差点を使え。",
 	intro_hachi_title: "ハチ公ライド",
-	intro_hachi_sub: "ゴミを集めて進化して、1位を奪え。",
+	intro_hachi_sub: "コインを集めて進化して、1位を奪え。",
 
 	// Mission labels
 	mission_PlayGames: "3回遊ぶ",
@@ -159,4 +159,8 @@ export const JA: Record<string, string> = {
 	zone_HachikoSquare: "ハチ公前広場",
 	zone_CenterGai: "センター街",
 	zone_SkySlideHub: "スカイスライドハブ",
+	zone_Dogenzaka: "道玄坂",
+	zone_Hikarie: "渋谷ヒカリエ",
+	zone_MiyashitaPark: "宮下パーク",
+	zone_ShibuyaStation: "渋谷駅",
 };

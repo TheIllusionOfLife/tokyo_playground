@@ -12,7 +12,7 @@ export const CHARACTER_SCALE = 0.5; // half-size characters (makes city feel lar
 export const DEFAULT_JUMP_HEIGHT = 7.2; // standard jump height
 
 // Lobby & Match Flow
-export const LOBBY_INTERMISSION = 8;
+export const LOBBY_INTERMISSION = 0;
 export const RESULTS_DISPLAY_DURATION = 5;
 export const CLEANUP_DURATION = 3;
 
@@ -414,7 +414,7 @@ export const HACHI_STARTING_EVOLUTION = 2; // start with double jump + wall run
 export const HACHI_LOBBY_MIN_LEVEL = 3; // lobby Hachi always has double jump + wall run
 export const HACHI_EVOLUTION_THRESHOLDS = [0, 5, 12, 20, 30];
 export const HACHI_WALK_SPEEDS = [70, 70, 70, 70, 70]; // flat speed (no evolution boost for now)
-export const HACHI_ITEMS_TO_SPAWN = 200;
+export const HACHI_ITEMS_TO_SPAWN = 800;
 export const HACHI_COLLECTION_RADIUS = 14;
 export const HACHI_DEFAULT_SCALE = CHARACTER_SCALE; // matches character scale
 export const HACHI_BIG_SCALE = 1.5;
@@ -423,15 +423,12 @@ export const HACHI_WALL_RUN_SPEED = 75;
 export const HACHI_WALL_RUN_RAYCAST = 3;
 export const HACHI_WALL_RUN_MAX_DUR = 3;
 export const HACHI_ITEM_POINT_VALUE = 1;
-export const HACHI_BONUS_ITEM_COUNT = 20;
+export const HACHI_BONUS_ITEM_COUNT = 80;
 export const HACHI_BONUS_ITEM_VALUE = 5;
 export const HACHI_WIN_ITEM_BONUS = 20;
 export const HACHI_JUMP_VELOCITY = 106; // 150 * sqrt(0.5) for half jump apex
 export const HACHI_JUMP_COOLDOWN = 0.1; // seconds between jump requests
 export const HACHI_EJECT_COOLDOWN = 1.0; // seconds between eject requests
-export const HACHI_HOTSPOT_RADIUS = 18;
-export const HACHI_HOTSPOT_ROTATION_INTERVAL = 20;
-export const HACHI_HOTSPOT_MULTIPLIER = 2;
 export const HACHI_FINAL_SPRINT_WINDOW = 30;
 export const HACHI_FINAL_SPRINT_MULTIPLIER = 3;
 
@@ -440,14 +437,32 @@ export const CAN_KICK_RISE = 15; // studs the can flies up
 export const CAN_KICK_SPIN = 1080; // degrees of spin
 export const CAN_KICK_TWEEN_DURATION = 1.2; // seconds
 
+// Hachi Ride collectible meshes (AI-generated)
+export const HACHI_COIN_MESH_ID = "rbxassetid://79249341534588";
+export const HACHI_COIN_TEXTURE_ID = "rbxassetid://117029818969636";
+export const HACHI_STAR_MESH_ID = "rbxassetid://78058646229827";
+export const HACHI_STAR_TEXTURE_ID = "rbxassetid://92501872934670";
+
 // Hachi Ride sky-drop
 export const HACHI_SKY_DROP_MIN_Y = 300;
 export const HACHI_SKY_DROP_MAX_Y = 400;
 export const HACHI_SKY_DROP_FALL_DURATION = 4; // seconds
 export const HACHI_SKY_DROP_GROUND_Y = 16;
-export const HACHI_SKY_DROP_DENSE_RADIUS = 200; // Gaussian std dev for center cluster
-export const HACHI_SKY_DROP_SPREAD_RADIUS = 600; // max XZ clamp
+export const HACHI_SKY_DROP_DENSE_RADIUS = 400; // center-bias radius (wider spread)
+export const HACHI_SKY_DROP_CENTER_BIAS = 0.1; // 10% items within dense radius
+export const HACHI_SKY_DROP_BUILDING_BIAS = 0.5; // 50% items within building area
+// Building area bounds (LOD2 parts above Y=30)
+export const HACHI_BLDG_MIN_X = -11364;
+export const HACHI_BLDG_MAX_X = -9908;
+export const HACHI_BLDG_MIN_Z = 32734;
+export const HACHI_BLDG_MAX_Z = 34065;
+export const HACHI_SKY_DROP_ACTIVE_RATIO = 0.5; // fraction of items that actually fall per round
 export const HACHI_CITY_CENTER = new Vector3(-10608, 0, 33375);
+// DEM bounds (_533935_dem_6697_op_gml)
+export const HACHI_CITY_MIN_X = -11679;
+export const HACHI_CITY_MAX_X = -9631;
+export const HACHI_CITY_MIN_Z = 32634;
+export const HACHI_CITY_MAX_Z = 34286;
 export const HACHI_ROOFTOP_BONUS_OFFSET_Y = 50;
 export const HACHI_ROOFTOP_BUILDINGS: { topY: number; x: number; z: number }[] =
 	[

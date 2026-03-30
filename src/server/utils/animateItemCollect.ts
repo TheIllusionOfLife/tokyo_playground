@@ -43,6 +43,22 @@ export function animateItemCollect(item: BasePart, isBonus: boolean): Tween {
 		Transparency: 1,
 	});
 
+	// Also shrink SpecialMesh if present (FileMesh visuals use mesh.Scale, not Part.Size)
+	const mesh = item.FindFirstChildOfClass("SpecialMesh");
+	let meshTween: Tween | undefined;
+	if (mesh) {
+		const originalScale = mesh.Scale;
+		meshTween = TweenService.Create(mesh, tweenInfo, {
+			Scale: originalScale.mul(0.1),
+		});
+		meshTween.Play();
+		meshTween.Completed.Once((state) => {
+			if (state === Enum.PlaybackState.Completed) {
+				mesh.Scale = originalScale;
+			}
+		});
+	}
+
 	tween.Play();
 
 	tween.Completed.Once((playbackState) => {
