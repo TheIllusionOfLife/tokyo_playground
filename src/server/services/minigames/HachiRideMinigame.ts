@@ -7,6 +7,8 @@ import {
 	Workspace,
 } from "@rbxts/services";
 import {
+	DEFAULT_JUMP_HEIGHT,
+	DEFAULT_WALK_SPEED,
 	HACHI_ANTICHEAT_CHECK_INTERVAL,
 	HACHI_ANTICHEAT_GRACE_STUDS,
 	HACHI_ANTICHEAT_STRIKE_DECAY,
@@ -281,13 +283,12 @@ export class HachiRideMinigame implements IMinigame {
 			}
 		}
 
-		// Re-spawn mid-match deaths: re-equip costume on new character
+		// Re-spawn mid-match deaths: lose Hachi, reset to normal speed
 		for (const player of players) {
 			const conn = player.CharacterAdded.Connect(() => {
 				if (!this.roundStarted) return;
 				this.respawnGrace.set(player.UserId, os.clock());
 				task.wait(0.5);
-				// Re-check after yield: round may have ended during the wait
 				if (!this.roundStarted) return;
 				if (!player.Character) return;
 				const spawnPart = spawnParts[0];
@@ -297,22 +298,15 @@ export class HachiRideMinigame implements IMinigame {
 					);
 					this.resetAnticheatBaseline(player.UserId, spawnPart.Position);
 				}
-				// Clear stale mount state and re-equip Hachi costume
-				if (!template) return;
+				// Clear stale Hachi state, ensure normal human speed
 				forceUnmount(player);
-				const state = this.playerStates.get(player.UserId);
-				const clone = template.Clone();
-				clone.Name = `Hachi_${player.UserId}`;
-				if (
-					equipHachiCostume(
-						player,
-						clone,
-						state?.evolutionLevel ?? HACHI_STARTING_EVOLUTION,
-					)
-				) {
-					this.hachiModels.set(player.UserId, clone);
-				} else {
-					clone.Destroy();
+				this.hachiModels.delete(player.UserId);
+				const humanoid =
+					player.Character.FindFirstChildOfClass("Humanoid");
+				if (humanoid) {
+					humanoid.WalkSpeed = DEFAULT_WALK_SPEED;
+					humanoid.UseJumpPower = false;
+					humanoid.JumpHeight = DEFAULT_JUMP_HEIGHT;
 				}
 			});
 			matchJanitor.Add(conn);
