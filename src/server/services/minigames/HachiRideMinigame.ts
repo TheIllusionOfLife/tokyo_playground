@@ -181,7 +181,7 @@ export class HachiRideMinigame implements IMinigame {
 				sizeVal: new Vector3(2, 2, 2),
 				color: Color3.fromRGB(100, 200, 255),
 				isBonus: false,
-				landingY: HACHI_SKY_DROP_GROUND_Y,
+				landingY: this.raycastLandingY(skyPos.X, skyPos.Z),
 			});
 		}
 
@@ -194,7 +194,7 @@ export class HachiRideMinigame implements IMinigame {
 				sizeVal: new Vector3(5, 5, 5),
 				color: Color3.fromRGB(255, 215, 0),
 				isBonus: true,
-				landingY: HACHI_SKY_DROP_GROUND_Y,
+				landingY: this.raycastLandingY(skyPos.X, skyPos.Z),
 			});
 		}
 
@@ -854,6 +854,17 @@ export class HachiRideMinigame implements IMinigame {
 
 		part.Parent = Workspace;
 		return part;
+	}
+
+	/** Raycast downward to find the surface Y at a given XZ position. */
+	private raycastLandingY(x: number, z: number): number {
+		const origin = new Vector3(x, HACHI_SKY_DROP_MAX_Y + 50, z);
+		const direction = new Vector3(0, -(HACHI_SKY_DROP_MAX_Y + 100), 0);
+		const result = Workspace.Raycast(origin, direction);
+		if (result) {
+			return result.Position.Y;
+		}
+		return HACHI_SKY_DROP_GROUND_Y;
 	}
 
 	private generateSpawnPositions(count: number): Vector3[] {
