@@ -15,6 +15,8 @@ import {
 	HACHI_BONUS_ITEM_COUNT,
 	HACHI_BONUS_ITEM_VALUE,
 	HACHI_CITY_CENTER,
+	HACHI_COIN_MESH_ID,
+	HACHI_COIN_TEXTURE_ID,
 	HACHI_COLLECTION_RADIUS,
 	HACHI_EJECT_COOLDOWN,
 	HACHI_EVOLUTION_THRESHOLDS,
@@ -38,6 +40,8 @@ import {
 	HACHI_CITY_MAX_X,
 	HACHI_CITY_MIN_Z,
 	HACHI_CITY_MAX_Z,
+	HACHI_STAR_MESH_ID,
+	HACHI_STAR_TEXTURE_ID,
 	HACHI_SPAWN_TAG,
 	HACHI_STARTING_EVOLUTION,
 	HACHI_WALK_SPEEDS,
@@ -146,6 +150,7 @@ export class HachiRideMinigame implements IMinigame {
 				skyPos,
 				new Vector3(5, 5, 5),
 				Color3.fromRGB(255, 215, 0),
+				true,
 			);
 			this.activeItems.push(part);
 			this.bonusItems.add(part);
@@ -200,7 +205,7 @@ export class HachiRideMinigame implements IMinigame {
 		);
 		for (let i = 0; i < activeCount; i++) {
 			const c = candidates[i];
-			const part = this.createCollectible(c.pos, c.sizeVal, c.color);
+			const part = this.createCollectible(c.pos, c.sizeVal, c.color, c.isBonus);
 			this.activeItems.push(part);
 			if (c.isBonus) this.bonusItems.add(part);
 			this.itemLandingY.set(part, c.landingY);
@@ -823,19 +828,27 @@ export class HachiRideMinigame implements IMinigame {
 		position: Vector3,
 		size: Vector3,
 		color: Color3,
+		isBonus = false,
 	): BasePart {
 		const part = new Instance("Part");
-		part.Shape = Enum.PartType.Ball;
-		part.Size = size;
-		part.Color = color;
-		part.Material = Enum.Material.Neon;
+		part.Size = new Vector3(0.05, 0.05, 0.05);
+		part.Transparency = 1;
 		part.Anchored = true;
 		part.CanCollide = false;
 		part.CanTouch = false;
 		part.CanQuery = false;
 		part.CastShadow = false;
-		part.Transparency = 1;
 		part.Position = position;
+
+		const mesh = new Instance("SpecialMesh");
+		mesh.MeshType = Enum.MeshType.FileMesh;
+		mesh.MeshId = isBonus ? HACHI_STAR_MESH_ID : HACHI_COIN_MESH_ID;
+		mesh.TextureId = isBonus
+			? HACHI_STAR_TEXTURE_ID
+			: HACHI_COIN_TEXTURE_ID;
+		mesh.Scale = size;
+		mesh.Parent = part;
+
 		part.Parent = Workspace;
 		return part;
 	}

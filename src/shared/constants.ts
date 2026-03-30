@@ -437,6 +437,12 @@ export const CAN_KICK_RISE = 15; // studs the can flies up
 export const CAN_KICK_SPIN = 1080; // degrees of spin
 export const CAN_KICK_TWEEN_DURATION = 1.2; // seconds
 
+// Hachi Ride collectible meshes (AI-generated)
+export const HACHI_COIN_MESH_ID = "rbxassetid://79249341534588";
+export const HACHI_COIN_TEXTURE_ID = "rbxassetid://117029818969636";
+export const HACHI_STAR_MESH_ID = "rbxassetid://78058646229827";
+export const HACHI_STAR_TEXTURE_ID = "rbxassetid://92501872934670";
+
 // Hachi Ride sky-drop
 export const HACHI_SKY_DROP_MIN_Y = 300;
 export const HACHI_SKY_DROP_MAX_Y = 400;
