@@ -22,6 +22,7 @@ export class MissionService implements OnStart {
 	private readonly serverEvents = GlobalEvents.createServer({});
 	// Transient per-session tracking for PlayAllGames (not persisted)
 	private readonly gamesPlayedToday = new Map<number, Set<MinigameId>>();
+	private readonly playAllGamesCredited = new Set<number>(); // players already credited this session
 
 	constructor(private readonly playerDataService: PlayerDataService) {}
 
@@ -41,6 +42,7 @@ export class MissionService implements OnStart {
 
 		Players.PlayerRemoving.Connect((player) => {
 			this.gamesPlayedToday.delete(player.UserId);
+			this.playAllGamesCredited.delete(player.UserId);
 		});
 	}
 
@@ -163,21 +165,26 @@ export class MissionService implements OnStart {
 		}
 
 		// PlayAllGames: track distinct minigame types played per session
-		// Increment atomically when all 3 types have been played (target: 1)
-		let played = this.gamesPlayedToday.get(player.UserId);
-		if (!played) {
-			played = new Set<MinigameId>();
-			this.gamesPlayedToday.set(player.UserId, played);
-		}
-		played.add(state.minigameId);
-		if (played.size() >= 3) {
-			this.incrementAndNotify(player, MissionId.PlayAllGames, 1);
+		// Increment once when all 3 types have been played (target: 1)
+		if (!this.playAllGamesCredited.has(player.UserId)) {
+			let played = this.gamesPlayedToday.get(player.UserId);
+			if (!played) {
+				played = new Set<MinigameId>();
+				this.gamesPlayedToday.set(player.UserId, played);
+			}
+			const prevSize = played.size();
+			played.add(state.minigameId);
+			if (prevSize < 3 && played.size() >= 3) {
+				this.incrementAndNotify(player, MissionId.PlayAllGames, 1);
+				this.playAllGamesCredited.add(player.UserId);
+			}
 		}
 
 		// WinTwoInARow: streakCount is already updated before this call
+		// Use >= 2 (not === 2) so mission works regardless of when it's assigned mid-streak
 		if (won) {
 			const streakCount = this.playerDataService.getStreakCount(player);
-			if (streakCount === 2) {
+			if (streakCount >= 2) {
 				this.incrementAndNotify(player, MissionId.WinTwoInARow, 1);
 			}
 		}
