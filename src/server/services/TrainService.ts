@@ -13,6 +13,11 @@ interface PartState {
 	originalCanCollide: boolean;
 }
 
+interface DecalState {
+	decal: Decal | Texture;
+	originalTransparency: number;
+}
+
 @Service()
 export class TrainService implements OnStart {
 	onStart() {
@@ -51,8 +56,9 @@ export class TrainService implements OnStart {
 			}
 		}
 
-		// Cache original transparency and collision per part
+		// Cache original transparency per part and per decal/texture
 		const partStates: PartState[] = [];
+		const decalStates: DecalState[] = [];
 		for (const desc of train.GetDescendants()) {
 			if (desc.IsA("BasePart")) {
 				partStates.push({
@@ -60,18 +66,30 @@ export class TrainService implements OnStart {
 					originalTransparency: desc.Transparency,
 					originalCanCollide: desc.CanCollide,
 				});
+			} else if (desc.IsA("Decal") || desc.IsA("Texture")) {
+				decalStates.push({
+					decal: desc,
+					originalTransparency: desc.Transparency,
+				});
 			}
 		}
 
 		print("[TrainService] Started — one-directional train with fade");
-		task.spawn(() => this.runLoop(primary, partStates));
+		task.spawn(() => this.runLoop(primary, partStates, decalStates));
 	}
 
-	private setFade(partStates: PartState[], alpha: number) {
+	private setFade(
+		partStates: PartState[],
+		decalStates: DecalState[],
+		alpha: number,
+	) {
 		for (const ps of partStates) {
-			// Interpolate from original transparency toward fully hidden
 			ps.part.Transparency =
 				ps.originalTransparency + (1 - ps.originalTransparency) * alpha;
+		}
+		for (const ds of decalStates) {
+			ds.decal.Transparency =
+				ds.originalTransparency + (1 - ds.originalTransparency) * alpha;
 		}
 	}
 
@@ -81,17 +99,19 @@ export class TrainService implements OnStart {
 		}
 	}
 
-	private runLoop(primary: BasePart, partStates: PartState[]) {
+	private runLoop(
+		primary: BasePart,
+		partStates: PartState[],
+		decalStates: DecalState[],
+	) {
 		const startCFrame = primary.CFrame;
 		const travelDir = startCFrame.RightVector;
 		const exitCFrame = startCFrame.add(travelDir.mul(TRAVEL_DISTANCE));
-		// Off-screen position where visibility changes are invisible to players
 		const hiddenCFrame = startCFrame.add(new Vector3(0, -500, 0));
 		const duration = TRAVEL_DISTANCE / TWEEN_SPEED;
 
 		while (primary.Parent) {
 			// Train is already visible (restored off-screen during previous wait).
-			// Teleport to start — all parts appear together since they're already visible.
 			primary.CFrame = startCFrame;
 			this.setCollision(partStates, true);
 
@@ -113,7 +133,11 @@ export class TrainService implements OnStart {
 				const traveled = (os.clock() - startTime) * TWEEN_SPEED;
 				if (traveled > TRAVEL_DISTANCE - FADE_STUDS) {
 					const remaining = TRAVEL_DISTANCE - traveled;
-					this.setFade(partStates, 1 - math.max(remaining, 0) / FADE_STUDS);
+					this.setFade(
+						partStates,
+						decalStates,
+						1 - math.max(remaining, 0) / FADE_STUDS,
+					);
 				}
 			});
 
@@ -121,15 +145,14 @@ export class TrainService implements OnStart {
 			conn.Disconnect();
 
 			// Hide fully, disable collision, move off-screen
-			this.setFade(partStates, 1);
+			this.setFade(partStates, decalStates, 1);
 			this.setCollision(partStates, false);
 			primary.CFrame = hiddenCFrame;
 
-			// Wait most of the interval, then restore visibility while off-screen
-			// so clients have time to process all 68 transparency changes before
-			// the train teleports back to the visible start position.
+			// Restore visibility while off-screen so clients process all changes
+			// before the train teleports back to the visible start position.
 			task.wait(TRAIN_INTERVAL - VISIBILITY_SETTLE);
-			this.setFade(partStates, 0);
+			this.setFade(partStates, decalStates, 0);
 			task.wait(VISIBILITY_SETTLE);
 		}
 	}

@@ -116,60 +116,68 @@ export class AmbientCityService implements OnStart {
 	}
 
 	private spawnCarWave(): Model[] {
-		const carWP = ServerStorage.FindFirstChild("CarWaypoints");
+		const carWP =
+			Workspace.FindFirstChild("CarWaypoints") ??
+			ServerStorage.FindFirstChild("CarWaypoints");
 		if (!carWP) return [];
 
 		const templateNames = ["CarTemplate_1", "CarTemplate_2", "CarTemplate_3"];
 		const wave: Model[] = [];
 
-		// Spawn 1 car per wave (reduced for lobby)
-		const pathIndex = math.random(1, 3);
-		const pathFolder = carWP.FindFirstChild(`Path${pathIndex}`);
-		if (!pathFolder) return [];
-		const startPart = pathFolder.FindFirstChild("Start") as
-			| BasePart
-			| undefined;
-		const endPart = pathFolder.FindFirstChild("End") as BasePart | undefined;
-		if (!startPart || !endPart) return [];
+		// Spawn 1 car per path: Path1→Template1, Path2→Template2, Path3→Template3
+		for (let i = 1; i <= 3; i++) {
+			const pathFolder = carWP.FindFirstChild(`Path${i}`);
+			if (!pathFolder) continue;
+			const startPart = pathFolder.FindFirstChild("Start") as
+				| BasePart
+				| undefined;
+			const endPart = pathFolder.FindFirstChild("End") as
+				| BasePart
+				| undefined;
+			if (!startPart || !endPart) continue;
 
-		const templateName =
-			templateNames[math.random(0, templateNames.size() - 1)];
-		const template = ServerStorage.FindFirstChild(templateName) as
-			| Model
-			| undefined;
-		if (!template) return [];
+			const templateName = templateNames[i - 1];
+			const template = ServerStorage.FindFirstChild(templateName) as
+				| Model
+				| undefined;
+			if (!template) continue;
 
-		const car = template.Clone();
-		const primary = car.PrimaryPart;
-		for (const desc of car.GetDescendants()) {
-			if (desc.IsA("BasePart")) {
-				desc.Anchored = desc === primary;
-				desc.CanCollide = false;
-				desc.CanTouch = false;
-				desc.CanQuery = false;
-				desc.CastShadow = false;
+			const car = template.Clone();
+			const primary = car.PrimaryPart;
+			for (const desc of car.GetDescendants()) {
+				if (desc.IsA("BasePart")) {
+					desc.Anchored = desc === primary;
+					desc.CanCollide = true;
+					desc.CanTouch = false;
+					desc.CanQuery = false;
+					desc.CastShadow = false;
+				}
 			}
+
+			const rawDir = endPart.Position.sub(startPart.Position);
+			const carDir =
+				rawDir.Magnitude > 0.1 ? rawDir : new Vector3(0, 0, 1);
+			car.PivotTo(
+				CFrame.lookAt(startPart.Position, startPart.Position.add(carDir)),
+			);
+			car.Parent = Workspace;
+
+			if (primary) {
+				TweenService.Create(
+					primary,
+					new TweenInfo(CAR_WAVE_DURATION, Enum.EasingStyle.Linear),
+					{
+						CFrame: CFrame.lookAt(
+							endPart.Position,
+							endPart.Position.add(carDir),
+						),
+					},
+				).Play();
+			}
+
+			this.activeCarNPCs.push(car);
+			wave.push(car);
 		}
-
-		const rawDir = endPart.Position.sub(startPart.Position);
-		const carDir = rawDir.Magnitude > 0.1 ? rawDir : new Vector3(0, 0, 1);
-		car.PivotTo(
-			CFrame.lookAt(startPart.Position, startPart.Position.add(carDir)),
-		);
-		car.Parent = Workspace;
-
-		if (primary) {
-			TweenService.Create(
-				primary,
-				new TweenInfo(CAR_WAVE_DURATION, Enum.EasingStyle.Linear),
-				{
-					CFrame: CFrame.lookAt(endPart.Position, endPart.Position.add(carDir)),
-				},
-			).Play();
-		}
-
-		this.activeCarNPCs.push(car);
-		wave.push(car);
 		return wave;
 	}
 

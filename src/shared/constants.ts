@@ -413,6 +413,9 @@ export const HACHI_ROUND_DURATION =
 export const HACHI_STARTING_EVOLUTION = 2; // start with double jump + wall run
 export const HACHI_LOBBY_MIN_LEVEL = 3; // lobby Hachi always has double jump + wall run
 export const HACHI_EVOLUTION_THRESHOLDS = [0, 5, 12, 20, 30];
+// Max air jumps per evolution level (index = level)
+// Level 0: 0, Level 1-2: 1 (double), Level 3: 2 (triple), Level 4: 3 (quadruple)
+export const HACHI_MAX_AIR_JUMPS = [0, 1, 1, 2, 3];
 export const HACHI_WALK_SPEEDS = [70, 70, 70, 70, 70]; // flat speed (no evolution boost for now)
 export const HACHI_ITEMS_TO_SPAWN = 800;
 export const HACHI_COLLECTION_RADIUS = 14;

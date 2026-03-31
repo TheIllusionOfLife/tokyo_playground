@@ -16,6 +16,7 @@ import {
 	HACHI_EJECT_COOLDOWN,
 	HACHI_JUMP_COOLDOWN,
 	HACHI_LOBBY_MIN_LEVEL,
+	HACHI_MAX_AIR_JUMPS,
 	HACHI_RIDE_PORTAL_TAG,
 	HACHI_RIDE_TAG,
 	HACHI_SLIDE_RAMP_PROXIMITY,
@@ -58,8 +59,8 @@ export class LobbyService implements OnStart {
 	private readonly hachiJumpCooldowns = new Map<number, number>();
 	private readonly hachiEjectCooldowns = new Map<number, number>();
 	private readonly hachiAnimStates = new Map<Model, HachiAnimState>();
-	/** Lobby double-jump phase: 0=grounded, 1=can double, 2=used */
-	private readonly lobbyJumpPhase = new Map<number, number>();
+	/** Lobby air jumps used this airborne session (reset on land). */
+	private readonly lobbyAirJumpsUsed = new Map<number, number>();
 	private slideRamps: BasePart[] = [];
 	private matchActive = false;
 	private onStartRequested?: (minigameId: MinigameId) => void;
@@ -113,7 +114,7 @@ export class LobbyService implements OnStart {
 			this.hachiSlideActive.delete(player.UserId);
 			this.hachiJumpCooldowns.delete(player.UserId);
 			this.hachiEjectCooldowns.delete(player.UserId);
-			this.lobbyJumpPhase.delete(player.UserId);
+			this.lobbyAirJumpsUsed.delete(player.UserId);
 		});
 
 		// Cache slide ramps
@@ -392,7 +393,7 @@ export class LobbyService implements OnStart {
 				data?.maxHachiLevel ?? 0,
 				HACHI_LOBBY_MIN_LEVEL,
 			);
-			this.lobbyJumpPhase.set(player.UserId, maxLevel >= 2 ? 1 : 2);
+			this.lobbyAirJumpsUsed.set(player.UserId, 0);
 
 			// Reset phase when landed (HRP Y velocity settles)
 			task.delay(0.3, () => {
@@ -405,12 +406,12 @@ export class LobbyService implements OnStart {
 					checks++;
 					if (checks > 300) {
 						landConn.Disconnect();
-						this.lobbyJumpPhase.set(player.UserId, 0);
+						this.lobbyAirJumpsUsed.delete(player.UserId);
 						return;
 					}
 					if (math.abs(hrp.AssemblyLinearVelocity.Y) < 5) {
 						landConn.Disconnect();
-						this.lobbyJumpPhase.set(player.UserId, 0);
+						this.lobbyAirJumpsUsed.delete(player.UserId);
 					}
 				});
 			});
@@ -421,12 +422,17 @@ export class LobbyService implements OnStart {
 		this.serverEvents.hachiLobbyDoubleJump.connect((player) => {
 			if (this.matchActive) return;
 
-			const phase = this.lobbyJumpPhase.get(player.UserId) ?? 0;
-			if (phase !== 1) return;
-
 			const data = this.playerDataService.getPlayerData(player);
-			if (!data || math.max(data.maxHachiLevel, HACHI_LOBBY_MIN_LEVEL) < 2)
-				return;
+			const maxLevel = math.max(
+				data?.maxHachiLevel ?? 0,
+				HACHI_LOBBY_MIN_LEVEL,
+			);
+			if (maxLevel < 1) return;
+
+			const maxJumps =
+				HACHI_MAX_AIR_JUMPS[math.min(maxLevel, HACHI_MAX_AIR_JUMPS.size() - 1)];
+			const used = this.lobbyAirJumpsUsed.get(player.UserId) ?? 0;
+			if (used >= maxJumps) return;
 
 			if (!isPlayerMounted(player)) return;
 			const hrp = player.Character?.FindFirstChild("HumanoidRootPart") as
@@ -437,7 +443,7 @@ export class LobbyService implements OnStart {
 			// Must be airborne
 			if (math.abs(hrp.AssemblyLinearVelocity.Y) < 5) return;
 
-			this.lobbyJumpPhase.set(player.UserId, 2);
+			this.lobbyAirJumpsUsed.set(player.UserId, used + 1);
 			// Impulse applied client-side for instant feel.
 			this.serverEvents.hachiDoubleJumpGranted.fire(player);
 		});

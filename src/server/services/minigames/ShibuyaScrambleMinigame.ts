@@ -496,7 +496,9 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 	}
 
 	private spawnCarWave(): Model[] {
-		const carWP = ServerStorage.FindFirstChild("CarWaypoints");
+		const carWP =
+			Workspace.FindFirstChild("CarWaypoints") ??
+			ServerStorage.FindFirstChild("CarWaypoints");
 		if (!carWP) return [];
 
 		const templateNames = ["CarTemplate_1", "CarTemplate_2", "CarTemplate_3"];
@@ -524,7 +526,7 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 			for (const desc of car.GetDescendants()) {
 				if (desc.IsA("BasePart")) {
 					desc.Anchored = desc === primary;
-					desc.CanCollide = false;
+					desc.CanCollide = true;
 					desc.CanTouch = false;
 					desc.CanQuery = false;
 				}

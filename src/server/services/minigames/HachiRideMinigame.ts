@@ -35,6 +35,7 @@ import {
 	HACHI_ITEMS_TO_SPAWN,
 	HACHI_JUMP_COOLDOWN,
 	HACHI_JUMP_VELOCITY,
+	HACHI_MAX_AIR_JUMPS,
 	HACHI_MAX_SPEED_TOLERANCE,
 	HACHI_ROOFTOP_BONUS_OFFSET_Y,
 	HACHI_ROOFTOP_BUILDINGS,
@@ -106,7 +107,7 @@ export class HachiRideMinigame implements IMinigame {
 	private wallRunStates = new Map<number, WallRunState>();
 	private jumpCooldowns = new Map<number, number>();
 	private ejectCooldowns = new Map<number, number>();
-	private doubleJumpUsed = new Map<number, boolean>();
+	private airJumpsUsed = new Map<number, number>();
 	private jumpPhase = new Map<number, number>();
 	private jumpTime = new Map<number, number>();
 	private lastPositions = new Map<number, Vector3>();
@@ -519,7 +520,7 @@ export class HachiRideMinigame implements IMinigame {
 		this.wallRunStates.clear();
 		this.jumpCooldowns.clear();
 		this.ejectCooldowns.clear();
-		this.doubleJumpUsed.clear();
+		this.airJumpsUsed.clear();
 		this.jumpPhase.clear();
 		this.jumpTime.clear();
 		this.lastPositions.clear();
@@ -554,7 +555,7 @@ export class HachiRideMinigame implements IMinigame {
 		this.wallRunStates.delete(userId);
 		this.jumpCooldowns.delete(userId);
 		this.ejectCooldowns.delete(userId);
-		this.doubleJumpUsed.delete(userId);
+		this.airJumpsUsed.delete(userId);
 		this.jumpPhase.delete(userId);
 		this.jumpTime.delete(userId);
 		this.lastPositions.delete(userId);
@@ -994,11 +995,15 @@ export class HachiRideMinigame implements IMinigame {
 	private handleDoubleJumpEvent(player: Player) {
 		const state = this.playerStates.get(player.UserId);
 		if (!state) return;
-		// Require evolution >= 1 (double jump unlock)
+		// Require evolution >= 1 (air jump unlock)
 		if (state.evolutionLevel < 1) return;
-		// Reject if already used this airborne session
-		if (this.doubleJumpUsed.get(player.UserId)) return;
-		this.doubleJumpUsed.set(player.UserId, true);
+		const maxJumps =
+			HACHI_MAX_AIR_JUMPS[
+				math.min(state.evolutionLevel, HACHI_MAX_AIR_JUMPS.size() - 1)
+			];
+		const used = this.airJumpsUsed.get(player.UserId) ?? 0;
+		if (used >= maxJumps) return;
+		this.airJumpsUsed.set(player.UserId, used + 1);
 	}
 
 	private checkSpeedViolations(_dt: number) {
@@ -1108,7 +1113,7 @@ export class HachiRideMinigame implements IMinigame {
 			const isGrounded = math.abs(hrp.AssemblyLinearVelocity.Y) < 5;
 
 			if (isGrounded) {
-				this.doubleJumpUsed.set(userId, false);
+				this.airJumpsUsed.set(userId, 0);
 				this.stopWallRun(userId, player);
 				continue;
 			}
