@@ -43,25 +43,25 @@ export class HudController implements OnStart {
 			if (phase === MatchPhase.WaitingForPlayers) {
 				gameStore.resetForNewMatch();
 			}
-
-			// Pre-stream arena geometry on match start so mobile players don't spawn into void
-			if (phase === MatchPhase.Preparing) {
-				const hrp = Players.LocalPlayer.Character?.FindFirstChild(
-					"HumanoidRootPart",
-				) as BasePart | undefined;
-				if (hrp) {
-					task.spawn(() => {
-						pcall(() =>
-							Players.LocalPlayer.RequestStreamAroundAsync(hrp.Position),
-						);
-					});
-				}
-			}
 		});
 
 		clientEvents.roleAssigned.connect((role, minigameId) => {
 			gameStore.setRole(role);
 			gameStore.setActiveMinigameId(minigameId);
+
+			// Pre-stream arena geometry after teleport so mobile players
+			// don't see void. roleAssigned fires after prepare()+assignRoles()
+			// which teleport the player, so HRP is now at the arena position.
+			const hrp = Players.LocalPlayer.Character?.FindFirstChild(
+				"HumanoidRootPart",
+			) as BasePart | undefined;
+			if (hrp) {
+				task.spawn(() => {
+					pcall(() =>
+						Players.LocalPlayer.RequestStreamAroundAsync(hrp.Position),
+					);
+				});
+			}
 		});
 
 		clientEvents.roundTimerUpdate.connect((timeRemaining) => {

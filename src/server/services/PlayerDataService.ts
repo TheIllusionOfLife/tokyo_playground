@@ -68,6 +68,7 @@ export class PlayerDataService implements OnStart {
 			if (attempt < MAX_RETRIES) {
 				if (!player.IsDescendantOf(Players)) return;
 				task.wait(math.pow(2, attempt));
+				if (!player.IsDescendantOf(Players)) return;
 			}
 		}
 
@@ -75,7 +76,9 @@ export class PlayerDataService implements OnStart {
 			warn(
 				`[PlayerDataService] All ${MAX_RETRIES} profile load attempts failed for ${player.Name} (${player.UserId})`,
 			);
-			player.Kick("Failed to load your data. Please rejoin.");
+			if (player.IsDescendantOf(Players)) {
+				player.Kick("Failed to load your data. Please rejoin.");
+			}
 			return;
 		}
 
@@ -89,7 +92,7 @@ export class PlayerDataService implements OnStart {
 		if (!typeIs(data.npcFirstInteractions, "table"))
 			data.npcFirstInteractions = [];
 		if (!typeIs(data.ownedItems, "table")) data.ownedItems = [];
-		if (!typeIs(data.equippedItems, "table")) data.equippedItems = {} as never;
+		if (!typeIs(data.equippedItems, "table")) data.equippedItems = {};
 
 		profile.ListenToRelease(() => {
 			this.profiles.delete(player);
