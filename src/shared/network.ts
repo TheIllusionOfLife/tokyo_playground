@@ -26,7 +26,7 @@ interface ServerToClientEvents {
 	roleAssigned(role: PlayerRole, minigameId: MinigameId): void;
 	crowdWaveStarted(pathCount: number): void;
 	roundTimerUpdate(timeRemaining: number): void;
-	hintTextChanged(hint: string): void;
+	hintTextChanged(hint: string, hintArgs?: string[]): void;
 	rewardGranted(breakdown: RewardBreakdown): void;
 	playerCaught(caughtPlayerId: number): void;
 	playerFreed(freedPlayerIds: number[]): void;

@@ -229,8 +229,9 @@ export class CanKickMinigame implements IMinigame {
 		this.serverEvents.catchHighlight.broadcast(closestHider.UserId);
 		this.lastHintText = fireHintText(
 			this.serverEvents,
-			`${closestHider.Name} was caught!`,
+			"hint_player_caught",
 			this.lastHintText,
+			[closestHider.Name],
 		);
 		print(
 			`[CanKick] ${closestHider.Name} caught by ${player.Name} (${oniState.catchCount} catches)`,
@@ -254,10 +255,10 @@ export class CanKickMinigame implements IMinigame {
 				this.rattleProgress + 1,
 				CAN_RATTLE_TARGET,
 			);
-			this.serverEvents.hintTextChanged.fire(
-				player,
-				`RATTLE ${this.rattleProgress}/${CAN_RATTLE_TARGET}`,
-			);
+			this.serverEvents.hintTextChanged.fire(player, "hint_rattle_progress", [
+				`${this.rattleProgress}`,
+				`${CAN_RATTLE_TARGET}`,
+			]);
 			if (this.rattleProgress >= CAN_RATTLE_TARGET) {
 				this.rattleProgress = 0;
 				for (const [userId, state] of this.playerStates) {
@@ -265,10 +266,7 @@ export class CanKickMinigame implements IMinigame {
 					if (state.role !== PlayerRole.Hider) continue;
 					const hider = this.playerObjects.get(userId);
 					if (hider) {
-						this.serverEvents.hintTextChanged.fire(
-							hider,
-							"Jail rattled! Oni revealed for 2 seconds!",
-						);
+						this.serverEvents.hintTextChanged.fire(hider, "hint_jail_rattled");
 					}
 				}
 				if (this.oniUserId !== undefined) {
@@ -332,8 +330,9 @@ export class CanKickMinigame implements IMinigame {
 
 		this.lastHintText = fireHintText(
 			this.serverEvents,
-			`${player.Name} kicked the can! ${freedIds.size()} freed!`,
+			"hint_can_kicked",
 			this.lastHintText,
+			[player.Name, `${freedIds.size()}`],
 		);
 		print(
 			`[CanKick] ${player.Name} kicked the can, freed ${freedIds.size()} players`,

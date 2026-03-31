@@ -131,9 +131,7 @@ export class AmbientCityService implements OnStart {
 			const startPart = pathFolder.FindFirstChild("Start") as
 				| BasePart
 				| undefined;
-			const endPart = pathFolder.FindFirstChild("End") as
-				| BasePart
-				| undefined;
+			const endPart = pathFolder.FindFirstChild("End") as BasePart | undefined;
 			if (!startPart || !endPart) continue;
 
 			const templateName = templateNames[i - 1];
@@ -155,8 +153,7 @@ export class AmbientCityService implements OnStart {
 			}
 
 			const rawDir = endPart.Position.sub(startPart.Position);
-			const carDir =
-				rawDir.Magnitude > 0.1 ? rawDir : new Vector3(0, 0, 1);
+			const carDir = rawDir.Magnitude > 0.1 ? rawDir : new Vector3(0, 0, 1);
 			car.PivotTo(
 				CFrame.lookAt(startPart.Position, startPart.Position.add(carDir)),
 			);

@@ -272,8 +272,9 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 		this.serverEvents.spiritChargeChanged.fire(closestHider, 1);
 		this.lastHintText = fireHintText(
 			this.serverEvents,
-			`${closestHider.Name} was tagged!`,
+			"hint_player_tagged",
 			this.lastHintText,
+			[closestHider.Name],
 		);
 		print(
 			`[ShibuyaScramble] ${closestHider.Name} tagged by ${player.Name} (${oniState.catchCount} tags)`,

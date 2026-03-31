@@ -171,6 +171,17 @@ export const EN: Record<string, string> = {
 	hint_items_falling: "Items falling from the sky! Collect as much as you can!",
 	hint_keep_collecting: "Keep collecting!",
 	hint_final_sprint: "Final sprint! Bonus items are worth triple now!",
+	hint_player_tagged: "%1 was tagged!",
+	hint_player_caught: "%1 was caught!",
+	hint_can_kicked: "%1 kicked the can! %2 freed!",
+	hint_bonus_collected: "BONUS! +%1 points!",
+	hint_rattle_progress: "RATTLE %1/%2",
+	hint_jail_rattled: "Jail rattled! Oni revealed for 2 seconds!",
+	hint_ability_1: "Level 1: DOUBLE JUMP unlocked! Press Space mid-air!",
+	hint_ability_2: "Level 2: WALL RUN unlocked! Jump near walls!",
+	hint_ability_3: "Level 3: BIG HACHI + TRIPLE JUMP!",
+	hint_ability_4: "Level 4: FLUFFY HACHI + QUADRUPLE JUMP!",
+	hint_hachi_evolved: "Hachi evolved to level %1!",
 
 	// Zones
 	zone_ShibuyaSky: "Shibuya Sky",

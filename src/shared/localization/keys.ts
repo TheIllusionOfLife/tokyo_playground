@@ -162,6 +162,17 @@ export const L_HINT_HACHI_START = "hint_hachi_start";
 export const L_HINT_ITEMS_FALLING = "hint_items_falling";
 export const L_HINT_KEEP_COLLECTING = "hint_keep_collecting";
 export const L_HINT_FINAL_SPRINT = "hint_final_sprint";
+export const L_HINT_PLAYER_TAGGED = "hint_player_tagged";
+export const L_HINT_PLAYER_CAUGHT = "hint_player_caught";
+export const L_HINT_CAN_KICKED = "hint_can_kicked";
+export const L_HINT_BONUS_COLLECTED = "hint_bonus_collected";
+export const L_HINT_RATTLE_PROGRESS = "hint_rattle_progress";
+export const L_HINT_JAIL_RATTLED = "hint_jail_rattled";
+export const L_HINT_ABILITY_1 = "hint_ability_1";
+export const L_HINT_ABILITY_2 = "hint_ability_2";
+export const L_HINT_ABILITY_3 = "hint_ability_3";
+export const L_HINT_ABILITY_4 = "hint_ability_4";
+export const L_HINT_HACHI_EVOLVED = "hint_hachi_evolved";
 
 // Zone names
 export const L_ZONE_SHIBUYA_SKY = "zone_ShibuyaSky";

@@ -12,7 +12,7 @@ import {
 } from "@rbxts/services";
 import { clientEvents } from "client/network";
 import { SCRAMBLE_SLIDE_COOLDOWN, SE_SLIDE } from "shared/constants";
-import { t } from "shared/localization";
+import { t, tf } from "shared/localization";
 import { L_DAILY_LOGIN_BONUS } from "shared/localization/keys";
 import { gameStore } from "shared/store/game-store";
 import { MatchPhase, MinigameId, MissionId } from "shared/types";
@@ -54,8 +54,10 @@ export class HudController implements OnStart {
 			gameStore.setTimeRemaining(timeRemaining);
 		});
 
-		clientEvents.hintTextChanged.connect((hint) => {
-			gameStore.setHintText(t(hint));
+		clientEvents.hintTextChanged.connect((hint, hintArgs) => {
+			const text =
+				hintArgs && hintArgs.size() > 0 ? tf(hint, ...hintArgs) : t(hint);
+			gameStore.setHintText(text);
 		});
 
 		clientEvents.countdownTick.connect((secondsLeft) => {

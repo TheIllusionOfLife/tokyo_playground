@@ -58,8 +58,9 @@ export function fireHintText(
 	serverEvents: ServerEvents,
 	text: string,
 	lastRef: string,
+	args?: string[],
 ): string {
 	if (text === lastRef) return lastRef;
-	serverEvents.hintTextChanged.broadcast(text);
+	serverEvents.hintTextChanged.broadcast(text, args);
 	return text;
 }

@@ -485,7 +485,8 @@ export class HachiRideMinigame implements IMinigame {
 		if (level >= 1) {
 			this.serverEvents.hachiDoubleJumpGranted.fire(player);
 		}
-		this.serverEvents.hintTextChanged.fire(player, this.getAbilityText(level));
+		const hint = this.getAbilityHint(level);
+		this.serverEvents.hintTextChanged.fire(player, hint.key, hint.args);
 	}
 
 	/** Admin debug: set item count and trigger evolution checks. */
@@ -708,10 +709,9 @@ export class HachiRideMinigame implements IMinigame {
 			// Fire bonus BEFORE item so the client's bonusThisFrame flag
 			// is set when the item handler runs (both arrive same frame).
 			this.serverEvents.hachiBonusCollected.fire(player);
-			this.serverEvents.hintTextChanged.fire(
-				player,
-				`BONUS! +${value} points!`,
-			);
+			this.serverEvents.hintTextChanged.fire(player, "hint_bonus_collected", [
+				`${value}`,
+			]);
 			this.missionService.incrementAndNotify(
 				player,
 				MissionId.CollectBonusItem,
@@ -792,8 +792,12 @@ export class HachiRideMinigame implements IMinigame {
 		}
 
 		// Show ability description
-		const abilityText = this.getAbilityText(newLevel);
-		this.serverEvents.hintTextChanged.fire(player, abilityText);
+		const abilityHint = this.getAbilityHint(newLevel);
+		this.serverEvents.hintTextChanged.fire(
+			player,
+			abilityHint.key,
+			abilityHint.args,
+		);
 
 		// Also show level-up in generic hint after a delay
 		task.delay(3, () => {
@@ -875,18 +879,18 @@ export class HachiRideMinigame implements IMinigame {
 		glow.Parent = part;
 	}
 
-	private getAbilityText(level: number): string {
+	private getAbilityHint(level: number): { key: string; args?: string[] } {
 		switch (level) {
 			case 1:
-				return "Level 1: DOUBLE JUMP unlocked! Press Space mid-air!";
+				return { key: "hint_ability_1" };
 			case 2:
-				return "Level 2: WALL RUN unlocked! Jump near walls!";
+				return { key: "hint_ability_2" };
 			case 3:
-				return "Level 3: BIG HACHI + TRIPLE JUMP!";
+				return { key: "hint_ability_3" };
 			case 4:
-				return "Level 4: FLUFFY HACHI + QUADRUPLE JUMP!";
+				return { key: "hint_ability_4" };
 			default:
-				return `Hachi evolved to level ${level}!`;
+				return { key: "hint_hachi_evolved", args: [`${level}`] };
 		}
 	}
 

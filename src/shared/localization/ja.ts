@@ -171,6 +171,17 @@ export const JA: Record<string, string> = {
 	hint_items_falling: "空からアイテムが降ってくる! たくさん集めろ!",
 	hint_keep_collecting: "どんどん集めろ!",
 	hint_final_sprint: "ラストスパート! ボーナスアイテム3倍!",
+	hint_player_tagged: "%1がタッチされた!",
+	hint_player_caught: "%1が捕まった!",
+	hint_can_kicked: "%1が缶を蹴った! %2人解放!",
+	hint_bonus_collected: "ボーナス! +%1ポイント!",
+	hint_rattle_progress: "ガタガタ %1/%2",
+	hint_jail_rattled: "牢屋が揺れた! オニが2秒間バレる!",
+	hint_ability_1: "レベル1: 二段ジャンプ解放! 空中でスペース!",
+	hint_ability_2: "レベル2: 壁走り解放! 壁の近くでジャンプ!",
+	hint_ability_3: "レベル3: デカハチ + 三段ジャンプ!",
+	hint_ability_4: "レベル4: もふもふハチ + 四段ジャンプ!",
+	hint_hachi_evolved: "ハチがレベル%1に進化!",
 
 	// Zones
 	zone_ShibuyaSky: "渋谷スカイ",
