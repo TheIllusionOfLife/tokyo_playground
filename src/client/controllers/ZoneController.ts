@@ -16,19 +16,27 @@ export class ZoneController implements OnStart {
 	private currentZone = "";
 	private zoneShownAt = 0; // os.clock() when popup was shown
 	private elapsed = 0;
+	private addedConn?: RBXScriptConnection;
+	private removedConn?: RBXScriptConnection;
+	private heartbeatConn?: RBXScriptConnection;
+	private characterAddedConn?: RBXScriptConnection;
 
 	onStart() {
 		this.zoneParts = CollectionService.GetTagged(ZONE_TAG).filter(
 			(p): p is BasePart => p.IsA("BasePart"),
 		);
-		CollectionService.GetInstanceAddedSignal(ZONE_TAG).Connect((p) => {
-			if (p.IsA("BasePart")) this.zoneParts.push(p);
-		});
-		CollectionService.GetInstanceRemovedSignal(ZONE_TAG).Connect((p) => {
+		this.addedConn = CollectionService.GetInstanceAddedSignal(ZONE_TAG).Connect(
+			(p) => {
+				if (p.IsA("BasePart")) this.zoneParts.push(p);
+			},
+		);
+		this.removedConn = CollectionService.GetInstanceRemovedSignal(
+			ZONE_TAG,
+		).Connect((p) => {
 			this.zoneParts = this.zoneParts.filter((z) => z !== p);
 		});
 
-		RunService.Heartbeat.Connect((dt) => {
+		this.heartbeatConn = RunService.Heartbeat.Connect((dt) => {
 			this.elapsed += dt;
 			if (this.elapsed < CHECK_INTERVAL) return;
 			this.elapsed = 0;
@@ -36,7 +44,7 @@ export class ZoneController implements OnStart {
 		});
 
 		// Force recompute on respawn/teleport
-		Players.LocalPlayer.CharacterAdded.Connect(() => {
+		this.characterAddedConn = Players.LocalPlayer.CharacterAdded.Connect(() => {
 			task.wait(1);
 			this.currentZone = "";
 			this.zoneShownAt = 0;

@@ -37,6 +37,10 @@ export const CAN_FREED_SPEED_BOOST_DURATION = 3;
 // Cooldowns
 export const ACTION_COOLDOWN = 0.5;
 
+// AFK Detection
+export const AFK_TIMEOUT = 300; // 5 minutes
+export const ACTIVITY_HEARTBEAT_INTERVAL = 60; // client fires every 60s if active
+
 // Leveling — cumulative points needed per level
 export const LEVEL_THRESHOLDS: number[] = [
 	0, 50, 200, 500, 1000, 1800, 3000, 4500, 7000, 10000,

@@ -3,6 +3,7 @@ import { Janitor } from "@rbxts/janitor";
 import { Players } from "@rbxts/services";
 import {
 	ACTION_COOLDOWN,
+	AFK_TIMEOUT,
 	CLEANUP_DURATION,
 	LOBBY_INTERMISSION,
 	MINIGAME_CONFIGS,
@@ -57,6 +58,7 @@ export class MatchService implements OnStart {
 	private matchJanitor?: Janitor;
 	private matchPlayers = new Set<Player>();
 	private playerCooldowns = new Map<Player, number>();
+	private lastActivity = new Map<number, number>();
 	private minigameIndex = -1;
 	private nextMinigameId: MinigameId = MinigameId.CanKick;
 	private currentMinigameId: MinigameId = MinigameId.CanKick;
@@ -117,13 +119,21 @@ export class MatchService implements OnStart {
 			}),
 		);
 
+		this.serverEvents.clientActivity.connect(
+			safeHandler("MatchService.clientActivity", (player) => {
+				this.lastActivity.set(player.UserId, os.clock());
+			}),
+		);
+
 		Players.PlayerAdded.Connect((player) => {
+			this.lastActivity.set(player.UserId, os.clock());
 			if ((this.currentPhase as MatchPhase) !== MatchPhase.WaitingForPlayers) {
 				this.handlePlayerJoinMidMatch(player);
 			}
 		});
 
 		Players.PlayerRemoving.Connect((player) => {
+			this.lastActivity.delete(player.UserId);
 			this.handlePlayerLeaveMidMatch(player);
 		});
 
@@ -226,7 +236,32 @@ export class MatchService implements OnStart {
 		}
 
 		this.matchJanitor = new Janitor();
-		this.matchPlayers = new Set(Players.GetPlayers());
+		this.matchPlayers = new Set(
+			Players.GetPlayers().filter((p) => !this.isPlayerAfk(p)),
+		);
+
+		// Notify AFK players and fire analytics
+		for (const player of Players.GetPlayers()) {
+			if (!this.matchPlayers.has(player)) {
+				this.serverEvents.afkRemoved.fire(player);
+				this.analyticsService.fireForPlayer(player, {
+					name: "afk_removed",
+					playerId: player.UserId,
+					idleSeconds: math.floor(
+						os.clock() - (this.lastActivity.get(player.UserId) ?? 0),
+					),
+				});
+				this.lastActivity.set(player.UserId, os.clock());
+			}
+		}
+
+		const config = MINIGAME_CONFIGS[minigameId];
+		if (this.matchPlayers.size() < config.minPlayers) {
+			print("[MatchService] Below minimum after AFK filter — cancelling");
+			this.forceCleanup();
+			return;
+		}
+
 		this.playerCooldowns.clear();
 		this.currentMinigameId = minigameId;
 		this.lobbyService.setMatchActive(true);
@@ -294,7 +329,6 @@ export class MatchService implements OnStart {
 			playerCount: this.matchPlayers.size(),
 		});
 
-		const config = MINIGAME_CONFIGS[minigameId];
 		let timeRemaining = config.roundDuration;
 		this.matchTimeRemaining = timeRemaining;
 		let lastTimerBroadcast = timeRemaining;
@@ -676,6 +710,11 @@ export class MatchService implements OnStart {
 		this.minigameIndex = (this.minigameIndex + 1) % available.size();
 		this.nextMinigameId = available[this.minigameIndex];
 		return this.nextMinigameId;
+	}
+
+	private isPlayerAfk(player: Player): boolean {
+		const lastTime = this.lastActivity.get(player.UserId) ?? 0;
+		return os.clock() - lastTime > AFK_TIMEOUT;
 	}
 
 	private broadcastQueueStatus(

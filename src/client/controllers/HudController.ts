@@ -3,6 +3,7 @@ import React from "@rbxts/react";
 import { ReflexProvider } from "@rbxts/react-reflex";
 import ReactRoblox from "@rbxts/react-roblox";
 import {
+	GuiService,
 	HapticService,
 	Players,
 	RunService,
@@ -33,6 +34,7 @@ export class HudController implements OnStart {
 		this.wireNetworkEvents();
 		this.mountReactUi();
 		clientEvents.playerReady.fire();
+		clientEvents.reportPlatform.fire(this.detectPlatform());
 		clientEvents.requestShopCatalog.fire();
 	}
 
@@ -409,6 +411,13 @@ export class HudController implements OnStart {
 			});
 			break;
 		}
+	}
+
+	private detectPlatform(): string {
+		if (GuiService.IsTenFootInterface()) return "console";
+		if (UserInputService.TouchEnabled && !UserInputService.KeyboardEnabled)
+			return "mobile";
+		return "desktop";
 	}
 
 	private refreshFeaturedUnlock() {

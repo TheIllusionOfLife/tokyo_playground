@@ -18,6 +18,7 @@ import {
 	RewardBreakdown,
 } from "shared/types";
 import { getCurrentDay } from "shared/utils/dayKey";
+import { AnalyticsService } from "./AnalyticsService";
 
 const PROFILE_STORE_KEY = "PlayerData_v1";
 
@@ -31,6 +32,8 @@ export class PlayerDataService implements OnStart {
 	private expectedReleases = new Set<Player>();
 	private profileLoadedCallbacks: Array<(player: Player) => void> = [];
 	private readonly serverEvents = GlobalEvents.createServer({});
+
+	constructor(private readonly analyticsService: AnalyticsService) {}
 
 	onStart() {
 		print("[PlayerDataService] Started");
@@ -77,6 +80,11 @@ export class PlayerDataService implements OnStart {
 				`[PlayerDataService] All ${MAX_RETRIES} profile load attempts failed for ${player.Name} (${player.UserId})`,
 			);
 			if (player.IsDescendantOf(Players)) {
+				this.analyticsService.fireForPlayer(player, {
+					name: "profile_load_failure",
+					playerId: player.UserId,
+					attempts: MAX_RETRIES,
+				});
 				player.Kick("Failed to load your data. Please rejoin.");
 			}
 			return;

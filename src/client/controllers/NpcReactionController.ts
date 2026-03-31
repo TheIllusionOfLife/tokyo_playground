@@ -85,6 +85,9 @@ export class NpcReactionController implements OnStart {
 		sound.Parent = SoundService;
 		sound.Play();
 		sound.Ended.Once(() => sound.Destroy());
+		task.delay(10, () => {
+			if (sound.Parent) sound.Destroy();
+		});
 	}
 
 	isNpcActive(npcId: string): boolean {

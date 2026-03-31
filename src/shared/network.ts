@@ -116,6 +116,9 @@ interface ServerToClientEvents {
 	bonOdoriNote(direction: number, beatTime: number): void;
 	foodTruckFound(playerName: string, slotsRemaining: number): void;
 
+	// ── AFK ─────────────────────────────────────────────────────────────
+	afkRemoved(): void;
+
 	// ── Boundary ────────────────────────────────────────────────────────
 	boundaryWarning(ratio: number): void;
 
@@ -159,6 +162,8 @@ interface ClientToServerEvents {
 	// ── Living Shibuya: Lobby Hachi Abilities ────────────────────────────
 	hachiToggleCostume(equip: boolean): void;
 	hachiLobbyDoubleJump(): void; // fix M1: separate from match hachiDoubleJump
+	reportPlatform(platform: string): void;
+	clientActivity(): void;
 	hachiLobbyWallRun(wallNormal: Vector3): void;
 }
 
