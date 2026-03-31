@@ -171,6 +171,17 @@ export class HudController implements OnStart {
 			gameStore.setHachiEvolutionLevel(level);
 		});
 
+		clientEvents.hachiFieldItems.connect(
+			(remainingRegular, totalRegular, remainingBonus, totalBonus) => {
+				gameStore.setHachiFieldItems(
+					remainingRegular,
+					totalRegular,
+					remainingBonus,
+					totalBonus,
+				);
+			},
+		);
+
 		clientEvents.queueStatusChanged.connect((status) => {
 			gameStore.setQueueStatus(status);
 		});
