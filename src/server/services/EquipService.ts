@@ -4,6 +4,7 @@ import { SHOP_CATALOG, STAMP_REWARD_CATALOG } from "shared/constants";
 
 import { GlobalEvents } from "shared/network";
 import { ItemCategory, ItemId } from "shared/types";
+import { safeHandler } from "../utils/safeConnect";
 import { PlayerDataService } from "./PlayerDataService";
 
 const COSMETICS_FOLDER = "Cosmetics";
@@ -210,13 +211,18 @@ export class EquipService implements OnStart {
 	onStart() {
 		print("[EquipService] Started");
 
-		this.serverEvents.requestEquip.connect((player, itemId) => {
-			const now = os.clock();
-			if (now - (this.equipCooldowns.get(player.UserId) ?? 0) < EQUIP_COOLDOWN)
-				return;
-			this.equipCooldowns.set(player.UserId, now);
-			this.handleEquipRequest(player, itemId);
-		});
+		this.serverEvents.requestEquip.connect(
+			safeHandler("EquipService.requestEquip", (player, itemId) => {
+				const now = os.clock();
+				if (
+					now - (this.equipCooldowns.get(player.UserId) ?? 0) <
+					EQUIP_COOLDOWN
+				)
+					return;
+				this.equipCooldowns.set(player.UserId, now);
+				this.handleEquipRequest(player, itemId);
+			}),
+		);
 
 		// Apply cosmetics on character spawn (after profile is loaded)
 		this.playerDataService.registerOnProfileLoaded((player) => {

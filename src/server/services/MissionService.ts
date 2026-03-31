@@ -15,6 +15,7 @@ import {
 	PlayerRole,
 } from "shared/types";
 import { getCurrentDay } from "shared/utils/dayKey";
+import { safeHandler } from "../utils/safeConnect";
 import { PlayerDataService } from "./PlayerDataService";
 
 @Service()
@@ -36,9 +37,11 @@ export class MissionService implements OnStart {
 			this.onPlayerJoined(player);
 		});
 
-		this.serverEvents.collectMissionReward.connect((player, id) => {
-			this.handleCollectReward(player, id);
-		});
+		this.serverEvents.collectMissionReward.connect(
+			safeHandler("MissionService.collectMissionReward", (player, id) => {
+				this.handleCollectReward(player, id);
+			}),
+		);
 
 		Players.PlayerRemoving.Connect((player) => {
 			this.gamesPlayedToday.delete(player.UserId);

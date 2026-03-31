@@ -18,6 +18,7 @@ import {
 import { GlobalEvents } from "shared/network";
 import { NpcId, TimePhase } from "shared/types";
 import { getCurrentDay } from "shared/utils/dayKey";
+import { safeHandler } from "../utils/safeConnect";
 import { DayNightService } from "./DayNightService";
 import { PlayerDataService } from "./PlayerDataService";
 
@@ -73,14 +74,21 @@ export class NpcRoutineService implements OnStart {
 		});
 
 		// Handle NPC interaction requests
-		this.serverEvents.requestNpcInteraction.connect((player, npcId) => {
-			this.handleInteraction(player, npcId);
-		});
+		this.serverEvents.requestNpcInteraction.connect(
+			safeHandler(
+				"NpcRoutineService.requestNpcInteraction",
+				(player, npcId) => {
+					this.handleInteraction(player, npcId);
+				},
+			),
+		);
 
 		// Handle omikuji requests
-		this.serverEvents.requestOmikuji.connect((player) => {
-			this.handleOmikuji(player);
-		});
+		this.serverEvents.requestOmikuji.connect(
+			safeHandler("NpcRoutineService.requestOmikuji", (player) => {
+				this.handleOmikuji(player);
+			}),
+		);
 	}
 
 	private updateNpcPresence() {

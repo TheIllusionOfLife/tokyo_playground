@@ -57,11 +57,28 @@ export class PlayerDataService implements OnStart {
 
 	private onPlayerAdded(player: Player) {
 		const profileKey = `Player_${player.UserId}`;
-		const profile = this.profileStore.LoadProfileAsync(profileKey);
+		const MAX_RETRIES = 3;
+		let profile: ReturnType<typeof this.profileStore.LoadProfileAsync>;
+		for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+			profile = this.profileStore.LoadProfileAsync(profileKey);
+			if (profile !== undefined) break;
+			print(
+				`[PlayerDataService] Profile load attempt ${attempt}/${MAX_RETRIES} failed for ${player.Name}`,
+			);
+			if (attempt < MAX_RETRIES) {
+				if (!player.IsDescendantOf(Players)) return;
+				task.wait(math.pow(2, attempt));
+				if (!player.IsDescendantOf(Players)) return;
+			}
+		}
 
 		if (profile === undefined) {
-			print(`[PlayerDataService] Failed to load profile for ${player.Name}`);
-			player.Kick("Failed to load your data. Please rejoin.");
+			warn(
+				`[PlayerDataService] All ${MAX_RETRIES} profile load attempts failed for ${player.Name} (${player.UserId})`,
+			);
+			if (player.IsDescendantOf(Players)) {
+				player.Kick("Failed to load your data. Please rejoin.");
+			}
 			return;
 		}
 
@@ -74,6 +91,8 @@ export class PlayerDataService implements OnStart {
 		if (!typeIs(data.badges, "table")) data.badges = [];
 		if (!typeIs(data.npcFirstInteractions, "table"))
 			data.npcFirstInteractions = [];
+		if (!typeIs(data.ownedItems, "table")) data.ownedItems = [];
+		if (!typeIs(data.equippedItems, "table")) data.equippedItems = {};
 
 		profile.ListenToRelease(() => {
 			this.profiles.delete(player);
@@ -146,6 +165,7 @@ export class PlayerDataService implements OnStart {
 	}
 
 	addCoins(player: Player, amount: number) {
+		if (!(amount > 0 && amount < math.huge)) return;
 		const profile = this.profiles.get(player);
 		if (profile) {
 			profile.Data.coins += amount;
@@ -153,6 +173,7 @@ export class PlayerDataService implements OnStart {
 	}
 
 	addPlayPoints(player: Player, amount: number) {
+		if (!(amount > 0 && amount < math.huge)) return;
 		const profile = this.profiles.get(player);
 		if (profile) {
 			profile.Data.totalPlayPoints += amount;
