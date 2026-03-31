@@ -186,6 +186,7 @@ export const EN: Record<string, string> = {
 	// Zones
 	zone_ShibuyaSky: "Shibuya Sky",
 	zone_ShibuyaCrossing: "Shibuya Crossing",
+	["zone_Shibuya Crossing"]: "Shibuya Crossing",
 	zone_HachikoSquare: "Hachiko Square",
 	zone_CenterGai: "Center-gai",
 	zone_SkySlideHub: "Sky Slide Hub",

@@ -186,6 +186,7 @@ export const JA: Record<string, string> = {
 	// Zones
 	zone_ShibuyaSky: "渋谷スカイ",
 	zone_ShibuyaCrossing: "渋谷スクランブル交差点",
+	["zone_Shibuya Crossing"]: "渋谷スクランブル交差点",
 	zone_HachikoSquare: "ハチ公前広場",
 	zone_CenterGai: "センター街",
 	zone_SkySlideHub: "スカイスライドハブ",
