@@ -80,6 +80,8 @@ export const JA: Record<string, string> = {
 
 	// Bon Odori
 	bon_odori_hint: "WASDでリズムに乗ろう!",
+	bon_odori_score: "スコア",
+	bon_odori_combo: "コンボ",
 
 	// Obstacle course
 	obstacle_active: "障害物コース開催中",

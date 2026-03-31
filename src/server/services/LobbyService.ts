@@ -28,6 +28,10 @@ import {
 	SLIDE_DIR_Y_OFFSET,
 	SLIDE_RAMP_TAG,
 } from "shared/constants";
+import {
+	L_HINT_STARTING_CAN_KICK,
+	L_HINT_STARTING_SCRAMBLE,
+} from "shared/localization/keys";
 import { GlobalEvents } from "shared/network";
 import { MinigameId } from "shared/types";
 import { animateHachi, HachiAnimState } from "../utils/animateHachi";
@@ -228,7 +232,7 @@ export class LobbyService implements OnStart {
 				}
 				this.serverEvents.hintTextChanged.fire(
 					player,
-					"hint_starting_can_kick",
+					L_HINT_STARTING_CAN_KICK,
 				);
 				this.onStartRequested(MinigameId.CanKick);
 			});
@@ -249,7 +253,7 @@ export class LobbyService implements OnStart {
 					}
 					this.serverEvents.hintTextChanged.fire(
 						player,
-						"hint_starting_scramble",
+						L_HINT_STARTING_SCRAMBLE,
 					);
 					this.onStartRequested(MinigameId.ShibuyaScramble);
 				});

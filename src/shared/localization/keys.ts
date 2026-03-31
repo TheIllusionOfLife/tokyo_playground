@@ -81,6 +81,8 @@ export const L_NEXT_FEATURED = "next_featured";
 
 // Bon Odori
 export const L_BON_ODORI_HINT = "bon_odori_hint";
+export const L_BON_ODORI_SCORE = "bon_odori_score";
+export const L_BON_ODORI_COMBO = "bon_odori_combo";
 
 // Obstacle course
 export const L_OBSTACLE_ACTIVE = "obstacle_active";

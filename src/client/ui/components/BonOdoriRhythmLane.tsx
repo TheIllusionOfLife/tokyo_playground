@@ -33,7 +33,7 @@ export function BonOdoriRhythmLane() {
 				TextColor3={Color3.fromRGB(255, 220, 100)}
 				TextScaled={true}
 				Font={Enum.Font.GothamBold}
-				Text={`Score: ${bonOdori.score}`}
+				Text={`${t("bon_odori_score")}: ${bonOdori.score}`}
 			/>
 
 			{/* Combo */}
@@ -44,7 +44,9 @@ export function BonOdoriRhythmLane() {
 				TextColor3={Color3.fromRGB(200, 180, 220)}
 				TextScaled={true}
 				Font={Enum.Font.Gotham}
-				Text={bonOdori.combo > 0 ? `Combo x${bonOdori.combo}` : ""}
+				Text={
+					bonOdori.combo > 0 ? `${t("bon_odori_combo")} x${bonOdori.combo}` : ""
+				}
 			/>
 
 			{/* Instruction */}

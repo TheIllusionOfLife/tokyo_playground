@@ -14,6 +14,7 @@ export class AmbientCityService implements OnStart {
 	private loopGeneration = 0;
 	private activeCrowdNPCs: Model[] = [];
 	private activeCarNPCs: Model[] = [];
+	private fadingModels = new Set<Model>();
 
 	onStart() {
 		print("[AmbientCityService] Started");
@@ -33,7 +34,7 @@ export class AmbientCityService implements OnStart {
 		this.destroyAllAmbientActors();
 	}
 
-	/** Immediately destroy all spawned NPCs and cars. */
+	/** Immediately destroy all spawned NPCs and cars, including those mid-fade. */
 	destroyAllAmbientActors() {
 		for (const npc of this.activeCrowdNPCs) {
 			if (npc.Parent) npc.Destroy();
@@ -44,6 +45,11 @@ export class AmbientCityService implements OnStart {
 			if (car.Parent) car.Destroy();
 		}
 		this.activeCarNPCs = [];
+
+		for (const model of this.fadingModels) {
+			if (model.Parent) model.Destroy();
+		}
+		this.fadingModels.clear();
 	}
 
 	/** Alternating traffic loop: cars → gap → pedestrians → gap → repeat */
@@ -225,13 +231,18 @@ export class AmbientCityService implements OnStart {
 		return fallback;
 	}
 
-	/** Fade out NPCs/cars over 1s, then destroy. Removes from tracking immediately. */
+	/** Fade out NPCs/cars over 1s, then destroy. Tracks fading models for safe cleanup. */
 	private fadeAndDestroy(wave: Model[], activeList: Model[]) {
 		// Remove from active list immediately so next-wave timing isn't blocked
 		const waveSet = new Set(wave);
 		const remaining = activeList.filter((n) => !waveSet.has(n));
 		activeList.clear();
 		for (const n of remaining) activeList.push(n);
+
+		// Track fading models so stop() can destroy them mid-fade
+		for (const model of wave) {
+			this.fadingModels.add(model);
+		}
 
 		// Fade out all parts
 		for (const model of wave) {
@@ -251,6 +262,7 @@ export class AmbientCityService implements OnStart {
 		// Destroy after fade completes
 		task.delay(FADE_OUT_DURATION + 0.1, () => {
 			for (const model of wave) {
+				this.fadingModels.delete(model);
 				if (model.Parent) model.Destroy();
 			}
 		});

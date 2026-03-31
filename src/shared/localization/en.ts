@@ -80,6 +80,8 @@ export const EN: Record<string, string> = {
 
 	// Bon Odori
 	bon_odori_hint: "WASD to the beat!",
+	bon_odori_score: "Score",
+	bon_odori_combo: "Combo",
 
 	// Obstacle course
 	obstacle_active: "Obstacle Course Active",

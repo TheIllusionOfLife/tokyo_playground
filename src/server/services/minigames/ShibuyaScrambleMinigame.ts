@@ -46,6 +46,7 @@ type ServerEvents = ReturnType<typeof GlobalEvents.createServer>;
 const ONI_SPAWN_TAG = "ShibuyaScrambleOniSpawn";
 const HIDER_SPAWN_TAG = "ShibuyaScrambleHiderSpawn";
 const SLIDE_RAMP_TAG = "ShibuyaSlideRamp";
+const FADE_OUT_DURATION = 1; // seconds for NPC/car fade-out
 
 export class ShibuyaScrambleMinigame implements IMinigame {
 	readonly id = MinigameId.ShibuyaScramble;
@@ -462,15 +463,19 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 		for (const npc of npcs) {
 			for (const desc of npc.GetDescendants()) {
 				if (desc.IsA("BasePart")) {
-					TweenService.Create(desc, new TweenInfo(1, Enum.EasingStyle.Linear), {
-						Transparency: 1,
-					}).Play();
+					TweenService.Create(
+						desc,
+						new TweenInfo(FADE_OUT_DURATION, Enum.EasingStyle.Linear),
+						{
+							Transparency: 1,
+						},
+					).Play();
 				} else if (desc.IsA("ParticleEmitter") || desc.IsA("Trail")) {
 					desc.Enabled = false;
 				}
 			}
 		}
-		task.delay(1.1, () => {
+		task.delay(FADE_OUT_DURATION + 0.1, () => {
 			for (const npc of npcs) {
 				if (npc.Parent) npc.Destroy();
 			}
@@ -602,15 +607,19 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 		for (const car of cars) {
 			for (const desc of car.GetDescendants()) {
 				if (desc.IsA("BasePart")) {
-					TweenService.Create(desc, new TweenInfo(1, Enum.EasingStyle.Linear), {
-						Transparency: 1,
-					}).Play();
+					TweenService.Create(
+						desc,
+						new TweenInfo(FADE_OUT_DURATION, Enum.EasingStyle.Linear),
+						{
+							Transparency: 1,
+						},
+					).Play();
 				} else if (desc.IsA("ParticleEmitter") || desc.IsA("Trail")) {
 					desc.Enabled = false;
 				}
 			}
 		}
-		task.delay(1.1, () => {
+		task.delay(FADE_OUT_DURATION + 0.1, () => {
 			for (const car of cars) {
 				if (car.Parent) car.Destroy();
 			}
