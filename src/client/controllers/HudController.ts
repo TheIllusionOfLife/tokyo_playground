@@ -43,6 +43,20 @@ export class HudController implements OnStart {
 			if (phase === MatchPhase.WaitingForPlayers) {
 				gameStore.resetForNewMatch();
 			}
+
+			// Pre-stream arena geometry on match start so mobile players don't spawn into void
+			if (phase === MatchPhase.Preparing) {
+				const hrp = Players.LocalPlayer.Character?.FindFirstChild(
+					"HumanoidRootPart",
+				) as BasePart | undefined;
+				if (hrp) {
+					task.spawn(() => {
+						pcall(() =>
+							Players.LocalPlayer.RequestStreamAroundAsync(hrp.Position),
+						);
+					});
+				}
+			}
 		});
 
 		clientEvents.roleAssigned.connect((role, minigameId) => {

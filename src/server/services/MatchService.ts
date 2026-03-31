@@ -25,6 +25,7 @@ import {
 	type HachiRoundOutcome,
 } from "shared/utils/hachiOutcome";
 import { unequipHachiCostume } from "../utils/hachiCostume";
+import { safeHandler } from "../utils/safeConnect";
 import { AmbientCityService } from "./AmbientCityService";
 import { AnalyticsService } from "./AnalyticsService";
 import { BoundaryService } from "./BoundaryService";
@@ -95,20 +96,26 @@ export class MatchService implements OnStart {
 		// Wire portal start requests (avoids circular DI: MatchService already holds LobbyService)
 		this.lobbyService.setOnStartRequested((id) => this.requestStart(id));
 
-		this.serverEvents.requestCatch.connect((player) => {
-			this.handleActionRequest(player, "catch");
-		});
+		this.serverEvents.requestCatch.connect(
+			safeHandler("MatchService.requestCatch", (player) => {
+				this.handleActionRequest(player, "catch");
+			}),
+		);
 
-		this.serverEvents.requestKickCan.connect((player) => {
-			this.handleActionRequest(player, "kickCan");
-		});
+		this.serverEvents.requestKickCan.connect(
+			safeHandler("MatchService.requestKickCan", (player) => {
+				this.handleActionRequest(player, "kickCan");
+			}),
+		);
 
-		this.serverEvents.requestSpiritWave.connect((player) => {
-			if (this.currentPhase !== MatchPhase.InProgress) return;
-			if (!this.activeMinigame) return;
-			if (!this.matchPlayers.has(player)) return;
-			this.activeMinigame.handleSpiritWaveRequest(player);
-		});
+		this.serverEvents.requestSpiritWave.connect(
+			safeHandler("MatchService.requestSpiritWave", (player) => {
+				if (this.currentPhase !== MatchPhase.InProgress) return;
+				if (!this.activeMinigame) return;
+				if (!this.matchPlayers.has(player)) return;
+				this.activeMinigame.handleSpiritWaveRequest(player);
+			}),
+		);
 
 		Players.PlayerAdded.Connect((player) => {
 			if ((this.currentPhase as MatchPhase) !== MatchPhase.WaitingForPlayers) {

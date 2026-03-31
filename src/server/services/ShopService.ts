@@ -3,6 +3,7 @@ import { Players } from "@rbxts/services";
 import { SHOP_CATALOG, SHOP_CATALOG_COOLDOWN } from "shared/constants";
 import { GlobalEvents } from "shared/network";
 import { ItemId, ShopItemData } from "shared/types";
+import { safeHandler } from "../utils/safeConnect";
 import { PlayerDataService } from "./PlayerDataService";
 
 @Service()
@@ -32,20 +33,24 @@ export class ShopService implements OnStart {
 			}
 		});
 
-		this.serverEvents.requestShopCatalog.connect((player) => {
-			const now = os.clock();
-			if (
-				now - (this.catalogCooldowns.get(player.UserId) ?? 0) <
-				SHOP_CATALOG_COOLDOWN
-			)
-				return;
-			this.catalogCooldowns.set(player.UserId, now);
-			this.handleRequestCatalog(player);
-		});
+		this.serverEvents.requestShopCatalog.connect(
+			safeHandler("ShopService.requestShopCatalog", (player) => {
+				const now = os.clock();
+				if (
+					now - (this.catalogCooldowns.get(player.UserId) ?? 0) <
+					SHOP_CATALOG_COOLDOWN
+				)
+					return;
+				this.catalogCooldowns.set(player.UserId, now);
+				this.handleRequestCatalog(player);
+			}),
+		);
 
-		this.serverEvents.requestPurchase.connect((player, itemId) => {
-			this.handleRequestPurchase(player, itemId);
-		});
+		this.serverEvents.requestPurchase.connect(
+			safeHandler("ShopService.requestPurchase", (player, itemId) => {
+				this.handleRequestPurchase(player, itemId);
+			}),
+		);
 
 		Players.PlayerRemoving.Connect((player) => {
 			this.catalogCooldowns.delete(player.UserId);
