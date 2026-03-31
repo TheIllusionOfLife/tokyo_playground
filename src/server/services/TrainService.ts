@@ -151,7 +151,7 @@ export class TrainService implements OnStart {
 
 			// Restore visibility while off-screen so clients process all changes
 			// before the train teleports back to the visible start position.
-			task.wait(TRAIN_INTERVAL - VISIBILITY_SETTLE);
+			task.wait(math.max(0, TRAIN_INTERVAL - VISIBILITY_SETTLE));
 			this.setFade(partStates, decalStates, 0);
 			task.wait(VISIBILITY_SETTLE);
 		}

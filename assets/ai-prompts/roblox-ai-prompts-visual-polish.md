@@ -16,7 +16,7 @@ Generate a small collectible coin, roughly 2 studs in diameter. It should look l
 ### Bonus Point Object (Golden Star)
 
 ```
-Generate a golden star collectible, about 5 studs across. It should be a 5-pointed star shape with rounded tips, glowing gold color (#FFD700). Make it look premium and eye-catching with a slight metallic sheen. Keep under 800 triangles. It should stand out clearly against blue coins.
+Generate a golden star collectible, about 5 studs across. It should be a 5-pointed star shape with rounded tips, glowing gold color (#FFD700). Make it look premium and eye-catching with a slight metallic sheen. Keep under 800 triangles. It should stand out clearly against green coins.
 ```
 
 ---

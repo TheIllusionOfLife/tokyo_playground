@@ -387,20 +387,13 @@ export class LobbyService implements OnStart {
 
 			this.hachiJumpCooldowns.set(player.UserId, now);
 			// Jump impulse is applied client-side (native Humanoid jump).
-			// Server tracks phase for double-jump gating.
-			const data = this.playerDataService.getPlayerData(player);
-			const maxLevel = math.max(
-				data?.maxHachiLevel ?? 0,
-				HACHI_LOBBY_MIN_LEVEL,
-			);
+			// Server tracks air jump count, reset on land.
 			this.lobbyAirJumpsUsed.set(player.UserId, 0);
 
-			// Reset phase when landed (HRP Y velocity settles)
+			// Reset air jumps when landed (FloorMaterial check, not Y-velocity)
 			task.delay(0.3, () => {
-				const hrp = player.Character?.FindFirstChild("HumanoidRootPart") as
-					| BasePart
-					| undefined;
-				if (!hrp) return;
+				const humanoid = player.Character?.FindFirstChildOfClass("Humanoid");
+				if (!humanoid) return;
 				let checks = 0;
 				const landConn = RunService.Heartbeat.Connect(() => {
 					checks++;
@@ -409,7 +402,7 @@ export class LobbyService implements OnStart {
 						this.lobbyAirJumpsUsed.delete(player.UserId);
 						return;
 					}
-					if (math.abs(hrp.AssemblyLinearVelocity.Y) < 5) {
+					if (humanoid.FloorMaterial !== Enum.Material.Air) {
 						landConn.Disconnect();
 						this.lobbyAirJumpsUsed.delete(player.UserId);
 					}

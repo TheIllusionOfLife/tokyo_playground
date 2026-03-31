@@ -456,12 +456,14 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 	}
 
 	private despawnCrowdNPCs(npcs = this.activeCrowdNPCs) {
+		// Filter out already-destroyed NPCs (e.g., spirit wave + cleanup overlap)
+		const alive = npcs.filter((npc) => npc.Parent !== undefined);
 		// Remove from tracking immediately so next-wave timing isn't blocked
 		this.activeCrowdNPCs = this.activeCrowdNPCs.filter(
-			(npc) => !npcs.includes(npc),
+			(npc) => !alive.includes(npc),
 		);
 		// Fade out then destroy
-		for (const npc of npcs) {
+		for (const npc of alive) {
 			for (const desc of npc.GetDescendants()) {
 				if (desc.IsA("BasePart")) {
 					TweenService.Create(
@@ -606,10 +608,11 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 		this.activeCarNPCs = this.activeCarNPCs.filter(
 			(car) => !cars.includes(car),
 		);
-		// Fade out then destroy
+		// Disable collision and stop motion immediately, then fade visually
 		for (const car of cars) {
 			for (const desc of car.GetDescendants()) {
 				if (desc.IsA("BasePart")) {
+					desc.CanCollide = false;
 					TweenService.Create(
 						desc,
 						new TweenInfo(FADE_OUT_DURATION, Enum.EasingStyle.Linear),

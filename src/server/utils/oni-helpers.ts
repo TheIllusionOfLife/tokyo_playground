@@ -60,7 +60,8 @@ export function fireHintText(
 	lastRef: string,
 	args?: string[],
 ): string {
-	if (text === lastRef) return lastRef;
+	const dedupKey = args ? `${text}:${args.join(",")}` : text;
+	if (dedupKey === lastRef) return lastRef;
 	serverEvents.hintTextChanged.broadcast(text, args);
-	return text;
+	return dedupKey;
 }
