@@ -144,6 +144,9 @@ export const EN: Record<string, string> = {
 	// Daily login
 	daily_login_bonus: "Daily Login Bonus!",
 
+	// AFK
+	afk_removed: "Removed from queue (idle)",
+
 	// New mission labels
 	mission_PlayWithFriends: "Play with a Friend",
 	mission_PlayAllGames: "Play All 3 Games",

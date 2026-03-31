@@ -39,4 +39,14 @@ export type AnalyticsEvent =
 			name: "session_end";
 			playerId: number;
 			durationSeconds: number;
+	  }
+	| {
+			name: "profile_load_failure";
+			playerId: number;
+			attempts: number;
+	  }
+	| {
+			name: "afk_removed";
+			playerId: number;
+			idleSeconds: number;
 	  };

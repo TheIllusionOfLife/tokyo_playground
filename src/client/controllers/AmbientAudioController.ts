@@ -41,6 +41,10 @@ export class AmbientAudioController implements OnStart {
 	}
 
 	private playAmbient(soundId: string, volume: number) {
+		if (this.currentSound) {
+			this.currentSound.Stop();
+			this.currentSound.Destroy();
+		}
 		const sound = new Instance("Sound");
 		sound.SoundId = soundId;
 		sound.Volume = volume;

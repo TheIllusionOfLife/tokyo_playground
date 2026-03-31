@@ -144,6 +144,9 @@ export const JA: Record<string, string> = {
 	// Daily login
 	daily_login_bonus: "ログインボーナス!",
 
+	// AFK
+	afk_removed: "待機中のため、キューから外れました",
+
 	// New mission labels
 	mission_PlayWithFriends: "フレンドと遊ぶ",
 	mission_PlayAllGames: "3種類すべて遊ぶ",
