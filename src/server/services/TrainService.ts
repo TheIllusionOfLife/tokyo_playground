@@ -5,6 +5,7 @@ const TRAIN_INTERVAL = 12; // seconds to wait before next pass
 const TWEEN_SPEED = 60; // studs per second
 const TRAVEL_DISTANCE = 950; // studs from start to city edge
 const FADE_STUDS = 80; // studs over which the train fades out at the end
+const VISIBILITY_SETTLE = 0.5; // seconds to let transparency propagate to clients
 
 interface PartState {
 	part: BasePart;
@@ -84,12 +85,14 @@ export class TrainService implements OnStart {
 		const startCFrame = primary.CFrame;
 		const travelDir = startCFrame.RightVector;
 		const exitCFrame = startCFrame.add(travelDir.mul(TRAVEL_DISTANCE));
+		// Off-screen position where visibility changes are invisible to players
+		const hiddenCFrame = startCFrame.add(new Vector3(0, -500, 0));
 		const duration = TRAVEL_DISTANCE / TWEEN_SPEED;
 
 		while (primary.Parent) {
-			// Start visible at initial position with original transparency
+			// Train is already visible (restored off-screen during previous wait).
+			// Teleport to start — all parts appear together since they're already visible.
 			primary.CFrame = startCFrame;
-			this.setFade(partStates, 0);
 			this.setCollision(partStates, true);
 
 			// Tween from start toward city edge
@@ -117,12 +120,17 @@ export class TrainService implements OnStart {
 			tween.Completed.Wait();
 			conn.Disconnect();
 
-			// Hide, disable collision, and teleport back to start
+			// Hide fully, disable collision, move off-screen
 			this.setFade(partStates, 1);
 			this.setCollision(partStates, false);
-			primary.CFrame = startCFrame;
+			primary.CFrame = hiddenCFrame;
 
-			task.wait(TRAIN_INTERVAL);
+			// Wait most of the interval, then restore visibility while off-screen
+			// so clients have time to process all 68 transparency changes before
+			// the train teleports back to the visible start position.
+			task.wait(TRAIN_INTERVAL - VISIBILITY_SETTLE);
+			this.setFade(partStates, 0);
+			task.wait(VISIBILITY_SETTLE);
 		}
 	}
 }
