@@ -596,9 +596,17 @@ export class HachiRideMinigame implements IMinigame {
 			);
 			this.jumpTime.set(player.UserId, now);
 		} else if (phase === 1) {
-			// Double jump (midair, evolution >= 1)
+			// Air jump (midair, evolution >= 1). Check multi-jump allowance.
+			const state = this.playerStates.get(player.UserId);
+			if (!state) return;
+			const maxJumps =
+				HACHI_MAX_AIR_JUMPS[
+					math.min(state.evolutionLevel, HACHI_MAX_AIR_JUMPS.size() - 1)
+				];
+			const used = this.airJumpsUsed.get(player.UserId) ?? 0;
+			if (used >= maxJumps) return;
 			this.jumpCooldowns.set(player.UserId, now);
-			this.jumpPhase.set(player.UserId, 2);
+			this.jumpPhase.set(player.UserId, used + 1 >= maxJumps ? 2 : 1);
 		}
 		// phase 2: reject
 	}
@@ -982,9 +990,9 @@ export class HachiRideMinigame implements IMinigame {
 		const verts: { idx: number; pos: Vector2 }[] = [];
 		for (const child of folder.GetChildren()) {
 			if (!child.IsA("BasePart")) continue;
-			const match = child.Name.match("^Vertex_(%d+)$");
-			if (!match || !match[0]) continue;
-			const idx = tonumber(match[0]) ?? 0;
+			const [numStr] = child.Name.match("^Vertex_(%d+)$");
+			if (numStr === undefined) continue;
+			const idx = tonumber(numStr) ?? 0;
 			verts.push({ idx, pos: new Vector2(child.Position.X, child.Position.Z) });
 		}
 		verts.sort((a, b) => a.idx < b.idx);
