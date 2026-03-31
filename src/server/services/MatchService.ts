@@ -137,6 +137,11 @@ export class MatchService implements OnStart {
 			this.handlePlayerLeaveMidMatch(player);
 		});
 
+		// Bootstrap lastActivity for players who connected before onStart
+		for (const player of Players.GetPlayers()) {
+			this.lastActivity.set(player.UserId, os.clock());
+		}
+
 		// Guarantee cleanup if Studio/server is force-quit mid-match
 		game.BindToClose(() => {
 			this.forceCleanup();
@@ -251,7 +256,6 @@ export class MatchService implements OnStart {
 						os.clock() - (this.lastActivity.get(player.UserId) ?? 0),
 					),
 				});
-				this.lastActivity.set(player.UserId, os.clock());
 			}
 		}
 
@@ -305,6 +309,24 @@ export class MatchService implements OnStart {
 			});
 			if (role === PlayerRole.Oni) {
 				oniPlayer = player;
+			}
+		}
+
+		// Route AFK-excluded players to spectator so they get proper UI state
+		for (const player of Players.GetPlayers()) {
+			if (!this.matchPlayers.has(player)) {
+				this.serverEvents.roleAssigned.fire(
+					player,
+					PlayerRole.Spectator,
+					minigameId,
+				);
+				this.serverEvents.matchSnapshot.fire(
+					player,
+					this.currentPhase,
+					0,
+					PlayerRole.Spectator,
+					minigameId,
+				);
 			}
 		}
 

@@ -10,7 +10,7 @@ import { MicroEventId } from "shared/types";
 export interface IMicroEvent {
 	readonly id: MicroEventId;
 
-	/** Maximum duration in seconds. MicroEventService enforces this as a hard cap. */
+	/** Suggested maximum duration in seconds. Termination is driven by isFinished(), not this value. */
 	readonly duration: number;
 
 	/** Initialize the event: spawn NPCs, create UI, wire connections. */

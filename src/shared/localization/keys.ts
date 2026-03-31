@@ -135,6 +135,9 @@ export const L_ITEM_MIDNIGHT_SPARK_TRAIL = "item_midnight_spark_trail";
 // Daily login
 export const L_DAILY_LOGIN_BONUS = "daily_login_bonus";
 
+// AFK
+export const L_AFK_REMOVED = "afk_removed";
+
 // New mission labels
 export const L_MISSION_PLAY_WITH_FRIENDS = "mission_PlayWithFriends";
 export const L_MISSION_PLAY_ALL_GAMES = "mission_PlayAllGames";

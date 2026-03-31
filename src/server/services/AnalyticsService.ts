@@ -41,6 +41,14 @@ export class AnalyticsService implements OnStart {
 		);
 
 		Players.PlayerRemoving.Connect((player) => {
+			// Flush pending session_start before emitting session_end
+			const pending = this.pendingSessionStart.get(player.UserId);
+			if (pending) {
+				task.cancel(pending);
+				this.pendingSessionStart.delete(player.UserId);
+				this.fireSessionStart(player);
+			}
+
 			const joinTime = this.joinTimes.get(player.UserId);
 			if (joinTime !== undefined) {
 				this.fireForPlayer(player, {
@@ -49,12 +57,8 @@ export class AnalyticsService implements OnStart {
 					durationSeconds: math.floor(os.clock() - joinTime),
 				});
 			}
-			// Cancel pending timeout if player leaves before platform report
-			const pending = this.pendingSessionStart.get(player.UserId);
-			if (pending) task.cancel(pending);
 			this.joinTimes.delete(player.UserId);
 			this.playerPlatforms.delete(player.UserId);
-			this.pendingSessionStart.delete(player.UserId);
 		});
 
 		// Bootstrap players who joined before this service initialized
