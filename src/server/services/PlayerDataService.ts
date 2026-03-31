@@ -88,6 +88,8 @@ export class PlayerDataService implements OnStart {
 		if (!typeIs(data.badges, "table")) data.badges = [];
 		if (!typeIs(data.npcFirstInteractions, "table"))
 			data.npcFirstInteractions = [];
+		if (!typeIs(data.ownedItems, "table")) data.ownedItems = [];
+		if (!typeIs(data.equippedItems, "table")) data.equippedItems = {} as never;
 
 		profile.ListenToRelease(() => {
 			this.profiles.delete(player);

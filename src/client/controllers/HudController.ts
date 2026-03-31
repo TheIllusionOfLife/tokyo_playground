@@ -109,14 +109,6 @@ export class HudController implements OnStart {
 			this.refreshFeaturedUnlock();
 		});
 
-		clientEvents.scoreUpdated.connect((_coins) => {
-			// Legacy event, kept for compatibility
-		});
-
-		clientEvents.gameStateChanged.connect((_state) => {
-			// Legacy event, kept for compatibility
-		});
-
 		// ── New events ──────────────────────────────────────────────────────
 
 		clientEvents.missionUpdate.connect((missions) => {
