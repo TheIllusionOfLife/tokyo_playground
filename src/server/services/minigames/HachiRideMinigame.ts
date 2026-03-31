@@ -124,6 +124,8 @@ export class HachiRideMinigame implements IMinigame {
 	private itemLandingY = new Map<BasePart, number>();
 	private totalRegularSpawned = 0;
 	private totalBonusSpawned = 0;
+	private remainingRegular = 0;
+	private remainingBonus = 0;
 
 	constructor(
 		private readonly serverEvents: ServerEvents,
@@ -214,6 +216,8 @@ export class HachiRideMinigame implements IMinigame {
 		// Store initial field item totals for HUD display
 		this.totalBonusSpawned = this.bonusItems.size();
 		this.totalRegularSpawned = this.activeItems.size() - this.totalBonusSpawned;
+		this.remainingBonus = this.totalBonusSpawned;
+		this.remainingRegular = this.totalRegularSpawned;
 
 		// Register cleanup: cancel tweens, destroy dynamic parts
 		matchJanitor.Add(() => {
@@ -692,6 +696,9 @@ export class HachiRideMinigame implements IMinigame {
 				const idx = this.activeItems.indexOf(item);
 				if (idx !== -1) this.activeItems.remove(idx);
 			}
+			if (toRemove.size() > 0) {
+				this.broadcastFieldItems();
+			}
 
 			// Check key items
 			for (const item of this.keyItems) {
@@ -737,25 +744,22 @@ export class HachiRideMinigame implements IMinigame {
 		}
 		// Always fire item event — HUD needs the count update.
 		this.serverEvents.hachiItemCollected.fire(player, state.itemCount);
-		this.broadcastFieldItems();
+		// Decrement remaining counter (broadcast happens after removal loop)
+		if (isBonus) {
+			this.remainingBonus--;
+		} else {
+			this.remainingRegular--;
+		}
 		this.tryEvolve(userId, state, player);
 	}
 
 	private broadcastFieldItems() {
-		let remainingBonus = 0;
-		for (const item of this.activeItems) {
-			if (this.bonusItems.has(item)) remainingBonus++;
-		}
-		const remainingRegular = this.activeItems.size() - remainingBonus;
-		for (const [, player] of this.playerObjects) {
-			this.serverEvents.hachiFieldItems.fire(
-				player,
-				remainingRegular,
-				this.totalRegularSpawned,
-				remainingBonus,
-				this.totalBonusSpawned,
-			);
-		}
+		this.serverEvents.hachiFieldItems.broadcast(
+			this.remainingRegular,
+			this.totalRegularSpawned,
+			this.remainingBonus,
+			this.totalBonusSpawned,
+		);
 	}
 
 	private tryEvolve(

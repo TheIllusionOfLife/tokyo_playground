@@ -33,7 +33,7 @@ Common mistake to avoid: Shiba Inu features (small body, fox-like face, pointy m
 
 ## Main Prompt
 
-```
+```text
 A vibrant game icon for a Roblox party game set in Tokyo Shibuya. Center composition featuring Hachi, a white-cream Akita Inu dog with a broad bear-like face, thick triangular ears, and a fluffy curled tail. Hachi looks calm yet friendly, slightly turned to the viewer with a gentle, loyal expression. Behind Hachi, the iconic Shibuya Crossing with colorful neon signs, tall buildings, and a bright blue sky. Japanese urban atmosphere with cherry blossom petals drifting. Style: clean cartoon/anime-inspired, bold outlines, saturated colors. Bright warm lighting. No text. Square format, 512x512. Background should have depth with buildings fading into soft focus. The overall mood should be fun, exciting, and inviting.
 ```
 
@@ -42,17 +42,17 @@ A vibrant game icon for a Roblox party game set in Tokyo Shibuya. Center composi
 ## Variations to Try
 
 ### Option A: Action Focus
-```
+```text
 A dynamic game icon for a Roblox party game. A white-cream Akita Inu dog named Hachi is mid-jump with speed lines radiating outward. Hachi has a broad bear-like face, thick triangular ears, a powerful stocky build, and a large fluffy tail curled over his back. Collectible items (green coins and gold stars) are scattered around him. The background shows Tokyo Shibuya neon lights in soft focus. Style: clean cartoon/anime-inspired, bold outlines, saturated colors. Energetic, exciting feel. No text. Square 512x512.
 ```
 
 ### Option B: City Focus
-```
+```text
 A bird's-eye view game icon of Shibuya Crossing at golden hour. Tiny colorful Roblox characters are playing in the streets below. In the foreground corner, a bronze statue of Hachi the Akita Inu dog sits faithfully, broad-headed with thick triangular ears and a curled fluffy tail. Warm orange and purple sunset lighting. The real Tokyo cityscape with neon signs and tall buildings creates depth. Style: clean cartoon/anime-inspired, saturated colors. No text. Square 512x512.
 ```
 
 ### Option C: Group Fun
-```
+```text
 A vibrant game icon showing three Roblox characters posing with Hachi, a large white-cream Akita Inu dog with a broad bear-like face, thick triangular ears, and a dense fluffy coat. Characters wear different cosmetics (hats, glowing trails). They stand at Shibuya Crossing at nighttime with vibrant neon signs and city lights behind them. Hachi sits calmly in the center, dignified and friendly. Style: clean cartoon/anime-inspired, bold outlines. Party and celebration mood. No text. Square 512x512.
 ```
 
