@@ -429,10 +429,9 @@ export class LobbyService implements OnStart {
 			);
 			if (maxLevel < 1) return;
 
-			const maxJumps =
-				HACHI_MAX_AIR_JUMPS[math.min(maxLevel, HACHI_MAX_AIR_JUMPS.size() - 1)];
+			// Lobby caps at 1 air jump (double); multi-jump is minigame-only
 			const used = this.lobbyAirJumpsUsed.get(player.UserId) ?? 0;
-			if (used >= maxJumps) return;
+			if (used >= 1) return;
 
 			if (!isPlayerMounted(player)) return;
 			const hrp = player.Character?.FindFirstChild("HumanoidRootPart") as

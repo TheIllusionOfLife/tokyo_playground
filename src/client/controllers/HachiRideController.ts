@@ -115,10 +115,12 @@ export class HachiRideController implements OnStart {
 					// First jump detected (native). Arm air jumps based on evolution level.
 					this.lastJumpTime = os.clock();
 					const level = this.getActiveEvoLevel();
-					const maxJumps =
+					const rawMax =
 						HACHI_MAX_AIR_JUMPS[
 							math.min(level, HACHI_MAX_AIR_JUMPS.size() - 1)
 						];
+					// Lobby caps at 1 air jump (double); multi-jump is minigame-only
+					const maxJumps = this.isInMinigame() ? rawMax : math.min(rawMax, 1);
 					this.airJumpsRemaining = maxJumps;
 					this.jumpPhase = maxJumps > 0 ? 1 : 2;
 					this.playJumpSE();
