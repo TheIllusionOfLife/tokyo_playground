@@ -620,6 +620,7 @@ export class HachiRideMinigame implements IMinigame {
 			if (!hrp) continue;
 			if (math.abs(hrp.AssemblyLinearVelocity.Y) < 5) {
 				this.jumpPhase.set(userId, 0);
+				this.airJumpsUsed.set(userId, 0);
 			}
 		}
 	}

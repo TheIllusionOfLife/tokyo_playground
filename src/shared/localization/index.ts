@@ -34,7 +34,9 @@ export function t(key: string): string {
 export function tf(key: string, ...args: string[]): string {
 	let result = t(key);
 	for (let i = 0; i < args.size(); i++) {
-		result = result.gsub(`%%${i + 1}`, args[i])[0];
+		// Escape % in replacement to avoid Lua gsub interpreting %0-%9 as captures
+		const safeArg = args[i].gsub("%%", "%%%%")[0];
+		result = result.gsub(`%%${i + 1}`, safeArg)[0];
 	}
 	return result;
 }
