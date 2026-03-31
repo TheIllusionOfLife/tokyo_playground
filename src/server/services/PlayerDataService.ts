@@ -165,7 +165,7 @@ export class PlayerDataService implements OnStart {
 	}
 
 	addCoins(player: Player, amount: number) {
-		if (amount <= 0) return;
+		if (!(amount > 0 && amount < math.huge)) return;
 		const profile = this.profiles.get(player);
 		if (profile) {
 			profile.Data.coins += amount;
@@ -173,7 +173,7 @@ export class PlayerDataService implements OnStart {
 	}
 
 	addPlayPoints(player: Player, amount: number) {
-		if (amount <= 0) return;
+		if (!(amount > 0 && amount < math.huge)) return;
 		const profile = this.profiles.get(player);
 		if (profile) {
 			profile.Data.totalPlayPoints += amount;

@@ -52,16 +52,22 @@ export class HudController implements OnStart {
 			// Pre-stream arena geometry after teleport so mobile players
 			// don't see void. roleAssigned fires after prepare()+assignRoles()
 			// which teleport the player, so HRP is now at the arena position.
-			const hrp = Players.LocalPlayer.Character?.FindFirstChild(
-				"HumanoidRootPart",
-			) as BasePart | undefined;
-			if (hrp) {
-				task.spawn(() => {
+			// Brief retry in case character/HRP isn't replicated yet.
+			task.spawn(() => {
+				let hrp: BasePart | undefined;
+				for (let i = 0; i < 6; i++) {
+					hrp = Players.LocalPlayer.Character?.FindFirstChild(
+						"HumanoidRootPart",
+					) as BasePart | undefined;
+					if (hrp) break;
+					task.wait(0.05);
+				}
+				if (hrp) {
 					pcall(() =>
 						Players.LocalPlayer.RequestStreamAroundAsync(hrp.Position),
 					);
-				});
-			}
+				}
+			});
 		});
 
 		clientEvents.roundTimerUpdate.connect((timeRemaining) => {
