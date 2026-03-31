@@ -251,10 +251,11 @@ export class AmbientCityService implements OnStart {
 			this.fadingModels.add(model);
 		}
 
-		// Fade out all parts
+		// Disable collision immediately, then fade visually
 		for (const model of wave) {
 			for (const desc of model.GetDescendants()) {
 				if (desc.IsA("BasePart")) {
+					desc.CanCollide = false;
 					TweenService.Create(
 						desc,
 						new TweenInfo(FADE_OUT_DURATION, Enum.EasingStyle.Linear),
