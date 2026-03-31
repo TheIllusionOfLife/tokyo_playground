@@ -7,10 +7,10 @@ After generation, follow the workflow in `assets/ai-prompts/README.md` (copy Mes
 
 ## Hachi Minigame: Collectible Items
 
-### Normal Point Object (Blue Coin)
+### Normal Point Object (Green Coin)
 
 ```
-Generate a small collectible coin, roughly 2 studs in diameter. It should look like a glowing blue token with a subtle star or paw print embossed on the front face. Material should be smooth with a neon-like glow. Color: light blue (#64C8FF). Keep it low-poly (under 500 triangles) since we spawn hundreds of these. No sharp edges.
+Generate a small collectible coin, roughly 2 studs in diameter. It should look like a glowing vivid green token with a subtle paw print embossed on the front face. Material should be smooth with a neon-like glow. Color: vivid green (#32FF50). Keep it low-poly (under 500 triangles) since we spawn hundreds of these. No sharp edges. The green should be bright and eye-catching against urban city backgrounds.
 ```
 
 ### Bonus Point Object (Golden Star)
