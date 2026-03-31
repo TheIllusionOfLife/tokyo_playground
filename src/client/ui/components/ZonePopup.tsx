@@ -2,10 +2,14 @@ import React from "@rbxts/react";
 import { useSelector } from "@rbxts/react-reflex";
 import { t } from "shared/localization";
 import { GameStoreState } from "shared/store/game-store";
+import { MatchPhase } from "shared/types";
 
 export function ZonePopup() {
 	const currentZone = useSelector((state: GameStoreState) => state.currentZone);
+	const matchPhase = useSelector((state: GameStoreState) => state.matchPhase);
 
+	// Suppress zone popups during active matches to avoid overlapping with game UI
+	if (matchPhase !== MatchPhase.WaitingForPlayers) return undefined!;
 	if (currentZone === "") return undefined!;
 
 	const zoneKey = `zone_${currentZone}`;

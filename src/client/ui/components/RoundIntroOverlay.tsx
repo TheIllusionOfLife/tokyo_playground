@@ -13,8 +13,8 @@ export function RoundIntroOverlay() {
 	return (
 		<frame
 			key="RoundIntroOverlay"
-			Size={new UDim2(0.5, 0, 0.18, 0)}
-			Position={new UDim2(0.25, 0, 0.16, 0)}
+			Size={new UDim2(0.6, 0, 0.22, 0)}
+			Position={new UDim2(0.2, 0, 0.12, 0)}
 			BackgroundColor3={Color3.fromRGB(10, 12, 24)}
 			BackgroundTransparency={0.1}
 			BorderSizePixel={0}

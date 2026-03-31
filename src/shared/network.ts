@@ -70,6 +70,12 @@ interface ServerToClientEvents {
 	catchHighlight(caughtUserId: number): void;
 	spiritChargeChanged(charges: number): void;
 	hachiRaceState(state: HachiRaceStateData): void;
+	hachiFieldItems(
+		remainingRegular: number,
+		totalRegular: number,
+		remainingBonus: number,
+		totalBonus: number,
+	): void;
 	hachiCostumeEquipped(equipped: boolean): void;
 	roundSummary(summaryText: string, winnerName: string): void;
 	dailyLoginBonus(points: number): void;

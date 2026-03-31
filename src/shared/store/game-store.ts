@@ -52,6 +52,10 @@ export interface GameStoreState {
 	spiritCharges: number;
 	featuredUnlock?: FeaturedUnlockData;
 	hachiRaceState?: HachiRaceStateData;
+	hachiFieldRegular: number;
+	hachiFieldRegularTotal: number;
+	hachiFieldBonus: number;
+	hachiFieldBonusTotal: number;
 	activeOverlay: "none" | "missions" | "shop" | "skills";
 	feedMessages: FeedMessage[];
 	oniRevealName?: string;
@@ -97,6 +101,10 @@ const initialState: GameStoreState = {
 	hachiCostumed: false,
 	hachiItemCount: 0,
 	hachiEvolutionLevel: 0,
+	hachiFieldRegular: 0,
+	hachiFieldRegularTotal: 0,
+	hachiFieldBonus: 0,
+	hachiFieldBonusTotal: 0,
 	localCaught: false,
 	localTagged: false,
 	spiritCharges: 0,
@@ -217,6 +225,19 @@ export const gameStore = createProducer(initialState, {
 		...state,
 		hachiRaceState,
 	}),
+	setHachiFieldItems: (
+		state,
+		remainingRegular: number,
+		totalRegular: number,
+		remainingBonus: number,
+		totalBonus: number,
+	) => ({
+		...state,
+		hachiFieldRegular: remainingRegular,
+		hachiFieldRegularTotal: totalRegular,
+		hachiFieldBonus: remainingBonus,
+		hachiFieldBonusTotal: totalBonus,
+	}),
 	setActiveOverlay: (
 		state,
 		activeOverlay: GameStoreState["activeOverlay"],
@@ -264,6 +285,10 @@ export const gameStore = createProducer(initialState, {
 		hachiCostumed: false,
 		hachiItemCount: 0,
 		hachiEvolutionLevel: 0,
+		hachiFieldRegular: 0,
+		hachiFieldRegularTotal: 0,
+		hachiFieldBonus: 0,
+		hachiFieldBonusTotal: 0,
 		currentZone: "",
 		spectating: false,
 		spectateTargetName: "",

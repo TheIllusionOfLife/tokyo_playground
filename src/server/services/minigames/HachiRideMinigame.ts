@@ -122,6 +122,8 @@ export class HachiRideMinigame implements IMinigame {
 	private raceUpdateElapsed = 0;
 	private finalSprintStarted = false;
 	private itemLandingY = new Map<BasePart, number>();
+	private totalRegularSpawned = 0;
+	private totalBonusSpawned = 0;
 
 	constructor(
 		private readonly serverEvents: ServerEvents,
@@ -208,6 +210,10 @@ export class HachiRideMinigame implements IMinigame {
 			if (c.isBonus) this.bonusItems.add(part);
 			this.itemLandingY.set(part, c.landingY);
 		}
+
+		// Store initial field item totals for HUD display
+		this.totalBonusSpawned = this.bonusItems.size();
+		this.totalRegularSpawned = this.activeItems.size() - this.totalBonusSpawned;
 
 		// Register cleanup: cancel tweens, destroy dynamic parts
 		matchJanitor.Add(() => {
@@ -382,6 +388,8 @@ export class HachiRideMinigame implements IMinigame {
 				this.serverEvents.hachiDoubleJumpGranted.fire(player);
 			}
 		}
+		// Send initial field item counts to all players
+		this.broadcastFieldItems();
 		// Reveal items and tween them falling from sky
 		for (const item of this.activeItems) {
 			item.Transparency = 0;
@@ -729,7 +737,25 @@ export class HachiRideMinigame implements IMinigame {
 		}
 		// Always fire item event — HUD needs the count update.
 		this.serverEvents.hachiItemCollected.fire(player, state.itemCount);
+		this.broadcastFieldItems();
 		this.tryEvolve(userId, state, player);
+	}
+
+	private broadcastFieldItems() {
+		let remainingBonus = 0;
+		for (const item of this.activeItems) {
+			if (this.bonusItems.has(item)) remainingBonus++;
+		}
+		const remainingRegular = this.activeItems.size() - remainingBonus;
+		for (const [, player] of this.playerObjects) {
+			this.serverEvents.hachiFieldItems.fire(
+				player,
+				remainingRegular,
+				this.totalRegularSpawned,
+				remainingBonus,
+				this.totalBonusSpawned,
+			);
+		}
 	}
 
 	private tryEvolve(

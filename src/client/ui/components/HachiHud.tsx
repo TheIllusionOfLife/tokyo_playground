@@ -18,6 +18,14 @@ export function HachiHud() {
 		(s: GameStoreState) => s.hachiEvolutionLevel,
 	);
 	const raceState = useSelector((s: GameStoreState) => s.hachiRaceState);
+	const fieldRegular = useSelector((s: GameStoreState) => s.hachiFieldRegular);
+	const fieldRegularTotal = useSelector(
+		(s: GameStoreState) => s.hachiFieldRegularTotal,
+	);
+	const fieldBonus = useSelector((s: GameStoreState) => s.hachiFieldBonus);
+	const fieldBonusTotal = useSelector(
+		(s: GameStoreState) => s.hachiFieldBonusTotal,
+	);
 
 	if (
 		activeMinigameId !== MinigameId.HachiRide ||
@@ -44,11 +52,86 @@ export function HachiHud() {
 
 	return (
 		<>
+			{/* Field item counters - top left */}
+			<frame
+				key="FieldItems"
+				Size={new UDim2(0, 120, 0, 48)}
+				Position={new UDim2(0, 10, 0, 80)}
+				BackgroundColor3={Color3.fromRGB(15, 15, 30)}
+				BackgroundTransparency={0.2}
+				BorderSizePixel={0}
+			>
+				<uicorner CornerRadius={new UDim(0, 8)} />
+				<uipadding
+					PaddingTop={new UDim(0, 4)}
+					PaddingBottom={new UDim(0, 4)}
+					PaddingLeft={new UDim(0, 8)}
+					PaddingRight={new UDim(0, 8)}
+				/>
+				{/* Regular coins row */}
+				<frame
+					key="RegularRow"
+					Size={new UDim2(1, 0, 0, 18)}
+					Position={new UDim2(0, 0, 0, 0)}
+					BackgroundTransparency={1}
+				>
+					<frame
+						key="CoinIcon"
+						Size={new UDim2(0, 14, 0, 14)}
+						Position={new UDim2(0, 0, 0.5, 0)}
+						AnchorPoint={new Vector2(0, 0.5)}
+						BackgroundColor3={Color3.fromRGB(50, 255, 80)}
+						BorderSizePixel={0}
+					>
+						<uicorner CornerRadius={new UDim(1, 0)} />
+					</frame>
+					<textlabel
+						Size={new UDim2(1, -20, 1, 0)}
+						Position={new UDim2(0, 20, 0, 0)}
+						BackgroundTransparency={1}
+						Text={`${fieldRegular} / ${fieldRegularTotal}`}
+						TextColor3={Color3.fromRGB(200, 255, 200)}
+						TextXAlignment={Enum.TextXAlignment.Left}
+						TextScaled={true}
+						Font={Enum.Font.GothamBold}
+					/>
+				</frame>
+				{/* Bonus stars row */}
+				<frame
+					key="BonusRow"
+					Size={new UDim2(1, 0, 0, 18)}
+					Position={new UDim2(0, 0, 0, 22)}
+					BackgroundTransparency={1}
+				>
+					<frame
+						key="StarIcon"
+						Size={new UDim2(0, 14, 0, 14)}
+						Position={new UDim2(0, 0, 0.5, 0)}
+						AnchorPoint={new Vector2(0, 0.5)}
+						BackgroundColor3={Color3.fromRGB(255, 215, 0)}
+						BorderSizePixel={0}
+						Rotation={45}
+					>
+						<uicorner CornerRadius={new UDim(0, 2)} />
+					</frame>
+					<textlabel
+						Size={new UDim2(1, -20, 1, 0)}
+						Position={new UDim2(0, 20, 0, 0)}
+						BackgroundTransparency={1}
+						Text={`${fieldBonus} / ${fieldBonusTotal}`}
+						TextColor3={Color3.fromRGB(255, 235, 150)}
+						TextXAlignment={Enum.TextXAlignment.Left}
+						TextScaled={true}
+						Font={Enum.Font.GothamBold}
+					/>
+				</frame>
+			</frame>
+
 			{/* Rank badge - top right */}
 			<frame
 				key="RankBadge"
 				Size={new UDim2(0, 50, 0, 30)}
-				Position={new UDim2(1, -10, 0, 0)}
+				Position={new UDim2(1, -10, 0, 10)}
 				AnchorPoint={new Vector2(1, 0)}
 				BackgroundColor3={Color3.fromRGB(30, 30, 70)}
 				BackgroundTransparency={0.2}
@@ -68,8 +151,8 @@ export function HachiHud() {
 			{/* Points + speed-meter progress bar */}
 			<frame
 				key="PointsInfo"
-				Size={new UDim2(0, 100, 0, 50)}
-				Position={new UDim2(1, -10, 0.15, 0)}
+				Size={new UDim2(0, 110, 0, 50)}
+				Position={new UDim2(1, -10, 0, 48)}
 				AnchorPoint={new Vector2(1, 0)}
 				BackgroundColor3={Color3.fromRGB(15, 15, 30)}
 				BackgroundTransparency={0.2}
