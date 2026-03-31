@@ -1247,8 +1247,8 @@ export class HachiRideMinigame implements IMinigame {
 				| undefined;
 			if (!humanoid || !hrp) continue;
 
-			// Grounded detection via Y velocity
-			const isGrounded = math.abs(hrp.AssemblyLinearVelocity.Y) < 5;
+			// Grounded detection via FloorMaterial (not Y-velocity, which triggers at apex)
+			const isGrounded = humanoid.FloorMaterial !== Enum.Material.Air;
 
 			if (isGrounded) {
 				this.airJumpsUsed.set(userId, 0);
