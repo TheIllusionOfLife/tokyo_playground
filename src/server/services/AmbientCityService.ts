@@ -54,6 +54,8 @@ export class AmbientCityService implements OnStart {
 
 	/** Alternating traffic loop: cars → gap → pedestrians → gap → repeat */
 	private runTrafficLoop(gen: number) {
+		// Initial delay before first wave so actors don't pop in immediately on join
+		task.wait(TRAFFIC_GAP);
 		while (this.running && this.loopGeneration === gen) {
 			// Car phase
 			const carWave = this.spawnCarWave();
