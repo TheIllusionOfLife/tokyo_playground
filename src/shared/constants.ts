@@ -413,6 +413,9 @@ export const HACHI_ROUND_DURATION =
 export const HACHI_STARTING_EVOLUTION = 2; // start with double jump + wall run
 export const HACHI_LOBBY_MIN_LEVEL = 3; // lobby Hachi always has double jump + wall run
 export const HACHI_EVOLUTION_THRESHOLDS = [0, 5, 12, 20, 30];
+// Max air jumps per evolution level (index = level)
+// Level 0: 0, Level 1-2: 1 (double), Level 3: 2 (triple), Level 4: 3 (quadruple)
+export const HACHI_MAX_AIR_JUMPS = [0, 1, 1, 2, 3];
 export const HACHI_WALK_SPEEDS = [70, 70, 70, 70, 70]; // flat speed (no evolution boost for now)
 export const HACHI_ITEMS_TO_SPAWN = 800;
 export const HACHI_COLLECTION_RADIUS = 14;
@@ -438,8 +441,8 @@ export const CAN_KICK_SPIN = 1080; // degrees of spin
 export const CAN_KICK_TWEEN_DURATION = 1.2; // seconds
 
 // Hachi Ride collectible meshes (AI-generated)
-export const HACHI_COIN_MESH_ID = "rbxassetid://79249341534588";
-export const HACHI_COIN_TEXTURE_ID = "rbxassetid://117029818969636";
+export const HACHI_COIN_MESH_ID = "rbxassetid://106160080561432";
+export const HACHI_COIN_TEXTURE_ID = "rbxassetid://96453484501646";
 export const HACHI_STAR_MESH_ID = "rbxassetid://78058646229827";
 export const HACHI_STAR_TEXTURE_ID = "rbxassetid://92501872934670";
 
@@ -449,8 +452,8 @@ export const HACHI_SKY_DROP_MAX_Y = 400;
 export const HACHI_SKY_DROP_FALL_DURATION = 4; // seconds
 export const HACHI_SKY_DROP_GROUND_Y = 16;
 export const HACHI_SKY_DROP_DENSE_RADIUS = 400; // center-bias radius (wider spread)
-export const HACHI_SKY_DROP_CENTER_BIAS = 0.1; // 10% items within dense radius
-export const HACHI_SKY_DROP_BUILDING_BIAS = 0.5; // 50% items within building area
+export const HACHI_SKY_DROP_CENTER_BIAS = 0.15; // 15% items within dense radius
+export const HACHI_SKY_DROP_BUILDING_BIAS = 0.85; // 85% items within building area (0% uniform/suburb)
 // Building area bounds (LOD2 parts above Y=30)
 export const HACHI_BLDG_MIN_X = -11364;
 export const HACHI_BLDG_MAX_X = -9908;

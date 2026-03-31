@@ -1,6 +1,7 @@
 import React, { useRef } from "@rbxts/react";
 import { useSelector } from "@rbxts/react-reflex";
 import { clientEvents } from "client/network";
+import { t } from "shared/localization";
 import { GameStoreState } from "shared/store/game-store";
 import { MatchPhase, MinigameId } from "shared/types";
 
@@ -92,7 +93,7 @@ export function HachiPlayButton() {
 				TextColor3={Color3.fromRGB(255, 220, 80)}
 				TextScaled={true}
 				Font={Enum.Font.FredokaOne}
-				Text="JOIN"
+				Text={t("hachi_play")}
 				ZIndex={10}
 			/>
 		</frame>

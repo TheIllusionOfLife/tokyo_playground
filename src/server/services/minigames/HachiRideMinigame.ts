@@ -35,6 +35,7 @@ import {
 	HACHI_ITEMS_TO_SPAWN,
 	HACHI_JUMP_COOLDOWN,
 	HACHI_JUMP_VELOCITY,
+	HACHI_MAX_AIR_JUMPS,
 	HACHI_MAX_SPEED_TOLERANCE,
 	HACHI_ROOFTOP_BONUS_OFFSET_Y,
 	HACHI_ROOFTOP_BUILDINGS,
@@ -106,7 +107,7 @@ export class HachiRideMinigame implements IMinigame {
 	private wallRunStates = new Map<number, WallRunState>();
 	private jumpCooldowns = new Map<number, number>();
 	private ejectCooldowns = new Map<number, number>();
-	private doubleJumpUsed = new Map<number, boolean>();
+	private airJumpsUsed = new Map<number, number>();
 	private jumpPhase = new Map<number, number>();
 	private jumpTime = new Map<number, number>();
 	private lastPositions = new Map<number, Vector3>();
@@ -362,9 +363,7 @@ export class HachiRideMinigame implements IMinigame {
 			}
 		}
 
-		this.serverEvents.hintTextChanged.broadcast(
-			"Mount Hachi and jump! Collect coins! 3... 2... 1...",
-		);
+		this.serverEvents.hintTextChanged.broadcast("hint_hachi_start");
 		return roles;
 	}
 
@@ -410,9 +409,7 @@ export class HachiRideMinigame implements IMinigame {
 				this.activeTweens.push(tween);
 			});
 		}
-		this.serverEvents.hintTextChanged.broadcast(
-			"Items falling from the sky! Collect as much as you can!",
-		);
+		this.serverEvents.hintTextChanged.broadcast("hint_items_falling");
 		this.broadcastRaceState();
 	}
 
@@ -474,6 +471,11 @@ export class HachiRideMinigame implements IMinigame {
 					}).Play();
 				}
 			}
+			const primary =
+				hachiModel.PrimaryPart ?? hachiModel.FindFirstChildWhichIsA("BasePart");
+			if (primary && !primary.FindFirstChild("FluffyEffect")) {
+				this.addFluffyEffect(primary);
+			}
 		}
 
 		state.evolutionLevel = level;
@@ -483,7 +485,8 @@ export class HachiRideMinigame implements IMinigame {
 		if (level >= 1) {
 			this.serverEvents.hachiDoubleJumpGranted.fire(player);
 		}
-		this.serverEvents.hintTextChanged.fire(player, this.getAbilityText(level));
+		const hint = this.getAbilityHint(level);
+		this.serverEvents.hintTextChanged.fire(player, hint.key, hint.args);
 	}
 
 	/** Admin debug: set item count and trigger evolution checks. */
@@ -523,7 +526,7 @@ export class HachiRideMinigame implements IMinigame {
 		this.wallRunStates.clear();
 		this.jumpCooldowns.clear();
 		this.ejectCooldowns.clear();
-		this.doubleJumpUsed.clear();
+		this.airJumpsUsed.clear();
 		this.jumpPhase.clear();
 		this.jumpTime.clear();
 		this.lastPositions.clear();
@@ -558,7 +561,7 @@ export class HachiRideMinigame implements IMinigame {
 		this.wallRunStates.delete(userId);
 		this.jumpCooldowns.delete(userId);
 		this.ejectCooldowns.delete(userId);
-		this.doubleJumpUsed.delete(userId);
+		this.airJumpsUsed.delete(userId);
 		this.jumpPhase.delete(userId);
 		this.jumpTime.delete(userId);
 		this.lastPositions.delete(userId);
@@ -593,9 +596,17 @@ export class HachiRideMinigame implements IMinigame {
 			);
 			this.jumpTime.set(player.UserId, now);
 		} else if (phase === 1) {
-			// Double jump (midair, evolution >= 1)
+			// Air jump (midair, evolution >= 1). Check multi-jump allowance.
+			const state = this.playerStates.get(player.UserId);
+			if (!state) return;
+			const maxJumps =
+				HACHI_MAX_AIR_JUMPS[
+					math.min(state.evolutionLevel, HACHI_MAX_AIR_JUMPS.size() - 1)
+				];
+			const used = this.airJumpsUsed.get(player.UserId) ?? 0;
+			if (used >= maxJumps) return;
 			this.jumpCooldowns.set(player.UserId, now);
-			this.jumpPhase.set(player.UserId, 2);
+			this.jumpPhase.set(player.UserId, used + 1 >= maxJumps ? 2 : 1);
 		}
 		// phase 2: reject
 	}
@@ -617,6 +628,7 @@ export class HachiRideMinigame implements IMinigame {
 			if (!hrp) continue;
 			if (math.abs(hrp.AssemblyLinearVelocity.Y) < 5) {
 				this.jumpPhase.set(userId, 0);
+				this.airJumpsUsed.set(userId, 0);
 			}
 		}
 	}
@@ -706,10 +718,9 @@ export class HachiRideMinigame implements IMinigame {
 			// Fire bonus BEFORE item so the client's bonusThisFrame flag
 			// is set when the item handler runs (both arrive same frame).
 			this.serverEvents.hachiBonusCollected.fire(player);
-			this.serverEvents.hintTextChanged.fire(
-				player,
-				`BONUS! +${value} points!`,
-			);
+			this.serverEvents.hintTextChanged.fire(player, "hint_bonus_collected", [
+				`${value}`,
+			]);
 			this.missionService.incrementAndNotify(
 				player,
 				MissionId.CollectBonusItem,
@@ -767,7 +778,7 @@ export class HachiRideMinigame implements IMinigame {
 			}
 		}
 
-		// Level 4: fluffy pink-white color
+		// Level 4: fluffy pink-white color + particle effect
 		if (newLevel === 4) {
 			const hachiModel = this.hachiModels.get(userId);
 			if (hachiModel) {
@@ -779,17 +790,28 @@ export class HachiRideMinigame implements IMinigame {
 						}).Play();
 					}
 				}
+				// Add fluffy cloud/sparkle particle emitter to primary part
+				const primary =
+					hachiModel.PrimaryPart ??
+					hachiModel.FindFirstChildWhichIsA("BasePart");
+				if (primary && !primary.FindFirstChild("FluffyEffect")) {
+					this.addFluffyEffect(primary);
+				}
 			}
 		}
 
 		// Show ability description
-		const abilityText = this.getAbilityText(newLevel);
-		this.serverEvents.hintTextChanged.fire(player, abilityText);
+		const abilityHint = this.getAbilityHint(newLevel);
+		this.serverEvents.hintTextChanged.fire(
+			player,
+			abilityHint.key,
+			abilityHint.args,
+		);
 
 		// Also show level-up in generic hint after a delay
 		task.delay(3, () => {
 			if (!this.roundStarted) return;
-			this.serverEvents.hintTextChanged.fire(player, "Keep collecting!");
+			this.serverEvents.hintTextChanged.fire(player, "hint_keep_collecting");
 		});
 
 		print(
@@ -797,18 +819,87 @@ export class HachiRideMinigame implements IMinigame {
 		);
 	}
 
-	private getAbilityText(level: number): string {
+	private addFluffyEffect(part: BasePart) {
+		// Sparkle particles
+		const sparkle = new Instance("ParticleEmitter");
+		sparkle.Name = "FluffyEffect";
+		sparkle.Rate = 15;
+		sparkle.Lifetime = new NumberRange(0.6, 1.2);
+		sparkle.Speed = new NumberRange(1, 3);
+		sparkle.SpreadAngle = new Vector2(180, 180);
+		sparkle.LightEmission = 0.8;
+		sparkle.LightInfluence = 0.2;
+		sparkle.Brightness = 1.5;
+		sparkle.Size = new NumberSequence([
+			new NumberSequenceKeypoint(0, 0),
+			new NumberSequenceKeypoint(0.3, 1.2),
+			new NumberSequenceKeypoint(1, 0),
+		]);
+		sparkle.Transparency = new NumberSequence([
+			new NumberSequenceKeypoint(0, 0.3),
+			new NumberSequenceKeypoint(0.5, 0.5),
+			new NumberSequenceKeypoint(1, 1),
+		]);
+		sparkle.Color = new ColorSequence([
+			new ColorSequenceKeypoint(0, Color3.fromRGB(255, 220, 240)),
+			new ColorSequenceKeypoint(0.5, Color3.fromRGB(255, 182, 230)),
+			new ColorSequenceKeypoint(1, Color3.fromRGB(255, 255, 255)),
+		]);
+		sparkle.RotSpeed = new NumberRange(-90, 90);
+		sparkle.Rotation = new NumberRange(0, 360);
+		sparkle.Parent = part;
+
+		// Rising aura — slow upward drift of soft pink glow
+		const aura = new Instance("ParticleEmitter");
+		aura.Name = "FluffyAura";
+		aura.Rate = 20;
+		aura.Lifetime = new NumberRange(1.0, 2.0);
+		aura.Speed = new NumberRange(0.5, 1.5);
+		aura.SpreadAngle = new Vector2(30, 30);
+		aura.EmissionDirection = Enum.NormalId.Top;
+		aura.LightEmission = 1;
+		aura.LightInfluence = 0;
+		aura.Brightness = 2;
+		aura.Size = new NumberSequence([
+			new NumberSequenceKeypoint(0, 0.5),
+			new NumberSequenceKeypoint(0.4, 2.5),
+			new NumberSequenceKeypoint(1, 0),
+		]);
+		aura.Transparency = new NumberSequence([
+			new NumberSequenceKeypoint(0, 0.6),
+			new NumberSequenceKeypoint(0.3, 0.4),
+			new NumberSequenceKeypoint(1, 1),
+		]);
+		aura.Color = new ColorSequence([
+			new ColorSequenceKeypoint(0, Color3.fromRGB(255, 180, 220)),
+			new ColorSequenceKeypoint(1, Color3.fromRGB(255, 240, 255)),
+		]);
+		aura.RotSpeed = new NumberRange(-30, 30);
+		aura.Rotation = new NumberRange(0, 360);
+		aura.Drag = 2;
+		aura.Parent = part;
+
+		// Soft pink glow light
+		const glow = new Instance("PointLight");
+		glow.Name = "FluffyGlow";
+		glow.Color = Color3.fromRGB(255, 200, 230);
+		glow.Brightness = 1.5;
+		glow.Range = 12;
+		glow.Parent = part;
+	}
+
+	private getAbilityHint(level: number): { key: string; args?: string[] } {
 		switch (level) {
 			case 1:
-				return "Level 1: DOUBLE JUMP unlocked! Press Space mid-air!";
+				return { key: "hint_ability_1" };
 			case 2:
-				return "Level 2: WALL RUN unlocked! Jump near walls!";
+				return { key: "hint_ability_2" };
 			case 3:
-				return "Level 3: BIG HACHI! Bigger and faster!";
+				return { key: "hint_ability_3" };
 			case 4:
-				return "Level 4: FLUFFY HACHI! Maximum cuteness!";
+				return { key: "hint_ability_4" };
 			default:
-				return `Hachi evolved to level ${level}!`;
+				return { key: "hint_hachi_evolved", args: [`${level}`] };
 		}
 	}
 
@@ -825,6 +916,7 @@ export class HachiRideMinigame implements IMinigame {
 		part.CanTouch = false;
 		part.CanQuery = false;
 		part.CastShadow = false;
+		part.Material = Enum.Material.Neon;
 		// Rotate coins upright (disc mesh is flat on Y axis)
 		if (!isBonus) {
 			part.CFrame = new CFrame(position).mul(CFrame.Angles(math.rad(90), 0, 0));
@@ -868,8 +960,8 @@ export class HachiRideMinigame implements IMinigame {
 					Color3.fromRGB(255, 180, 0),
 				)
 			: new ColorSequence(
-					Color3.fromRGB(150, 220, 255),
-					Color3.fromRGB(80, 160, 255),
+					Color3.fromRGB(80, 255, 120),
+					Color3.fromRGB(30, 200, 60),
 				);
 		emitter.RotSpeed = new NumberRange(-120, 120);
 		emitter.Enabled = false; // enabled when item is revealed
@@ -891,42 +983,94 @@ export class HachiRideMinigame implements IMinigame {
 		return HACHI_SKY_DROP_GROUND_Y + 2;
 	}
 
+	/** Read CityBoundary polygon vertices from Workspace (fallback to AABB). */
+	private getCityPolygon(): Vector2[] {
+		const folder = Workspace.FindFirstChild("CityBoundary");
+		if (!folder) return [];
+		const verts: { idx: number; pos: Vector2 }[] = [];
+		for (const child of folder.GetChildren()) {
+			if (!child.IsA("BasePart")) continue;
+			const [numStr] = child.Name.match("^Vertex_(%d+)$");
+			if (numStr === undefined) continue;
+			const idx = tonumber(numStr) ?? 0;
+			verts.push({ idx, pos: new Vector2(child.Position.X, child.Position.Z) });
+		}
+		verts.sort((a, b) => a.idx < b.idx);
+		return verts.map((v) => v.pos);
+	}
+
+	/** Point-in-polygon test using ray casting algorithm (2D, XZ plane). */
+	private isInsidePolygon(point: Vector2, polygon: Vector2[]): boolean {
+		const n = polygon.size();
+		if (n < 3) return true; // fallback: no polygon = allow all
+		let inside = false;
+		for (let i = 0, j = n - 1; i < n; j = i++) {
+			const pi = polygon[i];
+			const pj = polygon[j];
+			if (
+				pi.Y > point.Y !== pj.Y > point.Y &&
+				point.X < ((pj.X - pi.X) * (point.Y - pi.Y)) / (pj.Y - pi.Y) + pi.X
+			) {
+				inside = !inside;
+			}
+		}
+		return inside;
+	}
+
 	private generateSpawnPositions(count: number): Vector3[] {
+		const polygon = this.getCityPolygon();
+		const usePolygon = polygon.size() >= 3;
+
+		// Compute AABB of polygon for rejection sampling
+		let aabbMinX = HACHI_BLDG_MIN_X;
+		let aabbMaxX = HACHI_BLDG_MAX_X;
+		let aabbMinZ = HACHI_BLDG_MIN_Z;
+		let aabbMaxZ = HACHI_BLDG_MAX_Z;
+		if (usePolygon) {
+			aabbMinX = math.huge;
+			aabbMaxX = -math.huge;
+			aabbMinZ = math.huge;
+			aabbMaxZ = -math.huge;
+			for (const v of polygon) {
+				if (v.X < aabbMinX) aabbMinX = v.X;
+				if (v.X > aabbMaxX) aabbMaxX = v.X;
+				if (v.Y < aabbMinZ) aabbMinZ = v.Y;
+				if (v.Y > aabbMaxZ) aabbMaxZ = v.Y;
+			}
+		}
+
 		const positions: Vector3[] = [];
 		const centerCount = math.floor(count * HACHI_SKY_DROP_CENTER_BIAS);
-		const buildingCount = math.floor(count * HACHI_SKY_DROP_BUILDING_BIAS);
-		const uniformCount = count - centerCount - buildingCount;
+		const cityCount = count - centerCount;
+		const maxAttempts = count * 5; // prevent infinite loop
+		let attempts = 0;
 
-		// 40% uniform across full DEM bounds
-		for (let i = 0; i < uniformCount; i++) {
-			const x =
-				HACHI_CITY_MIN_X +
-				math.random() * (HACHI_CITY_MAX_X - HACHI_CITY_MIN_X);
-			const z =
-				HACHI_CITY_MIN_Z +
-				math.random() * (HACHI_CITY_MAX_Z - HACHI_CITY_MIN_Z);
+		// City area (rejection sampling within polygon)
+		while (positions.size() < cityCount && attempts < maxAttempts) {
+			attempts++;
+			const x = aabbMinX + math.random() * (aabbMaxX - aabbMinX);
+			const z = aabbMinZ + math.random() * (aabbMaxZ - aabbMinZ);
+			if (usePolygon && !this.isInsidePolygon(new Vector2(x, z), polygon)) {
+				continue;
+			}
 			const y = math.random(HACHI_SKY_DROP_MIN_Y, HACHI_SKY_DROP_MAX_Y);
 			positions.push(new Vector3(x, y, z));
 		}
 
-		// 35% within building area (more likely to land on rooftops)
-		for (let i = 0; i < buildingCount; i++) {
-			const x =
-				HACHI_BLDG_MIN_X +
-				math.random() * (HACHI_BLDG_MAX_X - HACHI_BLDG_MIN_X);
-			const z =
-				HACHI_BLDG_MIN_Z +
-				math.random() * (HACHI_BLDG_MAX_Z - HACHI_BLDG_MIN_Z);
-			const y = math.random(HACHI_SKY_DROP_MIN_Y, HACHI_SKY_DROP_MAX_Y);
-			positions.push(new Vector3(x, y, z));
-		}
-
-		// 15% center-biased within dense radius
-		for (let i = 0; i < centerCount; i++) {
+		// Center-biased (also constrained to polygon)
+		attempts = 0;
+		while (
+			positions.size() < cityCount + centerCount &&
+			attempts < centerCount * 5
+		) {
+			attempts++;
 			const angle = math.random() * math.pi * 2;
 			const r = math.random() * HACHI_SKY_DROP_DENSE_RADIUS;
 			const x = HACHI_CITY_CENTER.X + math.cos(angle) * r;
 			const z = HACHI_CITY_CENTER.Z + math.sin(angle) * r;
+			if (usePolygon && !this.isInsidePolygon(new Vector2(x, z), polygon)) {
+				continue;
+			}
 			const y = math.random(HACHI_SKY_DROP_MIN_Y, HACHI_SKY_DROP_MAX_Y);
 			positions.push(new Vector3(x, y, z));
 		}
@@ -952,9 +1096,7 @@ export class HachiRideMinigame implements IMinigame {
 			timeRemaining <= HACHI_FINAL_SPRINT_WINDOW
 		) {
 			this.finalSprintStarted = true;
-			this.serverEvents.hintTextChanged.broadcast(
-				"Final sprint! Bonus items are worth triple now!",
-			);
+			this.serverEvents.hintTextChanged.broadcast("hint_final_sprint");
 		}
 	}
 
@@ -1000,11 +1142,15 @@ export class HachiRideMinigame implements IMinigame {
 	private handleDoubleJumpEvent(player: Player) {
 		const state = this.playerStates.get(player.UserId);
 		if (!state) return;
-		// Require evolution >= 1 (double jump unlock)
+		// Require evolution >= 1 (air jump unlock)
 		if (state.evolutionLevel < 1) return;
-		// Reject if already used this airborne session
-		if (this.doubleJumpUsed.get(player.UserId)) return;
-		this.doubleJumpUsed.set(player.UserId, true);
+		const maxJumps =
+			HACHI_MAX_AIR_JUMPS[
+				math.min(state.evolutionLevel, HACHI_MAX_AIR_JUMPS.size() - 1)
+			];
+		const used = this.airJumpsUsed.get(player.UserId) ?? 0;
+		if (used >= maxJumps) return;
+		this.airJumpsUsed.set(player.UserId, used + 1);
 	}
 
 	private checkSpeedViolations(_dt: number) {
@@ -1110,11 +1256,11 @@ export class HachiRideMinigame implements IMinigame {
 				| undefined;
 			if (!humanoid || !hrp) continue;
 
-			// Grounded detection via Y velocity
-			const isGrounded = math.abs(hrp.AssemblyLinearVelocity.Y) < 5;
+			// Grounded detection via FloorMaterial (not Y-velocity, which triggers at apex)
+			const isGrounded = humanoid.FloorMaterial !== Enum.Material.Air;
 
 			if (isGrounded) {
-				this.doubleJumpUsed.set(userId, false);
+				this.airJumpsUsed.set(userId, 0);
 				this.stopWallRun(userId, player);
 				continue;
 			}

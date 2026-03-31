@@ -58,8 +58,10 @@ export function fireHintText(
 	serverEvents: ServerEvents,
 	text: string,
 	lastRef: string,
+	args?: string[],
 ): string {
-	if (text === lastRef) return lastRef;
-	serverEvents.hintTextChanged.broadcast(text);
-	return text;
+	const dedupKey = args ? `${text}:${args.join(",")}` : text;
+	if (dedupKey === lastRef) return lastRef;
+	serverEvents.hintTextChanged.broadcast(text, args);
+	return dedupKey;
 }

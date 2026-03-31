@@ -1,6 +1,7 @@
 import React from "@rbxts/react";
 import { useSelector } from "@rbxts/react-reflex";
 import { STAMP_SET_DEFINITIONS } from "shared/living-shibuya-constants";
+import { t } from "shared/localization";
 import { GameStoreState, gameStore } from "shared/store/game-store";
 import { StampSetId } from "shared/types";
 
@@ -118,7 +119,7 @@ export function StampCardPanel() {
 				TextColor3={Color3.fromRGB(255, 220, 120)}
 				TextScaled={true}
 				Font={Enum.Font.GothamBold}
-				Text="Stamp Rally"
+				Text={t("stamp_rally")}
 				TextXAlignment={Enum.TextXAlignment.Left}
 			/>
 

@@ -80,6 +80,8 @@ export const JA: Record<string, string> = {
 
 	// Bon Odori
 	bon_odori_hint: "WASDでリズムに乗ろう!",
+	bon_odori_score: "スコア",
+	bon_odori_combo: "コンボ",
 
 	// Obstacle course
 	obstacle_active: "障害物コース開催中",
@@ -153,9 +155,38 @@ export const JA: Record<string, string> = {
 	boundary_warning: "エリアの端に近づいています!",
 	boundary_return: "エリアに戻ります...",
 
+	// Hachi play button
+	hachi_play: "プレイ",
+
+	// Hint texts
+	hint_oni_counting: "オニが数えている…隠れて!",
+	hint_oni_hunting: "オニが追いかけてくる! 逃げて隠れろ!",
+	hint_spirit_wave: "クラウドスピリット! 隠れる側の援護!",
+	hint_crowd_crossing: "群衆が横断中 — 紛れろ!",
+	hint_cars_crossing: "車が来る! 気をつけろ!",
+	hint_can_moved: "缶が新しい路地に転がった!",
+	hint_starting_can_kick: "缶蹴り開始...",
+	hint_starting_scramble: "渋谷スクランブル開始...",
+	hint_hachi_start: "ハチに乗ってジャンプ! コインを集めろ! 3... 2... 1...",
+	hint_items_falling: "空からアイテムが降ってくる! たくさん集めろ!",
+	hint_keep_collecting: "どんどん集めろ!",
+	hint_final_sprint: "ラストスパート! ボーナスアイテム3倍!",
+	hint_player_tagged: "%1がタッチされた!",
+	hint_player_caught: "%1が捕まった!",
+	hint_can_kicked: "%1が缶を蹴った! %2人解放!",
+	hint_bonus_collected: "ボーナス! +%1ポイント!",
+	hint_rattle_progress: "ガタガタ %1/%2",
+	hint_jail_rattled: "牢屋が揺れた! オニが2秒間バレる!",
+	hint_ability_1: "レベル1: 二段ジャンプ解放! 空中でスペース!",
+	hint_ability_2: "レベル2: 壁走り解放! 壁の近くでジャンプ!",
+	hint_ability_3: "レベル3: デカハチ + 三段ジャンプ!",
+	hint_ability_4: "レベル4: もふもふハチ + 四段ジャンプ!",
+	hint_hachi_evolved: "ハチがレベル%1に進化!",
+
 	// Zones
 	zone_ShibuyaSky: "渋谷スカイ",
 	zone_ShibuyaCrossing: "渋谷スクランブル交差点",
+	["zone_Shibuya Crossing"]: "渋谷スクランブル交差点",
 	zone_HachikoSquare: "ハチ公前広場",
 	zone_CenterGai: "センター街",
 	zone_SkySlideHub: "スカイスライドハブ",

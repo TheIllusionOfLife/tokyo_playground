@@ -80,6 +80,8 @@ export const EN: Record<string, string> = {
 
 	// Bon Odori
 	bon_odori_hint: "WASD to the beat!",
+	bon_odori_score: "Score",
+	bon_odori_combo: "Combo",
 
 	// Obstacle course
 	obstacle_active: "Obstacle Course Active",
@@ -153,9 +155,38 @@ export const EN: Record<string, string> = {
 	boundary_warning: "You're leaving the area!",
 	boundary_return: "Returning to the area...",
 
+	// Hachi play button
+	hachi_play: "PLAY",
+
+	// Hint texts
+	hint_oni_counting: "Oni is counting... Hide!",
+	hint_oni_hunting: "Oni is hunting! Run and hide!",
+	hint_spirit_wave: "Crowd Spirit! Extra cover for the hiders!",
+	hint_crowd_crossing: "Crowd crossing — use them!",
+	hint_cars_crossing: "Cars crossing! Watch out!",
+	hint_can_moved: "The can rolled to a new alley!",
+	hint_starting_can_kick: "Starting Can Kick...",
+	hint_starting_scramble: "Starting Shibuya Scramble...",
+	hint_hachi_start: "Mount Hachi and jump! Collect coins! 3... 2... 1...",
+	hint_items_falling: "Items falling from the sky! Collect as much as you can!",
+	hint_keep_collecting: "Keep collecting!",
+	hint_final_sprint: "Final sprint! Bonus items are worth triple now!",
+	hint_player_tagged: "%1 was tagged!",
+	hint_player_caught: "%1 was caught!",
+	hint_can_kicked: "%1 kicked the can! %2 freed!",
+	hint_bonus_collected: "BONUS! +%1 points!",
+	hint_rattle_progress: "RATTLE %1/%2",
+	hint_jail_rattled: "Jail rattled! Oni revealed for 2 seconds!",
+	hint_ability_1: "Level 1: DOUBLE JUMP unlocked! Press Space mid-air!",
+	hint_ability_2: "Level 2: WALL RUN unlocked! Jump near walls!",
+	hint_ability_3: "Level 3: BIG HACHI + TRIPLE JUMP!",
+	hint_ability_4: "Level 4: FLUFFY HACHI + QUADRUPLE JUMP!",
+	hint_hachi_evolved: "Hachi evolved to level %1!",
+
 	// Zones
 	zone_ShibuyaSky: "Shibuya Sky",
 	zone_ShibuyaCrossing: "Shibuya Crossing",
+	["zone_Shibuya Crossing"]: "Shibuya Crossing",
 	zone_HachikoSquare: "Hachiko Square",
 	zone_CenterGai: "Center-gai",
 	zone_SkySlideHub: "Sky Slide Hub",

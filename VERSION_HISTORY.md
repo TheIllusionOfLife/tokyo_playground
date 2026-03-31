@@ -22,3 +22,4 @@
 | v0.16.0 | 2026-03-29 | Mobile playtest fixes: boundary system, zone popups, ambient city life, train, SkySlide corridors |
 | v0.17.0 | 2026-03-30 | Content quality pass: 16-item shop, Kitsune series, 5 new missions, economy rebalance |
 | v0.18.0 | 2026-03-31 | Mobile playtest polish: missions UI, AI collectible meshes, 3-tier item distribution, train fade, zone popups, trail particles, Hachi JOIN button |
+| v0.19.0 | 2026-03-31 | Playtest overhaul: scramble crossing traffic, polygon spawn, multi-jump evolution, green coins, fluffy aura, full JA localization, corridor redesign |

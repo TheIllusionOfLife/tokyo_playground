@@ -69,6 +69,8 @@ export class SlideController implements OnStart {
 
 		for (const ramp of this.slideRamps) {
 			if (!ramp.Parent) continue;
+			// Skip DismountOnly ramps (e.g., ShibuyaSkyBoosters) when on Hachi
+			if (isOnHachi && ramp.GetAttribute("DismountOnly") === true) continue;
 
 			// Accurate closest-point-on-box check
 			const localPos = ramp.CFrame.PointToObjectSpace(checkPos);

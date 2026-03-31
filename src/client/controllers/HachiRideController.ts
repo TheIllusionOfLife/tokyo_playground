@@ -13,6 +13,7 @@ import {
 	HACHI_DOUBLE_JUMP_IMPULSE,
 	HACHI_JUMP_COOLDOWN,
 	HACHI_LOBBY_MIN_LEVEL,
+	HACHI_MAX_AIR_JUMPS,
 	SE_JUMP,
 } from "shared/constants";
 import { gameStore } from "shared/store/game-store";
@@ -38,11 +39,11 @@ export class HachiRideController implements OnStart {
 	private wallRunStopConn?: RBXScriptConnection;
 	private jumpRequestConn?: RBXScriptConnection;
 
-	// Client-side jump phase: 0=grounded, 1=double available, 2=used
+	// Client-side jump phase: 0=grounded, 1=air jumps available, 2=exhausted
 	private jumpPhase = 0;
 	private lastJumpTime = 0;
 	private wallRunning = false;
-	private doubleJumpConsumed = false;
+	private airJumpsRemaining = 0;
 
 	private isInMinigame(): boolean {
 		return gameStore.getState().activeMinigameId === MinigameId.HachiRide;
@@ -111,10 +112,17 @@ export class HachiRideController implements OnStart {
 					newState === Enum.HumanoidStateType.Jumping &&
 					this.jumpPhase === 0
 				) {
-					// First jump detected (native). Arm double if evolution allows.
+					// First jump detected (native). Arm air jumps based on evolution level.
 					this.lastJumpTime = os.clock();
-					this.jumpPhase = this.getActiveEvoLevel() >= 1 ? 1 : 2;
-					this.doubleJumpConsumed = false;
+					const level = this.getActiveEvoLevel();
+					const rawMax =
+						HACHI_MAX_AIR_JUMPS[
+							math.min(level, HACHI_MAX_AIR_JUMPS.size() - 1)
+						];
+					// Lobby caps at 1 air jump (double); multi-jump is minigame-only
+					const maxJumps = this.isInMinigame() ? rawMax : math.min(rawMax, 1);
+					this.airJumpsRemaining = maxJumps;
+					this.jumpPhase = maxJumps > 0 ? 1 : 2;
 					this.playJumpSE();
 					// Notify server so it can arm phase tracking
 					clientEvents.hachiJump.fire();
@@ -166,7 +174,7 @@ export class HachiRideController implements OnStart {
 		this.jumpRequestConn = UserInputService.JumpRequest.Connect(() => {
 			if (!this.costumed) return;
 			if (this.jumpPhase !== 1) return;
-			if (this.doubleJumpConsumed) return;
+			if (this.airJumpsRemaining <= 0) return;
 			const h =
 				Players.LocalPlayer.Character?.FindFirstChildOfClass("Humanoid");
 			if (!h) return;
@@ -223,7 +231,7 @@ export class HachiRideController implements OnStart {
 	private performDoubleJump(): boolean {
 		const now = os.clock();
 		if (now - this.lastJumpTime < HACHI_JUMP_COOLDOWN) return false;
-		if (this.doubleJumpConsumed) return false;
+		if (this.airJumpsRemaining <= 0) return false;
 
 		// Validate character and airborne state BEFORE consuming state
 		const h = Players.LocalPlayer.Character?.FindFirstChildOfClass("Humanoid");
@@ -240,8 +248,8 @@ export class HachiRideController implements OnStart {
 		}
 
 		this.lastJumpTime = now;
-		this.jumpPhase = 2;
-		this.doubleJumpConsumed = true;
+		this.airJumpsRemaining -= 1;
+		this.jumpPhase = this.airJumpsRemaining > 0 ? 1 : 2;
 
 		h.PlatformStand = true;
 		hrp.AssemblyLinearVelocity = new Vector3(
