@@ -99,16 +99,19 @@ export const JA: Record<string, string> = {
 
 	// Minigame names
 	game_can_kick: "缶蹴り",
-	game_scramble: "渋谷カオス",
+	game_scramble: "渋谷かくれんぼ",
 	game_hachi_ride: "ハチ公ライド",
 
 	// Minigame intros
-	intro_can_kick_title: "路地裏かくれんぼ",
-	intro_can_kick_sub: "オニに見つからずに缶を蹴って仲間を助けよう。",
-	intro_scramble_title: "渋谷カオス",
-	intro_scramble_sub: "群衆に紛れて生き残れ。スクランブル交差点を使え。",
+	intro_can_kick_title: "缶蹴り",
+	intro_can_kick_sub:
+		"1人がオニ。隠れる側: 隠れて缶を蹴り、捕まった仲間を救え! オニ: 全員見つけて捕まえろ!",
+	intro_scramble_title: "渋谷かくれんぼ",
+	intro_scramble_sub:
+		"渋谷中に隠れろ! オニが追いかけてくる。タッチされたらスピリットウェーブで仲間を援護!",
 	intro_hachi_title: "ハチ公ライド",
-	intro_hachi_sub: "コインを集めて進化して、1位を奪え。",
+	intro_hachi_sub:
+		"ハチに乗ってレース! アイテムを集めて進化。二段ジャンプ、壁走り。最多ポイントで勝利!",
 
 	// Mission labels
 	mission_PlayGames: "3回遊ぶ",

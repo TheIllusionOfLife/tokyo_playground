@@ -25,42 +25,46 @@ import { SpectatorOverlay } from "./components/SpectatorOverlay";
 import { StampCardPanel } from "./components/StampCardPanel";
 import { StampDiscoveryPopup } from "./components/StampDiscoveryPopup";
 
-import { TopBar } from "./components/TopBar";
+import { TopBar, TopBarTimer } from "./components/TopBar";
 import { ZonePopup } from "./components/ZonePopup";
 
 export function GameHud() {
 	return (
-		<screengui
-			key="GameHud"
-			ResetOnSpawn={false}
-			ZIndexBehavior={Enum.ZIndexBehavior.Sibling}
-		>
-			<PlayPointsDisplay />
-			<TopBar />
-			<RoundIntroOverlay />
-			<RoleIndicator />
-			<HachiHud />
-			<HachiToggleButton />
-			<HachiPlayButton />
-			<HintText />
-			<EventFeed />
-			<CountdownOverlay />
-			<RewardPopup />
-			<Scoreboard />
-			<ActionButton />
-			<LevelUpOverlay />
-			<MissionPanel />
-			<ShopPanel />
-			<SpectatorOverlay />
-			<SkillsPanel />
-			{/* Living Shibuya */}
-			<StampCardPanel />
-			<StampDiscoveryPopup />
-			<OmikujiCard />
-			<MicroEventIndicator />
-			<BonOdoriRhythmLane />
-			<ObstacleCourseTimer />
-			<ZonePopup />
-		</screengui>
+		<>
+			{/* Timer in the Roblox topbar zone (own ScreenGui with ScreenInsets.None) */}
+			<TopBarTimer />
+			<screengui
+				key="GameHud"
+				ResetOnSpawn={false}
+				ZIndexBehavior={Enum.ZIndexBehavior.Sibling}
+			>
+				<PlayPointsDisplay />
+				<TopBar />
+				<RoundIntroOverlay />
+				<RoleIndicator />
+				<HachiHud />
+				<HachiToggleButton />
+				<HachiPlayButton />
+				<HintText />
+				<EventFeed />
+				<CountdownOverlay />
+				<RewardPopup />
+				<Scoreboard />
+				<ActionButton />
+				<LevelUpOverlay />
+				<MissionPanel />
+				<ShopPanel />
+				<SpectatorOverlay />
+				<SkillsPanel />
+				{/* Living Shibuya */}
+				<StampCardPanel />
+				<StampDiscoveryPopup />
+				<OmikujiCard />
+				<MicroEventIndicator />
+				<BonOdoriRhythmLane />
+				<ObstacleCourseTimer />
+				<ZonePopup />
+			</screengui>
+		</>
 	);
 }

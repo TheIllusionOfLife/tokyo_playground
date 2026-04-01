@@ -1,5 +1,6 @@
 import React from "@rbxts/react";
 import { useSelector } from "@rbxts/react-reflex";
+import { GuiService } from "@rbxts/services";
 import { t } from "shared/localization";
 import {
 	L_PHASE_GET_READY,
@@ -28,25 +29,35 @@ function formatTime(seconds: number): string {
 	return `${mins}:${secs < 10 ? "0" : ""}${secs}`;
 }
 
-export function TopBar() {
+/**
+ * Timer displayed inside the Roblox topbar zone (same row as menu buttons).
+ * Uses a separate ScreenGui with ScreenInsets.None so it renders above the
+ * safe inset area, and GuiService:GetGuiInset() for dynamic positioning.
+ */
+export function TopBarTimer() {
 	const matchPhase = useSelector((state: GameStoreState) => state.matchPhase);
 	const timeRemaining = useSelector(
 		(state: GameStoreState) => state.timeRemaining,
 	);
 
-	// Hide in lobby — QueueStatusCard handles queue info separately
-	if (matchPhase === MatchPhase.WaitingForPlayers) return undefined!;
+	if (matchPhase !== MatchPhase.InProgress) return undefined!;
 
-	const isInProgress = matchPhase === MatchPhase.InProgress;
-	const phaseText = PHASE_LABELS[matchPhase]?.() ?? matchPhase;
+	// Get the topbar inset height for positioning within the topbar zone
+	const [insetTop] = GuiService.GetGuiInset();
+	const topbarHeight = insetTop.Y;
 
-	// InProgress: show only the timer number, 2x size, centered
-	if (isInProgress) {
-		return (
+	return (
+		<screengui
+			key="TopBarTimerGui"
+			ResetOnSpawn={false}
+			ScreenInsets={Enum.ScreenInsets.None}
+			DisplayOrder={5}
+			ZIndexBehavior={Enum.ZIndexBehavior.Sibling}
+		>
 			<frame
-				key="TopBar"
-				Size={new UDim2(0.15, 0, 0.06, 0)}
-				Position={new UDim2(0.5, 0, 0, 0)}
+				key="TimerFrame"
+				Size={new UDim2(0, 100, 0, math.max(topbarHeight - 4, 28))}
+				Position={new UDim2(0.5, 0, 0, 2)}
 				AnchorPoint={new Vector2(0.5, 0)}
 				BackgroundColor3={Color3.fromRGB(0, 0, 0)}
 				BackgroundTransparency={0.4}
@@ -63,10 +74,26 @@ export function TopBar() {
 					Text={formatTime(timeRemaining)}
 				/>
 			</frame>
-		);
+		</screengui>
+	);
+}
+
+/**
+ * Phase text shown below the topbar (for non-InProgress phases).
+ */
+export function TopBar() {
+	const matchPhase = useSelector((state: GameStoreState) => state.matchPhase);
+
+	// Hide in lobby and during InProgress (timer handles that)
+	if (
+		matchPhase === MatchPhase.WaitingForPlayers ||
+		matchPhase === MatchPhase.InProgress
+	) {
+		return undefined!;
 	}
 
-	// Other phases: show phase text label
+	const phaseText = PHASE_LABELS[matchPhase]?.() ?? matchPhase;
+
 	return (
 		<frame
 			key="TopBar"

@@ -99,16 +99,19 @@ export const EN: Record<string, string> = {
 
 	// Minigame names
 	game_can_kick: "Can Kick",
-	game_scramble: "Shibuya Scramble",
+	game_scramble: "Shibuya Hide & Seek",
 	game_hachi_ride: "Hachi Ride",
 
 	// Minigame intros
-	intro_can_kick_title: "Street Hide-and-Seek",
-	intro_can_kick_sub: "Avoid the Oni and free your team with the can.",
-	intro_scramble_title: "Shibuya Chaos",
-	intro_scramble_sub: "Blend into the crowd, survive, and use the crossing.",
+	intro_can_kick_title: "Can Kick",
+	intro_can_kick_sub:
+		"One player is the Oni. Hiders: stay hidden and kick the can to free caught friends! Oni: find and catch all hiders.",
+	intro_scramble_title: "Shibuya Hide & Seek",
+	intro_scramble_sub:
+		"Hide anywhere in Shibuya! Oni hunts you down. Tagged hiders get Spirit Wave to help teammates.",
 	intro_hachi_title: "Ride Hachi",
-	intro_hachi_sub: "Collect coins, evolve fast, and steal the lead.",
+	intro_hachi_sub:
+		"Race on Hachi! Collect items to evolve: double jump, wall run, and more. Most points wins!",
 
 	// Mission labels
 	mission_PlayGames: "Play 3 Games",

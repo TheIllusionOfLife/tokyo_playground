@@ -77,17 +77,17 @@ export const MINIGAME_INTROS: Record<
 	[MinigameId.CanKick]: {
 		titleKey: "intro_can_kick_title",
 		subtitleKey: "intro_can_kick_sub",
-		durationSeconds: 5,
+		durationSeconds: 10,
 	},
 	[MinigameId.ShibuyaScramble]: {
 		titleKey: "intro_scramble_title",
 		subtitleKey: "intro_scramble_sub",
-		durationSeconds: 5,
+		durationSeconds: 10,
 	},
 	[MinigameId.HachiRide]: {
 		titleKey: "intro_hachi_title",
 		subtitleKey: "intro_hachi_sub",
-		durationSeconds: 5,
+		durationSeconds: 10,
 	},
 };
 
