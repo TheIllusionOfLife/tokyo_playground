@@ -641,6 +641,17 @@ export const VEHICLE_CATALOG: VehicleDef[] = [
 		idleAmp: 0.2,
 	},
 	{
+		id: VehicleId.CalicoCat,
+		name: "Calico Cat",
+		nameKey: "vehicle_calico_cat",
+		templateName: "CalicoCatTemplate",
+		price: 300,
+		levelRequired: 2,
+		animProfile: AnimProfile.Static,
+		speedScale: 1.0,
+		idleAmp: 0.2,
+	},
+	{
 		id: VehicleId.Kart,
 		name: "Kart",
 		nameKey: "vehicle_kart",

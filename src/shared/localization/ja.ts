@@ -199,6 +199,7 @@ export const JA: Record<string, string> = {
 	vehicle_tab: "のりもの",
 	vehicle_hachi: "ハチ",
 	vehicle_white_cat: "白ネコ",
+	vehicle_calico_cat: "三毛猫",
 	vehicle_kart: "カート",
 	vehicle_white_dragon: "白龍",
 	vehicle_green_dragon: "緑龍",

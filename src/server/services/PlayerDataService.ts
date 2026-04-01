@@ -25,6 +25,7 @@ import { getCurrentDay } from "shared/utils/dayKey";
 const VEHICLE_ID_VALUES = new Set<VehicleId>([
 	VehicleId.DefaultHachi,
 	VehicleId.WhiteCat,
+	VehicleId.CalicoCat,
 	VehicleId.Kart,
 	VehicleId.WhiteDragon,
 	VehicleId.GreenDragon,

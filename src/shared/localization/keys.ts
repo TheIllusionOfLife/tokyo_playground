@@ -180,6 +180,7 @@ export const L_HINT_HACHI_EVOLVED = "hint_hachi_evolved";
 export const L_VEHICLE_TAB = "vehicle_tab";
 export const L_VEHICLE_HACHI = "vehicle_hachi";
 export const L_VEHICLE_WHITE_CAT = "vehicle_white_cat";
+export const L_VEHICLE_CALICO_CAT = "vehicle_calico_cat";
 export const L_VEHICLE_KART = "vehicle_kart";
 export const L_VEHICLE_WHITE_DRAGON = "vehicle_white_dragon";
 export const L_VEHICLE_GREEN_DRAGON = "vehicle_green_dragon";
