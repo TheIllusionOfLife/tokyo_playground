@@ -37,6 +37,7 @@ export function isPlayerMounted(player: Player): boolean {
 	if (!model.Parent || model.Parent !== player.Character) {
 		mountedPlayers.delete(player.UserId);
 		sitTracks.delete(player.UserId);
+		originalHipHeights.delete(player.UserId);
 		return false;
 	}
 	return true;
@@ -59,6 +60,13 @@ export function forceUnmount(player: Player, notifyClient = false): void {
 	if (track) {
 		track.Stop();
 		sitTracks.delete(player.UserId);
+	}
+	// Restore HipHeight before destroying the model
+	const origHip = originalHipHeights.get(player.UserId);
+	if (origHip !== undefined) {
+		const humanoid = player.Character?.FindFirstChildOfClass("Humanoid");
+		if (humanoid) humanoid.HipHeight = origHip;
+		originalHipHeights.delete(player.UserId);
 	}
 	const model = mountedPlayers.get(player.UserId);
 	if (model && model.Parent) model.Destroy();
