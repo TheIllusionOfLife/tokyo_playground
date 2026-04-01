@@ -590,6 +590,7 @@ export function ShopPanel() {
 										? new UDim2(0, 8, 0, 12)
 										: new UDim2(0, 6, 0, 6)
 								}
+								HorizontalAlignment={Enum.HorizontalAlignment.Center}
 							/>
 							{tab === "cosmetics"
 								? shopItems.map((item) => (
