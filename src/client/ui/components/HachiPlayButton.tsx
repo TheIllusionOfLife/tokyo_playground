@@ -2,7 +2,6 @@ import React, { useEffect, useRef } from "@rbxts/react";
 import { useSelector } from "@rbxts/react-reflex";
 import { RunService } from "@rbxts/services";
 import { clientEvents } from "client/network";
-import { t } from "shared/localization";
 import { GameStoreState } from "shared/store/game-store";
 import { MatchPhase, MinigameId } from "shared/types";
 
@@ -46,17 +45,21 @@ export function HachiPlayButton() {
 			BorderSizePixel={0}
 			ZIndex={10}
 		>
-			{/* Dark backdrop for contrast */}
+			{/* Subtle shadow stroke for contrast */}
 			<frame
 				Size={new UDim2(1, 12, 1, 30)}
 				Position={new UDim2(0.5, 0, 0.5, 4)}
 				AnchorPoint={new Vector2(0.5, 0.5)}
-				BackgroundColor3={Color3.fromRGB(0, 0, 0)}
-				BackgroundTransparency={0.5}
+				BackgroundTransparency={1}
 				BorderSizePixel={0}
 				ZIndex={8}
 			>
 				<uicorner CornerRadius={new UDim(0, 14)} />
+				<uistroke
+					Color={Color3.fromRGB(0, 0, 0)}
+					Thickness={2}
+					Transparency={0.4}
+				/>
 			</frame>
 			{/* Left ear */}
 			<frame
@@ -88,9 +91,9 @@ export function HachiPlayButton() {
 				BackgroundColor3={Color3.fromRGB(255, 160, 20)}
 				BorderSizePixel={0}
 				TextColor3={Color3.fromRGB(255, 255, 255)}
-				Text={"\u{1F43E}"}
+				Text="PLAY"
 				TextScaled={true}
-				Font={Enum.Font.GothamBold}
+				Font={Enum.Font.FredokaOne}
 				ZIndex={10}
 				Event={{
 					Activated: () => {
@@ -122,10 +125,10 @@ export function HachiPlayButton() {
 				BackgroundTransparency={1}
 				TextColor3={Color3.fromRGB(255, 220, 80)}
 				TextStrokeColor3={Color3.fromRGB(0, 0, 0)}
-				TextStrokeTransparency={0.3}
+				TextStrokeTransparency={0.15}
 				TextScaled={true}
 				Font={Enum.Font.FredokaOne}
-				Text={t("hachi_play")}
+				Text="PLAY"
 				ZIndex={10}
 			/>
 		</frame>

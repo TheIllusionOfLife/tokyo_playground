@@ -1,31 +1,65 @@
-import React, { useEffect, useState } from "@rbxts/react";
+import React, { useEffect, useRef, useState } from "@rbxts/react";
 import { useSelector } from "@rbxts/react-reflex";
-import { TweenService } from "@rbxts/services";
+import { RunService } from "@rbxts/services";
 import { clientEvents } from "client/network";
 import { SPIN_REWARDS } from "shared/constants";
+import { t } from "shared/localization";
 import { GameStoreState, gameStore } from "shared/store/game-store";
 import { MatchPhase } from "shared/types";
+
+const SEGMENT_COLORS = [
+	Color3.fromRGB(255, 90, 90),
+	Color3.fromRGB(255, 200, 60),
+	Color3.fromRGB(90, 200, 90),
+	Color3.fromRGB(80, 160, 255),
+	Color3.fromRGB(200, 120, 255),
+	Color3.fromRGB(255, 160, 60),
+	Color3.fromRGB(100, 220, 200),
+	Color3.fromRGB(255, 130, 180),
+];
+
+const SPARKLE_OFFSETS = [0, 60, 120, 180, 240, 300];
 
 export function SpinWheel() {
 	const matchPhase = useSelector((s: GameStoreState) => s.matchPhase);
 	const activeOverlay = useSelector((s: GameStoreState) => s.activeOverlay);
+	const spinAvailable = useSelector((s: GameStoreState) => s.spinAvailable);
 	const open = activeOverlay === "spin";
 	const [spinning, setSpinning] = useState(false);
 	const [lastReward, setLastReward] = useState(0);
+	const [wheelRotation, setWheelRotation] = useState(0);
+	const [resultScale, setResultScale] = useState(1);
+	const wheelRef = useRef<Frame>();
 
-	// Listen for spin result (must be before early return to satisfy Rules of Hooks)
+	// Listen for spin result
 	useEffect(() => {
 		const conn = clientEvents.spinResult.connect((reward, success) => {
 			setSpinning(false);
 			if (success) {
 				setLastReward(reward);
+				// Flash result with scale-up
+				setResultScale(1.8);
+				task.delay(0.4, () => setResultScale(1));
 			}
 		});
 		return () => conn.Disconnect();
 	}, []);
 
+	// Continuous wheel rotation animation
+	useEffect(() => {
+		if (!open) return;
+		const speed = spinning ? 12 : 0.3;
+		const conn = RunService.Heartbeat.Connect((dt) => {
+			setWheelRotation((prev) => (prev + dt * speed * 60) % 360);
+		});
+		return () => conn.Disconnect();
+	}, [open, spinning]);
+
 	// Hide during matches
 	if (matchPhase !== MatchPhase.WaitingForPlayers) return undefined!;
+
+	const alreadySpun = !spinAvailable;
+	const dimAlpha = alreadySpun ? 0.5 : 0;
 
 	return (
 		<>
@@ -33,9 +67,11 @@ export function SpinWheel() {
 			<frame
 				key="SpinButton"
 				Size={new UDim2(0, 100, 0, 30)}
-				Position={new UDim2(1, -10, 0, 168)}
+				Position={new UDim2(1, -220, 0, 8)}
 				AnchorPoint={new Vector2(1, 0)}
-				BackgroundColor3={Color3.fromRGB(70, 30, 100)}
+				BackgroundColor3={
+					alreadySpun ? Color3.fromRGB(60, 60, 60) : Color3.fromRGB(70, 30, 100)
+				}
 				BackgroundTransparency={0.3}
 				BorderSizePixel={0}
 				ZIndex={10}
@@ -44,10 +80,14 @@ export function SpinWheel() {
 				<textbutton
 					Size={new UDim2(1, 0, 1, 0)}
 					BackgroundTransparency={1}
-					TextColor3={Color3.fromRGB(255, 200, 255)}
+					TextColor3={
+						alreadySpun
+							? Color3.fromRGB(150, 150, 150)
+							: Color3.fromRGB(255, 200, 255)
+					}
 					TextScaled={true}
 					Font={Enum.Font.GothamBold}
-					Text={"\u{1F3B0} Spin"}
+					Text={alreadySpun ? "\u{2705} Spin" : "\u{1F3B0} Spin"}
 					Event={{
 						Activated: () =>
 							gameStore.setActiveOverlay(open ? "none" : ("spin" as never)),
@@ -63,7 +103,7 @@ export function SpinWheel() {
 			{open ? (
 				<frame
 					key="SpinOverlay"
-					Size={new UDim2(0, 250, 0, 250)}
+					Size={new UDim2(0, 280, 0, 300)}
 					Position={new UDim2(0.5, 0, 0.5, 0)}
 					AnchorPoint={new Vector2(0.5, 0.5)}
 					BackgroundColor3={Color3.fromRGB(20, 15, 35)}
@@ -71,7 +111,13 @@ export function SpinWheel() {
 					BorderSizePixel={0}
 					ZIndex={19}
 				>
-					<uicorner CornerRadius={new UDim(0, 12)} />
+					<uicorner CornerRadius={new UDim(0, 16)} />
+					<uistroke
+						Color={Color3.fromRGB(255, 200, 100)}
+						Thickness={2}
+						Transparency={0.3}
+					/>
+					{/* Close button */}
 					<textbutton
 						Size={new UDim2(0, 32, 0, 32)}
 						Position={new UDim2(1, -8, 0, 8)}
@@ -89,6 +135,7 @@ export function SpinWheel() {
 					>
 						<uicorner CornerRadius={new UDim(1, 0)} />
 					</textbutton>
+					{/* Title */}
 					<textlabel
 						Size={new UDim2(0.8, 0, 0, 30)}
 						Position={new UDim2(0.1, 0, 0, 12)}
@@ -96,48 +143,137 @@ export function SpinWheel() {
 						TextColor3={Color3.fromRGB(255, 200, 100)}
 						TextScaled={true}
 						Font={Enum.Font.FredokaOne}
-						Text="Daily Lucky Spin"
+						Text={t("spin_title")}
 						ZIndex={19}
 					/>
-					{/* Wheel display */}
+					{/* Wheel container with rotation */}
 					<frame
-						Size={new UDim2(0, 140, 0, 140)}
-						Position={new UDim2(0.5, 0, 0.5, -10)}
+						ref={wheelRef}
+						Size={new UDim2(0, 160, 0, 160)}
+						Position={new UDim2(0.5, 0, 0.5, -15)}
 						AnchorPoint={new Vector2(0.5, 0.5)}
-						BackgroundColor3={Color3.fromRGB(255, 200, 50)}
+						BackgroundTransparency={1}
 						BorderSizePixel={0}
+						Rotation={wheelRotation}
 						ZIndex={19}
 					>
-						<uicorner CornerRadius={new UDim(1, 0)} />
-						<uistroke Color={Color3.fromRGB(255, 160, 20)} Thickness={4} />
-						<textlabel
-							Size={new UDim2(1, 0, 1, 0)}
-							BackgroundTransparency={1}
-							TextColor3={Color3.fromRGB(50, 30, 10)}
-							TextScaled={true}
-							Font={Enum.Font.FredokaOne}
-							Text={lastReward > 0 ? `+${lastReward}` : "\u{1F3B0}"}
-							ZIndex={20}
-						/>
+						{/* Colored segments (8 wedge-like sections) */}
+						{SPIN_REWARDS.map((reward, i) => {
+							const angle = (i / SPIN_REWARDS.size()) * 360;
+							const segColor = SEGMENT_COLORS[i % SEGMENT_COLORS.size()];
+							const dimmed = alreadySpun
+								? new Color3(
+										segColor.R * 0.4,
+										segColor.G * 0.4,
+										segColor.B * 0.4,
+									)
+								: segColor;
+							return (
+								<frame
+									key={`seg-${i}`}
+									Size={new UDim2(0, 28, 0, 60)}
+									Position={new UDim2(0.5, 0, 0.5, 0)}
+									AnchorPoint={new Vector2(0.5, 1)}
+									BackgroundColor3={dimmed}
+									BackgroundTransparency={0.15}
+									BorderSizePixel={0}
+									Rotation={angle}
+									ZIndex={19}
+								>
+									<uicorner CornerRadius={new UDim(0, 4)} />
+									<textlabel
+										Size={new UDim2(1, 0, 0.5, 0)}
+										Position={new UDim2(0, 0, 0, 2)}
+										BackgroundTransparency={1}
+										TextColor3={Color3.fromRGB(255, 255, 255)}
+										TextScaled={true}
+										Font={Enum.Font.GothamBold}
+										Text={`${reward}`}
+										ZIndex={20}
+										Rotation={0}
+									/>
+								</frame>
+							);
+						})}
+						{/* Center circle */}
+						<frame
+							Size={new UDim2(0, 50, 0, 50)}
+							Position={new UDim2(0.5, 0, 0.5, 0)}
+							AnchorPoint={new Vector2(0.5, 0.5)}
+							BackgroundColor3={Color3.fromRGB(255, 200, 50)}
+							BorderSizePixel={0}
+							ZIndex={21}
+						>
+							<uicorner CornerRadius={new UDim(1, 0)} />
+							<uistroke Color={Color3.fromRGB(255, 160, 20)} Thickness={3} />
+							<textlabel
+								Size={new UDim2(resultScale, 0, resultScale, 0)}
+								Position={new UDim2(0.5, 0, 0.5, 0)}
+								AnchorPoint={new Vector2(0.5, 0.5)}
+								BackgroundTransparency={1}
+								TextColor3={Color3.fromRGB(50, 30, 10)}
+								TextScaled={true}
+								Font={Enum.Font.FredokaOne}
+								Text={lastReward > 0 ? `+${lastReward}` : "\u{2B50}"}
+								ZIndex={22}
+								Rotation={-wheelRotation}
+							/>
+						</frame>
 					</frame>
-					{/* Spin button */}
+					{/* Sparkle stars (orbit around wheel) */}
+					{SPARKLE_OFFSETS.map((offsetDeg, i) => {
+						const rad = ((wheelRotation * 0.7 + offsetDeg) * math.pi) / 180;
+						const cx = 0.5;
+						const cy = 0.5 - 15 / 300;
+						const orbitR = 95;
+						return (
+							<textlabel
+								key={`sparkle-${i}`}
+								Size={new UDim2(0, 12, 0, 12)}
+								Position={
+									new UDim2(
+										cx,
+										math.cos(rad) * orbitR,
+										cy,
+										math.sin(rad) * orbitR,
+									)
+								}
+								AnchorPoint={new Vector2(0.5, 0.5)}
+								BackgroundTransparency={1}
+								TextColor3={Color3.fromRGB(255, 255, 200)}
+								TextTransparency={alreadySpun ? 0.7 : 0.2}
+								TextScaled={true}
+								Font={Enum.Font.GothamBold}
+								Text={"\u{2728}"}
+								ZIndex={20}
+							/>
+						);
+					})}
+					{/* Spin / Come back tomorrow button */}
 					<textbutton
-						Size={new UDim2(0.6, 0, 0, 40)}
-						Position={new UDim2(0.2, 0, 1, -50)}
+						Size={new UDim2(0.65, 0, 0, 40)}
+						Position={new UDim2(0.5, 0, 1, -45)}
+						AnchorPoint={new Vector2(0.5, 0)}
 						BackgroundColor3={
-							spinning
+							spinning || alreadySpun
 								? Color3.fromRGB(80, 80, 80)
 								: Color3.fromRGB(80, 200, 120)
 						}
 						TextColor3={Color3.fromRGB(255, 255, 255)}
 						TextScaled={true}
 						Font={Enum.Font.GothamBold}
-						Text={spinning ? "Spinning..." : "SPIN!"}
-						Active={!spinning}
+						Text={
+							alreadySpun
+								? t("spin_come_back")
+								: spinning
+									? t("spin_spinning")
+									: t("spin_button")
+						}
+						Active={!spinning && !alreadySpun}
 						ZIndex={20}
 						Event={{
 							Activated: () => {
-								if (spinning) return;
+								if (spinning || alreadySpun) return;
 								setSpinning(true);
 								setLastReward(0);
 								clientEvents.requestSpin.fire();

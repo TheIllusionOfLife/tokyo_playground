@@ -218,6 +218,12 @@ export const EN: Record<string, string> = {
 	// Cosmetics preview
 	shop_try_on: "TRY ON",
 
+	// Spin
+	spin_title: "Daily Lucky Spin",
+	spin_button: "SPIN!",
+	spin_spinning: "Spinning...",
+	spin_come_back: "Come back tomorrow!",
+
 	// Zones
 	zone_ShibuyaSky: "Shibuya Sky",
 	zone_ShibuyaCrossing: "Shibuya Crossing",

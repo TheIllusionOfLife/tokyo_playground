@@ -1,4 +1,4 @@
-import React from "@rbxts/react";
+import React, { useState } from "@rbxts/react";
 import { useSelector } from "@rbxts/react-reflex";
 import { clientEvents } from "client/network";
 import { ALL_POI_ZONES } from "shared/constants";
@@ -10,6 +10,8 @@ import {
 } from "shared/localization/keys";
 import { GameStoreState, gameStore } from "shared/store/game-store";
 import { MatchPhase, MinigameId, MissionProgressData } from "shared/types";
+
+type MissionTab = "missions" | "poi";
 
 function MissionRow({
 	mission,
@@ -194,6 +196,39 @@ function PoiRow({
 	);
 }
 
+function TabButton({
+	label,
+	active,
+	layoutOrder,
+	onActivated,
+}: {
+	label: string;
+	active: boolean;
+	layoutOrder: number;
+	onActivated: () => void;
+}) {
+	return (
+		<textbutton
+			LayoutOrder={layoutOrder}
+			Size={new UDim2(0.48, 0, 1, 0)}
+			BackgroundColor3={
+				active ? Color3.fromRGB(60, 60, 100) : Color3.fromRGB(30, 30, 50)
+			}
+			BackgroundTransparency={active ? 0.1 : 0.4}
+			BorderSizePixel={0}
+			TextColor3={
+				active ? Color3.fromRGB(255, 255, 200) : Color3.fromRGB(150, 150, 170)
+			}
+			TextScaled={true}
+			Font={active ? Enum.Font.GothamBold : Enum.Font.Gotham}
+			Text={label}
+			Event={{ Activated: onActivated }}
+		>
+			<uicorner CornerRadius={new UDim(0, 6)} />
+		</textbutton>
+	);
+}
+
 export function MissionPanel() {
 	const activeOverlay = useSelector(
 		(state: GameStoreState) => state.activeOverlay,
@@ -213,10 +248,20 @@ export function MissionPanel() {
 	const poiClaimedRewards = useSelector(
 		(state: GameStoreState) => state.poiClaimedRewards,
 	);
+	const [activeTab, setActiveTab] = useState<MissionTab>("missions");
 
 	const isHachiInProgress =
 		activeMinigameId === MinigameId.HachiRide &&
 		matchPhase === MatchPhase.InProgress;
+
+	// Check for notification dot (claimable missions or PoI rewards)
+	const hasClaimableMission = missions.some(
+		(m) => m.progress >= m.target && !m.rewardCollected,
+	);
+	const hasClaimablePoi = ALL_POI_ZONES.some(
+		(z) => discoveredPoi.includes(z) && !poiClaimedRewards.includes(z),
+	);
+	const showNotifDot = hasClaimableMission || hasClaimablePoi;
 
 	// During HachiRide, only show the claim toast (not the full panel)
 	if (isHachiInProgress) {
@@ -280,6 +325,22 @@ export function MissionPanel() {
 						PaddingRight={new UDim(0, 8)}
 					/>
 				</textbutton>
+				{/* Notification dot */}
+				{showNotifDot ? (
+					<frame
+						key="NotifDot"
+						Size={new UDim2(0, 10, 0, 10)}
+						Position={new UDim2(1, -4, 0, -2)}
+						AnchorPoint={new Vector2(1, 0)}
+						BackgroundColor3={Color3.fromRGB(255, 80, 80)}
+						BorderSizePixel={0}
+						ZIndex={11}
+					>
+						<uicorner CornerRadius={new UDim(1, 0)} />
+					</frame>
+				) : (
+					undefined!
+				)}
 			</frame>
 			{/* Centered overlay when open */}
 			{open ? (
@@ -294,6 +355,7 @@ export function MissionPanel() {
 					ZIndex={19}
 				>
 					<uicorner CornerRadius={new UDim(0, 12)} />
+					{/* Close button */}
 					<textbutton
 						Size={new UDim2(0, 32, 0, 32)}
 						Position={new UDim2(1, -8, 0, 8)}
@@ -311,10 +373,37 @@ export function MissionPanel() {
 					>
 						<uicorner CornerRadius={new UDim(1, 0)} />
 					</textbutton>
-					{/* Scrollable content */}
+					{/* Tab bar */}
+					<frame
+						key="TabBar"
+						Size={new UDim2(0.85, 0, 0, 28)}
+						Position={new UDim2(0.075, 0, 0, 10)}
+						BackgroundTransparency={1}
+						BorderSizePixel={0}
+						ZIndex={19}
+					>
+						<uilistlayout
+							FillDirection={Enum.FillDirection.Horizontal}
+							Padding={new UDim(0, 6)}
+							HorizontalAlignment={Enum.HorizontalAlignment.Center}
+						/>
+						<TabButton
+							label={t(L_DAILY_MISSIONS)}
+							active={activeTab === "missions"}
+							layoutOrder={0}
+							onActivated={() => setActiveTab("missions")}
+						/>
+						<TabButton
+							label={t("poi_header")}
+							active={activeTab === "poi"}
+							layoutOrder={1}
+							onActivated={() => setActiveTab("poi")}
+						/>
+					</frame>
+					{/* Tab content */}
 					<scrollingframe
-						Size={new UDim2(1, -24, 1, -48)}
-						Position={new UDim2(0, 12, 0, 44)}
+						Size={new UDim2(1, -24, 1, -52)}
+						Position={new UDim2(0, 12, 0, 46)}
 						BackgroundTransparency={1}
 						BorderSizePixel={0}
 						ScrollBarThickness={4}
@@ -328,65 +417,29 @@ export function MissionPanel() {
 							Padding={new UDim(0, 4)}
 							HorizontalAlignment={Enum.HorizontalAlignment.Center}
 						/>
-						{/* Daily Missions header */}
-						<textlabel
-							key="MissionsHeader"
-							LayoutOrder={0}
-							Size={new UDim2(1, -8, 0, 22)}
-							BackgroundTransparency={1}
-							TextColor3={Color3.fromRGB(255, 255, 150)}
-							TextScaled={true}
-							Font={Enum.Font.GothamBold}
-							Text={t(L_DAILY_MISSIONS)}
-							TextXAlignment={Enum.TextXAlignment.Left}
-						/>
-						{missions.map((mission, i) => (
-							<MissionRow
-								key={mission.id}
-								mission={mission}
-								layoutOrder={i + 1}
-							/>
-						))}
-						{/* Divider */}
-						<frame
-							key="Divider"
-							LayoutOrder={100}
-							Size={new UDim2(0.9, 0, 0, 1)}
-							BackgroundColor3={Color3.fromRGB(80, 80, 100)}
-							BorderSizePixel={0}
-						>
-							<uipadding
-								PaddingTop={new UDim(0, 4)}
-								PaddingBottom={new UDim(0, 4)}
-							/>
-						</frame>
-						{/* PoI header */}
-						<textlabel
-							key="PoiHeader"
-							LayoutOrder={101}
-							Size={new UDim2(1, -8, 0, 22)}
-							BackgroundTransparency={1}
-							TextColor3={Color3.fromRGB(255, 200, 100)}
-							TextScaled={true}
-							Font={Enum.Font.GothamBold}
-							Text={t("poi_header")}
-							TextXAlignment={Enum.TextXAlignment.Left}
-						/>
-						{ALL_POI_ZONES.map((zoneName, i) => (
-							<PoiRow
-								key={zoneName}
-								zoneName={zoneName}
-								discovered={discoveredPoi.includes(zoneName)}
-								claimed={poiClaimedRewards.includes(zoneName)}
-								layoutOrder={102 + i}
-							/>
-						))}
+						{activeTab === "missions"
+							? missions.map((mission, i) => (
+									<MissionRow
+										key={mission.id}
+										mission={mission}
+										layoutOrder={i}
+									/>
+								))
+							: ALL_POI_ZONES.map((zoneName, i) => (
+									<PoiRow
+										key={zoneName}
+										zoneName={zoneName}
+										discovered={discoveredPoi.includes(zoneName)}
+										claimed={poiClaimedRewards.includes(zoneName)}
+										layoutOrder={i}
+									/>
+								))}
 					</scrollingframe>
 				</frame>
 			) : (
 				undefined!
 			)}
-			{/* Mission claim toast (moved from TodayGoalChip) */}
+			{/* Mission claim toast */}
 			{claimReady ? (
 				<textbutton
 					key="MissionClaimToast"

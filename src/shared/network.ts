@@ -125,6 +125,7 @@ interface ServerToClientEvents {
 
 	// ── Engagement ─────────────────────────────────────────────────────
 	spinResult(reward: number, success: boolean): void;
+	spinStatusSync(available: boolean): void;
 	leaderboardData(
 		entries: { rank: number; name: string; points: number }[],
 	): void;

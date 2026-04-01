@@ -192,6 +192,11 @@ export class HudController implements OnStart {
 			if (ok) clientEvents.requestVehicleCatalog.fire();
 		});
 
+		// Spin availability
+		clientEvents.spinStatusSync.connect((available) => {
+			gameStore.setSpinAvailable(available);
+		});
+
 		// Cosmetics preview
 		clientEvents.previewEquipped.connect((itemId, category, duration) => {
 			if (itemId !== undefined && category !== undefined) {

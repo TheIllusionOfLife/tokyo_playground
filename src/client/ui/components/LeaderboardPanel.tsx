@@ -40,7 +40,7 @@ export function LeaderboardPanel() {
 			<frame
 				key="LeaderboardButton"
 				Size={new UDim2(0, 100, 0, 30)}
-				Position={new UDim2(1, -10, 0, 206)}
+				Position={new UDim2(1, -110, 0, 8)}
 				AnchorPoint={new Vector2(1, 0)}
 				BackgroundColor3={Color3.fromRGB(30, 50, 80)}
 				BackgroundTransparency={0.3}
