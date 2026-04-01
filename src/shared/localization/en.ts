@@ -87,7 +87,6 @@ export const EN: Record<string, string> = {
 	obstacle_active: "Obstacle Course Active",
 
 	// Social
-	invite: "Invite",
 	spectator_tap: "Tap to switch",
 
 	// Misc formatting

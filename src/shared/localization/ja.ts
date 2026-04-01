@@ -87,7 +87,6 @@ export const JA: Record<string, string> = {
 	obstacle_active: "障害物コース開催中",
 
 	// Social
-	invite: "招待",
 	spectator_tap: "タップで切替",
 
 	// Misc formatting

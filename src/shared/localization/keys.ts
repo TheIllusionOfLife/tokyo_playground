@@ -88,7 +88,6 @@ export const L_BON_ODORI_COMBO = "bon_odori_combo";
 export const L_OBSTACLE_ACTIVE = "obstacle_active";
 
 // Social
-export const L_INVITE = "invite";
 export const L_SPECTATOR_TAP = "spectator_tap";
 
 // Misc formatting

@@ -3,7 +3,6 @@ import { useSelector } from "@rbxts/react-reflex";
 import { clientEvents } from "client/network";
 import { t } from "shared/localization";
 import {
-	L_ACTION_CATCH,
 	L_ACTION_KICK,
 	L_ACTION_RATTLE,
 	L_ACTION_SPIRIT_WAVE,
@@ -27,40 +26,37 @@ export function ActionButton() {
 		return undefined!;
 	}
 
-	const canShowRoleAction =
-		role === PlayerRole.Oni ||
-		(role === PlayerRole.Hider &&
-			(activeMinigameId !== MinigameId.CanKick || !localCaught) &&
-			(activeMinigameId !== MinigameId.ShibuyaScramble || !localTagged));
+	// Hider kick button (Can Kick, not caught)
+	const canShowKick =
+		role === PlayerRole.Hider &&
+		activeMinigameId === MinigameId.CanKick &&
+		!localCaught;
+	// Hider rattle button (Can Kick, caught/jailed)
 	const canShowCanRattle =
 		activeMinigameId === MinigameId.CanKick &&
 		role === PlayerRole.Hider &&
 		localCaught;
+	// Hider spirit wave button (Scramble, tagged, has charges)
 	const canShowSpiritWave =
 		activeMinigameId === MinigameId.ShibuyaScramble &&
 		role === PlayerRole.Hider &&
 		localTagged &&
 		spiritCharges > 0;
 
-	if (!canShowRoleAction && !canShowCanRattle && !canShowSpiritWave) {
+	if (!canShowKick && !canShowCanRattle && !canShowSpiritWave) {
 		return undefined!;
 	}
 
-	const isOni = role === PlayerRole.Oni;
 	const buttonColor = canShowSpiritWave
 		? Color3.fromRGB(140, 90, 220)
 		: canShowCanRattle
 			? Color3.fromRGB(220, 170, 60)
-			: isOni
-				? Color3.fromRGB(220, 50, 50)
-				: Color3.fromRGB(50, 130, 220);
+			: Color3.fromRGB(50, 130, 220);
 	const buttonText = canShowSpiritWave
 		? t(L_ACTION_SPIRIT_WAVE)
 		: canShowCanRattle
 			? t(L_ACTION_RATTLE)
-			: isOni
-				? t(L_ACTION_CATCH)
-				: t(L_ACTION_KICK);
+			: t(L_ACTION_KICK);
 
 	return (
 		<textbutton
@@ -78,8 +74,6 @@ export function ActionButton() {
 				Activated: () => {
 					if (canShowSpiritWave) {
 						clientEvents.requestSpiritWave.fire();
-					} else if (isOni) {
-						clientEvents.requestCatch.fire();
 					} else {
 						clientEvents.requestKickCan.fire();
 					}

@@ -8,7 +8,6 @@ import { HachiHud } from "./components/HachiHud";
 import { HachiPlayButton } from "./components/HachiPlayButton";
 import { HachiToggleButton } from "./components/HachiToggleButton";
 import { HintText } from "./components/HintText";
-import { InviteButton } from "./components/InviteButton";
 import { LevelUpOverlay } from "./components/LevelUpOverlay";
 import { MicroEventIndicator } from "./components/MicroEventIndicator";
 import { MissionPanel } from "./components/MissionPanel";
@@ -52,7 +51,6 @@ export function GameHud() {
 			<LevelUpOverlay />
 			<MissionPanel />
 			<ShopPanel />
-			<InviteButton />
 			<SpectatorOverlay />
 			<SkillsPanel />
 			{/* Living Shibuya */}
