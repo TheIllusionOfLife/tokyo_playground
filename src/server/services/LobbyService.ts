@@ -226,7 +226,18 @@ export class LobbyService implements OnStart {
 							HACHI_LOBBY_MIN_LEVEL,
 						);
 				const vDef = VEHICLE_CATALOG.find((v) => v.id === vehicleId);
-				if (!equipHachiCostume(player, clone, evoLevel, !this.matchActive, vDef?.weldYawOffset ?? 0, vDef?.scaleOverride, vDef?.seatHeightOffset ?? 0, vDef?.standingMount ?? false)) {
+				if (
+					!equipHachiCostume(
+						player,
+						clone,
+						evoLevel,
+						!this.matchActive,
+						vDef?.weldYawOffset ?? 0,
+						vDef?.scaleOverride,
+						vDef?.seatHeightOffset ?? 0,
+						vDef?.standingMount ?? false,
+					)
+				) {
 					clone.Destroy();
 				} else {
 					if (vDef) this.mountedVehicleDefs.set(clone, vDef);

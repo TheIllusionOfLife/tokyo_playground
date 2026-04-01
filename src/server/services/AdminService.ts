@@ -72,11 +72,11 @@ export class AdminService implements OnStart {
 					lv,
 					data.shopBalance,
 				);
+				this.serverEvents.hintTextChanged.fire(
+					player,
+					`Shop balance → ${value}`,
+				);
 			}
-			this.serverEvents.hintTextChanged.fire(
-				player,
-				`Shop balance → ${value}`,
-			);
 		} else if (cmd === "/help" || cmd === "/admin") {
 			this.serverEvents.hintTextChanged.fire(
 				player,

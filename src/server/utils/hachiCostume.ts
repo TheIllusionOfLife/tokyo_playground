@@ -155,9 +155,7 @@ export function equipHachiCostume(
 	// Apply per-vehicle yaw offset for meshes oriented differently.
 	const yawRad = math.pi + math.rad(weldYawOffset);
 	const verticalOffset = -(bodyHalfHeight + hrp.Size.Y / 2) + seatHeightOffset;
-	weld.C0 = new CFrame(0, verticalOffset, 0).mul(
-		CFrame.Angles(0, yawRad, 0),
-	);
+	weld.C0 = new CFrame(0, verticalOffset, 0).mul(CFrame.Angles(0, yawRad, 0));
 	weld.Parent = body;
 
 	// Play sitting animation at Action4 priority to override locomotion

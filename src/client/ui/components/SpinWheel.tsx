@@ -258,7 +258,7 @@ export function SpinWheel() {
 							</frame>
 						</frame>
 						{/* Sparkle stars (positioned imperatively via refs) */}
-						{SPARKLE_OFFSETS.map((offsetDeg, i) => (
+						{SPARKLE_OFFSETS.map((_, i) => (
 							<textlabel
 								key={`sparkle-${i}`}
 								ref={(ref) => {

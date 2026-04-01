@@ -224,13 +224,14 @@ function ShopCard({
 				Text={item.name}
 			/>
 			<textlabel
-				Size={new UDim2(1, -8, 0, 18)}
+				Size={new UDim2(1, -62, 0, 18)}
 				Position={new UDim2(0, 4, 0, 32)}
 				BackgroundTransparency={1}
 				TextColor3={Color3.fromRGB(150, 150, 200)}
 				TextScaled={true}
 				Font={Enum.Font.Gotham}
 				Text={`${item.category} • ${item.price}pts`}
+				TextXAlignment={Enum.TextXAlignment.Left}
 			/>
 			<textbutton
 				Size={new UDim2(1, -8, 0, 28)}
@@ -440,6 +441,7 @@ export function ShopPanel() {
 	const onOpen = () => {
 		gameStore.setActiveOverlay(open ? "none" : "shop");
 		if (!open) {
+			setTab("vehicles");
 			clientEvents.requestShopCatalog.fire();
 			clientEvents.requestVehicleCatalog.fire();
 		}
@@ -523,8 +525,9 @@ export function ShopPanel() {
 						/>
 						{/* Tab buttons */}
 						<frame
-							Size={new UDim2(0.5, -48, 0, 28)}
-							Position={new UDim2(0.5, 0, 0, 12)}
+							Size={new UDim2(0, 180, 0, 28)}
+							Position={new UDim2(1, -44, 0, 12)}
+							AnchorPoint={new Vector2(1, 0)}
 							BackgroundTransparency={1}
 							ZIndex={19}
 						>
