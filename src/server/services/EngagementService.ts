@@ -90,9 +90,14 @@ export class EngagementService implements OnStart {
 			const hi = math.max(player.UserId, otherPlayer.UserId);
 			const pairKey = `${lo}:${hi}`;
 			if (this.referralGranted.has(pairKey)) continue;
+
+			// Only grant if both profiles are loaded (don't mark granted if skipped)
+			const pData = this.playerDataService.getPlayerData(player);
+			const oData = this.playerDataService.getPlayerData(otherPlayer);
+			if (!pData || !oData) continue;
+
 			this.referralGranted.add(pairKey);
 
-			// Grant bonus to both
 			this.playerDataService.addPlayPoints(player, FRIEND_REFERRAL_BONUS);
 			this.playerDataService.addPlayPoints(otherPlayer, FRIEND_REFERRAL_BONUS);
 

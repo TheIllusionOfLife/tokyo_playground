@@ -16,8 +16,13 @@ export function HachiPlayButton() {
 		(state: GameStoreState) => state.activeMinigameId,
 	);
 
+	const isVisible =
+		matchPhase === MatchPhase.WaitingForPlayers &&
+		activeMinigameId === undefined;
+
 	// Pulsing glow animation (must be before early return for Rules of Hooks)
 	useEffect(() => {
+		if (!isVisible) return;
 		const conn = RunService.Heartbeat.Connect(() => {
 			const btn = btnRef.current;
 			if (!btn) return;
@@ -26,13 +31,9 @@ export function HachiPlayButton() {
 			btn.BackgroundTransparency = 0.05 + 0.1 * alpha;
 		});
 		return () => conn.Disconnect();
-	}, []);
+	}, [isVisible]);
 
-	// Only show in lobby (WaitingForPlayers) and not during a match
-	if (
-		matchPhase !== MatchPhase.WaitingForPlayers ||
-		activeMinigameId !== undefined
-	) {
+	if (!isVisible) {
 		return undefined!;
 	}
 

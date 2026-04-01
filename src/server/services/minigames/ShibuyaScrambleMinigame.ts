@@ -340,7 +340,7 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 			this.serverEvents,
 			this.playerStates,
 			this.playerObjects,
-			DEFAULT_WALK_SPEED,
+			HACHI_WALK_SPEEDS[0],
 		);
 		this.countdownThread = undefined;
 		// Stop crowd wave loop immediately (called before cleanup during results display)

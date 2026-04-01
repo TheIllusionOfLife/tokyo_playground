@@ -80,7 +80,7 @@ barFillCorner.CornerRadius = new UDim(0, 4);
 barFillCorner.Parent = barFill;
 
 // Tip text
-const TIPS = [
+const TIPS_EN = [
 	"Explore real Shibuya streets!",
 	"Ride Hachi and collect items to evolve!",
 	"Kick the can to free your friends!",
@@ -88,6 +88,17 @@ const TIPS = [
 	"Complete daily missions for bonus points!",
 	"Discover Points of Interest across Shibuya!",
 ];
+const TIPS_JA = [
+	"本物の渋谷の街を探検しよう!",
+	"ハチに乗ってアイテムを集めて進化!",
+	"缶を蹴って仲間を助けよう!",
+	"街中どこでも隠れられる!",
+	"デイリーミッションでボーナスポイント!",
+	"渋谷の名所を発見しよう!",
+];
+const locale = player.LocaleId;
+const tips = locale.sub(1, 2) === "ja" ? TIPS_JA : TIPS_EN;
+
 const tipLabel = new Instance("TextLabel");
 tipLabel.Name = "Tip";
 tipLabel.Size = new UDim2(0.6, 0, 0.04, 0);
@@ -96,7 +107,7 @@ tipLabel.BackgroundTransparency = 1;
 tipLabel.TextColor3 = Color3.fromRGB(160, 160, 180);
 tipLabel.TextScaled = true;
 tipLabel.Font = Enum.Font.GothamMedium;
-tipLabel.Text = TIPS[math.random(0, TIPS.size() - 1)];
+tipLabel.Text = tips[math.random(0, tips.size() - 1)];
 tipLabel.Parent = bg;
 
 // ── Loading Flow ────────────────────────────────────────────────────

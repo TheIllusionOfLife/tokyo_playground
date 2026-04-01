@@ -260,8 +260,8 @@ export class CanKickMinigame implements IMinigame {
 		// Fire jail teleport fade to caught player before moving them
 		this.serverEvents.jailTeleportFade.fire(hider);
 
-		// Teleport to jail after brief delay for fade
-		task.delay(0.15, () => {
+		// Teleport to jail after fade-in completes (0.2s buffer for latency)
+		task.delay(0.2, () => {
 			if (this.jailZone && hider.Character) {
 				hider.Character.PivotTo(
 					new CFrame(this.jailZone.Position.add(new Vector3(0, 3, 0))),

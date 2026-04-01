@@ -102,6 +102,8 @@ export class PlayerDataService implements OnStart {
 			data.npcFirstInteractions = [];
 		if (!typeIs(data.ownedItems, "table")) data.ownedItems = [];
 		if (!typeIs(data.equippedItems, "table")) data.equippedItems = {};
+		if (!typeIs(data.discoveredPoi, "table")) data.discoveredPoi = [];
+		if (!typeIs(data.poiClaimedRewards, "table")) data.poiClaimedRewards = [];
 
 		profile.ListenToRelease(() => {
 			this.profiles.delete(player);
