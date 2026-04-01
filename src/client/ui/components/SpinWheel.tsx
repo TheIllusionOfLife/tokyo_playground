@@ -88,11 +88,9 @@ export function SpinWheel() {
 			<frame
 				key="SpinButton"
 				Size={new UDim2(0, 100, 0, 30)}
-				Position={new UDim2(1, -220, 0, 8)}
+				Position={new UDim2(1, -10, 0, 86)}
 				AnchorPoint={new Vector2(1, 0)}
-				BackgroundColor3={
-					alreadySpun ? Color3.fromRGB(60, 60, 60) : Color3.fromRGB(70, 30, 100)
-				}
+				BackgroundColor3={Color3.fromRGB(70, 30, 100)}
 				BackgroundTransparency={0.3}
 				BorderSizePixel={0}
 				ZIndex={10}
@@ -101,18 +99,10 @@ export function SpinWheel() {
 				<textbutton
 					Size={new UDim2(1, 0, 1, 0)}
 					BackgroundTransparency={1}
-					TextColor3={
-						alreadySpun
-							? Color3.fromRGB(150, 150, 150)
-							: Color3.fromRGB(255, 200, 255)
-					}
+					TextColor3={Color3.fromRGB(255, 200, 255)}
 					TextScaled={true}
 					Font={Enum.Font.GothamBold}
-					Text={
-						alreadySpun
-							? `\u{2705} ${t("spin_toggle")}`
-							: `\u{1F3B0} ${t("spin_toggle")}`
-					}
+					Text={`\u{1F3B0} ${t("spin_toggle")}`}
 					Event={{
 						Activated: () =>
 							gameStore.setActiveOverlay(open ? "none" : ("spin" as never)),
