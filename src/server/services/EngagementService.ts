@@ -23,19 +23,18 @@ export class EngagementService implements OnStart {
 			this.handleSpin(player);
 		});
 
-		// Friend referral + spin status: check on join
+		// Spin status: sync after profile is loaded (not PlayerAdded)
+		this.playerDataService.registerOnProfileLoaded((player) => {
+			this.syncSpinStatus(player);
+		});
+
+		// Friend referral: check on join
 		Players.PlayerAdded.Connect((player) => {
-			task.defer(() => {
-				this.syncSpinStatus(player);
-				this.checkFriendReferral(player);
-			});
+			task.defer(() => this.checkFriendReferral(player));
 		});
 		// Also check for players already in-server at startup
 		for (const player of Players.GetPlayers()) {
-			task.defer(() => {
-				this.syncSpinStatus(player);
-				this.checkFriendReferral(player);
-			});
+			task.defer(() => this.checkFriendReferral(player));
 		}
 	}
 

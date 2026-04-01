@@ -27,9 +27,12 @@ export function SpinWheel() {
 	const open = activeOverlay === "spin";
 	const [spinning, setSpinning] = useState(false);
 	const [lastReward, setLastReward] = useState(0);
-	const [wheelRotation, setWheelRotation] = useState(0);
 	const [resultScale, setResultScale] = useState(1);
 	const wheelRef = useRef<Frame>();
+	const centerTextRef = useRef<TextLabel>();
+	const sparkleRefs = useRef<(TextLabel | undefined)[]>([]);
+	const rotationRef = useRef(0);
+	const scaleDelayRef = useRef<thread>();
 
 	// Listen for spin result
 	useEffect(() => {
@@ -37,20 +40,39 @@ export function SpinWheel() {
 			setSpinning(false);
 			if (success) {
 				setLastReward(reward);
-				// Flash result with scale-up
 				setResultScale(1.8);
-				task.delay(0.4, () => setResultScale(1));
+				if (scaleDelayRef.current) task.cancel(scaleDelayRef.current);
+				scaleDelayRef.current = task.delay(0.4, () => setResultScale(1));
 			}
 		});
-		return () => conn.Disconnect();
+		return () => {
+			conn.Disconnect();
+			if (scaleDelayRef.current) task.cancel(scaleDelayRef.current);
+		};
 	}, []);
 
-	// Continuous wheel rotation animation
+	// Imperative wheel rotation (no React re-renders)
 	useEffect(() => {
 		if (!open) return;
-		const speed = spinning ? 12 : 0.3;
 		const conn = RunService.Heartbeat.Connect((dt) => {
-			setWheelRotation((prev) => (prev + dt * speed * 60) % 360);
+			const speed = spinning ? 12 : 0.3;
+			rotationRef.current = (rotationRef.current + dt * speed * 60) % 360;
+			const rot = rotationRef.current;
+			if (wheelRef.current) wheelRef.current.Rotation = rot;
+			if (centerTextRef.current) centerTextRef.current.Rotation = -rot;
+			// Update sparkle positions
+			for (let i = 0; i < SPARKLE_OFFSETS.size(); i++) {
+				const sparkle = sparkleRefs.current[i];
+				if (!sparkle) continue;
+				const rad = ((rot * 0.7 + SPARKLE_OFFSETS[i]) * math.pi) / 180;
+				const orbitR = 95;
+				sparkle.Position = new UDim2(
+					0.5,
+					math.cos(rad) * orbitR,
+					0.5 - 15 / 300,
+					math.sin(rad) * orbitR,
+				);
+			}
 		});
 		return () => conn.Disconnect();
 	}, [open, spinning]);
@@ -154,7 +176,7 @@ export function SpinWheel() {
 						AnchorPoint={new Vector2(0.5, 0.5)}
 						BackgroundTransparency={1}
 						BorderSizePixel={0}
-						Rotation={wheelRotation}
+						Rotation={0}
 						ZIndex={19}
 					>
 						{/* Colored segments (8 wedge-like sections) */}
@@ -207,6 +229,7 @@ export function SpinWheel() {
 							<uicorner CornerRadius={new UDim(1, 0)} />
 							<uistroke Color={Color3.fromRGB(255, 160, 20)} Thickness={3} />
 							<textlabel
+								ref={centerTextRef}
 								Size={new UDim2(resultScale, 0, resultScale, 0)}
 								Position={new UDim2(0.5, 0, 0.5, 0)}
 								AnchorPoint={new Vector2(0.5, 0.5)}
@@ -216,39 +239,29 @@ export function SpinWheel() {
 								Font={Enum.Font.FredokaOne}
 								Text={lastReward > 0 ? `+${lastReward}` : "\u{2B50}"}
 								ZIndex={22}
-								Rotation={-wheelRotation}
+								Rotation={0}
 							/>
 						</frame>
 					</frame>
-					{/* Sparkle stars (orbit around wheel) */}
-					{SPARKLE_OFFSETS.map((offsetDeg, i) => {
-						const rad = ((wheelRotation * 0.7 + offsetDeg) * math.pi) / 180;
-						const cx = 0.5;
-						const cy = 0.5 - 15 / 300;
-						const orbitR = 95;
-						return (
-							<textlabel
-								key={`sparkle-${i}`}
-								Size={new UDim2(0, 12, 0, 12)}
-								Position={
-									new UDim2(
-										cx,
-										math.cos(rad) * orbitR,
-										cy,
-										math.sin(rad) * orbitR,
-									)
-								}
-								AnchorPoint={new Vector2(0.5, 0.5)}
-								BackgroundTransparency={1}
-								TextColor3={Color3.fromRGB(255, 255, 200)}
-								TextTransparency={alreadySpun ? 0.7 : 0.2}
-								TextScaled={true}
-								Font={Enum.Font.GothamBold}
-								Text={"\u{2728}"}
-								ZIndex={20}
-							/>
-						);
-					})}
+					{/* Sparkle stars (positioned imperatively via refs) */}
+					{SPARKLE_OFFSETS.map((offsetDeg, i) => (
+						<textlabel
+							key={`sparkle-${i}`}
+							ref={(ref) => {
+								sparkleRefs.current[i] = ref;
+							}}
+							Size={new UDim2(0, 12, 0, 12)}
+							Position={new UDim2(0.5, 0, 0.5, 0)}
+							AnchorPoint={new Vector2(0.5, 0.5)}
+							BackgroundTransparency={1}
+							TextColor3={Color3.fromRGB(255, 255, 200)}
+							TextTransparency={alreadySpun ? 0.7 : 0.2}
+							TextScaled={true}
+							Font={Enum.Font.GothamBold}
+							Text={"\u{2728}"}
+							ZIndex={20}
+						/>
+					))}
 					{/* Spin / Come back tomorrow button */}
 					<textbutton
 						Size={new UDim2(0.65, 0, 0, 40)}
