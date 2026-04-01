@@ -647,7 +647,7 @@ export const VEHICLE_CATALOG: VehicleDef[] = [
 		animProfile: AnimProfile.Quadruped,
 		speedScale: 1.1,
 		idleAmp: 0.2,
-		weldYawOffset: 180,
+		weldYawOffset: -90,
 	},
 	{
 		id: VehicleId.CalicoCat,
@@ -696,7 +696,7 @@ export const VEHICLE_CATALOG: VehicleDef[] = [
 		animProfile: AnimProfile.Static,
 		speedScale: 1.0,
 		idleAmp: 0.2,
-		weldYawOffset: 180,
+		weldYawOffset: -90,
 		hipHeightOffset: 3,
 	},
 	{
@@ -746,7 +746,7 @@ export const VEHICLE_CATALOG: VehicleDef[] = [
 		speedScale: 1.0,
 		idleAmp: 0.05,
 		weldYawOffset: 90,
-		seatHeightOffset: -1.5,
+		hipHeightOffset: -1,
 	},
 	{
 		id: VehicleId.ManekiNeko,
@@ -759,7 +759,7 @@ export const VEHICLE_CATALOG: VehicleDef[] = [
 		speedScale: 1.0,
 		idleAmp: 0.2,
 		weldYawOffset: 180,
-		seatHeightOffset: 5,
+		seatHeightOffset: -4,
 	},
 	{
 		id: VehicleId.ShibuyaBus,
@@ -784,7 +784,6 @@ export const VEHICLE_CATALOG: VehicleDef[] = [
 		speedScale: 0.9,
 		idleAmp: 0.08,
 		weldYawOffset: 180,
-		seatHeightOffset: 1.5,
 	},
 	{
 		id: VehicleId.Skateboard,
@@ -797,8 +796,8 @@ export const VEHICLE_CATALOG: VehicleDef[] = [
 		speedScale: 1.2,
 		idleAmp: 0.03,
 		standingMount: true,
-		seatHeightOffset: -3,
 		weldYawOffset: 90,
+		hipHeightOffset: -1.5,
 	},
 	{
 		id: VehicleId.Onigiri,
@@ -811,7 +810,6 @@ export const VEHICLE_CATALOG: VehicleDef[] = [
 		speedScale: 1.0,
 		idleAmp: 0.25,
 		weldYawOffset: 180,
-		seatHeightOffset: 2,
 	},
 	{
 		id: VehicleId.Shinkansen,

@@ -46,6 +46,16 @@ Roblox party mini-game platform set in Tokyo (Shibuya). roblox-ts + Flamework + 
 - `Lighting.Technology` is deprecated. Use `LightingStyle=Realistic` + `PrioritizeLightingQuality=true` (equivalent of old Future).
 - Streaming: `StreamingEnabled=true`, `StreamOutBehavior=Opportunistic`, `ModelStreamingBehavior=Improved`, `StreamingTargetRadius=512`, `StreamingMinRadius=256`.
 
+## Vehicle Mount Tuning
+- Vehicles are welded to HRP via `hachiCostume.ts`. The weld C0 has a base 180-degree Y rotation.
+- **`weldYawOffset`** (degrees): extra Y rotation added to the weld. Use when the mesh visual doesn't face the same direction as other vehicles. Test empirically: if it faces backward add 180, faces right try -90, faces left try 90.
+- **`seatHeightOffset`** (studs): adjusts the weld vertical offset. **Negative** = vehicle moves DOWN relative to character (character appears higher above vehicle). Use for vehicles where the character should sit on top (e.g. ManekiNeko head).
+- **`hipHeightOffset`** (studs): adjusts `Humanoid.HipHeight`. Raises/lowers the ENTIRE assembly (character + vehicle together). **Positive** = float higher (dragons). **Negative** = sit lower (skateboard, toy car touching ground). Original HipHeight is stored and restored on unmount.
+- **`standingMount`**: skips the sitting animation so the character uses normal walk/idle pose (e.g. Skateboard).
+- **`scaleOverride`**: overrides `HACHI_DEFAULT_SCALE` for specific vehicles.
+- MCP `execute_luau` cannot change mesh visual orientation. Rotating the model pivot or BasePart CFrame does NOT rotate the mesh visual (it's baked into the MeshId). Use `weldYawOffset` in code instead.
+- Vehicle template names in ServerStorage may not match VehicleId (e.g. WhiteCat uses "NekoTemplate"). Check `VEHICLE_CATALOG` in `constants.ts` for the mapping.
+
 ## Physics Ownership Rules
 - **Character HRP** physics are client-owned. Apply `AssemblyLinearVelocity` from the client. Use `Humanoid.PlatformStand=true` first to disable the ground controller (otherwise it dampens the impulse within one step).
 - **Hachi Body** movement is client-driven. VehicleSeat has `MaxSpeed=0`/`TurnSpeed=0` (physics disabled). Client's `moveConn` zeros `BodyVelocity.MaxForce` and applies `AssemblyLinearVelocity` directly via `GetMoveVector()`. **Hachi jumps** (both lobby and minigame) use client-side prediction for instant feel. VehicleSeat grants the seated client network ownership of the assembly, so the client applies jump impulse directly while the server tracks state (cooldown, phase, evolution).
