@@ -162,7 +162,7 @@ export function equipHachiCostume(
 	weld.Parent = body;
 
 	// Play sitting animation at Action4 priority to override locomotion
-	// Skip for standing mounts (e.g. Skateboard) so the character uses normal walk/idle
+	// Skip for standing mounts (e.g. Skateboard) so the character walks/runs normally
 	if (!standingMount) {
 		const animator =
 			humanoid.FindFirstChildOfClass("Animator") ??

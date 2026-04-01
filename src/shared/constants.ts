@@ -696,7 +696,7 @@ export const VEHICLE_CATALOG: VehicleDef[] = [
 		animProfile: AnimProfile.Static,
 		speedScale: 1.0,
 		idleAmp: 0.2,
-		weldYawOffset: -90,
+		weldYawOffset: 90,
 		hipHeightOffset: 3,
 	},
 	{
@@ -746,7 +746,7 @@ export const VEHICLE_CATALOG: VehicleDef[] = [
 		speedScale: 1.0,
 		idleAmp: 0.05,
 		weldYawOffset: 90,
-		hipHeightOffset: -1,
+		hipHeightOffset: -0.5,
 	},
 	{
 		id: VehicleId.ManekiNeko,
@@ -759,7 +759,8 @@ export const VEHICLE_CATALOG: VehicleDef[] = [
 		speedScale: 1.0,
 		idleAmp: 0.2,
 		weldYawOffset: 180,
-		seatHeightOffset: -4,
+		seatHeightOffset: -2,
+		hipHeightOffset: 2,
 	},
 	{
 		id: VehicleId.ShibuyaBus,
@@ -796,8 +797,8 @@ export const VEHICLE_CATALOG: VehicleDef[] = [
 		speedScale: 1.2,
 		idleAmp: 0.03,
 		standingMount: true,
-		weldYawOffset: 90,
-		hipHeightOffset: -1.5,
+		seatHeightOffset: -1.5,
+		hipHeightOffset: 0.5,
 	},
 	{
 		id: VehicleId.Onigiri,
