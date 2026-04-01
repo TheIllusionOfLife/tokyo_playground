@@ -116,11 +116,7 @@ export function SpinWheel() {
 						}
 						TextScaled={true}
 						Font={Enum.Font.GothamBold}
-						Text={
-							alreadySpun
-								? `\u{2B50} ${t("spin_toggle")}`
-								: `\u{1F3B0} ${t("spin_toggle")}`
-						}
+						Text={`\u{1F3B0} ${t("spin_toggle")}`}
 						Event={{
 							Activated: () =>
 								gameStore.setActiveOverlay(open ? "none" : ("spin" as never)),
