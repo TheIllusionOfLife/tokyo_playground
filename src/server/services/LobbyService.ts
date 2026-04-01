@@ -236,6 +236,7 @@ export class LobbyService implements OnStart {
 						vDef?.scaleOverride,
 						vDef?.seatHeightOffset ?? 0,
 						vDef?.standingMount ?? false,
+						vDef?.hipHeightOffset ?? 0,
 					)
 				) {
 					clone.Destroy();

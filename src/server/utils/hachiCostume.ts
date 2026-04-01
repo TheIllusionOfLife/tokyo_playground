@@ -26,6 +26,8 @@ const HACHI_JUMP_HEIGHT = 106 ** 2 / (2 * Workspace.Gravity);
 const mountedPlayers = new Map<number, Model>();
 /** Active sit animation tracks for cleanup on unequip. */
 const sitTracks = new Map<number, AnimationTrack>();
+/** Original HipHeight values for restoration on unequip. */
+const originalHipHeights = new Map<number, number>();
 
 /** Check if a player is currently mounted on Hachi (validates model is still alive). */
 export function isPlayerMounted(player: Player): boolean {
@@ -85,6 +87,7 @@ export function equipHachiCostume(
 	scaleOverride?: number,
 	seatHeightOffset = 0,
 	standingMount = false,
+	hipHeightOffset = 0,
 ): boolean {
 	const character = player.Character;
 	if (!character) return false;
@@ -184,6 +187,10 @@ export function equipHachiCostume(
 	const walkSpeed = HACHI_WALK_SPEEDS[evolutionLevel] ?? HACHI_WALK_SPEEDS[0];
 	humanoid.WalkSpeed = walkSpeed;
 	humanoid.JumpHeight = HACHI_JUMP_HEIGHT;
+	if (hipHeightOffset !== 0) {
+		originalHipHeights.set(player.UserId, humanoid.HipHeight);
+		humanoid.HipHeight += hipHeightOffset;
+	}
 
 	// Track mounted state
 	mountedPlayers.set(player.UserId, hachiModel);
@@ -235,6 +242,11 @@ export function unequipHachiCostume(player: Player): boolean {
 			humanoid.UseJumpPower = false;
 			humanoid.JumpHeight = DEFAULT_JUMP_HEIGHT;
 			humanoid.AutoRotate = true;
+			const origHip = originalHipHeights.get(player.UserId);
+			if (origHip !== undefined) {
+				humanoid.HipHeight = origHip;
+				originalHipHeights.delete(player.UserId);
+			}
 		}
 	}
 

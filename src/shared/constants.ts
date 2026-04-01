@@ -621,6 +621,8 @@ export interface VehicleDef {
 	standingMount?: boolean;
 	/** Extra vertical offset (studs) for the seat/weld position. */
 	seatHeightOffset?: number;
+	/** Extra HipHeight added when mounted, lifts the whole assembly. */
+	hipHeightOffset?: number;
 }
 
 export const VEHICLE_CATALOG: VehicleDef[] = [
@@ -682,7 +684,7 @@ export const VEHICLE_CATALOG: VehicleDef[] = [
 		speedScale: 1.0,
 		idleAmp: 0.2,
 		weldYawOffset: 90,
-		seatHeightOffset: 3,
+		hipHeightOffset: 3,
 	},
 	{
 		id: VehicleId.GreenDragon,
@@ -695,7 +697,7 @@ export const VEHICLE_CATALOG: VehicleDef[] = [
 		speedScale: 1.0,
 		idleAmp: 0.2,
 		weldYawOffset: 180,
-		seatHeightOffset: 3,
+		hipHeightOffset: 3,
 	},
 	{
 		id: VehicleId.Bear,

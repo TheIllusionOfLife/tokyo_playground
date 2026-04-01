@@ -286,6 +286,7 @@ export class HachiRideMinigame implements IMinigame {
 				vDef?.scaleOverride,
 				vDef?.seatHeightOffset ?? 0,
 				vDef?.standingMount ?? false,
+				vDef?.hipHeightOffset ?? 0,
 			);
 			this.hachiModels.set(player.UserId, clone);
 			matchJanitor.Add(() => {
