@@ -233,15 +233,12 @@ export const EN: Record<string, string> = {
 	vehicle_family_magic: "Magic",
 	vehicle_family_mount: "Mount",
 
-	// Zones
-	zone_ShibuyaSky: "Shibuya Sky",
-	zone_ShibuyaCrossing: "Shibuya Crossing",
+	// Zones (keys match ZoneName attributes in Studio)
+	["zone_Shibuya Sky"]: "Shibuya Sky",
 	["zone_Shibuya Crossing"]: "Shibuya Crossing",
-	zone_HachikoSquare: "Hachiko Square",
-	zone_CenterGai: "Center-gai",
-	zone_SkySlideHub: "Sky Slide Hub",
+	["zone_Center Gai"]: "Center-gai",
 	zone_Dogenzaka: "Dogenzaka",
 	zone_Hikarie: "Shibuya Hikarie",
-	zone_MiyashitaPark: "Miyashita Park",
-	zone_ShibuyaStation: "Shibuya Station",
+	["zone_Miyashita Park"]: "Miyashita Park",
+	["zone_Shibuya Station"]: "Shibuya Station",
 };

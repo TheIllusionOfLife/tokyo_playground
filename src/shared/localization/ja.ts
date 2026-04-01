@@ -233,15 +233,12 @@ export const JA: Record<string, string> = {
 	vehicle_family_magic: "まほう",
 	vehicle_family_mount: "マウント",
 
-	// Zones
-	zone_ShibuyaSky: "渋谷スカイ",
-	zone_ShibuyaCrossing: "渋谷スクランブル交差点",
+	// Zones (keys match ZoneName attributes in Studio)
+	["zone_Shibuya Sky"]: "渋谷スカイ",
 	["zone_Shibuya Crossing"]: "渋谷スクランブル交差点",
-	zone_HachikoSquare: "ハチ公前広場",
-	zone_CenterGai: "センター街",
-	zone_SkySlideHub: "スカイスライドハブ",
+	["zone_Center Gai"]: "センター街",
 	zone_Dogenzaka: "道玄坂",
 	zone_Hikarie: "渋谷ヒカリエ",
-	zone_MiyashitaPark: "宮下パーク",
-	zone_ShibuyaStation: "渋谷駅",
+	["zone_Miyashita Park"]: "宮下パーク",
+	["zone_Shibuya Station"]: "渋谷駅",
 };
