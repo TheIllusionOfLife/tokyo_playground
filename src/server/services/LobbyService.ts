@@ -61,6 +61,10 @@ export class LobbyService implements OnStart {
 	private readonly hachiJumpCooldowns = new Map<number, number>();
 	private readonly hachiEjectCooldowns = new Map<number, number>();
 	private readonly hachiAnimStates = new Map<Model, HachiAnimState>();
+	private readonly mountedVehicleDefs = new Map<
+		Model,
+		(typeof VEHICLE_CATALOG)[number]
+	>();
 	/** Lobby air jumps used this airborne session (reset on land). */
 	private readonly lobbyAirJumpsUsed = new Map<number, number>();
 	private slideRamps: BasePart[] = [];
@@ -223,6 +227,10 @@ export class LobbyService implements OnStart {
 						);
 				if (!equipHachiCostume(player, clone, evoLevel, !this.matchActive)) {
 					clone.Destroy();
+				} else {
+					// Cache vehicle def for animation dispatch (avoids live lookup drift)
+					const vDef = VEHICLE_CATALOG.find((v) => v.id === vehicleId);
+					if (vDef) this.mountedVehicleDefs.set(clone, vDef);
 				}
 			} else {
 				unequipHachiCostume(player);
@@ -373,8 +381,7 @@ export class LobbyService implements OnStart {
 				if (!state) {
 					state = { animTime: 0, airborne: false };
 				}
-				const vehicleId = this.playerDataService.getEquippedVehicle(player);
-				const vDef = VEHICLE_CATALOG.find((v) => v.id === vehicleId);
+				const vDef = this.mountedVehicleDefs.get(hachiModel);
 				this.hachiAnimStates.set(
 					hachiModel,
 					animateVehicle(
@@ -392,6 +399,7 @@ export class LobbyService implements OnStart {
 			for (const [model] of this.hachiAnimStates) {
 				if (!model.Parent) {
 					this.hachiAnimStates.delete(model);
+					this.mountedVehicleDefs.delete(model);
 				}
 			}
 		});

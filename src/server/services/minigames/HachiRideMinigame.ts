@@ -591,6 +591,7 @@ export class HachiRideMinigame implements IMinigame {
 		this.hachiSlideActive.delete(userId);
 		this.slideCooldowns.delete(userId);
 		this.respawnGrace.delete(userId);
+		this.hachiVehicleDefs.delete(userId);
 	}
 
 	private handleJumpRequest(player: Player) {

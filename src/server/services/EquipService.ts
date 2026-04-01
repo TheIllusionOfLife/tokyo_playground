@@ -207,6 +207,7 @@ export class EquipService implements OnStart {
 	private readonly serverEvents = GlobalEvents.createServer({});
 	private readonly charAddedConns = new Map<number, RBXScriptConnection>();
 	private readonly equipCooldowns = new Map<number, number>();
+	private readonly previewCooldowns = new Map<number, number>();
 	/** Monotonic token per player to prevent stale preview cleanup. */
 	private readonly previewVersions = new Map<number, number>();
 	/** Active preview category per player for proper cleanup. */
@@ -236,11 +237,11 @@ export class EquipService implements OnStart {
 			safeHandler("EquipService.requestPreview", (player, itemId) => {
 				const now = os.clock();
 				if (
-					now - (this.equipCooldowns.get(player.UserId) ?? 0) <
+					now - (this.previewCooldowns.get(player.UserId) ?? 0) <
 					EQUIP_COOLDOWN
 				)
 					return;
-				this.equipCooldowns.set(player.UserId, now);
+				this.previewCooldowns.set(player.UserId, now);
 				this.handlePreviewRequest(player, itemId);
 			}),
 		);
@@ -265,6 +266,7 @@ export class EquipService implements OnStart {
 				this.charAddedConns.delete(player.UserId);
 			}
 			this.equipCooldowns.delete(player.UserId);
+			this.previewCooldowns.delete(player.UserId);
 			this.previewVersions.delete(player.UserId);
 			this.activePreviewCategories.delete(player.UserId);
 		});
@@ -277,8 +279,8 @@ export class EquipService implements OnStart {
 		}
 		// Apply on future respawns
 		const conn = player.CharacterAdded.Connect((character) => {
-			// Cancel any active preview on respawn
-			this.cancelPreview(player);
+			// Clear preview state without re-applying (applyCosmetics handles the new character)
+			this.clearPreviewState(player);
 			const hrp = character.WaitForChild("HumanoidRootPart", 5);
 			const head = character.WaitForChild("Head", 5);
 			if (!hrp || !head) {
@@ -512,6 +514,14 @@ export class EquipService implements OnStart {
 		// Bump version to invalidate any pending cleanup
 		const version = (this.previewVersions.get(player.UserId) ?? 0) + 1;
 		this.previewVersions.set(player.UserId, version);
+	}
+
+	/** Clear preview state without applying cosmetics (used on respawn where applyCosmetics follows). */
+	private clearPreviewState(player: Player) {
+		this.activePreviewCategories.delete(player.UserId);
+		const version = (this.previewVersions.get(player.UserId) ?? 0) + 1;
+		this.previewVersions.set(player.UserId, version);
+		this.serverEvents.previewEquipped.fire(player, undefined, undefined, 0);
 	}
 
 	private applyTrail(character: Model, itemId: ItemId) {

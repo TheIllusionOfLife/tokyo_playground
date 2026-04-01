@@ -59,6 +59,13 @@ export class ShopService implements OnStart {
 		// Vehicle catalog/purchase/equip
 		this.serverEvents.requestVehicleCatalog.connect(
 			safeHandler("ShopService.requestVehicleCatalog", (player) => {
+				const now = os.clock();
+				if (
+					now - (this.catalogCooldowns.get(player.UserId) ?? 0) <
+					SHOP_CATALOG_COOLDOWN
+				)
+					return;
+				this.catalogCooldowns.set(player.UserId, now);
 				this.handleRequestVehicleCatalog(player);
 			}),
 		);
