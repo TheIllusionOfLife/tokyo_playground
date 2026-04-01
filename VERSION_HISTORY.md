@@ -24,3 +24,4 @@
 | v0.18.0 | 2026-03-31 | Mobile playtest polish: missions UI, AI collectible meshes, 3-tier item distribution, train fade, zone popups, trail particles, Hachi JOIN button |
 | v0.19.0 | 2026-03-31 | Playtest overhaul: scramble crossing traffic, polygon spawn, multi-jump evolution, green coins, fluffy aura, full JA localization, corridor redesign |
 | v0.20.0 | 2026-04-01 | Pre-launch audit: AFK detection, platform analytics, profile retry, safeHandler, streaming pre-load, sound leak fixes, city optimization (2168 furniture Box collision, SLIM LOD) |
+| v0.21.0 | 2026-04-01 | Cross-platform playtest: loading screen, auto-catch, Oni mounts Hachi, PoI discovery, engagement features (login streak, spin, leaderboard, badges), UI overhaul, immersive ads infrastructure |
