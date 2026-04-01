@@ -75,125 +75,132 @@ export function LeaderboardPanel() {
 					</textbutton>
 				</frame>
 			</screengui>
-			{/* Leaderboard overlay */}
+			{/* Leaderboard overlay (separate ScreenGui with default insets) */}
 			{open ? (
-				<frame
-					key="LeaderboardOverlay"
-					Size={new UDim2(0, 280, 0, 320)}
-					Position={new UDim2(0.5, 0, 0.5, 0)}
-					AnchorPoint={new Vector2(0.5, 0.5)}
-					BackgroundColor3={Color3.fromRGB(15, 25, 45)}
-					BackgroundTransparency={0.05}
-					BorderSizePixel={0}
-					ZIndex={19}
+				<screengui
+					key="LeaderboardOverlayGui"
+					ResetOnSpawn={false}
+					DisplayOrder={10}
+					ZIndexBehavior={Enum.ZIndexBehavior.Sibling}
 				>
-					<uicorner CornerRadius={new UDim(0, 12)} />
-					<textbutton
-						Size={new UDim2(0, 32, 0, 32)}
-						Position={new UDim2(1, -8, 0, 8)}
-						AnchorPoint={new Vector2(1, 0)}
-						BackgroundColor3={Color3.fromRGB(60, 40, 40)}
-						BackgroundTransparency={0.3}
-						TextColor3={Color3.fromRGB(255, 255, 255)}
-						TextScaled={true}
-						Font={Enum.Font.GothamBold}
-						Text="X"
-						ZIndex={20}
-						Event={{
-							Activated: () => gameStore.setActiveOverlay("none"),
-						}}
-					>
-						<uicorner CornerRadius={new UDim(1, 0)} />
-					</textbutton>
-					<textlabel
-						Size={new UDim2(0.8, 0, 0, 28)}
-						Position={new UDim2(0.1, 0, 0, 12)}
-						BackgroundTransparency={1}
-						TextColor3={Color3.fromRGB(255, 215, 0)}
-						TextScaled={true}
-						Font={Enum.Font.FredokaOne}
-						Text="Leaderboard"
-						ZIndex={19}
-					/>
-					<scrollingframe
-						Size={new UDim2(1, -24, 1, -52)}
-						Position={new UDim2(0, 12, 0, 46)}
-						BackgroundTransparency={1}
+					<frame
+						key="LeaderboardOverlay"
+						Size={new UDim2(0, 280, 0, 320)}
+						Position={new UDim2(0.5, 0, 0.5, 0)}
+						AnchorPoint={new Vector2(0.5, 0.5)}
+						BackgroundColor3={Color3.fromRGB(15, 25, 45)}
+						BackgroundTransparency={0.05}
 						BorderSizePixel={0}
-						ScrollBarThickness={4}
-						CanvasSize={new UDim2(0, 0, 0, 0)}
-						AutomaticCanvasSize={Enum.AutomaticSize.Y}
 						ZIndex={19}
 					>
-						<uilistlayout
-							FillDirection={Enum.FillDirection.Vertical}
-							Padding={new UDim(0, 3)}
+						<uicorner CornerRadius={new UDim(0, 12)} />
+						<textbutton
+							Size={new UDim2(0, 32, 0, 32)}
+							Position={new UDim2(1, -8, 0, 8)}
+							AnchorPoint={new Vector2(1, 0)}
+							BackgroundColor3={Color3.fromRGB(60, 40, 40)}
+							BackgroundTransparency={0.3}
+							TextColor3={Color3.fromRGB(255, 255, 255)}
+							TextScaled={true}
+							Font={Enum.Font.GothamBold}
+							Text="X"
+							ZIndex={20}
+							Event={{
+								Activated: () => gameStore.setActiveOverlay("none"),
+							}}
+						>
+							<uicorner CornerRadius={new UDim(1, 0)} />
+						</textbutton>
+						<textlabel
+							Size={new UDim2(0.8, 0, 0, 28)}
+							Position={new UDim2(0.1, 0, 0, 12)}
+							BackgroundTransparency={1}
+							TextColor3={Color3.fromRGB(255, 215, 0)}
+							TextScaled={true}
+							Font={Enum.Font.FredokaOne}
+							Text="Leaderboard"
+							ZIndex={19}
 						/>
-						{entries.size() === 0 ? (
-							<textlabel
-								key="Empty"
-								Size={new UDim2(1, 0, 0, 40)}
-								BackgroundTransparency={1}
-								TextColor3={Color3.fromRGB(120, 120, 140)}
-								TextScaled={true}
-								Font={Enum.Font.Gotham}
-								Text="No data yet. Play more games!"
+						<scrollingframe
+							Size={new UDim2(1, -24, 1, -52)}
+							Position={new UDim2(0, 12, 0, 46)}
+							BackgroundTransparency={1}
+							BorderSizePixel={0}
+							ScrollBarThickness={4}
+							CanvasSize={new UDim2(0, 0, 0, 0)}
+							AutomaticCanvasSize={Enum.AutomaticSize.Y}
+							ZIndex={19}
+						>
+							<uilistlayout
+								FillDirection={Enum.FillDirection.Vertical}
+								Padding={new UDim(0, 3)}
 							/>
-						) : (
-							entries.map((entry) => (
-								<frame
-									key={`rank-${entry.rank}`}
-									Size={new UDim2(1, -4, 0, 32)}
-									BackgroundColor3={
-										entry.rank <= 3
-											? Color3.fromRGB(50, 40, 20)
-											: Color3.fromRGB(30, 35, 50)
-									}
-									BackgroundTransparency={0.3}
-									BorderSizePixel={0}
-								>
-									<uicorner CornerRadius={new UDim(0, 4)} />
-									<textlabel
-										Size={new UDim2(0.12, 0, 1, 0)}
-										Position={new UDim2(0, 4, 0, 0)}
-										BackgroundTransparency={1}
-										TextColor3={
-											entry.rank === 1
-												? Color3.fromRGB(255, 215, 0)
-												: entry.rank === 2
-													? Color3.fromRGB(192, 192, 192)
-													: entry.rank === 3
-														? Color3.fromRGB(205, 127, 50)
-														: Color3.fromRGB(200, 200, 200)
+							{entries.size() === 0 ? (
+								<textlabel
+									key="Empty"
+									Size={new UDim2(1, 0, 0, 40)}
+									BackgroundTransparency={1}
+									TextColor3={Color3.fromRGB(120, 120, 140)}
+									TextScaled={true}
+									Font={Enum.Font.Gotham}
+									Text="No data yet. Play more games!"
+								/>
+							) : (
+								entries.map((entry) => (
+									<frame
+										key={`rank-${entry.rank}`}
+										Size={new UDim2(1, -4, 0, 32)}
+										BackgroundColor3={
+											entry.rank <= 3
+												? Color3.fromRGB(50, 40, 20)
+												: Color3.fromRGB(30, 35, 50)
 										}
-										TextScaled={true}
-										Font={Enum.Font.GothamBold}
-										Text={`#${entry.rank}`}
-									/>
-									<textlabel
-										Size={new UDim2(0.55, 0, 1, 0)}
-										Position={new UDim2(0.14, 0, 0, 0)}
-										BackgroundTransparency={1}
-										TextColor3={Color3.fromRGB(230, 230, 230)}
-										TextScaled={true}
-										Font={Enum.Font.Gotham}
-										Text={entry.name}
-										TextXAlignment={Enum.TextXAlignment.Left}
-									/>
-									<textlabel
-										Size={new UDim2(0.28, 0, 1, 0)}
-										Position={new UDim2(0.72, 0, 0, 0)}
-										BackgroundTransparency={1}
-										TextColor3={Color3.fromRGB(255, 220, 100)}
-										TextScaled={true}
-										Font={Enum.Font.GothamBold}
-										Text={`${entry.points} pts`}
-									/>
-								</frame>
-							))
-						)}
-					</scrollingframe>
-				</frame>
+										BackgroundTransparency={0.3}
+										BorderSizePixel={0}
+									>
+										<uicorner CornerRadius={new UDim(0, 4)} />
+										<textlabel
+											Size={new UDim2(0.12, 0, 1, 0)}
+											Position={new UDim2(0, 4, 0, 0)}
+											BackgroundTransparency={1}
+											TextColor3={
+												entry.rank === 1
+													? Color3.fromRGB(255, 215, 0)
+													: entry.rank === 2
+														? Color3.fromRGB(192, 192, 192)
+														: entry.rank === 3
+															? Color3.fromRGB(205, 127, 50)
+															: Color3.fromRGB(200, 200, 200)
+											}
+											TextScaled={true}
+											Font={Enum.Font.GothamBold}
+											Text={`#${entry.rank}`}
+										/>
+										<textlabel
+											Size={new UDim2(0.55, 0, 1, 0)}
+											Position={new UDim2(0.14, 0, 0, 0)}
+											BackgroundTransparency={1}
+											TextColor3={Color3.fromRGB(230, 230, 230)}
+											TextScaled={true}
+											Font={Enum.Font.Gotham}
+											Text={entry.name}
+											TextXAlignment={Enum.TextXAlignment.Left}
+										/>
+										<textlabel
+											Size={new UDim2(0.28, 0, 1, 0)}
+											Position={new UDim2(0.72, 0, 0, 0)}
+											BackgroundTransparency={1}
+											TextColor3={Color3.fromRGB(255, 220, 100)}
+											TextScaled={true}
+											Font={Enum.Font.GothamBold}
+											Text={`${entry.points} pts`}
+										/>
+									</frame>
+								))
+							)}
+						</scrollingframe>
+					</frame>
+				</screengui>
 			) : (
 				undefined!
 			)}

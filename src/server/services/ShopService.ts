@@ -85,6 +85,7 @@ export class ShopService implements OnStart {
 
 		Players.PlayerRemoving.Connect((player) => {
 			this.catalogCooldowns.delete(player.UserId);
+			this.vehicleCatalogCooldowns.delete(player.UserId);
 		});
 	}
 
