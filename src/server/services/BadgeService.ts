@@ -28,6 +28,8 @@ const gameId = game.GameId;
 
 @Service()
 export class BadgeService implements OnStart {
+	private readonly pendingAwards = new Map<number, Set<string>>();
+
 	constructor(private readonly playerDataService: PlayerDataService) {}
 
 	onStart() {
@@ -39,13 +41,29 @@ export class BadgeService implements OnStart {
 		const badgeId = BADGE_IDS[badgeName];
 		if (badgeId === 0) return; // Unconfigured
 
+		// In-memory dedup to prevent concurrent duplicate award requests
+		let pending = this.pendingAwards.get(player.UserId);
+		if (!pending) {
+			pending = new Set<string>();
+			this.pendingAwards.set(player.UserId, pending);
+		}
+		if (pending.has(badgeName)) return;
+		pending.add(badgeName);
+
 		task.spawn(() => {
 			const [hasOk, hasBadge] = pcall(() =>
 				RobloxBadgeService.UserHasBadgeAsync(player.UserId, badgeId),
 			);
-			if (hasOk && hasBadge) return; // Already has it
+			if (!hasOk) {
+				warn(
+					`[BadgeService] UserHasBadgeAsync failed for ${badgeName}: ${hasBadge}`,
+				);
+				pending!.delete(badgeName);
+				return;
+			}
+			if (hasBadge) return; // Already has it
 
-			const [awardOk] = pcall(() =>
+			const [awardOk, awardErr] = pcall(() =>
 				RobloxBadgeService.AwardBadge(player.UserId, badgeId),
 			);
 			if (awardOk) {
@@ -55,6 +73,9 @@ export class BadgeService implements OnStart {
 				if (data && !data.badges.includes(badgeName)) {
 					data.badges.push(badgeName);
 				}
+			} else {
+				warn(`[BadgeService] AwardBadge failed for ${badgeName}: ${awardErr}`);
+				pending!.delete(badgeName);
 			}
 		});
 	}
