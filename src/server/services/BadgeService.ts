@@ -61,7 +61,14 @@ export class BadgeService implements OnStart {
 				pending!.delete(badgeName);
 				return;
 			}
-			if (hasBadge) return; // Already has it
+			if (hasBadge) {
+				// Sync data.badges in case it's out of sync with Roblox
+				const data = this.playerDataService.getPlayerData(player);
+				if (data && !data.badges.includes(badgeName)) {
+					data.badges.push(badgeName);
+				}
+				return;
+			}
 
 			const [awardOk, awardErr] = pcall(() =>
 				RobloxBadgeService.AwardBadge(player.UserId, badgeId),
