@@ -88,7 +88,7 @@ export function SpinWheel() {
 			<frame
 				key="SpinButton"
 				Size={new UDim2(0, 100, 0, 30)}
-				Position={new UDim2(1, -10, 0, 86)}
+				Position={new UDim2(1, -120, 0, 4)}
 				AnchorPoint={new Vector2(1, 0)}
 				BackgroundColor3={Color3.fromRGB(70, 30, 100)}
 				BackgroundTransparency={0.3}
