@@ -24,6 +24,7 @@ import {
 import { isInsideJailRattleZone } from "shared/utils/canKickRattle";
 import {
 	equipHachiCostume,
+	forceUnmount,
 	isPlayerMounted,
 	unequipHachiCostume,
 } from "../../utils/hachiCostume";
@@ -257,12 +258,18 @@ export class CanKickMinigame implements IMinigame {
 		hiderState.isInJail = true;
 		oniState.catchCount += 1;
 
-		// Fire jail teleport fade to caught player before moving them
-		this.serverEvents.jailTeleportFade.fire(hider);
+		// Fire catch events first so red flash is visible before jail fade
+		this.serverEvents.playerCaught.broadcast(hider.UserId);
+		this.serverEvents.catchHighlight.broadcast(hider.UserId);
 
-		// Teleport to jail after fade-in completes (0.2s buffer for latency)
+		// Fire jail teleport fade after a brief delay so red flash shows first
+		task.delay(0.3, () => {
+			this.serverEvents.jailTeleportFade.fire(hider);
+		});
+
+		// Teleport to jail after fade-in completes (0.3s flash + 0.2s fade buffer)
 		const caughtCharacter = hider.Character;
-		task.delay(0.2, () => {
+		task.delay(0.5, () => {
 			// Only teleport if still the same character (not respawned during delay)
 			if (
 				this.jailZone &&
@@ -274,9 +281,6 @@ export class CanKickMinigame implements IMinigame {
 				);
 			}
 		});
-
-		this.serverEvents.playerCaught.broadcast(hider.UserId);
-		this.serverEvents.catchHighlight.broadcast(hider.UserId);
 		this.lastHintText = fireHintText(
 			this.serverEvents,
 			"hint_player_caught",
@@ -458,7 +462,11 @@ export class CanKickMinigame implements IMinigame {
 		// Unequip Oni's Hachi mount before clearing state
 		if (this.oniUserId !== undefined) {
 			const oniPlayer = this.playerObjects.get(this.oniUserId);
-			if (oniPlayer) unequipHachiCostume(oniPlayer);
+			if (oniPlayer) {
+				if (!unequipHachiCostume(oniPlayer)) {
+					forceUnmount(oniPlayer);
+				}
+			}
 		}
 		this.lastHintText = "";
 		this.oniUserId = undefined;

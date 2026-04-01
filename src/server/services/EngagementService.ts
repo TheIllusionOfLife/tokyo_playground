@@ -27,6 +27,10 @@ export class EngagementService implements OnStart {
 		Players.PlayerAdded.Connect((player) => {
 			task.defer(() => this.checkFriendReferral(player));
 		});
+		// Also check for players already in-server at startup
+		for (const player of Players.GetPlayers()) {
+			task.defer(() => this.checkFriendReferral(player));
+		}
 	}
 
 	private handleSpin(player: Player) {

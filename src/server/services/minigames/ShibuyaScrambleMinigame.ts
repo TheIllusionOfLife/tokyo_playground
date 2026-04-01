@@ -38,6 +38,7 @@ import {
 import { canTriggerSpiritWave } from "shared/utils/scrambleCrowd";
 import {
 	equipHachiCostume,
+	forceUnmount,
 	isPlayerMounted,
 	unequipHachiCostume,
 } from "../../utils/hachiCostume";
@@ -363,7 +364,11 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 		// Unequip Oni's Hachi mount before clearing state
 		if (this.oniUserId !== undefined) {
 			const oniPlayer = this.playerObjects.get(this.oniUserId);
-			if (oniPlayer) unequipHachiCostume(oniPlayer);
+			if (oniPlayer) {
+				if (!unequipHachiCostume(oniPlayer)) {
+					forceUnmount(oniPlayer);
+				}
+			}
 		}
 		this.crowdLoopRunning = false;
 		if (this.crowdThread) {

@@ -10,9 +10,6 @@ const ReplicatedFirst = game.GetService("ReplicatedFirst");
 const ContentProvider = game.GetService("ContentProvider");
 const TweenService = game.GetService("TweenService");
 
-// Remove the default Roblox loading screen immediately
-ReplicatedFirst.RemoveDefaultLoadingScreen();
-
 const player = Players.LocalPlayer;
 const playerGui = player.WaitForChild("PlayerGui") as PlayerGui;
 
@@ -23,6 +20,9 @@ screenGui.ResetOnSpawn = false;
 screenGui.DisplayOrder = 100;
 screenGui.IgnoreGuiInset = true;
 screenGui.Parent = playerGui;
+
+// Remove default AFTER custom GUI is parented (prevents visible flash)
+ReplicatedFirst.RemoveDefaultLoadingScreen();
 
 // Dark background
 const bg = new Instance("Frame");
