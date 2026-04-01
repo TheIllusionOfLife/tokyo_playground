@@ -33,7 +33,7 @@ const VEHICLE_DISPLAY: Map<string, VehicleDisplayInfo> = new Map([
 		{
 			emoji: "\u{1F436}",
 			accentColor: Color3.fromRGB(180, 120, 60),
-			familyTag: "Animal",
+			familyTag: "vehicle_family_animal",
 		},
 	],
 	[
@@ -41,7 +41,7 @@ const VEHICLE_DISPLAY: Map<string, VehicleDisplayInfo> = new Map([
 		{
 			emoji: "\u{1F431}",
 			accentColor: Color3.fromRGB(180, 120, 60),
-			familyTag: "Animal",
+			familyTag: "vehicle_family_animal",
 		},
 	],
 	[
@@ -49,7 +49,7 @@ const VEHICLE_DISPLAY: Map<string, VehicleDisplayInfo> = new Map([
 		{
 			emoji: "\u{1F408}",
 			accentColor: Color3.fromRGB(180, 120, 60),
-			familyTag: "Animal",
+			familyTag: "vehicle_family_animal",
 		},
 	],
 	[
@@ -57,7 +57,7 @@ const VEHICLE_DISPLAY: Map<string, VehicleDisplayInfo> = new Map([
 		{
 			emoji: "\u{1F43B}",
 			accentColor: Color3.fromRGB(180, 120, 60),
-			familyTag: "Animal",
+			familyTag: "vehicle_family_animal",
 		},
 	],
 	[
@@ -65,7 +65,7 @@ const VEHICLE_DISPLAY: Map<string, VehicleDisplayInfo> = new Map([
 		{
 			emoji: "\u{1F415}",
 			accentColor: Color3.fromRGB(180, 120, 60),
-			familyTag: "Animal",
+			familyTag: "vehicle_family_animal",
 		},
 	],
 	[
@@ -73,7 +73,7 @@ const VEHICLE_DISPLAY: Map<string, VehicleDisplayInfo> = new Map([
 		{
 			emoji: "\u{1F98A}",
 			accentColor: Color3.fromRGB(180, 120, 60),
-			familyTag: "Animal",
+			familyTag: "vehicle_family_animal",
 		},
 	],
 	[
@@ -81,7 +81,7 @@ const VEHICLE_DISPLAY: Map<string, VehicleDisplayInfo> = new Map([
 		{
 			emoji: "\u{1F63A}",
 			accentColor: Color3.fromRGB(180, 120, 60),
-			familyTag: "Animal",
+			familyTag: "vehicle_family_animal",
 		},
 	],
 	// Wheeled (Vehicle)
@@ -90,7 +90,7 @@ const VEHICLE_DISPLAY: Map<string, VehicleDisplayInfo> = new Map([
 		{
 			emoji: "\u{1F3CE}",
 			accentColor: Color3.fromRGB(60, 120, 200),
-			familyTag: "Vehicle",
+			familyTag: "vehicle_family_vehicle",
 		},
 	],
 	[
@@ -98,7 +98,7 @@ const VEHICLE_DISPLAY: Map<string, VehicleDisplayInfo> = new Map([
 		{
 			emoji: "\u{1F697}",
 			accentColor: Color3.fromRGB(60, 120, 200),
-			familyTag: "Vehicle",
+			familyTag: "vehicle_family_vehicle",
 		},
 	],
 	[
@@ -106,7 +106,7 @@ const VEHICLE_DISPLAY: Map<string, VehicleDisplayInfo> = new Map([
 		{
 			emoji: "\u{1F68C}",
 			accentColor: Color3.fromRGB(60, 120, 200),
-			familyTag: "Vehicle",
+			familyTag: "vehicle_family_vehicle",
 		},
 	],
 	[
@@ -114,7 +114,7 @@ const VEHICLE_DISPLAY: Map<string, VehicleDisplayInfo> = new Map([
 		{
 			emoji: "\u{1F6FA}",
 			accentColor: Color3.fromRGB(60, 120, 200),
-			familyTag: "Vehicle",
+			familyTag: "vehicle_family_vehicle",
 		},
 	],
 	[
@@ -122,7 +122,7 @@ const VEHICLE_DISPLAY: Map<string, VehicleDisplayInfo> = new Map([
 		{
 			emoji: "\u{1F6F9}",
 			accentColor: Color3.fromRGB(60, 120, 200),
-			familyTag: "Vehicle",
+			familyTag: "vehicle_family_vehicle",
 		},
 	],
 	[
@@ -130,7 +130,7 @@ const VEHICLE_DISPLAY: Map<string, VehicleDisplayInfo> = new Map([
 		{
 			emoji: "\u{1F685}",
 			accentColor: Color3.fromRGB(60, 120, 200),
-			familyTag: "Vehicle",
+			familyTag: "vehicle_family_vehicle",
 		},
 	],
 	// Static/Serpentine (Magic)
@@ -139,7 +139,7 @@ const VEHICLE_DISPLAY: Map<string, VehicleDisplayInfo> = new Map([
 		{
 			emoji: "\u{1F409}",
 			accentColor: Color3.fromRGB(140, 80, 200),
-			familyTag: "Magic",
+			familyTag: "vehicle_family_magic",
 		},
 	],
 	[
@@ -147,7 +147,7 @@ const VEHICLE_DISPLAY: Map<string, VehicleDisplayInfo> = new Map([
 		{
 			emoji: "\u{1F432}",
 			accentColor: Color3.fromRGB(140, 80, 200),
-			familyTag: "Magic",
+			familyTag: "vehicle_family_magic",
 		},
 	],
 	[
@@ -155,7 +155,7 @@ const VEHICLE_DISPLAY: Map<string, VehicleDisplayInfo> = new Map([
 		{
 			emoji: "\u{1F359}",
 			accentColor: Color3.fromRGB(140, 80, 200),
-			familyTag: "Magic",
+			familyTag: "vehicle_family_magic",
 		},
 	],
 ]);
@@ -163,7 +163,7 @@ const VEHICLE_DISPLAY: Map<string, VehicleDisplayInfo> = new Map([
 const DEFAULT_DISPLAY: VehicleDisplayInfo = {
 	emoji: "\u{2728}",
 	accentColor: Color3.fromRGB(100, 100, 100),
-	familyTag: "Mount",
+	familyTag: "vehicle_family_mount",
 };
 
 function ShopCard({
@@ -296,7 +296,7 @@ function VehicleCard({
 	if (vehicle.owned && vehicle.equipped) {
 		buttonText = t(L_SHOP_UNEQUIP);
 		buttonColor = Color3.fromRGB(80, 160, 200);
-		active = false;
+		active = true;
 	} else if (vehicle.owned) {
 		buttonText = t(L_SHOP_EQUIP);
 		buttonColor = Color3.fromRGB(80, 200, 180);
@@ -352,7 +352,7 @@ function VehicleCard({
 					TextColor3={Color3.fromRGB(200, 200, 220)}
 					TextScaled={true}
 					Font={Enum.Font.Gotham}
-					Text={info.familyTag}
+					Text={t(info.familyTag)}
 				>
 					<uicorner CornerRadius={new UDim(0, 3)} />
 				</textlabel>

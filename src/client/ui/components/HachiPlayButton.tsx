@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from "@rbxts/react";
 import { useSelector } from "@rbxts/react-reflex";
 import { RunService } from "@rbxts/services";
 import { clientEvents } from "client/network";
+import { t } from "shared/localization";
 import { GameStoreState } from "shared/store/game-store";
 import { MatchPhase, MinigameId } from "shared/types";
 
@@ -91,7 +92,7 @@ export function HachiPlayButton() {
 				BackgroundColor3={Color3.fromRGB(255, 160, 20)}
 				BorderSizePixel={0}
 				TextColor3={Color3.fromRGB(255, 255, 255)}
-				Text="PLAY"
+				Text={t("hachi_play")}
 				TextScaled={true}
 				Font={Enum.Font.FredokaOne}
 				ZIndex={10}
@@ -128,7 +129,7 @@ export function HachiPlayButton() {
 				TextStrokeTransparency={0.15}
 				TextScaled={true}
 				Font={Enum.Font.FredokaOne}
-				Text="PLAY"
+				Text={t("hachi_play")}
 				ZIndex={10}
 			/>
 		</frame>

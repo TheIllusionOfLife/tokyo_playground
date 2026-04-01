@@ -81,7 +81,6 @@ export function SpinWheel() {
 	if (matchPhase !== MatchPhase.WaitingForPlayers) return undefined!;
 
 	const alreadySpun = !spinAvailable;
-	const dimAlpha = alreadySpun ? 0.5 : 0;
 
 	return (
 		<>
@@ -109,7 +108,11 @@ export function SpinWheel() {
 					}
 					TextScaled={true}
 					Font={Enum.Font.GothamBold}
-					Text={alreadySpun ? "\u{2705} Spin" : "\u{1F3B0} Spin"}
+					Text={
+						alreadySpun
+							? `\u{2705} ${t("spin_toggle")}`
+							: `\u{1F3B0} ${t("spin_toggle")}`
+					}
 					Event={{
 						Activated: () =>
 							gameStore.setActiveOverlay(open ? "none" : ("spin" as never)),

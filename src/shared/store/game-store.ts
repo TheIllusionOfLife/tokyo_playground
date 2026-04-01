@@ -152,7 +152,7 @@ const initialState: GameStoreState = {
 	previewItemId: undefined,
 	previewCategory: undefined,
 	previewExpiry: 0,
-	spinAvailable: true,
+	spinAvailable: false,
 };
 
 export const gameStore = createProducer(initialState, {

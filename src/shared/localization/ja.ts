@@ -220,9 +220,16 @@ export const JA: Record<string, string> = {
 
 	// Spin
 	spin_title: "デイリーラッキースピン",
+	spin_toggle: "スピン",
 	spin_button: "スピン!",
 	spin_spinning: "回転中...",
 	spin_come_back: "また明日!",
+
+	// Vehicle families
+	vehicle_family_animal: "どうぶつ",
+	vehicle_family_vehicle: "のりもの",
+	vehicle_family_magic: "まほう",
+	vehicle_family_mount: "マウント",
 
 	// Zones
 	zone_ShibuyaSky: "渋谷スカイ",
