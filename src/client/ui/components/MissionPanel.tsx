@@ -11,7 +11,13 @@ import {
 import { GameStoreState, gameStore } from "shared/store/game-store";
 import { MatchPhase, MinigameId, MissionProgressData } from "shared/types";
 
-function MissionRow({ mission }: { mission: MissionProgressData }) {
+function MissionRow({
+	mission,
+	layoutOrder,
+}: {
+	mission: MissionProgressData;
+	layoutOrder?: number;
+}) {
 	const canClaim =
 		mission.progress >= mission.target && !mission.rewardCollected;
 	const fillRatio = math.min(mission.progress / math.max(mission.target, 1), 1);
@@ -19,6 +25,7 @@ function MissionRow({ mission }: { mission: MissionProgressData }) {
 	return (
 		<frame
 			key={mission.id}
+			LayoutOrder={layoutOrder ?? 0}
 			Size={new UDim2(1, -8, 0, 50)}
 			BackgroundColor3={Color3.fromRGB(35, 35, 50)}
 			BackgroundTransparency={0.2}
@@ -94,10 +101,12 @@ function PoiRow({
 	zoneName,
 	discovered,
 	claimed,
+	layoutOrder,
 }: {
 	zoneName: string;
 	discovered: boolean;
 	claimed: boolean;
+	layoutOrder: number;
 }) {
 	const displayName = t(`zone_${zoneName}`) || zoneName;
 	const canClaim = discovered && !claimed;
@@ -105,6 +114,7 @@ function PoiRow({
 	return (
 		<frame
 			key={zoneName}
+			LayoutOrder={layoutOrder}
 			Size={new UDim2(1, -8, 0, 36)}
 			BackgroundColor3={Color3.fromRGB(35, 35, 50)}
 			BackgroundTransparency={0.2}
@@ -331,7 +341,11 @@ export function MissionPanel() {
 							TextXAlignment={Enum.TextXAlignment.Left}
 						/>
 						{missions.map((mission, i) => (
-							<MissionRow key={mission.id} mission={mission} />
+							<MissionRow
+								key={mission.id}
+								mission={mission}
+								layoutOrder={i + 1}
+							/>
 						))}
 						{/* Divider */}
 						<frame
@@ -364,6 +378,7 @@ export function MissionPanel() {
 								zoneName={zoneName}
 								discovered={discoveredPoi.includes(zoneName)}
 								claimed={poiClaimedRewards.includes(zoneName)}
+								layoutOrder={102 + i}
 							/>
 						))}
 					</scrollingframe>
