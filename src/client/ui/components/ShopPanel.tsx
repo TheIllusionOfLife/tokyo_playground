@@ -318,7 +318,7 @@ function VehicleCard({
 	return (
 		<frame
 			key={vehicle.id}
-			Size={new UDim2(0, 150, 0, 130)}
+			Size={new UDim2(0, 150, 0, 140)}
 			BackgroundColor3={Color3.fromRGB(35, 35, 50)}
 			BackgroundTransparency={0.2}
 			BorderSizePixel={0}
@@ -576,10 +576,14 @@ export function ShopPanel() {
 							<uigridlayout
 								CellSize={
 									tab === "vehicles"
-										? new UDim2(0, 150, 0, 130)
+										? new UDim2(0, 150, 0, 140)
 										: new UDim2(0, 128, 0, 96)
 								}
-								CellPadding={new UDim2(0, 6, 0, 6)}
+								CellPadding={
+									tab === "vehicles"
+										? new UDim2(0, 8, 0, 12)
+										: new UDim2(0, 6, 0, 6)
+								}
 							/>
 							{tab === "cosmetics"
 								? shopItems.map((item) => (
