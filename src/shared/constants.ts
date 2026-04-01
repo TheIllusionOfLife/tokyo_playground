@@ -663,6 +663,17 @@ export const VEHICLE_CATALOG: VehicleDef[] = [
 		idleAmp: 0.2,
 	},
 	{
+		id: VehicleId.GreenDragon,
+		name: "Green Dragon",
+		nameKey: "vehicle_green_dragon",
+		templateName: "GreenDragonTemplate",
+		price: 600,
+		levelRequired: 4,
+		animProfile: AnimProfile.Static,
+		speedScale: 1.0,
+		idleAmp: 0.2,
+	},
+	{
 		id: VehicleId.Tanuki,
 		name: "Tanuki",
 		nameKey: "vehicle_tanuki",
