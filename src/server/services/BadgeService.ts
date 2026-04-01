@@ -7,12 +7,12 @@ import { PlayerDataService } from "./PlayerDataService";
  * Replace these placeholder IDs with actual badge IDs after creation.
  */
 const BADGE_IDS = {
-	FirstWin: 0, // TODO: Replace with actual badge ID
-	TenWins: 0,
-	HundredGames: 0,
-	MaxEvolution: 0,
+	FirstWin: 1067084317807175,
+	TenWins: 3922930450136065,
+	HundredGames: 3230616476857521,
+	MaxEvolution: 929715236193916,
 	AllPoiDiscovered: 0,
-	SevenDayStreak: 0,
+	SevenDayStreak: 1561377943956271,
 	CanKickMaster: 0,
 	RescueHero: 0,
 	OniLegend: 0,
