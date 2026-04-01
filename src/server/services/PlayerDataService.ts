@@ -388,6 +388,7 @@ export class PlayerDataService implements OnStart {
 				const def = MISSION_DEFS[id];
 				if (slot.progress >= def.target && !slot.rewardCollected) {
 					slot.rewardCollected = true;
+					data.missionsCompleted = (data.missionsCompleted ?? 0) + 1;
 					return true;
 				}
 				return false;

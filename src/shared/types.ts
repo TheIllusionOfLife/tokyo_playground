@@ -360,6 +360,12 @@ export interface PlayerData {
 	// Vehicles
 	equippedVehicle: VehicleId;
 	ownedVehicles: VehicleId[];
+	// Cumulative stats (for badges)
+	totalCanKicks: number;
+	totalRescues: number;
+	totalCatches: number;
+	totalWallRuns: number;
+	missionsCompleted: number;
 }
 
 export const DEFAULT_PLAYER_DATA: PlayerData = {
@@ -389,4 +395,9 @@ export const DEFAULT_PLAYER_DATA: PlayerData = {
 	firstTimeRewardClaimed: false,
 	equippedVehicle: VehicleId.DefaultHachi,
 	ownedVehicles: [VehicleId.DefaultHachi],
+	totalCanKicks: 0,
+	totalRescues: 0,
+	totalCatches: 0,
+	totalWallRuns: 0,
+	missionsCompleted: 0,
 };

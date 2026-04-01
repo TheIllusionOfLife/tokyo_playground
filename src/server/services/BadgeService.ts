@@ -13,6 +13,15 @@ const BADGE_IDS = {
 	MaxEvolution: 0,
 	AllPoiDiscovered: 0,
 	SevenDayStreak: 0,
+	CanKickMaster: 0,
+	RescueHero: 0,
+	OniLegend: 0,
+	SpeedDemon: 0,
+	WallRunner: 0,
+	ShibuyaRegular: 0,
+	MissionComplete: 0,
+	Shopaholic: 0,
+	VehicleCollector: 0,
 };
 
 const gameId = game.GameId;
@@ -58,9 +67,25 @@ export class BadgeService implements OnStart {
 		if (data.gamesWon >= 1) this.awardBadge(player, "FirstWin");
 		if (data.gamesWon >= 10) this.awardBadge(player, "TenWins");
 		if (data.gamesPlayed >= 100) this.awardBadge(player, "HundredGames");
+		if (data.gamesPlayed >= 10) this.awardBadge(player, "ShibuyaRegular");
 		if (data.maxHachiLevel >= 4) this.awardBadge(player, "MaxEvolution");
 		if (data.discoveredPoi.size() >= 9)
 			this.awardBadge(player, "AllPoiDiscovered");
 		if ((data.loginStreak ?? 0) >= 6) this.awardBadge(player, "SevenDayStreak");
+		if ((data.totalCanKicks ?? 0) >= 10)
+			this.awardBadge(player, "CanKickMaster");
+		if ((data.totalRescues ?? 0) >= 20) this.awardBadge(player, "RescueHero");
+		if ((data.totalCatches ?? 0) >= 50) this.awardBadge(player, "OniLegend");
+		if ((data.totalWallRuns ?? 0) >= 20) this.awardBadge(player, "WallRunner");
+		if ((data.missionsCompleted ?? 0) >= 10)
+			this.awardBadge(player, "MissionComplete");
+		if (data.ownedItems.size() >= 5) this.awardBadge(player, "Shopaholic");
+		if (data.ownedVehicles.size() >= 5)
+			this.awardBadge(player, "VehicleCollector");
+	}
+
+	/** Check if a single-round item count qualifies for SpeedDemon. */
+	checkRoundItemCount(player: Player, itemCount: number) {
+		if (itemCount >= 50) this.awardBadge(player, "SpeedDemon");
 	}
 }

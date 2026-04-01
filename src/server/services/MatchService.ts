@@ -29,6 +29,7 @@ import { unequipHachiCostume } from "../utils/hachiCostume";
 import { safeHandler } from "../utils/safeConnect";
 import { AmbientCityService } from "./AmbientCityService";
 import { AnalyticsService } from "./AnalyticsService";
+import { BadgeService } from "./BadgeService";
 import { BoundaryService } from "./BoundaryService";
 import { GameStateService } from "./GameStateService";
 import { LobbyService } from "./LobbyService";
@@ -76,6 +77,7 @@ export class MatchService implements OnStart {
 		private readonly analyticsService: AnalyticsService,
 		private readonly ambientCityService: AmbientCityService,
 		private readonly boundaryService: BoundaryService,
+		private readonly badgeService: BadgeService,
 	) {}
 
 	onStart() {
@@ -512,6 +514,17 @@ export class MatchService implements OnStart {
 					player,
 					state.evolutionLevel,
 				);
+				this.badgeService.checkRoundItemCount(player, state.itemCount);
+			}
+
+			// Accumulate stats for badges
+			if (data) {
+				data.totalCatches = (data.totalCatches ?? 0) + state.catchCount;
+				data.totalRescues = (data.totalRescues ?? 0) + state.rescueCount;
+				if (state.minigameId === MinigameId.CanKick && "isCaught" in state) {
+					// Can kick count is tracked via rescueCount (freeing = kicking)
+					data.totalCanKicks = (data.totalCanKicks ?? 0) + state.rescueCount;
+				}
 			}
 
 			entries.push({
