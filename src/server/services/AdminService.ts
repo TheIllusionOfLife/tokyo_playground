@@ -61,10 +61,26 @@ export class AdminService implements OnStart {
 					`Hachi MaxSpeed → ${value}`,
 				);
 			}
+		} else if (cmd === "/balance" && value !== undefined) {
+			const data = this.playerDataService.getPlayerData(player);
+			if (data) {
+				data.shopBalance = value;
+				const lv = this.playerDataService.getPlaygroundLevel(player);
+				this.serverEvents.playPointsUpdate.fire(
+					player,
+					data.totalPlayPoints,
+					lv,
+					data.shopBalance,
+				);
+			}
+			this.serverEvents.hintTextChanged.fire(
+				player,
+				`Shop balance → ${value}`,
+			);
 		} else if (cmd === "/help" || cmd === "/admin") {
 			this.serverEvents.hintTextChanged.fire(
 				player,
-				"/evolve N | /items N | /points N | /speed N",
+				"/evolve N | /items N | /points N | /balance N | /speed N",
 			);
 		}
 	}

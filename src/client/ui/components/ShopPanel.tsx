@@ -258,7 +258,7 @@ function ShopCard({
 			{!item.owned && levelMet && (
 				<textbutton
 					Size={new UDim2(0, 50, 0, 16)}
-					Position={new UDim2(1, -54, 0, 52)}
+					Position={new UDim2(1, -54, 0, 34)}
 					BackgroundColor3={Color3.fromRGB(100, 80, 140)}
 					TextColor3={Color3.fromRGB(220, 220, 255)}
 					TextScaled={true}
