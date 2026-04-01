@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "@rbxts/react";
 import { useSelector } from "@rbxts/react-reflex";
+import { GuiService } from "@rbxts/services";
 import { clientEvents } from "client/network";
 import { GameStoreState, gameStore } from "shared/store/game-store";
 import { MatchPhase } from "shared/types";
@@ -34,40 +35,50 @@ export function LeaderboardPanel() {
 
 	if (matchPhase !== MatchPhase.WaitingForPlayers) return undefined!;
 
+	const [insetTop] = GuiService.GetGuiInset();
+	const topbarHeight = insetTop.Y;
+
 	return (
 		<>
-			{/* Toggle button */}
-			<frame
-				key="LeaderboardButton"
-				Size={new UDim2(0, 100, 0, 30)}
-				Position={new UDim2(1, -120, 0, 10)}
-				AnchorPoint={new Vector2(1, 0)}
-				BackgroundColor3={Color3.fromRGB(30, 50, 80)}
-				BackgroundTransparency={0.3}
-				BorderSizePixel={0}
-				ZIndex={10}
+			{/* Toggle button in topbar zone */}
+			<screengui
+				key="LeaderboardButtonGui"
+				ResetOnSpawn={false}
+				ScreenInsets={Enum.ScreenInsets.None}
+				DisplayOrder={4}
+				ZIndexBehavior={Enum.ZIndexBehavior.Sibling}
 			>
-				<uicorner CornerRadius={new UDim(0, 15)} />
-				<textbutton
-					Size={new UDim2(1, 0, 1, 0)}
-					BackgroundTransparency={1}
-					TextColor3={Color3.fromRGB(150, 200, 255)}
-					TextScaled={true}
-					Font={Enum.Font.GothamBold}
-					Text={"\u{1F3C6} Ranks"}
-					Event={{
-						Activated: () =>
-							gameStore.setActiveOverlay(
-								open ? "none" : ("leaderboard" as never),
-							),
-					}}
+				<frame
+					key="LeaderboardButton"
+					Size={new UDim2(0, 100, 0, math.max(topbarHeight - 4, 28))}
+					Position={new UDim2(1, -10, 0, 6)}
+					AnchorPoint={new Vector2(1, 0)}
+					BackgroundColor3={Color3.fromRGB(30, 50, 80)}
+					BackgroundTransparency={0.3}
+					BorderSizePixel={0}
 				>
-					<uipadding
-						PaddingLeft={new UDim(0, 8)}
-						PaddingRight={new UDim(0, 8)}
-					/>
-				</textbutton>
-			</frame>
+					<uicorner CornerRadius={new UDim(0, 15)} />
+					<textbutton
+						Size={new UDim2(1, 0, 1, 0)}
+						BackgroundTransparency={1}
+						TextColor3={Color3.fromRGB(150, 200, 255)}
+						TextScaled={true}
+						Font={Enum.Font.GothamBold}
+						Text={"\u{1F3C6} Ranks"}
+						Event={{
+							Activated: () =>
+								gameStore.setActiveOverlay(
+									open ? "none" : ("leaderboard" as never),
+								),
+						}}
+					>
+						<uipadding
+							PaddingLeft={new UDim(0, 8)}
+							PaddingRight={new UDim(0, 8)}
+						/>
+					</textbutton>
+				</frame>
+			</screengui>
 			{/* Leaderboard overlay */}
 			{open ? (
 				<frame
