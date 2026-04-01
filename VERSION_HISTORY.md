@@ -26,3 +26,4 @@
 | v0.20.0 | 2026-04-01 | Pre-launch audit: AFK detection, platform analytics, profile retry, safeHandler, streaming pre-load, sound leak fixes, city optimization (2168 furniture Box collision, SLIM LOD) |
 | v0.21.0 | 2026-04-01 | Cross-platform playtest: loading screen, auto-catch, Oni mounts Hachi, PoI discovery, engagement features (login streak, spin, leaderboard, badges), UI overhaul, immersive ads infrastructure |
 | v0.22.0 | 2026-04-02 | Vehicles, badges, UI polish: 16 rideable vehicles with AnimProfile dispatch, cosmetics preview, 15 achievement badges with stat tracking, spin wheel visual overhaul, tabbed missions/PoI, mobile button layout fix |
+| v0.23.0 | 2026-04-02 | Vehicle tuning + UI fixes: per-vehicle weld rotation/height/hip offsets for all 16 mounts, floating dragons, standing skateboard, topbar Spin/Ranks buttons, shop tab redesign, PoI sync fix, /balance debug command |
