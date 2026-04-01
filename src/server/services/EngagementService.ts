@@ -108,26 +108,21 @@ export class EngagementService implements OnStart {
 			this.playerDataService.addPlayPoints(player, FRIEND_REFERRAL_BONUS);
 			this.playerDataService.addPlayPoints(otherPlayer, FRIEND_REFERRAL_BONUS);
 
-			const playerData = this.playerDataService.getPlayerData(player);
-			const otherData = this.playerDataService.getPlayerData(otherPlayer);
-			if (playerData) {
-				const level = this.playerDataService.getPlaygroundLevel(player);
-				this.serverEvents.playPointsUpdate.fire(
-					player,
-					playerData.totalPlayPoints,
-					level,
-					playerData.shopBalance,
-				);
-			}
-			if (otherData) {
-				const level = this.playerDataService.getPlaygroundLevel(otherPlayer);
-				this.serverEvents.playPointsUpdate.fire(
-					otherPlayer,
-					otherData.totalPlayPoints,
-					level,
-					otherData.shopBalance,
-				);
-			}
+			// pData/oData are mutated in place by addPlayPoints
+			const pLevel = this.playerDataService.getPlaygroundLevel(player);
+			this.serverEvents.playPointsUpdate.fire(
+				player,
+				pData.totalPlayPoints,
+				pLevel,
+				pData.shopBalance,
+			);
+			const oLevel = this.playerDataService.getPlaygroundLevel(otherPlayer);
+			this.serverEvents.playPointsUpdate.fire(
+				otherPlayer,
+				oData.totalPlayPoints,
+				oLevel,
+				oData.shopBalance,
+			);
 
 			print(
 				`[EngagementService] Friend referral: ${player.Name} + ${otherPlayer.Name} each get +${FRIEND_REFERRAL_BONUS} pts`,

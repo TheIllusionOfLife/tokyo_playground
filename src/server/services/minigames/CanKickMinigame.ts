@@ -269,10 +269,13 @@ export class CanKickMinigame implements IMinigame {
 
 		// Teleport to jail after fade-in completes (0.3s flash + 0.2s fade buffer)
 		const caughtCharacter = hider.Character;
+		const hiderId = hider.UserId;
 		task.delay(0.5, () => {
-			// Only teleport if still the same character (not respawned during delay)
+			// Only teleport if still the same character, still in jail (not freed by can kick)
+			const hiderState2 = this.playerStates.get(hiderId);
 			if (
 				this.jailZone &&
+				hiderState2?.isInJail &&
 				hider.Character &&
 				hider.Character === caughtCharacter
 			) {

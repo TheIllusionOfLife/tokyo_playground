@@ -212,12 +212,15 @@ export class LobbyService implements OnStart {
 					| undefined;
 				if (!template) return;
 				const clone = template.Clone();
-				const data = this.playerDataService.getPlayerData(player);
-				const evoLevel = math.max(
-					data?.maxHachiLevel ?? 0,
-					HACHI_LOBBY_MIN_LEVEL,
-				);
-				if (!equipHachiCostume(player, clone, evoLevel, true)) {
+				// During matches, Oni remounts at level 0 (no evolution abilities)
+				// In lobby, use player's max level with lobby minimum
+				const evoLevel = this.matchActive
+					? 0
+					: math.max(
+							this.playerDataService.getPlayerData(player)?.maxHachiLevel ?? 0,
+							HACHI_LOBBY_MIN_LEVEL,
+						);
+				if (!equipHachiCostume(player, clone, evoLevel, !this.matchActive)) {
 					clone.Destroy();
 				}
 			} else {
