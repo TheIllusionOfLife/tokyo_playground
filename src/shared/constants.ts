@@ -25,6 +25,18 @@ export const CAN_KICK_BONUS = 20;
 export const LOSS_MULTIPLIER = 0.6;
 export const DAILY_LOGIN_BONUS_POINTS = 20;
 
+// Login streak bonuses (index = day in streak, capped at day 7)
+export const LOGIN_STREAK_BONUSES = [20, 20, 30, 40, 50, 60, 80, 100];
+
+// First-time reward
+export const FIRST_TIME_REWARD_POINTS = 50;
+
+// Lucky spin rewards (index = segment, weighted random)
+export const SPIN_REWARDS = [5, 10, 10, 15, 15, 20, 25, 50];
+
+// Friend referral
+export const FRIEND_REFERRAL_BONUS = 15;
+
 // Can Kick
 export const ONI_CATCH_RADIUS = 10;
 export const ONI_MOUNTED_CATCH_RADIUS = 14;

@@ -325,6 +325,10 @@ export interface PlayerData {
 	// Point of Interest discovery (replaces stamps)
 	discoveredPoi: string[];
 	poiClaimedRewards: string[];
+	// Engagement
+	loginStreak: number;
+	lastSpinDay: number;
+	firstTimeRewardClaimed: boolean;
 }
 
 export const DEFAULT_PLAYER_DATA: PlayerData = {
@@ -349,4 +353,7 @@ export const DEFAULT_PLAYER_DATA: PlayerData = {
 	lastLoginDay: 0,
 	discoveredPoi: [],
 	poiClaimedRewards: [],
+	loginStreak: 0,
+	lastSpinDay: 0,
+	firstTimeRewardClaimed: false,
 };

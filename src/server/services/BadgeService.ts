@@ -1,0 +1,66 @@
+import { OnStart, Service } from "@flamework/core";
+import { BadgeService as RobloxBadgeService } from "@rbxts/services";
+import { PlayerDataService } from "./PlayerDataService";
+
+/**
+ * Badge IDs must be created in Roblox Creator Dashboard.
+ * Replace these placeholder IDs with actual badge IDs after creation.
+ */
+const BADGE_IDS = {
+	FirstWin: 0, // TODO: Replace with actual badge ID
+	TenWins: 0,
+	HundredGames: 0,
+	MaxEvolution: 0,
+	AllPoiDiscovered: 0,
+	SevenDayStreak: 0,
+};
+
+const gameId = game.GameId;
+
+@Service()
+export class BadgeService implements OnStart {
+	constructor(private readonly playerDataService: PlayerDataService) {}
+
+	onStart() {
+		print("[BadgeService] Started (badge IDs need configuration)");
+	}
+
+	/** Try to award a badge. No-op if badge ID is 0 (unconfigured). */
+	awardBadge(player: Player, badgeName: keyof typeof BADGE_IDS) {
+		const badgeId = BADGE_IDS[badgeName];
+		if (badgeId === 0) return; // Unconfigured
+
+		task.spawn(() => {
+			const [hasOk, hasBadge] = pcall(() =>
+				RobloxBadgeService.UserHasBadgeAsync(player.UserId, badgeId),
+			);
+			if (hasOk && hasBadge) return; // Already has it
+
+			const [awardOk] = pcall(() =>
+				RobloxBadgeService.AwardBadge(player.UserId, badgeId),
+			);
+			if (awardOk) {
+				print(`[BadgeService] Awarded ${badgeName} to ${player.Name}`);
+				// Track in player data for client display
+				const data = this.playerDataService.getPlayerData(player);
+				if (data && !data.badges.includes(badgeName)) {
+					data.badges.push(badgeName);
+				}
+			}
+		});
+	}
+
+	/** Check milestones after a game ends. */
+	checkMilestones(player: Player) {
+		const data = this.playerDataService.getPlayerData(player);
+		if (!data) return;
+
+		if (data.gamesWon >= 1) this.awardBadge(player, "FirstWin");
+		if (data.gamesWon >= 10) this.awardBadge(player, "TenWins");
+		if (data.gamesPlayed >= 100) this.awardBadge(player, "HundredGames");
+		if (data.maxHachiLevel >= 4) this.awardBadge(player, "MaxEvolution");
+		if (data.discoveredPoi.size() >= 9)
+			this.awardBadge(player, "AllPoiDiscovered");
+		if ((data.loginStreak ?? 0) >= 6) this.awardBadge(player, "SevenDayStreak");
+	}
+}

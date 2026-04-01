@@ -121,6 +121,12 @@ interface ServerToClientEvents {
 	bonOdoriNote(direction: number, beatTime: number): void;
 	foodTruckFound(playerName: string, slotsRemaining: number): void;
 
+	// ── Engagement ─────────────────────────────────────────────────────
+	spinResult(reward: number, success: boolean): void;
+	leaderboardData(
+		entries: { rank: number; name: string; points: number }[],
+	): void;
+
 	// ── AFK ─────────────────────────────────────────────────────────────
 	afkRemoved(): void;
 
@@ -167,6 +173,10 @@ interface ClientToServerEvents {
 	interactFoodTruck(): void;
 	obstacleCourseCheckpoint(checkpointIndex: number): void;
 	obstacleCourseFinish(): void; // fix H2: no client-supplied time; server computes elapsed
+
+	// ── Engagement ──────────────────────────────────────────────────────
+	requestSpin(): void;
+	requestLeaderboard(): void;
 
 	// ── Minigame start request ───────────────────────────────────────────
 	requestMinigameStart(minigameId: MinigameId): void;

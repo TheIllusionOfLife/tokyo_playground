@@ -3,8 +3,9 @@ import ProfileService from "@rbxts/profileservice";
 import { Profile } from "@rbxts/profileservice/globals";
 import { Players } from "@rbxts/services";
 import {
-	DAILY_LOGIN_BONUS_POINTS,
+	FIRST_TIME_REWARD_POINTS,
 	LEVEL_THRESHOLDS,
+	LOGIN_STREAK_BONUSES,
 	MISSION_DEFS,
 } from "shared/constants";
 import { GlobalEvents } from "shared/network";
@@ -127,13 +128,44 @@ export class PlayerDataService implements OnStart {
 			cb(player);
 		}
 
-		// Daily login bonus
+		// First-time reward (new players)
+		if (
+			!data.firstTimeRewardClaimed &&
+			data.gamesPlayed === 0 &&
+			data.totalPlayPoints === 0
+		) {
+			data.firstTimeRewardClaimed = true;
+			this.addPlayPoints(player, FIRST_TIME_REWARD_POINTS);
+			// Grant Cherry Blossom Trail
+			if (!data.ownedItems.includes(ItemId.TrailCherryBlossom)) {
+				data.ownedItems.push(ItemId.TrailCherryBlossom);
+			}
+			print(
+				`[PlayerDataService] First-time reward for ${player.Name}: +${FIRST_TIME_REWARD_POINTS} pts + Cherry Blossom Trail`,
+			);
+		}
+
+		// Daily login bonus with streak
 		const today = getCurrentDay();
 		const lastLogin = typeIs(data.lastLoginDay, "number")
 			? data.lastLoginDay
 			: 0;
 		if (lastLogin < today) {
-			const bonusPoints = DAILY_LOGIN_BONUS_POINTS;
+			// Check streak continuity (yesterday = today - 1)
+			const streak = typeIs(data.loginStreak, "number") ? data.loginStreak : 0;
+			if (lastLogin === today - 1) {
+				data.loginStreak = math.min(
+					streak + 1,
+					LOGIN_STREAK_BONUSES.size() - 1,
+				);
+			} else {
+				data.loginStreak = 0; // Reset streak (gap > 1 day)
+			}
+
+			const bonusPoints =
+				LOGIN_STREAK_BONUSES[
+					math.min(data.loginStreak, LOGIN_STREAK_BONUSES.size() - 1)
+				];
 			data.lastLoginDay = today;
 			this.addPlayPoints(player, bonusPoints);
 			const level = this.getPlaygroundLevel(player);
@@ -144,6 +176,9 @@ export class PlayerDataService implements OnStart {
 				data.shopBalance,
 			);
 			this.serverEvents.dailyLoginBonus.fire(player, bonusPoints);
+			print(
+				`[PlayerDataService] Login streak day ${data.loginStreak} for ${player.Name}: +${bonusPoints} pts`,
+			);
 		}
 
 		// fix M3: dedicated sync for Living Shibuya progress

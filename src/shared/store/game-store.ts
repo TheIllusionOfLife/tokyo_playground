@@ -56,7 +56,13 @@ export interface GameStoreState {
 	hachiFieldRegularTotal: number;
 	hachiFieldBonus: number;
 	hachiFieldBonusTotal: number;
-	activeOverlay: "none" | "missions" | "shop" | "skills";
+	activeOverlay:
+		| "none"
+		| "missions"
+		| "shop"
+		| "skills"
+		| "spin"
+		| "leaderboard";
 	feedMessages: FeedMessage[];
 	oniRevealName?: string;
 	summaryText?: string;
