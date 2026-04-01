@@ -179,7 +179,7 @@ export const L_HINT_HACHI_EVOLVED = "hint_hachi_evolved";
 // Vehicles
 export const L_VEHICLE_TAB = "vehicle_tab";
 export const L_VEHICLE_HACHI = "vehicle_hachi";
-export const L_VEHICLE_NEKO = "vehicle_neko";
+export const L_VEHICLE_WHITE_CAT = "vehicle_white_cat";
 export const L_VEHICLE_KART = "vehicle_kart";
 export const L_VEHICLE_WHITE_DRAGON = "vehicle_white_dragon";
 export const L_VEHICLE_TANUKI = "vehicle_tanuki";

@@ -114,7 +114,7 @@ export enum MissionId {
 
 export enum VehicleId {
 	DefaultHachi = "DefaultHachi",
-	Neko = "Neko",
+	WhiteCat = "WhiteCat",
 	Kart = "Kart",
 	WhiteDragon = "WhiteDragon",
 	Tanuki = "Tanuki",

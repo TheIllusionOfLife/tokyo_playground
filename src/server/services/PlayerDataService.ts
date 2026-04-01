@@ -24,7 +24,7 @@ import { getCurrentDay } from "shared/utils/dayKey";
 /** Valid VehicleId values for post-Reconcile validation. */
 const VEHICLE_ID_VALUES = new Set<VehicleId>([
 	VehicleId.DefaultHachi,
-	VehicleId.Neko,
+	VehicleId.WhiteCat,
 	VehicleId.Kart,
 	VehicleId.WhiteDragon,
 	VehicleId.Tanuki,

@@ -630,9 +630,9 @@ export const VEHICLE_CATALOG: VehicleDef[] = [
 		idleAmp: 0.15,
 	},
 	{
-		id: VehicleId.Neko,
-		name: "Neko",
-		nameKey: "vehicle_neko",
+		id: VehicleId.WhiteCat,
+		name: "White Cat",
+		nameKey: "vehicle_white_cat",
 		templateName: "NekoTemplate",
 		price: 0,
 		levelRequired: 0,
