@@ -50,8 +50,14 @@ export function stopOniCountdown(
 	}
 }
 
+/** Per-hint-key lock map: prevents gameplay hints from overwriting instructional hints. */
+const hintLockMap = new Map<string, number>();
+
 /**
  * Fire a hint text broadcast, deduplicating against the last sent value.
+ * When `lockDuration` is provided, the hint establishes a lock window during
+ * which non-locking hints are suppressed (e.g. instructional hints persist
+ * for 3 seconds even if gameplay hints fire).
  * Returns the new lastRef value to store.
  */
 export function fireHintText(
@@ -59,8 +65,25 @@ export function fireHintText(
 	text: string,
 	lastRef: string,
 	args?: string[],
+	lockDuration?: number,
 ): string {
 	const dedupKey = args ? `${text}:${args.join(",")}` : text;
+
+	// If this is NOT a locking call, check if any active lock suppresses it
+	if (lockDuration === undefined) {
+		const now = os.clock();
+		for (const [key, lockUntil] of hintLockMap) {
+			if (now < lockUntil) return lastRef;
+			// Clean up expired locks
+			hintLockMap.delete(key);
+		}
+	}
+
+	// Set lock if requested
+	if (lockDuration !== undefined) {
+		hintLockMap.set(dedupKey, os.clock() + lockDuration);
+	}
+
 	if (dedupKey === lastRef) return lastRef;
 	serverEvents.hintTextChanged.broadcast(text, args);
 	return dedupKey;

@@ -3,10 +3,10 @@ import {
 	CollectionService,
 	Players,
 	RunService,
-	ServerStorage,
 	Workspace,
 } from "@rbxts/services";
 import {
+	AnimProfile,
 	CAN_KICK_PORTAL_TAG,
 	CHARACTER_SCALE,
 	DEFAULT_JUMP_HEIGHT,
@@ -28,14 +28,15 @@ import {
 	SCRAMBLE_SLIDE_SPEED,
 	SLIDE_DIR_Y_OFFSET,
 	SLIDE_RAMP_TAG,
+	VEHICLE_CATALOG,
 } from "shared/constants";
 import {
 	L_HINT_STARTING_CAN_KICK,
 	L_HINT_STARTING_SCRAMBLE,
 } from "shared/localization/keys";
 import { GlobalEvents } from "shared/network";
-import { MinigameId } from "shared/types";
-import { animateHachi, HachiAnimState } from "../utils/animateHachi";
+import { MinigameId, VehicleId } from "shared/types";
+import { animateVehicle, HachiAnimState } from "../utils/animateVehicle";
 import {
 	equipHachiCostume,
 	forceUnmount,
@@ -45,6 +46,7 @@ import {
 	unequipHachiCostume,
 	updateHachiWalkSpeed,
 } from "../utils/hachiCostume";
+import { getVehicleTemplate } from "../utils/vehicleTemplate";
 
 import { PlayerDataService } from "./PlayerDataService";
 
@@ -207,9 +209,8 @@ export class LobbyService implements OnStart {
 
 			if (equip) {
 				if (isPlayerMounted(player)) return; // already mounted
-				const template = ServerStorage.FindFirstChild("HachiTemplate") as
-					| Model
-					| undefined;
+				const vehicleId = this.playerDataService.getEquippedVehicle(player);
+				const template = getVehicleTemplate(vehicleId);
 				if (!template) return;
 				const clone = template.Clone();
 				// During matches, Oni remounts at level 0 (no evolution abilities)
@@ -358,10 +359,10 @@ export class LobbyService implements OnStart {
 		});
 	}
 
-	/** Animate Hachi costume models on mounted players. */
+	/** Animate vehicle costume models on mounted players. */
 	private setupHachiAnimation() {
 		RunService.Heartbeat.Connect((dt) => {
-			// Animate all currently mounted players' Hachi costumes
+			// Animate all currently mounted players' vehicle costumes
 			for (const player of Players.GetPlayers()) {
 				const hachiModel = getPlayerHachi(player);
 				if (!hachiModel || !hachiModel.Parent) continue;
@@ -372,7 +373,19 @@ export class LobbyService implements OnStart {
 				if (!state) {
 					state = { animTime: 0, airborne: false };
 				}
-				this.hachiAnimStates.set(hachiModel, animateHachi(body, dt, state));
+				const vehicleId = this.playerDataService.getEquippedVehicle(player);
+				const vDef = VEHICLE_CATALOG.find((v) => v.id === vehicleId);
+				this.hachiAnimStates.set(
+					hachiModel,
+					animateVehicle(
+						body,
+						dt,
+						state,
+						vDef?.animProfile ?? AnimProfile.Quadruped,
+						vDef?.speedScale ?? 1.0,
+						vDef?.idleAmp ?? 0.15,
+					),
+				);
 			}
 
 			// Clean up stale entries

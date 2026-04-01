@@ -92,7 +92,12 @@ export class MatchService implements OnStart {
 		);
 		this.minigameService.register(
 			MinigameId.HachiRide,
-			(events) => new HachiRideMinigame(events, this.missionService),
+			(events) =>
+				new HachiRideMinigame(
+					events,
+					this.missionService,
+					this.playerDataService,
+				),
 		);
 
 		// Wire portal start requests (avoids circular DI: MatchService already holds LobbyService)

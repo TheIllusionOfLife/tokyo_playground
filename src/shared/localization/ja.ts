@@ -195,6 +195,21 @@ export const JA: Record<string, string> = {
 	poi_claimed: "獲得済み",
 	poi_undiscovered: "未発見",
 
+	// Vehicles
+	vehicle_tab: "のりもの",
+	vehicle_hachi: "ハチ",
+	vehicle_neko: "ネコ",
+	vehicle_kart: "カート",
+	vehicle_dragon: "龍",
+	vehicle_tanuki: "タヌキ",
+	vehicle_shiba: "柴犬",
+	vehicle_kitsune: "キツネ",
+	vehicle_daruma: "だるま",
+	vehicle_maneki: "まねきねこ",
+
+	// Cosmetics preview
+	shop_try_on: "試着",
+
 	// Zones
 	zone_ShibuyaSky: "渋谷スカイ",
 	zone_ShibuyaCrossing: "渋谷スクランブル交差点",

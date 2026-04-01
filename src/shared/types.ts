@@ -112,6 +112,18 @@ export enum MissionId {
 	WinTwoInARow = "WinTwoInARow",
 }
 
+export enum VehicleId {
+	DefaultHachi = "DefaultHachi",
+	Neko = "Neko",
+	Kart = "Kart",
+	JapaneseDragon = "JapaneseDragon",
+	Tanuki = "Tanuki",
+	ShibaInu = "ShibaInu",
+	Kitsune = "Kitsune",
+	Daruma = "Daruma",
+	ManekiNeko = "ManekiNeko",
+}
+
 export enum ItemId {
 	HatCone = "HatCone",
 	HatCrown = "HatCrown",
@@ -267,6 +279,15 @@ export interface ShopItemData {
 	equipped: boolean;
 }
 
+export interface VehicleShopData {
+	id: VehicleId;
+	name: string;
+	price: number;
+	levelRequired: number;
+	owned: boolean;
+	equipped: boolean;
+}
+
 // ── Living Shibuya Interfaces ────────────────────────────────────────────
 
 export interface StampSpotData {
@@ -329,6 +350,9 @@ export interface PlayerData {
 	loginStreak: number;
 	lastSpinDay: number;
 	firstTimeRewardClaimed: boolean;
+	// Vehicles
+	equippedVehicle: VehicleId;
+	ownedVehicles: VehicleId[];
 }
 
 export const DEFAULT_PLAYER_DATA: PlayerData = {
@@ -356,4 +380,6 @@ export const DEFAULT_PLAYER_DATA: PlayerData = {
 	loginStreak: 0,
 	lastSpinDay: 0,
 	firstTimeRewardClaimed: false,
+	equippedVehicle: VehicleId.DefaultHachi,
+	ownedVehicles: [VehicleId.DefaultHachi],
 };

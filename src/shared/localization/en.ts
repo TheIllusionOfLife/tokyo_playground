@@ -195,6 +195,21 @@ export const EN: Record<string, string> = {
 	poi_claimed: "Claimed",
 	poi_undiscovered: "Not found",
 
+	// Vehicles
+	vehicle_tab: "Vehicles",
+	vehicle_hachi: "Hachi",
+	vehicle_neko: "Neko",
+	vehicle_kart: "Kart",
+	vehicle_dragon: "Japanese Dragon",
+	vehicle_tanuki: "Tanuki",
+	vehicle_shiba: "Shiba Inu",
+	vehicle_kitsune: "Kitsune",
+	vehicle_daruma: "Daruma",
+	vehicle_maneki: "Maneki-neko",
+
+	// Cosmetics preview
+	shop_try_on: "TRY ON",
+
 	// Zones
 	zone_ShibuyaSky: "Shibuya Sky",
 	zone_ShibuyaCrossing: "Shibuya Crossing",

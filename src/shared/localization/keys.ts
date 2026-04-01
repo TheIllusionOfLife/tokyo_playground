@@ -176,6 +176,21 @@ export const L_HINT_ABILITY_3 = "hint_ability_3";
 export const L_HINT_ABILITY_4 = "hint_ability_4";
 export const L_HINT_HACHI_EVOLVED = "hint_hachi_evolved";
 
+// Vehicles
+export const L_VEHICLE_TAB = "vehicle_tab";
+export const L_VEHICLE_HACHI = "vehicle_hachi";
+export const L_VEHICLE_NEKO = "vehicle_neko";
+export const L_VEHICLE_KART = "vehicle_kart";
+export const L_VEHICLE_DRAGON = "vehicle_dragon";
+export const L_VEHICLE_TANUKI = "vehicle_tanuki";
+export const L_VEHICLE_SHIBA = "vehicle_shiba";
+export const L_VEHICLE_KITSUNE = "vehicle_kitsune";
+export const L_VEHICLE_DARUMA = "vehicle_daruma";
+export const L_VEHICLE_MANEKI = "vehicle_maneki";
+
+// Cosmetics preview
+export const L_SHOP_TRY_ON = "shop_try_on";
+
 // Zone names
 export const L_ZONE_SHIBUYA_SKY = "zone_ShibuyaSky";
 export const L_ZONE_SHIBUYA_CROSSING = "zone_ShibuyaCrossing";

@@ -2,6 +2,8 @@ import { createProducer } from "@rbxts/reflex";
 import {
 	FeaturedUnlockData,
 	HachiRaceStateData,
+	ItemCategory,
+	ItemId,
 	MatchPhase,
 	MicroEventData,
 	MinigameId,
@@ -15,6 +17,8 @@ import {
 	ScoreboardEntry,
 	ShopItemData,
 	TimePhase,
+	VehicleId,
+	VehicleShopData,
 } from "shared/types";
 import { FEED_MESSAGE_TTL_SECONDS } from "shared/utils/feed";
 
@@ -89,6 +93,13 @@ export interface GameStoreState {
 	// Spectator
 	spectating: boolean;
 	spectateTargetName: string;
+	// Vehicles
+	vehicleItems: VehicleShopData[];
+	// Cosmetics Preview
+	previewActive: boolean;
+	previewItemId?: ItemId;
+	previewCategory?: ItemCategory;
+	previewExpiry: number;
 }
 
 const initialState: GameStoreState = {
@@ -134,6 +145,11 @@ const initialState: GameStoreState = {
 	currentZone: "",
 	spectating: false,
 	spectateTargetName: "",
+	vehicleItems: [],
+	previewActive: false,
+	previewItemId: undefined,
+	previewCategory: undefined,
+	previewExpiry: 0,
 };
 
 export const gameStore = createProducer(initialState, {
@@ -420,5 +436,32 @@ export const gameStore = createProducer(initialState, {
 		poiClaimedRewards: state.poiClaimedRewards.includes(zoneName)
 			? state.poiClaimedRewards
 			: [...state.poiClaimedRewards, zoneName],
+	}),
+
+	// ── Vehicles ─────────────────────────────────────────────────────────
+	setVehicleItems: (state, vehicleItems: VehicleShopData[]) => ({
+		...state,
+		vehicleItems,
+	}),
+
+	// ── Cosmetics Preview ───────────────────────────────────────────────
+	setPreview: (
+		state,
+		itemId: ItemId | undefined,
+		category: ItemCategory | undefined,
+		expiry: number,
+	) => ({
+		...state,
+		previewActive: itemId !== undefined,
+		previewItemId: itemId,
+		previewCategory: category,
+		previewExpiry: expiry,
+	}),
+	clearPreview: (state) => ({
+		...state,
+		previewActive: false,
+		previewItemId: undefined,
+		previewCategory: undefined,
+		previewExpiry: 0,
 	}),
 });

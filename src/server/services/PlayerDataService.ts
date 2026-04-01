@@ -17,6 +17,7 @@ import {
 	PlayerData,
 	PlayerMissions,
 	RewardBreakdown,
+	VehicleId,
 } from "shared/types";
 import { getCurrentDay } from "shared/utils/dayKey";
 import { AnalyticsService } from "./AnalyticsService";
@@ -406,6 +407,34 @@ export class PlayerDataService implements OnStart {
 		const profile = this.profiles.get(player);
 		if (profile) {
 			delete profile.Data.equippedItems[category];
+		}
+	}
+
+	// ── Vehicle methods ─────────────────────────────────────────────────────
+
+	getEquippedVehicle(player: Player): VehicleId {
+		return (
+			this.profiles.get(player)?.Data.equippedVehicle ?? VehicleId.DefaultHachi
+		);
+	}
+
+	setEquippedVehicle(player: Player, vehicleId: VehicleId) {
+		const profile = this.profiles.get(player);
+		if (profile) {
+			profile.Data.equippedVehicle = vehicleId;
+		}
+	}
+
+	getOwnedVehicles(player: Player): VehicleId[] {
+		return (
+			this.profiles.get(player)?.Data.ownedVehicles ?? [VehicleId.DefaultHachi]
+		);
+	}
+
+	addOwnedVehicle(player: Player, vehicleId: VehicleId) {
+		const profile = this.profiles.get(player);
+		if (profile && !profile.Data.ownedVehicles.includes(vehicleId)) {
+			profile.Data.ownedVehicles.push(vehicleId);
 		}
 	}
 
