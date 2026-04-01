@@ -99,10 +99,10 @@ export function SpinWheel() {
 					AnchorPoint={new Vector2(1, 0)}
 					BackgroundColor3={
 						alreadySpun
-							? Color3.fromRGB(50, 50, 60)
-							: Color3.fromRGB(70, 30, 100)
+							? Color3.fromRGB(60, 45, 20)
+							: Color3.fromRGB(90, 50, 20)
 					}
-					BackgroundTransparency={0.3}
+					BackgroundTransparency={0.2}
 					BorderSizePixel={0}
 				>
 					<uicorner CornerRadius={new UDim(0, 15)} />
@@ -111,14 +111,14 @@ export function SpinWheel() {
 						BackgroundTransparency={1}
 						TextColor3={
 							alreadySpun
-								? Color3.fromRGB(130, 130, 140)
-								: Color3.fromRGB(255, 200, 255)
+								? Color3.fromRGB(180, 160, 100)
+								: Color3.fromRGB(255, 220, 100)
 						}
 						TextScaled={true}
 						Font={Enum.Font.GothamBold}
 						Text={
 							alreadySpun
-								? `\u{2705} ${t("spin_toggle")}`
+								? `\u{2B50} ${t("spin_toggle")}`
 								: `\u{1F3B0} ${t("spin_toggle")}`
 						}
 						Event={{
