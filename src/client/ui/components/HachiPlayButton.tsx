@@ -78,7 +78,7 @@ export function HachiPlayButton() {
 				TextColor3={Color3.fromRGB(255, 255, 255)}
 				Text={"\u{1F43E}"}
 				TextScaled={true}
-				Font={Enum.Font.GothamBold}
+				Font={Enum.Font.FredokaOne}
 				ZIndex={10}
 				Event={{
 					Activated: () => {

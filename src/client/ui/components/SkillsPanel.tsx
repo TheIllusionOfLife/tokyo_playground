@@ -15,6 +15,7 @@ import {
 	L_SKILL_UNLOCKED,
 	L_SKILL_WALL_RUN,
 	L_SKILL_WALL_RUN_DESC,
+	L_SKILLS_BUTTON,
 } from "shared/localization/keys";
 import { GameStoreState, gameStore } from "shared/store/game-store";
 import { MatchPhase, MinigameId } from "shared/types";
@@ -101,7 +102,7 @@ export function SkillsPanel() {
 				TextColor3={Color3.fromRGB(200, 150, 255)}
 				TextScaled={true}
 				Font={Enum.Font.GothamBold}
-				Text={t("skills_button")}
+				Text={t(L_SKILLS_BUTTON)}
 				Event={{
 					Activated: () => gameStore.setActiveOverlay(open ? "none" : "skills"),
 				}}

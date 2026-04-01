@@ -198,6 +198,10 @@ export const L_VEHICLE_SHINKANSEN = "vehicle_shinkansen";
 
 // Cosmetics preview
 export const L_SHOP_TRY_ON = "shop_try_on";
+export const L_SHOP_TAB_ACCESSORY = "shop_tab_accessory";
+
+// Skills
+export const L_SKILLS_BUTTON = "skills_button";
 
 // Spin
 export const L_SPIN_TITLE = "spin_title";

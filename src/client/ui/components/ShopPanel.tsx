@@ -8,6 +8,7 @@ import {
 	L_SHOP_BUY,
 	L_SHOP_EQUIP,
 	L_SHOP_NEED_PTS,
+	L_SHOP_TAB_ACCESSORY,
 	L_SHOP_TRY_ON,
 	L_SHOP_UNEQUIP,
 	L_VEHICLE_TAB,
@@ -560,7 +561,7 @@ export function ShopPanel() {
 								TextColor3={Color3.fromRGB(255, 255, 255)}
 								TextScaled={true}
 								Font={Enum.Font.GothamBold}
-								Text={t("shop_tab_accessory")}
+								Text={t(L_SHOP_TAB_ACCESSORY)}
 								ZIndex={19}
 								Event={{ Activated: () => setTab("cosmetics") }}
 							>
