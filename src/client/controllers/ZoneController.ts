@@ -35,6 +35,10 @@ export class ZoneController implements OnStart {
 			this.poiSynced = true;
 			gameStore.setDiscoveredPoi(discovered);
 			gameStore.setPoiClaimedRewards(claimed);
+			// If already in a zone before sync arrived, fire discovery now
+			if (this.currentZone !== "" && !discovered.includes(this.currentZone)) {
+				clientEvents.poiDiscovered.fire(this.currentZone);
+			}
 		});
 
 		this.zoneParts = CollectionService.GetTagged(ZONE_TAG).filter(
