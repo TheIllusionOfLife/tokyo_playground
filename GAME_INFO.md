@@ -20,7 +20,7 @@ Welcome to Shibuya, where the whole city is your playground.
 
 Jump into classic games you already know: hide-and-seek with a twist, chaotic tag at the famous Scramble Crossing, and a wild item-collecting race on Hachi the dog. Every round is fast, every round is different.
 
-Explore real Shibuya streets between matches. Discover stamps, meet NPCs, draw your fortune at the shrine, and watch fireworks light up the night sky. Earn points, level up, and unlock hats, trails, and emotes to stand out.
+Explore real Shibuya streets between matches. Discover Points of Interest, meet NPCs, draw your fortune at the shrine, and watch fireworks light up the night sky. Earn points, level up, spin the lucky wheel, and unlock hats, trails, and accessories to stand out.
 
 Bring your friends or make new ones. The next game starts in seconds.
 
@@ -34,7 +34,7 @@ Bring your friends or make new ones. The next game starts in seconds.
 
 みんなが知ってる遊びを、東京スケールで。路地裏のかくれんぼ、スクランブル交差点の鬼ごっこ、ハチ公に乗ってアイテム集め。毎ラウンド速くて、毎ラウンド違う。
 
-試合の合間には本物の渋谷を探検。スタンプラリー、NPCとの出会い、神社でおみくじ、夜空の花火。ポイントを貯めてレベルアップ、帽子やトレイル、エモートをアンロックしよう。
+試合の合間には本物の渋谷を探検。名所めぐり、NPCとの出会い、神社でおみくじ、夜空の花火。ポイントを貯めてレベルアップ、ラッキースピンで帽子やトレイルをアンロックしよう。
 
 友達と一緒でも、一人でも。次のゲームは数秒で始まる。
 
@@ -66,8 +66,8 @@ Bring your friends or make new ones. The next game starts in seconds.
 
 | Name | EN Title | JA Title | Description |
 |------|----------|----------|-------------|
-| Can Kick | Street Hide-and-Seek | 路地裏かくれんぼ | Oni hunts hiders in the back alleys. Kick the can to free your friends. |
-| Shibuya Scramble | Shibuya Chaos | 渋谷カオス | Tag game at the famous crossing. Dodge cars, ride slides, blend into the crowd. |
+| Can Kick | Can Kick | 缶蹴り | Oni hunts hiders in the back alleys. Kick the can to free your friends. |
+| Shibuya Scramble | Shibuya Hide & Seek | 渋谷かくれんぼ | Hide anywhere in Shibuya. Oni chases you down. Dodge cars and blend into the crowd. |
 | Hachi Ride | Ride Hachi | ハチ公ライド | Race on Hachi the dog. Collect items, evolve, and steal the lead. |
 
 ---
@@ -78,8 +78,9 @@ Bring your friends or make new ones. The next game starts in seconds.
 - 3 unique mini-games with fast matchmaking
 - Ride Hachi the dog with evolution system
 - Day/night cycle with micro-events
-- 30 stamps to discover across the city
-- Cosmetic shop with hats, trails, and emotes
+- Discover Points of Interest across real Shibuya
+- Cosmetic shop with hats, trails, and accessories
+- Daily login streaks, lucky spin, and leaderboards
 - Cross-platform: PC, Mobile, Console
 
 ---

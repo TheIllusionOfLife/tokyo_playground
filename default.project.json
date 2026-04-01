@@ -39,6 +39,12 @@
 				}
 			}
 		},
+		"ReplicatedFirst": {
+			"$className": "ReplicatedFirst",
+			"TS": {
+				"$path": "out/replicated-first"
+			}
+		},
 		"Workspace": {
 			"$className": "Workspace"
 		},

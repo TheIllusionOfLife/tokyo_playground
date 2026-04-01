@@ -25,8 +25,21 @@ export const CAN_KICK_BONUS = 20;
 export const LOSS_MULTIPLIER = 0.6;
 export const DAILY_LOGIN_BONUS_POINTS = 20;
 
+// Login streak bonuses (index = day in streak, capped at day 7)
+export const LOGIN_STREAK_BONUSES = [20, 20, 30, 40, 50, 60, 80, 100];
+
+// First-time reward
+export const FIRST_TIME_REWARD_POINTS = 50;
+
+// Lucky spin rewards (index = segment, weighted random)
+export const SPIN_REWARDS = [5, 10, 10, 15, 15, 20, 25, 50];
+
+// Friend referral
+export const FRIEND_REFERRAL_BONUS = 15;
+
 // Can Kick
-export const ONI_CATCH_RADIUS = 8;
+export const ONI_CATCH_RADIUS = 10;
+export const ONI_MOUNTED_CATCH_RADIUS = 14;
 export const CAN_KICK_RADIUS = 10;
 export const ONI_COUNT_DURATION = 10;
 export const CAN_RELOCATE_INTERVAL = 35;
@@ -77,17 +90,17 @@ export const MINIGAME_INTROS: Record<
 	[MinigameId.CanKick]: {
 		titleKey: "intro_can_kick_title",
 		subtitleKey: "intro_can_kick_sub",
-		durationSeconds: 5,
+		durationSeconds: 10,
 	},
 	[MinigameId.ShibuyaScramble]: {
 		titleKey: "intro_scramble_title",
 		subtitleKey: "intro_scramble_sub",
-		durationSeconds: 5,
+		durationSeconds: 10,
 	},
 	[MinigameId.HachiRide]: {
 		titleKey: "intro_hachi_title",
 		subtitleKey: "intro_hachi_sub",
-		durationSeconds: 5,
+		durationSeconds: 10,
 	},
 };
 
@@ -400,6 +413,20 @@ export const BOUNDARY_AABB_MIN = new Vector3(-11900, -50, 32400);
 export const BOUNDARY_AABB_MAX = new Vector3(-9400, 500, 34500);
 export const BOUNDARY_WARNING_RATIO = 0.6; // start warning at 60% toward edge (covers suburb)
 
+// Point of Interest discovery
+export const POI_DISCOVERY_POINTS = 10;
+export const ALL_POI_ZONES = [
+	"ShibuyaSky",
+	"ShibuyaCrossing",
+	"HachikoSquare",
+	"CenterGai",
+	"SkySlideHub",
+	"Dogenzaka",
+	"Hikarie",
+	"MiyashitaPark",
+	"ShibuyaStation",
+];
+
 export const ZONE_TAG = "Zone";
 export const ZONE_DEBOUNCE = 30; // seconds before re-showing same zone
 export const ZONE_DISPLAY_DURATION = 3; // seconds to show zone popup
@@ -416,7 +443,7 @@ export const HACHI_ROUND_DURATION =
 	MINIGAME_CONFIGS[MinigameId.HachiRide].roundDuration;
 export const HACHI_STARTING_EVOLUTION = 2; // start with double jump + wall run
 export const HACHI_LOBBY_MIN_LEVEL = 3; // lobby Hachi always has double jump + wall run
-export const HACHI_EVOLUTION_THRESHOLDS = [0, 5, 12, 20, 30];
+export const HACHI_EVOLUTION_THRESHOLDS = [0, 10, 24, 40, 60];
 // Max air jumps per evolution level (index = level)
 // Level 0: 0, Level 1-2: 1 (double), Level 3: 2 (triple), Level 4: 3 (quadruple)
 export const HACHI_MAX_AIR_JUMPS = [0, 1, 1, 2, 3];
@@ -430,8 +457,10 @@ export const HACHI_WALL_RUN_SPEED = 75;
 export const HACHI_WALL_RUN_RAYCAST = 3;
 export const HACHI_WALL_RUN_MAX_DUR = 3;
 export const HACHI_ITEM_POINT_VALUE = 1;
-export const HACHI_BONUS_ITEM_COUNT = 80;
+export const HACHI_BONUS_ITEM_COUNT = 50;
 export const HACHI_BONUS_ITEM_VALUE = 5;
+export const HACHI_ROOFTOP_BONUS_COUNT = 30;
+export const HACHI_SKY_DROP_BONUS_COUNT = 20;
 export const HACHI_WIN_ITEM_BONUS = 20;
 export const HACHI_JUMP_VELOCITY = 106; // 150 * sqrt(0.5) for half jump apex
 export const HACHI_JUMP_COOLDOWN = 0.1; // seconds between jump requests
@@ -463,7 +492,7 @@ export const HACHI_BLDG_MIN_X = -11364;
 export const HACHI_BLDG_MAX_X = -9908;
 export const HACHI_BLDG_MIN_Z = 32734;
 export const HACHI_BLDG_MAX_Z = 34065;
-export const HACHI_SKY_DROP_ACTIVE_RATIO = 0.5; // fraction of items that actually fall per round
+export const HACHI_SKY_DROP_ACTIVE_RATIO = 1.0; // all items fall (distribution now fixed: 30 rooftop + 20 random)
 export const HACHI_CITY_CENTER = new Vector3(-10608, 0, 33375);
 // DEM bounds (_533935_dem_6697_op_gml)
 export const HACHI_CITY_MIN_X = -11679;
@@ -474,20 +503,41 @@ export const HACHI_ROOFTOP_BONUS_OFFSET_Y = 50;
 export const HACHI_ROOFTOP_BUILDINGS: { topY: number; x: number; z: number }[] =
 	[
 		{ topY: 216.7, x: -10476, z: 33443 },
-		{ topY: 187.2, x: -10689, z: 33635 },
-		{ topY: 178.3, x: -10362, z: 33375 },
+		{ topY: 187.2, x: -10689, z: 33634 },
+		{ topY: 178.3, x: -10362, z: 33374 },
 		{ topY: 173.8, x: -10475, z: 33623 },
-		{ topY: 172.0, x: -10402, z: 33558 },
-		{ topY: 156.0, x: -10833, z: 32874 },
-		{ topY: 139.5, x: -10226, z: 33407 },
-		{ topY: 137.6, x: -11132, z: 33877 },
-		{ topY: 137.1, x: -10466, z: 33711 },
-		{ topY: 135.1, x: -9941, z: 33485 },
+		{ topY: 172.0, x: -10402, z: 33557 },
+		{ topY: 156.0, x: -10833, z: 32873 },
+		{ topY: 139.5, x: -10227, z: 33406 },
+		{ topY: 137.6, x: -11133, z: 33876 },
+		{ topY: 137.1, x: -10466, z: 33710 },
+		{ topY: 135.1, x: -9942, z: 33484 },
+		{ topY: 129.6, x: -10252, z: 33066 },
+		{ topY: 124.4, x: -10938, z: 33638 },
+		{ topY: 121.7, x: -10882, z: 33278 },
+		{ topY: 116.8, x: -10586, z: 33750 },
+		{ topY: 116.2, x: -10956, z: 33046 },
+		{ topY: 114.0, x: -10764, z: 33454 },
+		{ topY: 112.6, x: -10153, z: 33369 },
+		{ topY: 111.6, x: -10752, z: 33093 },
+		{ topY: 108.3, x: -10642, z: 33514 },
+		{ topY: 101.1, x: -10673, z: 32777 },
+		{ topY: 92.4, x: -10183, z: 33494 },
+		{ topY: 92.0, x: -11008, z: 33520 },
+		{ topY: 91.9, x: -10837, z: 32919 },
+		{ topY: 88.1, x: -9982, z: 33037 },
+		{ topY: 87.7, x: -9936, z: 33018 },
+		{ topY: 87.6, x: -10506, z: 32968 },
+		{ topY: 87.2, x: -11048, z: 33626 },
+		{ topY: 86.4, x: -10122, z: 33115 },
+		{ topY: 85.8, x: -10944, z: 32914 },
+		{ topY: 85.7, x: -10081, z: 33148 },
 	];
 
 // Shibuya Scramble
 
-export const SCRAMBLE_TAG_RADIUS = 8;
+export const SCRAMBLE_TAG_RADIUS = 10;
+export const SCRAMBLE_MOUNTED_TAG_RADIUS = 14;
 export const SCRAMBLE_ONI_COUNT_DURATION = 10;
 export const SCRAMBLE_CROWD_WAVE_INTERVAL = 20;
 export const SCRAMBLE_CROWD_WAVE_DURATION = 10;
@@ -518,6 +568,8 @@ export const SE_BONUS_PICKUP = "rbxassetid://6518811702"; // magic pickup (1.2s)
 export const SE_EVOLVE = "rbxassetid://6647877129"; // magic level-up sparkle (3.1s)
 export const SE_SLIDE = "rbxassetid://151284431"; // brief swoosh (2.0s)
 export const SE_JUMP = "rbxassetid://5682262154"; // cartoon bounce (0.5s)
+export const SE_HACHI_JUMP = "rbxassetid://9125402735"; // cute pop bounce
+export const HACHI_PAW_DECAL_ID = "rbxassetid://300134974"; // paw print for jump button
 export const SE_CAN_KICK = "rbxassetid://2865227271"; // triumphant chime (2.0s)
 export const SE_CATCH = SE_CAN_KICK; // reuses can kick chime for catch impact
 export const SE_TICK = "rbxassetid://12221967"; // classic tick (0.3s)

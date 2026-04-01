@@ -149,7 +149,7 @@ export class HachiRideMinigame implements IMinigame {
 			this.playerObjects.set(player.UserId, player);
 		}
 
-		// Rooftop bonus items: always spawn (10, one per top building)
+		// Rooftop bonus items: 30 deterministic (one per top building)
 		for (const bldg of HACHI_ROOFTOP_BUILDINGS) {
 			const xOff = (math.random() - 0.5) * 10;
 			const zOff = (math.random() - 0.5) * 10;
@@ -167,7 +167,7 @@ export class HachiRideMinigame implements IMinigame {
 		// Generate all candidate positions, then randomly select a subset
 		const rooftopCount = HACHI_ROOFTOP_BUILDINGS.size();
 		const regularTotal = HACHI_ITEMS_TO_SPAWN - HACHI_BONUS_ITEM_COUNT;
-		const randomBonusTotal = HACHI_BONUS_ITEM_COUNT - rooftopCount; // 80 - 10 = 70
+		const randomBonusTotal = HACHI_BONUS_ITEM_COUNT - rooftopCount; // 50 - 30 = 20
 
 		// Build pool of candidate items (regular + random bonus)
 		interface CandidateItem {

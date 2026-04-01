@@ -69,6 +69,39 @@ export class CanKickController implements OnStart {
 		clientEvents.oniReveal.connect((oniUserId, durationSeconds) => {
 			this.showOniReveal(oniUserId, durationSeconds);
 		});
+
+		// Smooth jail teleport: brief black fade before/after teleport
+		clientEvents.jailTeleportFade.connect(() => {
+			const playerGui = Players.LocalPlayer.FindFirstChildOfClass("PlayerGui");
+			if (!playerGui) return;
+			const fadeGui = new Instance("ScreenGui");
+			fadeGui.Name = "JailFade";
+			fadeGui.DisplayOrder = 100;
+			fadeGui.IgnoreGuiInset = true;
+			fadeGui.Parent = playerGui;
+			const frame = new Instance("Frame");
+			frame.Size = new UDim2(1, 0, 1, 0);
+			frame.BackgroundColor3 = Color3.fromRGB(0, 0, 0);
+			frame.BackgroundTransparency = 1;
+			frame.BorderSizePixel = 0;
+			frame.Parent = fadeGui;
+			// Fade in
+			TweenService.Create(
+				frame,
+				new TweenInfo(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.In),
+				{ BackgroundTransparency: 0 },
+			).Play();
+			// Fade out after teleport completes
+			task.delay(0.4, () => {
+				const fadeOut = TweenService.Create(
+					frame,
+					new TweenInfo(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+					{ BackgroundTransparency: 1 },
+				);
+				fadeOut.Play();
+				fadeOut.Completed.Once(() => fadeGui.Destroy());
+			});
+		});
 	}
 
 	private startProximityLoop(can: Model) {

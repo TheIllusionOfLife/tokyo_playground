@@ -63,6 +63,7 @@ export class LobbyService implements OnStart {
 	private readonly lobbyAirJumpsUsed = new Map<number, number>();
 	private slideRamps: BasePart[] = [];
 	private matchActive = false;
+	private matchOniUserIds = new Set<number>();
 	private onStartRequested?: (minigameId: MinigameId) => void;
 
 	constructor(private readonly playerDataService: PlayerDataService) {}
@@ -73,6 +74,12 @@ export class LobbyService implements OnStart {
 
 	setMatchActive(active: boolean) {
 		this.matchActive = active;
+		if (!active) this.matchOniUserIds.clear();
+	}
+
+	/** Allow Oni to toggle Hachi mount/dismount during matches. */
+	setMatchOni(userId: number) {
+		this.matchOniUserIds.add(userId);
 	}
 
 	onStart() {
@@ -195,7 +202,8 @@ export class LobbyService implements OnStart {
 	/** HUD toggle: client requests costume equip/unequip. */
 	private setupHachiToggle() {
 		this.serverEvents.hachiToggleCostume.connect((player, equip) => {
-			if (this.matchActive) return;
+			// During matches, only Oni can toggle mount/dismount
+			if (this.matchActive && !this.matchOniUserIds.has(player.UserId)) return;
 
 			if (equip) {
 				if (isPlayerMounted(player)) return; // already mounted
@@ -204,12 +212,15 @@ export class LobbyService implements OnStart {
 					| undefined;
 				if (!template) return;
 				const clone = template.Clone();
-				const data = this.playerDataService.getPlayerData(player);
-				const evoLevel = math.max(
-					data?.maxHachiLevel ?? 0,
-					HACHI_LOBBY_MIN_LEVEL,
-				);
-				if (!equipHachiCostume(player, clone, evoLevel, true)) {
+				// During matches, Oni remounts at level 0 (no evolution abilities)
+				// In lobby, use player's max level with lobby minimum
+				const evoLevel = this.matchActive
+					? 0
+					: math.max(
+							this.playerDataService.getPlayerData(player)?.maxHachiLevel ?? 0,
+							HACHI_LOBBY_MIN_LEVEL,
+						);
+				if (!equipHachiCostume(player, clone, evoLevel, !this.matchActive)) {
 					clone.Destroy();
 				}
 			} else {

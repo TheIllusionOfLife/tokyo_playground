@@ -107,6 +107,12 @@ export function equipHachiCostume(
 		}
 	}
 
+	// Disable "Hachi" BillboardGui text (not useful during gameplay)
+	const billboard = hachiModel
+		.FindFirstChild("Head")
+		?.FindFirstChildOfClass("BillboardGui");
+	if (billboard) billboard.Enabled = false;
+
 	// Make all Hachi parts cosmetic-only (no physics impact on Humanoid)
 	for (const desc of hachiModel.GetDescendants()) {
 		if (desc.IsA("BasePart")) {

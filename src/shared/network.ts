@@ -85,10 +85,15 @@ interface ServerToClientEvents {
 	timeSync(serverClock: number): void;
 	lightingOverride(preset: string): void;
 
-	// ── Living Shibuya: Stamps ───────────────────────────────────────────
+	// ── Living Shibuya: Stamps (deprecated, kept for compat) ────────────
 	stampDiscovered(stampId: string, displayName: string): void;
 	stampSetCompleted(setId: string, rewardItemId: string): void;
 	stampCardData(discovered: string[], totalCount: number): void;
+
+	// ── Point of Interest Discovery ─────────────────────────────────────
+	poiDiscoveredConfirm(zoneName: string): void;
+	poiRewardClaimed(zoneName: string, points: number): void;
+	poiSyncAll(discovered: string[], claimed: string[]): void;
 
 	// ── Living Shibuya: NPCs ─────────────────────────────────────────────
 	npcSpawned(npcId: string, position: Vector3): void;
@@ -116,8 +121,17 @@ interface ServerToClientEvents {
 	bonOdoriNote(direction: number, beatTime: number): void;
 	foodTruckFound(playerName: string, slotsRemaining: number): void;
 
+	// ── Engagement ─────────────────────────────────────────────────────
+	spinResult(reward: number, success: boolean): void;
+	leaderboardData(
+		entries: { rank: number; name: string; points: number }[],
+	): void;
+
 	// ── AFK ─────────────────────────────────────────────────────────────
 	afkRemoved(): void;
+
+	// ── Can Kick: jail teleport ─────────────────────────────────────────
+	jailTeleportFade(): void;
 
 	// ── Boundary ────────────────────────────────────────────────────────
 	boundaryWarning(ratio: number): void;
@@ -143,8 +157,12 @@ interface ClientToServerEvents {
 	requestHachiSlide(): void;
 	requestSpiritWave(): void;
 
-	// ── Living Shibuya: Stamps ───────────────────────────────────────────
+	// ── Living Shibuya: Stamps (deprecated) ─────────────────────────────
 	requestStampCard(): void;
+
+	// ── Point of Interest Discovery ─────────────────────────────────────
+	poiDiscovered(zoneName: string): void;
+	claimPoiReward(zoneName: string): void;
 
 	// ── Living Shibuya: NPCs ─────────────────────────────────────────────
 	requestNpcInteraction(npcId: string): void;
@@ -155,6 +173,10 @@ interface ClientToServerEvents {
 	interactFoodTruck(): void;
 	obstacleCourseCheckpoint(checkpointIndex: number): void;
 	obstacleCourseFinish(): void; // fix H2: no client-supplied time; server computes elapsed
+
+	// ── Engagement ──────────────────────────────────────────────────────
+	requestSpin(): void;
+	requestLeaderboard(): void;
 
 	// ── Minigame start request ───────────────────────────────────────────
 	requestMinigameStart(minigameId: MinigameId): void;

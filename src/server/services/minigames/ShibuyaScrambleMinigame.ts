@@ -7,7 +7,9 @@ import {
 	Workspace,
 } from "@rbxts/services";
 import {
+	ACTION_COOLDOWN,
 	DEFAULT_WALK_SPEED,
+	HACHI_WALK_SPEEDS,
 	SCRAMBLE_CAR_DODGE_RADIUS,
 	SCRAMBLE_CAR_SPAWN_INTERVAL,
 	SCRAMBLE_CAR_SPEED_DURATION,
@@ -16,6 +18,7 @@ import {
 	SCRAMBLE_CROWD_WAVE_DURATION,
 	SCRAMBLE_CROWD_WAVE_INTERVAL,
 	SCRAMBLE_MAX_ACTIVE_SPIRIT_WAVES,
+	SCRAMBLE_MOUNTED_TAG_RADIUS,
 	SCRAMBLE_ONI_COUNT_DURATION,
 	SCRAMBLE_SLIDE_COOLDOWN,
 	SCRAMBLE_SLIDE_SPEED,
@@ -33,6 +36,12 @@ import {
 	ShibuyaScramblePlayerState,
 } from "shared/types";
 import { canTriggerSpiritWave } from "shared/utils/scrambleCrowd";
+import {
+	equipHachiCostume,
+	forceUnmount,
+	isPlayerMounted,
+	unequipHachiCostume,
+} from "../../utils/hachiCostume";
 import {
 	fireHintText,
 	startOniCountdown,
@@ -65,6 +74,8 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 	private lastHintText = "";
 	private spiritCharges = new Map<number, number>();
 	private activeSpiritWaveCount = 0;
+	private lastAutoCatchTime = 0;
+	private oniUserId?: number;
 
 	constructor(
 		private readonly serverEvents: ServerEvents,
@@ -143,9 +154,18 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 			roles.set(player, role);
 			const state = this.playerStates.get(player.UserId);
 			if (state) state.role = role;
+			if (role === PlayerRole.Oni) this.oniUserId = player.UserId;
 		}
 
 		this.teleportPlayers(players, roles);
+
+		// Auto-mount Oni on Hachi
+		for (const player of players) {
+			if (roles.get(player) === PlayerRole.Oni) {
+				this.mountOni(player);
+			}
+		}
+
 		return roles;
 	}
 
@@ -164,7 +184,7 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 			() => {
 				if (!this.oniCounting) return;
 				this.oniCounting = false;
-				this.setOniWalkSpeed(DEFAULT_WALK_SPEED);
+				this.setOniWalkSpeed(HACHI_WALK_SPEEDS[0]);
 				this.lastHintText = fireHintText(
 					this.serverEvents,
 					"hint_oni_hunting",
@@ -176,7 +196,75 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 		);
 	}
 
-	tick(_dt: number) {}
+	tick(_dt: number) {
+		if (this.oniCounting) return;
+		this.checkAutoCatch();
+	}
+
+	private checkAutoCatch() {
+		const now = os.clock();
+		if (now - this.lastAutoCatchTime < ACTION_COOLDOWN) return;
+
+		if (this.oniUserId === undefined) return;
+		const oniPlayer = this.playerObjects.get(this.oniUserId);
+		if (!oniPlayer?.Character) return;
+		const oniHrp = oniPlayer.Character.FindFirstChild("HumanoidRootPart") as
+			| BasePart
+			| undefined;
+		if (!oniHrp) return;
+
+		const oniPos = oniHrp.Position;
+		const mounted = isPlayerMounted(oniPlayer);
+		const tagRadius = mounted
+			? SCRAMBLE_MOUNTED_TAG_RADIUS
+			: SCRAMBLE_TAG_RADIUS;
+
+		let closestHider: Player | undefined;
+		let closestDist = tagRadius;
+
+		for (const [userId, state] of this.playerStates) {
+			if (state.role !== PlayerRole.Hider || state.isTagged) continue;
+			const hiderPlayer = this.playerObjects.get(userId);
+			if (!hiderPlayer?.Character) continue;
+			const hiderHrp = hiderPlayer.Character.FindFirstChild(
+				"HumanoidRootPart",
+			) as BasePart | undefined;
+			if (!hiderHrp) continue;
+
+			const dist = oniPos.sub(hiderHrp.Position).Magnitude;
+			if (dist <= closestDist) {
+				closestDist = dist;
+				closestHider = hiderPlayer;
+			}
+		}
+
+		if (!closestHider) return;
+
+		this.lastAutoCatchTime = now;
+		this.tagHider(oniPlayer, closestHider);
+	}
+
+	private tagHider(oniPlayer: Player, hider: Player) {
+		const oniState = this.playerStates.get(oniPlayer.UserId);
+		const hiderState = this.playerStates.get(hider.UserId);
+		if (!oniState || !hiderState) return;
+
+		hiderState.isTagged = true;
+		oniState.catchCount += 1;
+		this.spiritCharges.set(hider.UserId, 1);
+
+		this.serverEvents.playerCaught.broadcast(hider.UserId);
+		this.serverEvents.spiritChargeChanged.fire(hider, 1);
+		this.lastHintText = fireHintText(
+			this.serverEvents,
+			"hint_player_tagged",
+			this.lastHintText,
+			[hider.Name],
+		);
+		print(
+			`[ShibuyaScramble] ${hider.Name} tagged by ${oniPlayer.Name} (${oniState.catchCount} tags)`,
+		);
+	}
 
 	checkWinCondition(): RoundResult | undefined {
 		if (this.oniCounting) return undefined;
@@ -235,50 +323,8 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 		});
 	}
 
-	handleCatchRequest(player: Player) {
-		const oniState = this.playerStates.get(player.UserId);
-		if (!oniState || oniState.role !== PlayerRole.Oni) return;
-		if (this.oniCounting) return;
-
-		const oniChar = player.Character;
-		if (!oniChar) return;
-		const oniPos = oniChar.GetPivot().Position;
-
-		let closestHider: Player | undefined;
-		let closestDist = SCRAMBLE_TAG_RADIUS;
-
-		for (const [userId, state] of this.playerStates) {
-			if (state.role !== PlayerRole.Hider || state.isTagged) continue;
-			const hiderPlayer = this.playerObjects.get(userId);
-			if (!hiderPlayer?.Character) continue;
-			const dist = oniPos.sub(
-				hiderPlayer.Character.GetPivot().Position,
-			).Magnitude;
-			if (dist <= closestDist) {
-				closestDist = dist;
-				closestHider = hiderPlayer;
-			}
-		}
-
-		if (!closestHider) return;
-		const hiderState = this.playerStates.get(closestHider.UserId);
-		if (!hiderState) return;
-
-		hiderState.isTagged = true;
-		oniState.catchCount += 1;
-		this.spiritCharges.set(closestHider.UserId, 1);
-
-		this.serverEvents.playerCaught.broadcast(closestHider.UserId);
-		this.serverEvents.spiritChargeChanged.fire(closestHider, 1);
-		this.lastHintText = fireHintText(
-			this.serverEvents,
-			"hint_player_tagged",
-			this.lastHintText,
-			[closestHider.Name],
-		);
-		print(
-			`[ShibuyaScramble] ${closestHider.Name} tagged by ${player.Name} (${oniState.catchCount} tags)`,
-		);
+	handleCatchRequest(_player: Player) {
+		// Auto-catch in tick() handles all tagging now
 	}
 
 	removePlayer(userId: number) {
@@ -295,7 +341,7 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 			this.serverEvents,
 			this.playerStates,
 			this.playerObjects,
-			DEFAULT_WALK_SPEED,
+			HACHI_WALK_SPEEDS[0],
 		);
 		this.countdownThread = undefined;
 		// Stop crowd wave loop immediately (called before cleanup during results display)
@@ -315,6 +361,15 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 
 	cleanup() {
 		this.stopCountdown();
+		// Unequip Oni's Hachi mount before clearing state
+		if (this.oniUserId !== undefined) {
+			const oniPlayer = this.playerObjects.get(this.oniUserId);
+			if (oniPlayer) {
+				if (!unequipHachiCostume(oniPlayer)) {
+					forceUnmount(oniPlayer);
+				}
+			}
+		}
 		this.crowdLoopRunning = false;
 		if (this.crowdThread) {
 			task.cancel(this.crowdThread);
@@ -328,11 +383,27 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 		}
 		this.despawnCarNPCs();
 		this.lastHintText = "";
+		this.lastAutoCatchTime = 0;
+		this.oniUserId = undefined;
 		this.playerStates.clear();
 		this.playerObjects.clear();
 		this.slideCooldowns.clear();
 		this.spiritCharges.clear();
 		this.activeSpiritWaveCount = 0;
+	}
+
+	private mountOni(player: Player) {
+		const hachiTemplate = ServerStorage.FindFirstChild("HachiTemplate") as
+			| Model
+			| undefined;
+		if (!hachiTemplate) {
+			warn("[ShibuyaScramble] HachiTemplate not found for Oni mount");
+			return;
+		}
+		const hachiClone = hachiTemplate.Clone();
+		if (!equipHachiCostume(player, hachiClone, 0)) {
+			hachiClone.Destroy();
+		}
 	}
 
 	private runCrowdLoop() {

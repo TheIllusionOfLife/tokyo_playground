@@ -1,6 +1,7 @@
 import React from "@rbxts/react";
 import { useSelector } from "@rbxts/react-reflex";
 import { clientEvents } from "client/network";
+import { ALL_POI_ZONES } from "shared/constants";
 import { t, tMission } from "shared/localization";
 import {
 	L_CLAIMED,
@@ -10,7 +11,13 @@ import {
 import { GameStoreState, gameStore } from "shared/store/game-store";
 import { MatchPhase, MinigameId, MissionProgressData } from "shared/types";
 
-function MissionRow({ mission }: { mission: MissionProgressData }) {
+function MissionRow({
+	mission,
+	layoutOrder,
+}: {
+	mission: MissionProgressData;
+	layoutOrder?: number;
+}) {
 	const canClaim =
 		mission.progress >= mission.target && !mission.rewardCollected;
 	const fillRatio = math.min(mission.progress / math.max(mission.target, 1), 1);
@@ -18,6 +25,7 @@ function MissionRow({ mission }: { mission: MissionProgressData }) {
 	return (
 		<frame
 			key={mission.id}
+			LayoutOrder={layoutOrder ?? 0}
 			Size={new UDim2(1, -8, 0, 50)}
 			BackgroundColor3={Color3.fromRGB(35, 35, 50)}
 			BackgroundTransparency={0.2}
@@ -89,6 +97,103 @@ function MissionRow({ mission }: { mission: MissionProgressData }) {
 	);
 }
 
+function PoiRow({
+	zoneName,
+	discovered,
+	claimed,
+	layoutOrder,
+}: {
+	zoneName: string;
+	discovered: boolean;
+	claimed: boolean;
+	layoutOrder: number;
+}) {
+	const displayName = t(`zone_${zoneName}`) || zoneName;
+	const canClaim = discovered && !claimed;
+
+	return (
+		<frame
+			key={zoneName}
+			LayoutOrder={layoutOrder}
+			Size={new UDim2(1, -8, 0, 36)}
+			BackgroundColor3={Color3.fromRGB(35, 35, 50)}
+			BackgroundTransparency={0.2}
+			BorderSizePixel={0}
+		>
+			<uicorner CornerRadius={new UDim(0, 4)} />
+			{/* Status icon */}
+			<textlabel
+				Size={new UDim2(0, 20, 1, 0)}
+				Position={new UDim2(0, 4, 0, 0)}
+				BackgroundTransparency={1}
+				TextColor3={
+					claimed
+						? Color3.fromRGB(255, 215, 0)
+						: discovered
+							? Color3.fromRGB(80, 200, 120)
+							: Color3.fromRGB(100, 100, 120)
+				}
+				TextScaled={true}
+				Font={Enum.Font.GothamBold}
+				Text={claimed ? "\u{2B50}" : discovered ? "\u{2714}" : "\u{1F512}"}
+			/>
+			{/* Zone name */}
+			<textlabel
+				Size={new UDim2(0.5, 0, 1, 0)}
+				Position={new UDim2(0, 28, 0, 0)}
+				BackgroundTransparency={1}
+				TextColor3={
+					discovered
+						? Color3.fromRGB(230, 230, 230)
+						: Color3.fromRGB(120, 120, 140)
+				}
+				TextScaled={true}
+				Font={Enum.Font.Gotham}
+				Text={displayName}
+				TextXAlignment={Enum.TextXAlignment.Left}
+			/>
+			{/* Claim button */}
+			<textbutton
+				Size={new UDim2(0.28, 0, 0.7, 0)}
+				Position={new UDim2(0.7, 0, 0.15, 0)}
+				BackgroundColor3={
+					claimed
+						? Color3.fromRGB(60, 60, 60)
+						: canClaim
+							? Color3.fromRGB(80, 200, 120)
+							: Color3.fromRGB(50, 50, 65)
+				}
+				TextColor3={
+					claimed
+						? Color3.fromRGB(120, 120, 140)
+						: canClaim
+							? Color3.fromRGB(255, 255, 255)
+							: Color3.fromRGB(100, 100, 120)
+				}
+				TextScaled={true}
+				Font={Enum.Font.GothamBold}
+				Text={
+					claimed
+						? t("poi_claimed")
+						: canClaim
+							? t("poi_claim")
+							: t("poi_undiscovered")
+				}
+				Active={canClaim}
+				Event={{
+					Activated: () => {
+						if (canClaim) {
+							clientEvents.claimPoiReward.fire(zoneName);
+						}
+					},
+				}}
+			>
+				<uicorner CornerRadius={new UDim(0, 4)} />
+			</textbutton>
+		</frame>
+	);
+}
+
 export function MissionPanel() {
 	const activeOverlay = useSelector(
 		(state: GameStoreState) => state.activeOverlay,
@@ -101,6 +206,12 @@ export function MissionPanel() {
 	);
 	const claimReady = useSelector(
 		(state: GameStoreState) => state.missionClaimReady,
+	);
+	const discoveredPoi = useSelector(
+		(state: GameStoreState) => state.discoveredPoi,
+	);
+	const poiClaimedRewards = useSelector(
+		(state: GameStoreState) => state.poiClaimedRewards,
 	);
 
 	const isHachiInProgress =
@@ -174,7 +285,7 @@ export function MissionPanel() {
 			{open ? (
 				<frame
 					key="MissionOverlay"
-					Size={new UDim2(0, 280, 0, 200)}
+					Size={new UDim2(0, 300, 0, 420)}
 					Position={new UDim2(0.5, 0, 0.5, 0)}
 					AnchorPoint={new Vector2(0.5, 0.5)}
 					BackgroundColor3={Color3.fromRGB(20, 20, 40)}
@@ -200,22 +311,16 @@ export function MissionPanel() {
 					>
 						<uicorner CornerRadius={new UDim(1, 0)} />
 					</textbutton>
-					<textlabel
-						Size={new UDim2(1, -48, 0, 24)}
-						Position={new UDim2(0, 12, 0, 12)}
-						BackgroundTransparency={1}
-						TextColor3={Color3.fromRGB(255, 255, 150)}
-						TextScaled={true}
-						Font={Enum.Font.GothamBold}
-						Text={t(L_DAILY_MISSIONS)}
-						TextXAlignment={Enum.TextXAlignment.Left}
-						ZIndex={19}
-					/>
-					<frame
+					{/* Scrollable content */}
+					<scrollingframe
 						Size={new UDim2(1, -24, 1, -48)}
-						Position={new UDim2(0, 12, 0, 40)}
+						Position={new UDim2(0, 12, 0, 44)}
 						BackgroundTransparency={1}
 						BorderSizePixel={0}
+						ScrollBarThickness={4}
+						ScrollBarImageColor3={Color3.fromRGB(100, 100, 120)}
+						CanvasSize={new UDim2(0, 0, 0, 0)}
+						AutomaticCanvasSize={Enum.AutomaticSize.Y}
 						ZIndex={19}
 					>
 						<uilistlayout
@@ -223,10 +328,60 @@ export function MissionPanel() {
 							Padding={new UDim(0, 4)}
 							HorizontalAlignment={Enum.HorizontalAlignment.Center}
 						/>
-						{missions.map((mission) => (
-							<MissionRow key={mission.id} mission={mission} />
+						{/* Daily Missions header */}
+						<textlabel
+							key="MissionsHeader"
+							LayoutOrder={0}
+							Size={new UDim2(1, -8, 0, 22)}
+							BackgroundTransparency={1}
+							TextColor3={Color3.fromRGB(255, 255, 150)}
+							TextScaled={true}
+							Font={Enum.Font.GothamBold}
+							Text={t(L_DAILY_MISSIONS)}
+							TextXAlignment={Enum.TextXAlignment.Left}
+						/>
+						{missions.map((mission, i) => (
+							<MissionRow
+								key={mission.id}
+								mission={mission}
+								layoutOrder={i + 1}
+							/>
 						))}
-					</frame>
+						{/* Divider */}
+						<frame
+							key="Divider"
+							LayoutOrder={100}
+							Size={new UDim2(0.9, 0, 0, 1)}
+							BackgroundColor3={Color3.fromRGB(80, 80, 100)}
+							BorderSizePixel={0}
+						>
+							<uipadding
+								PaddingTop={new UDim(0, 4)}
+								PaddingBottom={new UDim(0, 4)}
+							/>
+						</frame>
+						{/* PoI header */}
+						<textlabel
+							key="PoiHeader"
+							LayoutOrder={101}
+							Size={new UDim2(1, -8, 0, 22)}
+							BackgroundTransparency={1}
+							TextColor3={Color3.fromRGB(255, 200, 100)}
+							TextScaled={true}
+							Font={Enum.Font.GothamBold}
+							Text={t("poi_header")}
+							TextXAlignment={Enum.TextXAlignment.Left}
+						/>
+						{ALL_POI_ZONES.map((zoneName, i) => (
+							<PoiRow
+								key={zoneName}
+								zoneName={zoneName}
+								discovered={discoveredPoi.includes(zoneName)}
+								claimed={poiClaimedRewards.includes(zoneName)}
+								layoutOrder={102 + i}
+							/>
+						))}
+					</scrollingframe>
 				</frame>
 			) : (
 				undefined!

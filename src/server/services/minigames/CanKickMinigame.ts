@@ -1,14 +1,17 @@
 import { Janitor } from "@rbxts/janitor";
 import { ServerStorage, Workspace } from "@rbxts/services";
 import {
+	ACTION_COOLDOWN,
 	CAN_FREED_SPEED_BOOST,
 	CAN_FREED_SPEED_BOOST_DURATION,
 	CAN_KICK_RADIUS,
 	CAN_RATTLE_TARGET,
 	CAN_RELOCATE_INTERVAL,
 	DEFAULT_WALK_SPEED,
+	HACHI_WALK_SPEEDS,
 	ONI_CATCH_RADIUS,
 	ONI_COUNT_DURATION,
+	ONI_MOUNTED_CATCH_RADIUS,
 } from "shared/constants";
 import { GlobalEvents } from "shared/network";
 import {
@@ -19,6 +22,12 @@ import {
 	RoundResult,
 } from "shared/types";
 import { isInsideJailRattleZone } from "shared/utils/canKickRattle";
+import {
+	equipHachiCostume,
+	forceUnmount,
+	isPlayerMounted,
+	unequipHachiCostume,
+} from "../../utils/hachiCostume";
 import {
 	fireHintText,
 	startOniCountdown,
@@ -49,6 +58,7 @@ export class CanKickMinigame implements IMinigame {
 	private canOrigin?: Vector3;
 	private rattleProgress = 0;
 	private readonly boostEligible = new Set<number>();
+	private lastAutoCatchTime = 0;
 
 	constructor(private readonly serverEvents: ServerEvents) {}
 
@@ -116,6 +126,13 @@ export class CanKickMinigame implements IMinigame {
 		// Teleport players to positions
 		this.teleportPlayers(players, roles);
 
+		// Auto-mount Oni on Hachi
+		for (const player of players) {
+			if (roles.get(player) === PlayerRole.Oni) {
+				this.mountOni(player);
+			}
+		}
+
 		return roles;
 	}
 
@@ -153,7 +170,7 @@ export class CanKickMinigame implements IMinigame {
 					this.serverEvents,
 					this.playerStates,
 					this.playerObjects,
-					DEFAULT_WALK_SPEED,
+					HACHI_WALK_SPEEDS[0],
 				);
 				this.lastHintText = fireHintText(
 					this.serverEvents,
@@ -165,7 +182,13 @@ export class CanKickMinigame implements IMinigame {
 	}
 
 	tick(_dt: number) {
-		if (this.oniCounting || !this.canModel || !this.canOrigin) return;
+		if (this.oniCounting) return;
+
+		// Auto-catch: check if Oni is near any uncaught hider
+		this.checkAutoCatch();
+
+		// Can relocation
+		if (!this.canModel || !this.canOrigin) return;
 		this.canRelocateElapsed += _dt;
 		if (this.canRelocateElapsed < CAN_RELOCATE_INTERVAL) return;
 		this.canRelocateElapsed = 0;
@@ -182,26 +205,37 @@ export class CanKickMinigame implements IMinigame {
 		);
 	}
 
-	handleCatchRequest(player: Player) {
-		const oniState = this.playerStates.get(player.UserId);
-		if (!oniState || oniState.role !== PlayerRole.Oni) return;
-		if (this.oniCounting) return;
+	private checkAutoCatch() {
+		const now = os.clock();
+		if (now - this.lastAutoCatchTime < ACTION_COOLDOWN) return;
 
-		const oniChar = player.Character;
-		if (!oniChar) return;
-		const oniPos = oniChar.GetPivot().Position;
+		if (this.oniUserId === undefined) return;
+		const oniPlayer = this.playerObjects.get(this.oniUserId);
+		if (!oniPlayer?.Character) return;
+		const oniHrp = oniPlayer.Character.FindFirstChild("HumanoidRootPart") as
+			| BasePart
+			| undefined;
+		if (!oniHrp) return;
+
+		const oniPos = oniHrp.Position;
+		const mounted = isPlayerMounted(oniPlayer);
+		const catchRadius = mounted ? ONI_MOUNTED_CATCH_RADIUS : ONI_CATCH_RADIUS;
 
 		// Find closest uncaught hider in range
 		let closestHider: Player | undefined;
-		let closestDist = ONI_CATCH_RADIUS;
+		let closestDist = catchRadius;
 
 		for (const [userId, state] of this.playerStates) {
 			if (state.role !== PlayerRole.Hider || state.isCaught) continue;
 			const hiderPlayer = this.playerObjects.get(userId);
 			if (!hiderPlayer?.Character) continue;
 
-			const hiderPos = hiderPlayer.Character.GetPivot().Position;
-			const dist = oniPos.sub(hiderPos).Magnitude;
+			const hiderHrp = hiderPlayer.Character.FindFirstChild(
+				"HumanoidRootPart",
+			) as BasePart | undefined;
+			if (!hiderHrp) continue;
+
+			const dist = oniPos.sub(hiderHrp.Position).Magnitude;
 			if (dist <= closestDist) {
 				closestDist = dist;
 				closestHider = hiderPlayer;
@@ -210,32 +244,62 @@ export class CanKickMinigame implements IMinigame {
 
 		if (!closestHider) return;
 
-		const hiderState = this.playerStates.get(closestHider.UserId);
-		if (!hiderState) return;
+		this.lastAutoCatchTime = now;
+		this.catchHider(oniPlayer, closestHider);
+	}
+
+	private catchHider(oniPlayer: Player, hider: Player) {
+		const oniState = this.playerStates.get(oniPlayer.UserId);
+		const hiderState = this.playerStates.get(hider.UserId);
+		if (!oniState || !hiderState) return;
 
 		// Mark caught
 		hiderState.isCaught = true;
 		hiderState.isInJail = true;
 		oniState.catchCount += 1;
 
-		// Teleport to jail
-		if (this.jailZone && closestHider.Character) {
-			closestHider.Character.PivotTo(
-				new CFrame(this.jailZone.Position.add(new Vector3(0, 3, 0))),
-			);
-		}
+		// Fire catch events first so red flash is visible before jail fade
+		this.serverEvents.playerCaught.broadcast(hider.UserId);
+		this.serverEvents.catchHighlight.broadcast(hider.UserId);
 
-		this.serverEvents.playerCaught.broadcast(closestHider.UserId);
-		this.serverEvents.catchHighlight.broadcast(closestHider.UserId);
+		// Fire jail teleport fade after a brief delay so red flash shows first
+		task.delay(0.3, () => {
+			this.serverEvents.jailTeleportFade.fire(hider);
+		});
+
+		// Teleport to jail after fade-in completes (0.3s flash + 0.2s fade buffer)
+		const caughtCharacter = hider.Character;
+		const hiderId = hider.UserId;
+		task.delay(0.5, () => {
+			// Only teleport if still the same character, still in jail (not freed by can kick)
+			const hiderState2 = this.playerStates.get(hiderId);
+			if (
+				this.jailZone &&
+				hiderState2?.isInJail &&
+				hider.Character &&
+				hider.Character === caughtCharacter
+			) {
+				hider.Character.PivotTo(
+					new CFrame(this.jailZone.Position.add(new Vector3(0, 3, 0))),
+				);
+			}
+		});
 		this.lastHintText = fireHintText(
 			this.serverEvents,
 			"hint_player_caught",
 			this.lastHintText,
-			[closestHider.Name],
+			[hider.Name],
 		);
 		print(
-			`[CanKick] ${closestHider.Name} caught by ${player.Name} (${oniState.catchCount} catches)`,
+			`[CanKick] ${hider.Name} caught by ${oniPlayer.Name} (${oniState.catchCount} catches)`,
 		);
+	}
+
+	handleCatchRequest(player: Player) {
+		// Auto-catch handles this now; keep for backward compat but no-op
+		const oniState = this.playerStates.get(player.UserId);
+		if (!oniState || oniState.role !== PlayerRole.Oni) return;
+		// No-op: auto-catch in tick() handles all catches
 	}
 
 	handleKickCanRequest(player: Player): boolean {
@@ -328,12 +392,20 @@ export class CanKickMinigame implements IMinigame {
 			});
 		}
 
+		// Only announce the hero who kicked (not freed players)
 		this.lastHintText = fireHintText(
 			this.serverEvents,
 			"hint_can_kicked",
 			this.lastHintText,
-			[player.Name, `${freedIds.size()}`],
+			[player.Name],
 		);
+		// Send freed hiders a separate hint
+		for (const freedId of freedIds) {
+			const freedPlayer = this.playerObjects.get(freedId);
+			if (freedPlayer) {
+				this.serverEvents.hintTextChanged.fire(freedPlayer, "hint_freed_run");
+			}
+		}
 		print(
 			`[CanKick] ${player.Name} kicked the can, freed ${freedIds.size()} players`,
 		);
@@ -382,7 +454,7 @@ export class CanKickMinigame implements IMinigame {
 			this.serverEvents,
 			this.playerStates,
 			this.playerObjects,
-			DEFAULT_WALK_SPEED,
+			HACHI_WALK_SPEEDS[0],
 		);
 		this.countdownThread = undefined;
 	}
@@ -390,6 +462,15 @@ export class CanKickMinigame implements IMinigame {
 	cleanup() {
 		// stopCountdown unfreezes Oni and cancels the thread — must run before clearing playerStates
 		this.stopCountdown();
+		// Unequip Oni's Hachi mount before clearing state
+		if (this.oniUserId !== undefined) {
+			const oniPlayer = this.playerObjects.get(this.oniUserId);
+			if (oniPlayer) {
+				if (!unequipHachiCostume(oniPlayer)) {
+					forceUnmount(oniPlayer);
+				}
+			}
+		}
 		this.lastHintText = "";
 		this.oniUserId = undefined;
 		this.canRelocateElapsed = 0;
@@ -397,10 +478,25 @@ export class CanKickMinigame implements IMinigame {
 		this.canOrigin = undefined;
 		this.rattleProgress = 0;
 		this.boostEligible.clear();
+		this.lastAutoCatchTime = 0;
 		this.playerStates.clear();
 		this.playerObjects.clear();
 		this.canModel = undefined;
 		this.jailZone = undefined;
+	}
+
+	private mountOni(player: Player) {
+		const hachiTemplate = ServerStorage.FindFirstChild("HachiTemplate") as
+			| Model
+			| undefined;
+		if (!hachiTemplate) {
+			warn("[CanKick] HachiTemplate not found for Oni mount");
+			return;
+		}
+		const hachiClone = hachiTemplate.Clone();
+		if (!equipHachiCostume(player, hachiClone, 0)) {
+			hachiClone.Destroy();
+		}
 	}
 
 	private teleportPlayers(players: Player[], roles: Map<Player, PlayerRole>) {

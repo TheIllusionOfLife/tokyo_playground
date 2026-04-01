@@ -14,7 +14,8 @@ import {
 	HACHI_JUMP_COOLDOWN,
 	HACHI_LOBBY_MIN_LEVEL,
 	HACHI_MAX_AIR_JUMPS,
-	SE_JUMP,
+	HACHI_PAW_DECAL_ID,
+	SE_HACHI_JUMP,
 } from "shared/constants";
 import { gameStore } from "shared/store/game-store";
 import { MinigameId } from "shared/types";
@@ -103,6 +104,7 @@ export class HachiRideController implements OnStart {
 
 		this.setDefaultJumpSoundEnabled(false);
 		this.ensureJumpSE();
+		this.showPawOverlay();
 
 		// Double jump detection via Humanoid.StateChanged.
 		// Arm double jump after first real jump (not slope/small drop).
@@ -276,6 +278,7 @@ export class HachiRideController implements OnStart {
 	private onCostumeRemoved() {
 		this.costumed = false;
 
+		this.hidePawOverlay();
 		this.setDefaultJumpSoundEnabled(true);
 
 		this.stateChangedConn?.Disconnect();
@@ -319,11 +322,12 @@ export class HachiRideController implements OnStart {
 
 	private jumpSE?: Sound;
 	private lastJumpSETime = 0;
+	private pawOverlay?: ScreenGui;
 
 	private ensureJumpSE() {
 		if (this.jumpSE) return;
 		this.jumpSE = new Instance("Sound");
-		this.jumpSE.SoundId = SE_JUMP;
+		this.jumpSE.SoundId = SE_HACHI_JUMP;
 		this.jumpSE.Volume = 0.4;
 		this.jumpSE.Parent = SoundService;
 		task.spawn(() => ContentProvider.PreloadAsync([this.jumpSE!]));
@@ -335,5 +339,53 @@ export class HachiRideController implements OnStart {
 		this.lastJumpSETime = now;
 		this.ensureJumpSE();
 		this.jumpSE!.Play();
+	}
+
+	/** Show a paw print overlay on the native mobile jump button. */
+	private showPawOverlay() {
+		if (this.pawOverlay) return;
+		// Only on mobile/touch devices
+		if (!UserInputService.TouchEnabled) return;
+
+		const playerGui = Players.LocalPlayer.FindFirstChildOfClass("PlayerGui");
+		if (!playerGui) return;
+
+		const gui = new Instance("ScreenGui");
+		gui.Name = "HachiPawOverlay";
+		gui.DisplayOrder = 50;
+		gui.ResetOnSpawn = false;
+		gui.Parent = playerGui;
+
+		// Position matches native jump button (bottom-right)
+		// Use ImageLabel (not ImageButton) so it doesn't intercept touch events
+		const btn = new Instance("ImageLabel");
+		btn.Name = "PawButton";
+		btn.Size = new UDim2(0, 70, 0, 70);
+		btn.Position = new UDim2(1, -25, 1, -25);
+		btn.AnchorPoint = new Vector2(1, 1);
+		btn.Image = HACHI_PAW_DECAL_ID;
+		btn.ImageColor3 = Color3.fromRGB(255, 200, 180);
+		btn.BackgroundColor3 = Color3.fromRGB(200, 120, 80);
+		btn.BackgroundTransparency = 0.2;
+		btn.BorderSizePixel = 0;
+		btn.Parent = gui;
+
+		const corner = new Instance("UICorner");
+		corner.CornerRadius = new UDim(1, 0);
+		corner.Parent = btn;
+
+		const stroke = new Instance("UIStroke");
+		stroke.Color = Color3.fromRGB(255, 180, 140);
+		stroke.Thickness = 3;
+		stroke.Parent = btn;
+
+		this.pawOverlay = gui;
+	}
+
+	private hidePawOverlay() {
+		if (this.pawOverlay) {
+			this.pawOverlay.Destroy();
+			this.pawOverlay = undefined;
+		}
 	}
 }

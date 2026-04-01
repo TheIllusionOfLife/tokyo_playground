@@ -87,7 +87,6 @@ export const EN: Record<string, string> = {
 	obstacle_active: "Obstacle Course Active",
 
 	// Social
-	invite: "Invite",
 	spectator_tap: "Tap to switch",
 
 	// Misc formatting
@@ -100,16 +99,19 @@ export const EN: Record<string, string> = {
 
 	// Minigame names
 	game_can_kick: "Can Kick",
-	game_scramble: "Shibuya Scramble",
+	game_scramble: "Shibuya Hide & Seek",
 	game_hachi_ride: "Hachi Ride",
 
 	// Minigame intros
-	intro_can_kick_title: "Street Hide-and-Seek",
-	intro_can_kick_sub: "Avoid the Oni and free your team with the can.",
-	intro_scramble_title: "Shibuya Chaos",
-	intro_scramble_sub: "Blend into the crowd, survive, and use the crossing.",
+	intro_can_kick_title: "Can Kick",
+	intro_can_kick_sub:
+		"One player is the Oni. Hiders: stay hidden and kick the can to free caught friends! Oni: find and catch all hiders.",
+	intro_scramble_title: "Shibuya Hide & Seek",
+	intro_scramble_sub:
+		"Hide anywhere in Shibuya! Oni hunts you down. Tagged hiders get Spirit Wave to help teammates.",
 	intro_hachi_title: "Ride Hachi",
-	intro_hachi_sub: "Collect coins, evolve fast, and steal the lead.",
+	intro_hachi_sub:
+		"Race on Hachi! Collect items to evolve: double jump, wall run, and more. Most points wins!",
 
 	// Mission labels
 	mission_PlayGames: "Play 3 Games",
@@ -176,7 +178,8 @@ export const EN: Record<string, string> = {
 	hint_final_sprint: "Final sprint! Bonus items are worth triple now!",
 	hint_player_tagged: "%1 was tagged!",
 	hint_player_caught: "%1 was caught!",
-	hint_can_kicked: "%1 kicked the can! %2 freed!",
+	hint_can_kicked: "%1 kicked the can!",
+	hint_freed_run: "You're free! Run and hide!",
 	hint_bonus_collected: "BONUS! +%1 points!",
 	hint_rattle_progress: "RATTLE %1/%2",
 	hint_jail_rattled: "Jail rattled! Oni revealed for 2 seconds!",
@@ -185,6 +188,12 @@ export const EN: Record<string, string> = {
 	hint_ability_3: "Level 3: BIG HACHI + TRIPLE JUMP!",
 	hint_ability_4: "Level 4: FLUFFY HACHI + QUADRUPLE JUMP!",
 	hint_hachi_evolved: "Hachi evolved to level %1!",
+
+	// Point of Interest
+	poi_header: "Points of Interest",
+	poi_claim: "Claim +10",
+	poi_claimed: "Claimed",
+	poi_undiscovered: "Not found",
 
 	// Zones
 	zone_ShibuyaSky: "Shibuya Sky",

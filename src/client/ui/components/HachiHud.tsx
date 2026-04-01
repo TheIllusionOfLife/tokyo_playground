@@ -60,7 +60,7 @@ export function HachiHud() {
 				<frame
 					key="FieldItems"
 					Size={new UDim2(0, 120, 0, 48)}
-					Position={new UDim2(0, 10, 0, 80)}
+					Position={new UDim2(0, 4, 0, 4)}
 					BackgroundColor3={Color3.fromRGB(15, 15, 30)}
 					BackgroundTransparency={0.2}
 					BorderSizePixel={0}
@@ -107,17 +107,16 @@ export function HachiHud() {
 						Position={new UDim2(0, 0, 0, 22)}
 						BackgroundTransparency={1}
 					>
-						<frame
+						<textlabel
 							key="StarIcon"
-							Size={new UDim2(0, 14, 0, 14)}
+							Size={new UDim2(0, 16, 0, 16)}
 							Position={new UDim2(0, 0, 0.5, 0)}
 							AnchorPoint={new Vector2(0, 0.5)}
-							BackgroundColor3={Color3.fromRGB(255, 215, 0)}
-							BorderSizePixel={0}
-							Rotation={45}
-						>
-							<uicorner CornerRadius={new UDim(0, 2)} />
-						</frame>
+							BackgroundTransparency={1}
+							Text={"\u{2B50}"}
+							TextScaled={true}
+							Font={Enum.Font.GothamBold}
+						/>
 						<textlabel
 							Size={new UDim2(1, -20, 1, 0)}
 							Position={new UDim2(0, 20, 0, 0)}
@@ -157,7 +156,7 @@ export function HachiHud() {
 			<frame
 				key="PointsInfo"
 				Size={new UDim2(0, 110, 0, 50)}
-				Position={new UDim2(1, -10, 0, 48)}
+				Position={new UDim2(1, -10, 0, 52)}
 				AnchorPoint={new Vector2(1, 0)}
 				BackgroundColor3={Color3.fromRGB(15, 15, 30)}
 				BackgroundTransparency={0.2}

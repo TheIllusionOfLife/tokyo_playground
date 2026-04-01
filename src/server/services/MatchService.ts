@@ -309,6 +309,8 @@ export class MatchService implements OnStart {
 			});
 			if (role === PlayerRole.Oni) {
 				oniPlayer = player;
+				// Allow Oni to mount/dismount Hachi during match
+				this.lobbyService.setMatchOni(player.UserId);
 			}
 		}
 

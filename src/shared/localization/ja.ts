@@ -87,7 +87,6 @@ export const JA: Record<string, string> = {
 	obstacle_active: "障害物コース開催中",
 
 	// Social
-	invite: "招待",
 	spectator_tap: "タップで切替",
 
 	// Misc formatting
@@ -100,16 +99,19 @@ export const JA: Record<string, string> = {
 
 	// Minigame names
 	game_can_kick: "缶蹴り",
-	game_scramble: "渋谷カオス",
+	game_scramble: "渋谷かくれんぼ",
 	game_hachi_ride: "ハチ公ライド",
 
 	// Minigame intros
-	intro_can_kick_title: "路地裏かくれんぼ",
-	intro_can_kick_sub: "オニに見つからずに缶を蹴って仲間を助けよう。",
-	intro_scramble_title: "渋谷カオス",
-	intro_scramble_sub: "群衆に紛れて生き残れ。スクランブル交差点を使え。",
+	intro_can_kick_title: "缶蹴り",
+	intro_can_kick_sub:
+		"1人がオニ。隠れる側: 隠れて缶を蹴り、捕まった仲間を救え! オニ: 全員見つけて捕まえろ!",
+	intro_scramble_title: "渋谷かくれんぼ",
+	intro_scramble_sub:
+		"渋谷中に隠れろ! オニが追いかけてくる。タッチされたらスピリットウェーブで仲間を援護!",
 	intro_hachi_title: "ハチ公ライド",
-	intro_hachi_sub: "コインを集めて進化して、1位を奪え。",
+	intro_hachi_sub:
+		"ハチに乗ってレース! アイテムを集めて進化。二段ジャンプ、壁走り。最多ポイントで勝利!",
 
 	// Mission labels
 	mission_PlayGames: "3回遊ぶ",
@@ -176,7 +178,8 @@ export const JA: Record<string, string> = {
 	hint_final_sprint: "ラストスパート! ボーナスアイテム3倍!",
 	hint_player_tagged: "%1がタッチされた!",
 	hint_player_caught: "%1が捕まった!",
-	hint_can_kicked: "%1が缶を蹴った! %2人解放!",
+	hint_can_kicked: "%1が缶を蹴った!",
+	hint_freed_run: "解放された! 逃げて隠れろ!",
 	hint_bonus_collected: "ボーナス! +%1ポイント!",
 	hint_rattle_progress: "ガタガタ %1/%2",
 	hint_jail_rattled: "牢屋が揺れた! オニが2秒間バレる!",
@@ -185,6 +188,12 @@ export const JA: Record<string, string> = {
 	hint_ability_3: "レベル3: デカハチ + 三段ジャンプ!",
 	hint_ability_4: "レベル4: もふもふハチ + 四段ジャンプ!",
 	hint_hachi_evolved: "ハチがレベル%1に進化!",
+
+	// Point of Interest
+	poi_header: "名所めぐり",
+	poi_claim: "+10獲得",
+	poi_claimed: "獲得済み",
+	poi_undiscovered: "未発見",
 
 	// Zones
 	zone_ShibuyaSky: "渋谷スカイ",

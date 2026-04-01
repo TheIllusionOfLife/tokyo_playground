@@ -4,7 +4,7 @@ import { clientEvents } from "client/network";
 import { t } from "shared/localization";
 import { L_HACHI_DISMOUNT, L_HACHI_RIDE } from "shared/localization/keys";
 import { GameStoreState } from "shared/store/game-store";
-import { MatchPhase, MinigameId } from "shared/types";
+import { MatchPhase, MinigameId, PlayerRole } from "shared/types";
 
 const PULSE_SPEED = 3;
 const SHAKE_SPEED = 4;
@@ -16,6 +16,7 @@ export function HachiToggleButton() {
 	const activeMinigameId = useSelector(
 		(state: GameStoreState) => state.activeMinigameId,
 	);
+	const role = useSelector((state: GameStoreState) => state.role);
 
 	const outerRef = useRef<Frame>();
 	const frameRef = useRef<Frame>();
@@ -26,9 +27,15 @@ export function HachiToggleButton() {
 		pendingRef.current = false;
 	}, [costumed]);
 
-	const isVisible =
-		matchPhase === MatchPhase.WaitingForPlayers &&
+	// Visible in lobby (not during Hachi Ride) OR during match if player is Oni
+	const isOniInMatch =
+		matchPhase === MatchPhase.InProgress &&
+		role === PlayerRole.Oni &&
 		activeMinigameId !== MinigameId.HachiRide;
+	const isVisible =
+		(matchPhase === MatchPhase.WaitingForPlayers &&
+			activeMinigameId !== MinigameId.HachiRide) ||
+		isOniInMatch;
 
 	// Pulsing glow + shake animation when not mounted and visible
 	useEffect(() => {
@@ -64,7 +71,7 @@ export function HachiToggleButton() {
 			key="HachiToggleButton"
 			ref={outerRef}
 			Size={new UDim2(0, 160, 0, 60)}
-			Position={new UDim2(1, -10, 0, 140)}
+			Position={new UDim2(1, -10, 0, 86)}
 			AnchorPoint={new Vector2(1, 0)}
 			BackgroundTransparency={1}
 			BorderSizePixel={0}
