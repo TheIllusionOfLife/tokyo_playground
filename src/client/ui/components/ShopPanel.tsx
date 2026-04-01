@@ -387,7 +387,7 @@ function VehicleCard({
 			{/* Action button */}
 			<textbutton
 				Size={new UDim2(1, -16, 0, 26)}
-				Position={new UDim2(0.5, 0, 1, -34)}
+				Position={new UDim2(0.5, 0, 0, 90)}
 				AnchorPoint={new Vector2(0.5, 0)}
 				BackgroundColor3={buttonColor}
 				TextColor3={Color3.fromRGB(255, 255, 255)}
