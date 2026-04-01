@@ -569,13 +569,13 @@ export function ShopPanel() {
 						</frame>
 						{/* Content area */}
 						<scrollingframe
-							Size={new UDim2(1, -16, 1, -52)}
-							Position={new UDim2(0, 12, 0, 44)}
+							Size={new UDim2(1, -12, 1, -52)}
+							Position={new UDim2(0, 6, 0, 44)}
 							BackgroundTransparency={1}
 							BorderSizePixel={0}
 							CanvasSize={new UDim2(0, 0, 0, 0)}
 							AutomaticCanvasSize={Enum.AutomaticSize.Y}
-							ScrollBarThickness={3}
+							ScrollBarThickness={6}
 							ScrollBarImageColor3={Color3.fromRGB(100, 100, 150)}
 							ZIndex={19}
 						>
