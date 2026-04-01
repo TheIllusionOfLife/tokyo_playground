@@ -199,6 +199,12 @@ export const L_VEHICLE_SHINKANSEN = "vehicle_shinkansen";
 // Cosmetics preview
 export const L_SHOP_TRY_ON = "shop_try_on";
 
+// Spin
+export const L_SPIN_TITLE = "spin_title";
+export const L_SPIN_BUTTON = "spin_button";
+export const L_SPIN_SPINNING = "spin_spinning";
+export const L_SPIN_COME_BACK = "spin_come_back";
+
 // Zone names
 export const L_ZONE_SHIBUYA_SKY = "zone_ShibuyaSky";
 export const L_ZONE_SHIBUYA_CROSSING = "zone_ShibuyaCrossing";

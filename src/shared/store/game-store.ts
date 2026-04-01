@@ -100,6 +100,8 @@ export interface GameStoreState {
 	previewItemId?: ItemId;
 	previewCategory?: ItemCategory;
 	previewExpiry: number;
+	// Spin
+	spinAvailable: boolean;
 }
 
 const initialState: GameStoreState = {
@@ -150,6 +152,7 @@ const initialState: GameStoreState = {
 	previewItemId: undefined,
 	previewCategory: undefined,
 	previewExpiry: 0,
+	spinAvailable: false,
 };
 
 export const gameStore = createProducer(initialState, {
@@ -463,5 +466,11 @@ export const gameStore = createProducer(initialState, {
 		previewItemId: undefined,
 		previewCategory: undefined,
 		previewExpiry: 0,
+	}),
+
+	// ── Spin ────────────────────────────────────────────────────────────
+	setSpinAvailable: (state, spinAvailable: boolean) => ({
+		...state,
+		spinAvailable,
 	}),
 });

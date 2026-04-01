@@ -23,7 +23,12 @@ export class EngagementService implements OnStart {
 			this.handleSpin(player);
 		});
 
-		// Friend referral: check on join if a friend is already in-server
+		// Spin status: sync after profile is loaded (not PlayerAdded)
+		this.playerDataService.registerOnProfileLoaded((player) => {
+			this.syncSpinStatus(player);
+		});
+
+		// Friend referral: check on join
 		Players.PlayerAdded.Connect((player) => {
 			task.defer(() => this.checkFriendReferral(player));
 		});
@@ -63,10 +68,19 @@ export class EngagementService implements OnStart {
 			data.shopBalance,
 		);
 		this.serverEvents.spinResult.fire(player, reward, true);
+		this.serverEvents.spinStatusSync.fire(player, false);
 
 		print(
 			`[EngagementService] ${player.Name} spun lucky wheel: +${reward} pts`,
 		);
+	}
+
+	private syncSpinStatus(player: Player) {
+		const data = this.playerDataService.getPlayerData(player);
+		if (!data) return;
+		const today = getCurrentDay();
+		const lastSpin = typeIs(data.lastSpinDay, "number") ? data.lastSpinDay : 0;
+		this.serverEvents.spinStatusSync.fire(player, lastSpin < today);
 	}
 
 	private checkFriendReferral(player: Player) {

@@ -20,6 +20,152 @@ import {
 	VehicleShopData,
 } from "shared/types";
 
+interface VehicleDisplayInfo {
+	emoji: string;
+	accentColor: Color3;
+	familyTag: string;
+}
+
+const VEHICLE_DISPLAY: Map<string, VehicleDisplayInfo> = new Map([
+	// Quadruped (Animal)
+	[
+		"DefaultHachi",
+		{
+			emoji: "\u{1F436}",
+			accentColor: Color3.fromRGB(180, 120, 60),
+			familyTag: "vehicle_family_animal",
+		},
+	],
+	[
+		"WhiteCat",
+		{
+			emoji: "\u{1F431}",
+			accentColor: Color3.fromRGB(180, 120, 60),
+			familyTag: "vehicle_family_animal",
+		},
+	],
+	[
+		"CalicoCat",
+		{
+			emoji: "\u{1F408}",
+			accentColor: Color3.fromRGB(180, 120, 60),
+			familyTag: "vehicle_family_animal",
+		},
+	],
+	[
+		"Bear",
+		{
+			emoji: "\u{1F43B}",
+			accentColor: Color3.fromRGB(180, 120, 60),
+			familyTag: "vehicle_family_animal",
+		},
+	],
+	[
+		"ShibaInu",
+		{
+			emoji: "\u{1F415}",
+			accentColor: Color3.fromRGB(180, 120, 60),
+			familyTag: "vehicle_family_animal",
+		},
+	],
+	[
+		"Kitsune",
+		{
+			emoji: "\u{1F98A}",
+			accentColor: Color3.fromRGB(180, 120, 60),
+			familyTag: "vehicle_family_animal",
+		},
+	],
+	[
+		"ManekiNeko",
+		{
+			emoji: "\u{1F63A}",
+			accentColor: Color3.fromRGB(180, 120, 60),
+			familyTag: "vehicle_family_animal",
+		},
+	],
+	// Wheeled (Vehicle)
+	[
+		"Kart",
+		{
+			emoji: "\u{1F3CE}",
+			accentColor: Color3.fromRGB(60, 120, 200),
+			familyTag: "vehicle_family_vehicle",
+		},
+	],
+	[
+		"ToyCar",
+		{
+			emoji: "\u{1F697}",
+			accentColor: Color3.fromRGB(60, 120, 200),
+			familyTag: "vehicle_family_vehicle",
+		},
+	],
+	[
+		"ShibuyaBus",
+		{
+			emoji: "\u{1F68C}",
+			accentColor: Color3.fromRGB(60, 120, 200),
+			familyTag: "vehicle_family_vehicle",
+		},
+	],
+	[
+		"Rickshaw",
+		{
+			emoji: "\u{1F6FA}",
+			accentColor: Color3.fromRGB(60, 120, 200),
+			familyTag: "vehicle_family_vehicle",
+		},
+	],
+	[
+		"Skateboard",
+		{
+			emoji: "\u{1F6F9}",
+			accentColor: Color3.fromRGB(60, 120, 200),
+			familyTag: "vehicle_family_vehicle",
+		},
+	],
+	[
+		"Shinkansen",
+		{
+			emoji: "\u{1F685}",
+			accentColor: Color3.fromRGB(60, 120, 200),
+			familyTag: "vehicle_family_vehicle",
+		},
+	],
+	// Static/Serpentine (Magic)
+	[
+		"WhiteDragon",
+		{
+			emoji: "\u{1F409}",
+			accentColor: Color3.fromRGB(140, 80, 200),
+			familyTag: "vehicle_family_magic",
+		},
+	],
+	[
+		"GreenDragon",
+		{
+			emoji: "\u{1F432}",
+			accentColor: Color3.fromRGB(140, 80, 200),
+			familyTag: "vehicle_family_magic",
+		},
+	],
+	[
+		"Onigiri",
+		{
+			emoji: "\u{1F359}",
+			accentColor: Color3.fromRGB(140, 80, 200),
+			familyTag: "vehicle_family_magic",
+		},
+	],
+]);
+
+const DEFAULT_DISPLAY: VehicleDisplayInfo = {
+	emoji: "\u{2728}",
+	accentColor: Color3.fromRGB(100, 100, 100),
+	familyTag: "vehicle_family_mount",
+};
+
 function ShopCard({
 	item,
 	balance,
@@ -141,6 +287,7 @@ function VehicleCard({
 }) {
 	const canAfford = balance >= vehicle.price;
 	const levelMet = level >= vehicle.levelRequired;
+	const info = VEHICLE_DISPLAY.get(vehicle.id) ?? DEFAULT_DISPLAY;
 
 	let buttonText: string;
 	let buttonColor: Color3;
@@ -149,7 +296,7 @@ function VehicleCard({
 	if (vehicle.owned && vehicle.equipped) {
 		buttonText = t(L_SHOP_UNEQUIP);
 		buttonColor = Color3.fromRGB(80, 160, 200);
-		active = false; // can't unequip default vehicle, just swap
+		active = true;
 	} else if (vehicle.owned) {
 		buttonText = t(L_SHOP_EQUIP);
 		buttonColor = Color3.fromRGB(80, 200, 180);
@@ -171,33 +318,71 @@ function VehicleCard({
 	return (
 		<frame
 			key={vehicle.id}
-			Size={new UDim2(0, 128, 0, 96)}
+			Size={new UDim2(0, 150, 0, 130)}
 			BackgroundColor3={Color3.fromRGB(35, 35, 50)}
 			BackgroundTransparency={0.2}
 			BorderSizePixel={0}
 		>
-			<uicorner CornerRadius={new UDim(0, 6)} />
+			<uicorner CornerRadius={new UDim(0, 8)} />
+			{/* Colored icon area */}
+			<frame
+				Size={new UDim2(1, 0, 0, 44)}
+				BackgroundColor3={info.accentColor}
+				BackgroundTransparency={0.3}
+				BorderSizePixel={0}
+			>
+				<uicorner CornerRadius={new UDim(0, 8)} />
+				<textlabel
+					Size={new UDim2(0, 32, 0, 32)}
+					Position={new UDim2(0, 6, 0.5, 0)}
+					AnchorPoint={new Vector2(0, 0.5)}
+					BackgroundTransparency={1}
+					TextScaled={true}
+					Text={info.emoji}
+					Font={Enum.Font.GothamBold}
+					TextColor3={Color3.fromRGB(255, 255, 255)}
+				/>
+				{/* Family tag */}
+				<textlabel
+					Size={new UDim2(0, 50, 0, 14)}
+					Position={new UDim2(1, -4, 0, 4)}
+					AnchorPoint={new Vector2(1, 0)}
+					BackgroundColor3={Color3.fromRGB(0, 0, 0)}
+					BackgroundTransparency={0.5}
+					TextColor3={Color3.fromRGB(200, 200, 220)}
+					TextScaled={true}
+					Font={Enum.Font.Gotham}
+					Text={t(info.familyTag)}
+				>
+					<uicorner CornerRadius={new UDim(0, 3)} />
+				</textlabel>
+			</frame>
+			{/* Vehicle name */}
 			<textlabel
-				Size={new UDim2(1, -8, 0, 26)}
-				Position={new UDim2(0, 4, 0, 4)}
+				Size={new UDim2(1, -8, 0, 20)}
+				Position={new UDim2(0, 4, 0, 48)}
 				BackgroundTransparency={1}
 				TextColor3={Color3.fromRGB(230, 230, 230)}
 				TextScaled={true}
 				Font={Enum.Font.GothamBold}
 				Text={vehicle.name}
+				TextXAlignment={Enum.TextXAlignment.Left}
 			/>
+			{/* Price */}
 			<textlabel
-				Size={new UDim2(1, -8, 0, 18)}
-				Position={new UDim2(0, 4, 0, 32)}
+				Size={new UDim2(1, -8, 0, 14)}
+				Position={new UDim2(0, 4, 0, 70)}
 				BackgroundTransparency={1}
 				TextColor3={Color3.fromRGB(150, 150, 200)}
 				TextScaled={true}
 				Font={Enum.Font.Gotham}
 				Text={vehicle.price > 0 ? `${vehicle.price}pts` : "Free"}
+				TextXAlignment={Enum.TextXAlignment.Left}
 			/>
+			{/* Action button */}
 			<textbutton
 				Size={new UDim2(1, -8, 0, 28)}
-				Position={new UDim2(0, 4, 0, 60)}
+				Position={new UDim2(0, 4, 1, -32)}
 				BackgroundColor3={buttonColor}
 				TextColor3={Color3.fromRGB(255, 255, 255)}
 				TextScaled={true}
@@ -360,7 +545,7 @@ export function ShopPanel() {
 							</textbutton>
 							<textbutton
 								key="tab_vehicles"
-								Size={new UDim2(0, 80, 1, 0)}
+								Size={new UDim2(0, 110, 1, 0)}
 								BackgroundColor3={
 									tab === "vehicles"
 										? Color3.fromRGB(80, 60, 120)
@@ -369,7 +554,7 @@ export function ShopPanel() {
 								TextColor3={Color3.fromRGB(255, 255, 255)}
 								TextScaled={true}
 								Font={Enum.Font.GothamBold}
-								Text={t(L_VEHICLE_TAB)}
+								Text={`${t(L_VEHICLE_TAB)} (${vehicleItems.filter((v) => v.owned).size()}/${vehicleItems.size()})`}
 								ZIndex={19}
 								Event={{ Activated: () => setTab("vehicles") }}
 							>
@@ -389,7 +574,11 @@ export function ShopPanel() {
 							ZIndex={19}
 						>
 							<uigridlayout
-								CellSize={new UDim2(0, 128, 0, 96)}
+								CellSize={
+									tab === "vehicles"
+										? new UDim2(0, 150, 0, 130)
+										: new UDim2(0, 128, 0, 96)
+								}
 								CellPadding={new UDim2(0, 6, 0, 6)}
 							/>
 							{tab === "cosmetics"
