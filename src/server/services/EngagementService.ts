@@ -31,7 +31,10 @@ export class EngagementService implements OnStart {
 
 	private handleSpin(player: Player) {
 		const data = this.playerDataService.getPlayerData(player);
-		if (!data) return;
+		if (!data) {
+			this.serverEvents.spinResult.fire(player, 0, false);
+			return;
+		}
 
 		const today = getCurrentDay();
 		const lastSpin = typeIs(data.lastSpinDay, "number") ? data.lastSpinDay : 0;

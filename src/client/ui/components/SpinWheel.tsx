@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "@rbxts/react";
+import React, { useEffect, useState } from "@rbxts/react";
 import { useSelector } from "@rbxts/react-reflex";
 import { TweenService } from "@rbxts/services";
 import { clientEvents } from "client/network";
@@ -12,7 +12,6 @@ export function SpinWheel() {
 	const open = activeOverlay === "spin";
 	const [spinning, setSpinning] = useState(false);
 	const [lastReward, setLastReward] = useState(0);
-	const wheelRef = useRef<Frame>();
 
 	// Listen for spin result (must be before early return to satisfy Rules of Hooks)
 	useEffect(() => {
@@ -102,7 +101,6 @@ export function SpinWheel() {
 					/>
 					{/* Wheel display */}
 					<frame
-						ref={wheelRef}
 						Size={new UDim2(0, 140, 0, 140)}
 						Position={new UDim2(0.5, 0, 0.5, -10)}
 						AnchorPoint={new Vector2(0.5, 0.5)}

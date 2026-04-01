@@ -21,6 +21,7 @@ export class ZoneController implements OnStart {
 	private removedConn?: RBXScriptConnection;
 	private heartbeatConn?: RBXScriptConnection;
 	private characterAddedConn?: RBXScriptConnection;
+	private poiSynced = false; // suppress discovery fires until initial sync arrives
 
 	onStart() {
 		// Wire PoI discovery events from server
@@ -31,6 +32,7 @@ export class ZoneController implements OnStart {
 			gameStore.addPoiClaimedReward(zoneName);
 		});
 		clientEvents.poiSyncAll.connect((discovered, claimed) => {
+			this.poiSynced = true;
 			gameStore.setDiscoveredPoi(discovered);
 			gameStore.setPoiClaimedRewards(claimed);
 		});
@@ -108,10 +110,12 @@ export class ZoneController implements OnStart {
 				this.lastShown.set(nearestZone, now);
 				gameStore.setCurrentZone(nearestZone);
 
-				// Fire PoI discovery if not already discovered
-				const discovered = gameStore.getState().discoveredPoi;
-				if (!discovered.includes(nearestZone)) {
-					clientEvents.poiDiscovered.fire(nearestZone);
+				// Fire PoI discovery if synced and not already discovered
+				if (this.poiSynced) {
+					const discovered = gameStore.getState().discoveredPoi;
+					if (!discovered.includes(nearestZone)) {
+						clientEvents.poiDiscovered.fire(nearestZone);
+					}
 				}
 			}
 		} else if (nearestZone === "" && this.currentZone !== "") {
