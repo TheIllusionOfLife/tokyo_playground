@@ -187,7 +187,7 @@ export const L_VEHICLE_GREEN_DRAGON = "vehicle_green_dragon";
 export const L_VEHICLE_BEAR = "vehicle_bear";
 export const L_VEHICLE_SHIBA = "vehicle_shiba";
 export const L_VEHICLE_KITSUNE = "vehicle_kitsune";
-export const L_VEHICLE_DARUMA = "vehicle_daruma";
+export const L_VEHICLE_TOY_CAR = "vehicle_toy_car";
 export const L_VEHICLE_MANEKI = "vehicle_maneki";
 
 // Cosmetics preview

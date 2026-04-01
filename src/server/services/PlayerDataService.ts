@@ -32,7 +32,7 @@ const VEHICLE_ID_VALUES = new Set<VehicleId>([
 	VehicleId.Bear,
 	VehicleId.ShibaInu,
 	VehicleId.Kitsune,
-	VehicleId.Daruma,
+	VehicleId.ToyCar,
 	VehicleId.ManekiNeko,
 ]);
 

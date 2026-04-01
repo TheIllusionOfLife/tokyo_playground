@@ -206,7 +206,7 @@ export const JA: Record<string, string> = {
 	vehicle_bear: "クマ",
 	vehicle_shiba: "柴犬",
 	vehicle_kitsune: "キツネ",
-	vehicle_daruma: "だるま",
+	vehicle_toy_car: "おもちゃの車",
 	vehicle_maneki: "まねきねこ",
 
 	// Cosmetics preview

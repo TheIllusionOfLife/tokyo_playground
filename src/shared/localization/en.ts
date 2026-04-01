@@ -206,7 +206,7 @@ export const EN: Record<string, string> = {
 	vehicle_bear: "Bear",
 	vehicle_shiba: "Shiba Inu",
 	vehicle_kitsune: "Kitsune",
-	vehicle_daruma: "Daruma",
+	vehicle_toy_car: "Toy Car",
 	vehicle_maneki: "Maneki-neko",
 
 	// Cosmetics preview
