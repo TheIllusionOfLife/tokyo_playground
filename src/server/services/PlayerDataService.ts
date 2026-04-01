@@ -126,6 +126,12 @@ export class PlayerDataService implements OnStart {
 		if (!typeIs(data.equippedItems, "table")) data.equippedItems = {};
 		if (!typeIs(data.discoveredPoi, "table")) data.discoveredPoi = [];
 		if (!typeIs(data.poiClaimedRewards, "table")) data.poiClaimedRewards = [];
+		// Numeric stat fields (badge milestones)
+		if (!typeIs(data.totalCanKicks, "number")) data.totalCanKicks = 0;
+		if (!typeIs(data.totalRescues, "number")) data.totalRescues = 0;
+		if (!typeIs(data.totalCatches, "number")) data.totalCatches = 0;
+		if (!typeIs(data.totalWallRuns, "number")) data.totalWallRuns = 0;
+		if (!typeIs(data.missionsCompleted, "number")) data.missionsCompleted = 0;
 		// Vehicle fields
 		if (!typeIs(data.ownedVehicles, "table"))
 			data.ownedVehicles = [VehicleId.DefaultHachi];
@@ -388,6 +394,7 @@ export class PlayerDataService implements OnStart {
 				const def = MISSION_DEFS[id];
 				if (slot.progress >= def.target && !slot.rewardCollected) {
 					slot.rewardCollected = true;
+					data.missionsCompleted = (data.missionsCompleted ?? 0) + 1;
 					return true;
 				}
 				return false;

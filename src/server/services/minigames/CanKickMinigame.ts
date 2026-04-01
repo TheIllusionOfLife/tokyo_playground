@@ -100,6 +100,7 @@ export class CanKickMinigame implements IMinigame {
 				isInJail: false,
 				rescueCount: 0,
 				catchCount: 0,
+				canKickCount: 0,
 			});
 			this.playerObjects.set(player.UserId, player);
 		}
@@ -372,6 +373,7 @@ export class CanKickMinigame implements IMinigame {
 		}
 
 		kickerState.rescueCount += freedIds.size();
+		kickerState.canKickCount = (kickerState.canKickCount ?? 0) + 1;
 		this.canRelocateElapsed = 0;
 
 		this.serverEvents.canKicked.broadcast(player.UserId);

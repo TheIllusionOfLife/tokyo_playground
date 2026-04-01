@@ -1390,6 +1390,9 @@ export class HachiRideMinigame implements IMinigame {
 					};
 					this.wallRunStates.set(userId, wallState);
 					this.serverEvents.hachiWallRunStart.fire(player, wallResult.Normal);
+					// Track cumulative wall runs for badges
+					const pData = this.playerDataService.getPlayerData(player);
+					if (pData) pData.totalWallRuns = (pData.totalWallRuns ?? 0) + 1;
 				}
 
 				wallState.duration += dt;

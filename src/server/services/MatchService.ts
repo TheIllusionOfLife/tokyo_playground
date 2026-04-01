@@ -29,6 +29,7 @@ import { unequipHachiCostume } from "../utils/hachiCostume";
 import { safeHandler } from "../utils/safeConnect";
 import { AmbientCityService } from "./AmbientCityService";
 import { AnalyticsService } from "./AnalyticsService";
+import { BadgeService } from "./BadgeService";
 import { BoundaryService } from "./BoundaryService";
 import { GameStateService } from "./GameStateService";
 import { LobbyService } from "./LobbyService";
@@ -76,6 +77,7 @@ export class MatchService implements OnStart {
 		private readonly analyticsService: AnalyticsService,
 		private readonly ambientCityService: AmbientCityService,
 		private readonly boundaryService: BoundaryService,
+		private readonly badgeService: BadgeService,
 	) {}
 
 	onStart() {
@@ -512,6 +514,26 @@ export class MatchService implements OnStart {
 					player,
 					state.evolutionLevel,
 				);
+				this.badgeService.checkRoundItemCount(player, state.itemCount);
+			}
+
+			// Accumulate stats for badges
+			if (data) {
+				// HachiRide mirrors itemCount to catchCount for scoreboard;
+				// exclude it from totalCatches (meant for actual player catches)
+				if (state.minigameId !== MinigameId.HachiRide) {
+					data.totalCatches = (data.totalCatches ?? 0) + state.catchCount;
+				}
+				data.totalRescues = (data.totalRescues ?? 0) + state.rescueCount;
+				if (
+					state.minigameId === MinigameId.CanKick &&
+					"canKickCount" in state
+				) {
+					data.totalCanKicks =
+						(data.totalCanKicks ?? 0) +
+						(state as { canKickCount: number }).canKickCount;
+				}
+				this.badgeService.checkMilestones(player);
 			}
 
 			entries.push({
