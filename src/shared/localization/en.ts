@@ -209,6 +209,12 @@ export const EN: Record<string, string> = {
 	vehicle_toy_car: "Toy Car",
 	vehicle_maneki: "Maneki-neko",
 
+	vehicle_shibuya_bus: "Shibuya Bus",
+	vehicle_rickshaw: "Rickshaw",
+	vehicle_skateboard: "Skateboard",
+	vehicle_onigiri: "Onigiri",
+	vehicle_shinkansen: "Shinkansen",
+
 	// Cosmetics preview
 	shop_try_on: "TRY ON",
 

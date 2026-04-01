@@ -190,6 +190,12 @@ export const L_VEHICLE_KITSUNE = "vehicle_kitsune";
 export const L_VEHICLE_TOY_CAR = "vehicle_toy_car";
 export const L_VEHICLE_MANEKI = "vehicle_maneki";
 
+export const L_VEHICLE_SHIBUYA_BUS = "vehicle_shibuya_bus";
+export const L_VEHICLE_RICKSHAW = "vehicle_rickshaw";
+export const L_VEHICLE_SKATEBOARD = "vehicle_skateboard";
+export const L_VEHICLE_ONIGIRI = "vehicle_onigiri";
+export const L_VEHICLE_SHINKANSEN = "vehicle_shinkansen";
+
 // Cosmetics preview
 export const L_SHOP_TRY_ON = "shop_try_on";
 

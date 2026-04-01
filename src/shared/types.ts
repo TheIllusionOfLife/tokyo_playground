@@ -124,6 +124,11 @@ export enum VehicleId {
 	Kitsune = "Kitsune",
 	ToyCar = "ToyCar",
 	ManekiNeko = "ManekiNeko",
+	ShibuyaBus = "ShibuyaBus",
+	Rickshaw = "Rickshaw",
+	Skateboard = "Skateboard",
+	Onigiri = "Onigiri",
+	Shinkansen = "Shinkansen",
 }
 
 export enum ItemId {

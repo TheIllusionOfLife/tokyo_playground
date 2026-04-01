@@ -34,6 +34,11 @@ const VEHICLE_ID_VALUES = new Set<VehicleId>([
 	VehicleId.Kitsune,
 	VehicleId.ToyCar,
 	VehicleId.ManekiNeko,
+	VehicleId.ShibuyaBus,
+	VehicleId.Rickshaw,
+	VehicleId.Skateboard,
+	VehicleId.Onigiri,
+	VehicleId.Shinkansen,
 ]);
 
 import { AnalyticsService } from "./AnalyticsService";

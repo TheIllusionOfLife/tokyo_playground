@@ -209,6 +209,12 @@ export const JA: Record<string, string> = {
 	vehicle_toy_car: "おもちゃの車",
 	vehicle_maneki: "まねきねこ",
 
+	vehicle_shibuya_bus: "渋谷バス",
+	vehicle_rickshaw: "人力車",
+	vehicle_skateboard: "スケボー",
+	vehicle_onigiri: "おにぎり",
+	vehicle_shinkansen: "新幹線",
+
 	// Cosmetics preview
 	shop_try_on: "試着",
 
