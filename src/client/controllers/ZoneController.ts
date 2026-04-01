@@ -17,10 +17,6 @@ export class ZoneController implements OnStart {
 	private currentZone = "";
 	private zoneShownAt = 0; // os.clock() when popup was shown
 	private elapsed = 0;
-	private addedConn?: RBXScriptConnection;
-	private removedConn?: RBXScriptConnection;
-	private heartbeatConn?: RBXScriptConnection;
-	private characterAddedConn?: RBXScriptConnection;
 	private poiSynced = false; // suppress discovery fires until initial sync arrives
 
 	onStart() {
@@ -35,23 +31,23 @@ export class ZoneController implements OnStart {
 			this.poiSynced = true;
 			gameStore.setDiscoveredPoi(discovered);
 			gameStore.setPoiClaimedRewards(claimed);
+			// If already in a zone before sync arrived, fire discovery now
+			if (this.currentZone !== "" && !discovered.includes(this.currentZone)) {
+				clientEvents.poiDiscovered.fire(this.currentZone);
+			}
 		});
 
 		this.zoneParts = CollectionService.GetTagged(ZONE_TAG).filter(
 			(p): p is BasePart => p.IsA("BasePart"),
 		);
-		this.addedConn = CollectionService.GetInstanceAddedSignal(ZONE_TAG).Connect(
-			(p) => {
-				if (p.IsA("BasePart")) this.zoneParts.push(p);
-			},
-		);
-		this.removedConn = CollectionService.GetInstanceRemovedSignal(
-			ZONE_TAG,
-		).Connect((p) => {
+		CollectionService.GetInstanceAddedSignal(ZONE_TAG).Connect((p) => {
+			if (p.IsA("BasePart")) this.zoneParts.push(p);
+		});
+		CollectionService.GetInstanceRemovedSignal(ZONE_TAG).Connect((p) => {
 			this.zoneParts = this.zoneParts.filter((z) => z !== p);
 		});
 
-		this.heartbeatConn = RunService.Heartbeat.Connect((dt) => {
+		RunService.Heartbeat.Connect((dt) => {
 			this.elapsed += dt;
 			if (this.elapsed < CHECK_INTERVAL) return;
 			this.elapsed = 0;
@@ -59,7 +55,7 @@ export class ZoneController implements OnStart {
 		});
 
 		// Force recompute on respawn/teleport
-		this.characterAddedConn = Players.LocalPlayer.CharacterAdded.Connect(() => {
+		Players.LocalPlayer.CharacterAdded.Connect(() => {
 			task.wait(1);
 			this.currentZone = "";
 			this.zoneShownAt = 0;

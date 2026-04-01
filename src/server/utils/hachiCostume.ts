@@ -26,6 +26,8 @@ const HACHI_JUMP_HEIGHT = 106 ** 2 / (2 * Workspace.Gravity);
 const mountedPlayers = new Map<number, Model>();
 /** Active sit animation tracks for cleanup on unequip. */
 const sitTracks = new Map<number, AnimationTrack>();
+/** Original HipHeight values for restoration on unequip. */
+const originalHipHeights = new Map<number, number>();
 
 /** Check if a player is currently mounted on Hachi (validates model is still alive). */
 export function isPlayerMounted(player: Player): boolean {
@@ -35,6 +37,7 @@ export function isPlayerMounted(player: Player): boolean {
 	if (!model.Parent || model.Parent !== player.Character) {
 		mountedPlayers.delete(player.UserId);
 		sitTracks.delete(player.UserId);
+		originalHipHeights.delete(player.UserId);
 		return false;
 	}
 	return true;
@@ -57,6 +60,13 @@ export function forceUnmount(player: Player, notifyClient = false): void {
 	if (track) {
 		track.Stop();
 		sitTracks.delete(player.UserId);
+	}
+	// Restore HipHeight before destroying the model
+	const origHip = originalHipHeights.get(player.UserId);
+	if (origHip !== undefined) {
+		const humanoid = player.Character?.FindFirstChildOfClass("Humanoid");
+		if (humanoid) humanoid.HipHeight = origHip;
+		originalHipHeights.delete(player.UserId);
 	}
 	const model = mountedPlayers.get(player.UserId);
 	if (model && model.Parent) model.Destroy();
@@ -81,6 +91,11 @@ export function equipHachiCostume(
 	hachiModel: Model,
 	evolutionLevel: number,
 	playBark = false,
+	weldYawOffset = 0,
+	scaleOverride?: number,
+	seatHeightOffset = 0,
+	standingMount = false,
+	hipHeightOffset = 0,
 ): boolean {
 	const character = player.Character;
 	if (!character) return false;
@@ -124,7 +139,7 @@ export function equipHachiCostume(
 	}
 
 	// Scale the model
-	hachiModel.ScaleTo(HACHI_DEFAULT_SCALE);
+	hachiModel.ScaleTo(scaleOverride ?? HACHI_DEFAULT_SCALE);
 
 	// Find the Body part (PrimaryPart of the Hachi model)
 	const body =
@@ -148,27 +163,31 @@ export function equipHachiCostume(
 	weld.Part1 = body;
 	// C0 offset: move Hachi below HRP so character sits on top.
 	// Rotate 180 around Y so Hachi's forward matches the character's forward.
-	weld.C0 = new CFrame(0, -(bodyHalfHeight + hrp.Size.Y / 2), 0).mul(
-		CFrame.Angles(0, math.pi, 0),
-	);
+	// Apply per-vehicle yaw offset for meshes oriented differently.
+	const yawRad = math.pi + math.rad(weldYawOffset);
+	const verticalOffset = -(bodyHalfHeight + hrp.Size.Y / 2) + seatHeightOffset;
+	weld.C0 = new CFrame(0, verticalOffset, 0).mul(CFrame.Angles(0, yawRad, 0));
 	weld.Parent = body;
 
 	// Play sitting animation at Action4 priority to override locomotion
-	const animator =
-		humanoid.FindFirstChildOfClass("Animator") ??
-		(() => {
-			const a = new Instance("Animator");
-			a.Parent = humanoid;
-			return a;
-		})();
-	const sitAnim = new Instance("Animation");
-	sitAnim.AnimationId = SIT_ANIMATION_ID;
-	const track = animator.LoadAnimation(sitAnim);
-	track.Priority = Enum.AnimationPriority.Action4;
-	track.Looped = true;
-	track.Play();
-	sitTracks.set(player.UserId, track);
-	sitAnim.Destroy();
+	// Skip for standing mounts (e.g. Skateboard) so the character walks/runs normally
+	if (!standingMount) {
+		const animator =
+			humanoid.FindFirstChildOfClass("Animator") ??
+			(() => {
+				const a = new Instance("Animator");
+				a.Parent = humanoid;
+				return a;
+			})();
+		const sitAnim = new Instance("Animation");
+		sitAnim.AnimationId = SIT_ANIMATION_ID;
+		const track = animator.LoadAnimation(sitAnim);
+		track.Priority = Enum.AnimationPriority.Action4;
+		track.Looped = true;
+		track.Play();
+		sitTracks.set(player.UserId, track);
+		sitAnim.Destroy();
+	}
 
 	// Set Humanoid movement properties (reset PlatformStand in case of stale state)
 	humanoid.PlatformStand = false;
@@ -176,6 +195,10 @@ export function equipHachiCostume(
 	const walkSpeed = HACHI_WALK_SPEEDS[evolutionLevel] ?? HACHI_WALK_SPEEDS[0];
 	humanoid.WalkSpeed = walkSpeed;
 	humanoid.JumpHeight = HACHI_JUMP_HEIGHT;
+	if (hipHeightOffset !== 0) {
+		originalHipHeights.set(player.UserId, humanoid.HipHeight);
+		humanoid.HipHeight += hipHeightOffset;
+	}
 
 	// Track mounted state
 	mountedPlayers.set(player.UserId, hachiModel);
@@ -227,6 +250,11 @@ export function unequipHachiCostume(player: Player): boolean {
 			humanoid.UseJumpPower = false;
 			humanoid.JumpHeight = DEFAULT_JUMP_HEIGHT;
 			humanoid.AutoRotate = true;
+			const origHip = originalHipHeights.get(player.UserId);
+			if (origHip !== undefined) {
+				humanoid.HipHeight = origHip;
+				originalHipHeights.delete(player.UserId);
+			}
 		}
 	}
 

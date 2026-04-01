@@ -277,7 +277,17 @@ export class HachiRideMinigame implements IMinigame {
 
 			// Equip costume on player (welds to HRP, sets WalkSpeed/JumpHeight)
 			const evoLevel = HACHI_STARTING_EVOLUTION;
-			equipHachiCostume(player, clone, evoLevel);
+			equipHachiCostume(
+				player,
+				clone,
+				evoLevel,
+				false,
+				vDef?.weldYawOffset ?? 0,
+				vDef?.scaleOverride,
+				vDef?.seatHeightOffset ?? 0,
+				vDef?.standingMount ?? false,
+				vDef?.hipHeightOffset ?? 0,
+			);
 			this.hachiModels.set(player.UserId, clone);
 			matchJanitor.Add(() => {
 				unequipHachiCostume(player);

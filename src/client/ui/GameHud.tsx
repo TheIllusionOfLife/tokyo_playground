@@ -32,8 +32,10 @@ import { ZonePopup } from "./components/ZonePopup";
 export function GameHud() {
 	return (
 		<>
-			{/* Timer in the Roblox topbar zone (own ScreenGui with ScreenInsets.None) */}
+			{/* Topbar zone elements (own ScreenGui with ScreenInsets.None) */}
 			<TopBarTimer />
+			<SpinWheel />
+			<LeaderboardPanel />
 			<screengui
 				key="GameHud"
 				ResetOnSpawn={false}
@@ -57,8 +59,6 @@ export function GameHud() {
 				<ShopPanel />
 				<SpectatorOverlay />
 				<SkillsPanel />
-				<SpinWheel />
-				<LeaderboardPanel />
 				{/* Living Shibuya */}
 				<StampCardPanel />
 				<StampDiscoveryPopup />

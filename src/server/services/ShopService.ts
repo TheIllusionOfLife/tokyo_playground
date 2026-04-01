@@ -14,6 +14,7 @@ import { PlayerDataService } from "./PlayerDataService";
 export class ShopService implements OnStart {
 	private readonly serverEvents = GlobalEvents.createServer({});
 	private readonly catalogCooldowns = new Map<number, number>();
+	private readonly vehicleCatalogCooldowns = new Map<number, number>();
 
 	constructor(private readonly playerDataService: PlayerDataService) {}
 
@@ -61,11 +62,11 @@ export class ShopService implements OnStart {
 			safeHandler("ShopService.requestVehicleCatalog", (player) => {
 				const now = os.clock();
 				if (
-					now - (this.catalogCooldowns.get(player.UserId) ?? 0) <
+					now - (this.vehicleCatalogCooldowns.get(player.UserId) ?? 0) <
 					SHOP_CATALOG_COOLDOWN
 				)
 					return;
-				this.catalogCooldowns.set(player.UserId, now);
+				this.vehicleCatalogCooldowns.set(player.UserId, now);
 				this.handleRequestVehicleCatalog(player);
 			}),
 		);
@@ -84,6 +85,7 @@ export class ShopService implements OnStart {
 
 		Players.PlayerRemoving.Connect((player) => {
 			this.catalogCooldowns.delete(player.UserId);
+			this.vehicleCatalogCooldowns.delete(player.UserId);
 		});
 	}
 

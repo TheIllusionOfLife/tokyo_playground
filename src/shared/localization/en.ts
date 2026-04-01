@@ -60,6 +60,7 @@ export const EN: Record<string, string> = {
 	skill_fluffy_hachi: "Fluffy Hachi",
 	skill_fluffy_hachi_desc: "Maximum cuteness",
 	skill_unlocked: "Unlocked",
+	skills_button: "Skills",
 
 	// Stamp rally
 	stamp_rally: "Stamp Rally",
@@ -190,7 +191,7 @@ export const EN: Record<string, string> = {
 	hint_hachi_evolved: "Hachi evolved to level %1!",
 
 	// Point of Interest
-	poi_header: "Points of Interest",
+	poi_header: "Landmarks",
 	poi_claim: "Claim +10",
 	poi_claimed: "Claimed",
 	poi_undiscovered: "Not found",
@@ -217,6 +218,7 @@ export const EN: Record<string, string> = {
 
 	// Cosmetics preview
 	shop_try_on: "TRY ON",
+	shop_tab_accessory: "Accessory",
 
 	// Spin
 	spin_title: "Daily Lucky Spin",

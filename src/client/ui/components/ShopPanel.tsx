@@ -8,6 +8,7 @@ import {
 	L_SHOP_BUY,
 	L_SHOP_EQUIP,
 	L_SHOP_NEED_PTS,
+	L_SHOP_TAB_ACCESSORY,
 	L_SHOP_TRY_ON,
 	L_SHOP_UNEQUIP,
 	L_VEHICLE_TAB,
@@ -223,13 +224,14 @@ function ShopCard({
 				Text={item.name}
 			/>
 			<textlabel
-				Size={new UDim2(1, -8, 0, 18)}
+				Size={new UDim2(1, !item.owned && levelMet ? -62 : -8, 0, 18)}
 				Position={new UDim2(0, 4, 0, 32)}
 				BackgroundTransparency={1}
 				TextColor3={Color3.fromRGB(150, 150, 200)}
 				TextScaled={true}
 				Font={Enum.Font.Gotham}
 				Text={`${item.category} • ${item.price}pts`}
+				TextXAlignment={Enum.TextXAlignment.Left}
 			/>
 			<textbutton
 				Size={new UDim2(1, -8, 0, 28)}
@@ -256,8 +258,8 @@ function ShopCard({
 			{/* Try On button for unowned items */}
 			{!item.owned && levelMet && (
 				<textbutton
-					Size={new UDim2(0, 50, 0, 18)}
-					Position={new UDim2(1, -54, 0, 32)}
+					Size={new UDim2(0, 50, 0, 16)}
+					Position={new UDim2(1, -54, 0, 34)}
 					BackgroundColor3={Color3.fromRGB(100, 80, 140)}
 					TextColor3={Color3.fromRGB(220, 220, 255)}
 					TextScaled={true}
@@ -318,12 +320,17 @@ function VehicleCard({
 	return (
 		<frame
 			key={vehicle.id}
-			Size={new UDim2(0, 150, 0, 130)}
+			Size={new UDim2(0, 150, 0, 140)}
 			BackgroundColor3={Color3.fromRGB(35, 35, 50)}
 			BackgroundTransparency={0.2}
 			BorderSizePixel={0}
 		>
 			<uicorner CornerRadius={new UDim(0, 8)} />
+			<uistroke
+				Color={Color3.fromRGB(60, 60, 80)}
+				Thickness={1}
+				Transparency={0.3}
+			/>
 			{/* Colored icon area */}
 			<frame
 				Size={new UDim2(1, 0, 0, 44)}
@@ -381,8 +388,9 @@ function VehicleCard({
 			/>
 			{/* Action button */}
 			<textbutton
-				Size={new UDim2(1, -8, 0, 28)}
-				Position={new UDim2(0, 4, 1, -32)}
+				Size={new UDim2(1, -16, 0, 26)}
+				Position={new UDim2(0.5, 0, 0, 90)}
+				AnchorPoint={new Vector2(0.5, 0)}
 				BackgroundColor3={buttonColor}
 				TextColor3={Color3.fromRGB(255, 255, 255)}
 				TextScaled={true}
@@ -423,7 +431,7 @@ export function ShopPanel() {
 	const activeMinigameId = useSelector(
 		(state: GameStoreState) => state.activeMinigameId,
 	);
-	const [tab, setTab] = useState<ShopTab>("cosmetics");
+	const [tab, setTab] = useState<ShopTab>("vehicles");
 
 	// Hide during HachiRide InProgress (overlaps with rank/skills/points)
 	const hideButton =
@@ -433,6 +441,7 @@ export function ShopPanel() {
 	const onOpen = () => {
 		gameStore.setActiveOverlay(open ? "none" : "shop");
 		if (!open) {
+			setTab("vehicles");
 			clientEvents.requestShopCatalog.fire();
 			clientEvents.requestVehicleCatalog.fire();
 		}
@@ -516,8 +525,9 @@ export function ShopPanel() {
 						/>
 						{/* Tab buttons */}
 						<frame
-							Size={new UDim2(0.5, -12, 0, 28)}
-							Position={new UDim2(0.5, 0, 0, 12)}
+							Size={new UDim2(0, 180, 0, 28)}
+							Position={new UDim2(1, -44, 0, 12)}
+							AnchorPoint={new Vector2(1, 0)}
 							BackgroundTransparency={1}
 							ZIndex={19}
 						>
@@ -527,25 +537,8 @@ export function ShopPanel() {
 								HorizontalAlignment={Enum.HorizontalAlignment.Right}
 							/>
 							<textbutton
-								key="tab_cosmetics"
-								Size={new UDim2(0, 80, 1, 0)}
-								BackgroundColor3={
-									tab === "cosmetics"
-										? Color3.fromRGB(80, 60, 120)
-										: Color3.fromRGB(40, 40, 60)
-								}
-								TextColor3={Color3.fromRGB(255, 255, 255)}
-								TextScaled={true}
-								Font={Enum.Font.GothamBold}
-								Text={t(L_SHOP)}
-								ZIndex={19}
-								Event={{ Activated: () => setTab("cosmetics") }}
-							>
-								<uicorner CornerRadius={new UDim(0, 6)} />
-							</textbutton>
-							<textbutton
 								key="tab_vehicles"
-								Size={new UDim2(0, 110, 1, 0)}
+								Size={new UDim2(0, 80, 1, 0)}
 								BackgroundColor3={
 									tab === "vehicles"
 										? Color3.fromRGB(80, 60, 120)
@@ -554,17 +547,34 @@ export function ShopPanel() {
 								TextColor3={Color3.fromRGB(255, 255, 255)}
 								TextScaled={true}
 								Font={Enum.Font.GothamBold}
-								Text={`${t(L_VEHICLE_TAB)} (${vehicleItems.filter((v) => v.owned).size()}/${vehicleItems.size()})`}
+								Text={t(L_VEHICLE_TAB)}
 								ZIndex={19}
 								Event={{ Activated: () => setTab("vehicles") }}
+							>
+								<uicorner CornerRadius={new UDim(0, 6)} />
+							</textbutton>
+							<textbutton
+								key="tab_cosmetics"
+								Size={new UDim2(0, 90, 1, 0)}
+								BackgroundColor3={
+									tab === "cosmetics"
+										? Color3.fromRGB(80, 60, 120)
+										: Color3.fromRGB(40, 40, 60)
+								}
+								TextColor3={Color3.fromRGB(255, 255, 255)}
+								TextScaled={true}
+								Font={Enum.Font.GothamBold}
+								Text={t(L_SHOP_TAB_ACCESSORY)}
+								ZIndex={19}
+								Event={{ Activated: () => setTab("cosmetics") }}
 							>
 								<uicorner CornerRadius={new UDim(0, 6)} />
 							</textbutton>
 						</frame>
 						{/* Content area */}
 						<scrollingframe
-							Size={new UDim2(1, -24, 1, -52)}
-							Position={new UDim2(0, 12, 0, 44)}
+							Size={new UDim2(1, -12, 1, -52)}
+							Position={new UDim2(0, 6, 0, 44)}
 							BackgroundTransparency={1}
 							BorderSizePixel={0}
 							CanvasSize={new UDim2(0, 0, 0, 0)}
@@ -576,10 +586,15 @@ export function ShopPanel() {
 							<uigridlayout
 								CellSize={
 									tab === "vehicles"
-										? new UDim2(0, 150, 0, 130)
+										? new UDim2(0, 150, 0, 140)
 										: new UDim2(0, 128, 0, 96)
 								}
-								CellPadding={new UDim2(0, 6, 0, 6)}
+								CellPadding={
+									tab === "vehicles"
+										? new UDim2(0, 8, 0, 12)
+										: new UDim2(0, 6, 0, 6)
+								}
+								HorizontalAlignment={Enum.HorizontalAlignment.Center}
 							/>
 							{tab === "cosmetics"
 								? shopItems.map((item) => (

@@ -225,11 +225,22 @@ export class LobbyService implements OnStart {
 							this.playerDataService.getPlayerData(player)?.maxHachiLevel ?? 0,
 							HACHI_LOBBY_MIN_LEVEL,
 						);
-				if (!equipHachiCostume(player, clone, evoLevel, !this.matchActive)) {
+				const vDef = VEHICLE_CATALOG.find((v) => v.id === vehicleId);
+				if (
+					!equipHachiCostume(
+						player,
+						clone,
+						evoLevel,
+						!this.matchActive,
+						vDef?.weldYawOffset ?? 0,
+						vDef?.scaleOverride,
+						vDef?.seatHeightOffset ?? 0,
+						vDef?.standingMount ?? false,
+						vDef?.hipHeightOffset ?? 0,
+					)
+				) {
 					clone.Destroy();
 				} else {
-					// Cache vehicle def for animation dispatch (avoids live lookup drift)
-					const vDef = VEHICLE_CATALOG.find((v) => v.id === vehicleId);
 					if (vDef) this.mountedVehicleDefs.set(clone, vDef);
 				}
 			} else {

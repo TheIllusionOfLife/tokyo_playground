@@ -57,7 +57,7 @@ export function TopBarTimer() {
 			<frame
 				key="TimerFrame"
 				Size={new UDim2(0, 100, 0, math.max(topbarHeight - 4, 28))}
-				Position={new UDim2(0.5, 0, 0, 2)}
+				Position={new UDim2(0.5, 0, 0, 20)}
 				AnchorPoint={new Vector2(0.5, 0)}
 				BackgroundColor3={Color3.fromRGB(0, 0, 0)}
 				BackgroundTransparency={0.4}
