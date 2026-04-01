@@ -1,8 +1,12 @@
 import { OnStart, Service } from "@flamework/core";
 import { Players } from "@rbxts/services";
-import { SHOP_CATALOG, SHOP_CATALOG_COOLDOWN } from "shared/constants";
+import {
+	SHOP_CATALOG,
+	SHOP_CATALOG_COOLDOWN,
+	VEHICLE_CATALOG,
+} from "shared/constants";
 import { GlobalEvents } from "shared/network";
-import { ItemId, ShopItemData } from "shared/types";
+import { ItemId, ShopItemData, VehicleId, VehicleShopData } from "shared/types";
 import { safeHandler } from "../utils/safeConnect";
 import { PlayerDataService } from "./PlayerDataService";
 
@@ -49,6 +53,32 @@ export class ShopService implements OnStart {
 		this.serverEvents.requestPurchase.connect(
 			safeHandler("ShopService.requestPurchase", (player, itemId) => {
 				this.handleRequestPurchase(player, itemId);
+			}),
+		);
+
+		// Vehicle catalog/purchase/equip
+		this.serverEvents.requestVehicleCatalog.connect(
+			safeHandler("ShopService.requestVehicleCatalog", (player) => {
+				const now = os.clock();
+				if (
+					now - (this.catalogCooldowns.get(player.UserId) ?? 0) <
+					SHOP_CATALOG_COOLDOWN
+				)
+					return;
+				this.catalogCooldowns.set(player.UserId, now);
+				this.handleRequestVehicleCatalog(player);
+			}),
+		);
+
+		this.serverEvents.requestVehiclePurchase.connect(
+			safeHandler("ShopService.requestVehiclePurchase", (player, vehicleId) => {
+				this.handleVehiclePurchase(player, vehicleId);
+			}),
+		);
+
+		this.serverEvents.requestVehicleEquip.connect(
+			safeHandler("ShopService.requestVehicleEquip", (player, vehicleId) => {
+				this.handleVehicleEquip(player, vehicleId);
 			}),
 		);
 
@@ -146,5 +176,99 @@ export class ShopService implements OnStart {
 			});
 		}
 		return result;
+	}
+
+	// ── Vehicle methods ─────────────────────────────────────────────────────
+
+	private handleRequestVehicleCatalog(player: Player) {
+		const data = this.playerDataService.getPlayerData(player);
+		if (!data) return;
+		const ownedVehicles = this.playerDataService.getOwnedVehicles(player);
+		const equippedVehicle = this.playerDataService.getEquippedVehicle(player);
+		const vehicles: VehicleShopData[] = VEHICLE_CATALOG.map((v) => ({
+			id: v.id,
+			name: v.name,
+			price: v.price,
+			levelRequired: v.levelRequired,
+			owned: ownedVehicles.includes(v.id),
+			equipped: v.id === equippedVehicle,
+		}));
+		this.serverEvents.vehicleCatalog.fire(player, vehicles);
+	}
+
+	private handleVehiclePurchase(player: Player, vehicleId: VehicleId) {
+		const data = this.playerDataService.getPlayerData(player);
+		if (!data) return;
+
+		const catalogItem = VEHICLE_CATALOG.find((v) => v.id === vehicleId);
+		if (!catalogItem) {
+			this.serverEvents.vehiclePurchaseResult.fire(
+				player,
+				false,
+				vehicleId,
+				data.shopBalance,
+				"Vehicle not found",
+			);
+			return;
+		}
+
+		const level = this.playerDataService.getPlaygroundLevel(player);
+		if (level < catalogItem.levelRequired) {
+			this.serverEvents.vehiclePurchaseResult.fire(
+				player,
+				false,
+				vehicleId,
+				data.shopBalance,
+				`Level ${catalogItem.levelRequired} required`,
+			);
+			return;
+		}
+
+		const ownedVehicles = this.playerDataService.getOwnedVehicles(player);
+		if (ownedVehicles.includes(vehicleId)) {
+			this.serverEvents.vehiclePurchaseResult.fire(
+				player,
+				false,
+				vehicleId,
+				data.shopBalance,
+				"Already owned",
+			);
+			return;
+		}
+
+		const spent = this.playerDataService.spendShopBalance(
+			player,
+			catalogItem.price,
+		);
+		if (!spent) {
+			this.serverEvents.vehiclePurchaseResult.fire(
+				player,
+				false,
+				vehicleId,
+				data.shopBalance,
+				"Insufficient balance",
+			);
+			return;
+		}
+
+		this.playerDataService.addOwnedVehicle(player, vehicleId);
+		const newBalance = this.playerDataService.getShopBalance(player);
+		this.serverEvents.vehiclePurchaseResult.fire(
+			player,
+			true,
+			vehicleId,
+			newBalance,
+			"",
+		);
+	}
+
+	private handleVehicleEquip(player: Player, vehicleId: VehicleId) {
+		const ownedVehicles = this.playerDataService.getOwnedVehicles(player);
+		if (!ownedVehicles.includes(vehicleId)) {
+			this.serverEvents.vehicleEquipResult.fire(player, false, vehicleId);
+			return;
+		}
+		this.playerDataService.setEquippedVehicle(player, vehicleId);
+		this.serverEvents.vehicleEquipResult.fire(player, true, vehicleId);
 	}
 }

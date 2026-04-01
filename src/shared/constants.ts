@@ -4,6 +4,7 @@ import {
 	MinigameId,
 	MissionId,
 	ShopItemData,
+	VehicleId,
 } from "shared/types";
 
 // Defaults
@@ -594,5 +595,205 @@ export const SE_GOLDEN_HOUR_CHIME = "rbxassetid://6518811702"; // warm shimmer
 
 // Streak bonuses — multiplier by consecutive games played (index = streak count, capped)
 export const STREAK_MULTIPLIERS = [1.0, 1.0, 1.1, 1.2, 1.2, 1.35];
+
+// ── Vehicle System ──────────────────────────────────────────────────────
+
+export enum AnimProfile {
+	Quadruped = "Quadruped",
+	Wheeled = "Wheeled",
+	Serpentine = "Serpentine",
+	Static = "Static",
+}
+
+export interface VehicleDef {
+	id: VehicleId;
+	name: string;
+	nameKey: string;
+	templateName: string;
+	price: number;
+	levelRequired: number;
+	animProfile: AnimProfile;
+	speedScale: number;
+	idleAmp: number;
+}
+
+export const VEHICLE_CATALOG: VehicleDef[] = [
+	{
+		id: VehicleId.DefaultHachi,
+		name: "Hachi",
+		nameKey: "vehicle_hachi",
+		templateName: "HachiTemplate",
+		price: 0,
+		levelRequired: 0,
+		animProfile: AnimProfile.Quadruped,
+		speedScale: 1.0,
+		idleAmp: 0.15,
+	},
+	{
+		id: VehicleId.WhiteCat,
+		name: "White Cat",
+		nameKey: "vehicle_white_cat",
+		templateName: "NekoTemplate",
+		price: 0,
+		levelRequired: 0,
+		animProfile: AnimProfile.Quadruped,
+		speedScale: 1.1,
+		idleAmp: 0.2,
+	},
+	{
+		id: VehicleId.CalicoCat,
+		name: "Calico Cat",
+		nameKey: "vehicle_calico_cat",
+		templateName: "CalicoCatTemplate",
+		price: 300,
+		levelRequired: 2,
+		animProfile: AnimProfile.Static,
+		speedScale: 1.0,
+		idleAmp: 0.2,
+	},
+	{
+		id: VehicleId.Kart,
+		name: "Kart",
+		nameKey: "vehicle_kart",
+		templateName: "KartTemplate",
+		price: 300,
+		levelRequired: 2,
+		animProfile: AnimProfile.Wheeled,
+		speedScale: 1.0,
+		idleAmp: 0.05,
+	},
+	{
+		id: VehicleId.WhiteDragon,
+		name: "White Dragon",
+		nameKey: "vehicle_white_dragon",
+		templateName: "WhiteDragonTemplate",
+		price: 800,
+		levelRequired: 5,
+		animProfile: AnimProfile.Static,
+		speedScale: 1.0,
+		idleAmp: 0.2,
+	},
+	{
+		id: VehicleId.GreenDragon,
+		name: "Green Dragon",
+		nameKey: "vehicle_green_dragon",
+		templateName: "GreenDragonTemplate",
+		price: 600,
+		levelRequired: 4,
+		animProfile: AnimProfile.Static,
+		speedScale: 1.0,
+		idleAmp: 0.2,
+	},
+	{
+		id: VehicleId.Bear,
+		name: "Bear",
+		nameKey: "vehicle_bear",
+		templateName: "BearTemplate",
+		price: 400,
+		levelRequired: 3,
+		animProfile: AnimProfile.Quadruped,
+		speedScale: 0.9,
+		idleAmp: 0.2,
+	},
+	{
+		id: VehicleId.ShibaInu,
+		name: "Shiba Inu",
+		nameKey: "vehicle_shiba",
+		templateName: "ShibaInuTemplate",
+		price: 200,
+		levelRequired: 1,
+		animProfile: AnimProfile.Quadruped,
+		speedScale: 1.0,
+		idleAmp: 0.15,
+	},
+	{
+		id: VehicleId.Kitsune,
+		name: "Kitsune",
+		nameKey: "vehicle_kitsune",
+		templateName: "KitsuneTemplate",
+		price: 600,
+		levelRequired: 4,
+		animProfile: AnimProfile.Quadruped,
+		speedScale: 1.15,
+		idleAmp: 0.12,
+	},
+	{
+		id: VehicleId.ToyCar,
+		name: "Toy Car",
+		nameKey: "vehicle_toy_car",
+		templateName: "ToyCarTemplate",
+		price: 500,
+		levelRequired: 3,
+		animProfile: AnimProfile.Wheeled,
+		speedScale: 1.0,
+		idleAmp: 0.05,
+	},
+	{
+		id: VehicleId.ManekiNeko,
+		name: "Maneki-neko",
+		nameKey: "vehicle_maneki",
+		templateName: "ManekiNekoTemplate",
+		price: 700,
+		levelRequired: 4,
+		animProfile: AnimProfile.Static,
+		speedScale: 1.0,
+		idleAmp: 0.2,
+	},
+	{
+		id: VehicleId.ShibuyaBus,
+		name: "Shibuya Bus",
+		nameKey: "vehicle_shibuya_bus",
+		templateName: "ShibuyaBusTemplate",
+		price: 400,
+		levelRequired: 3,
+		animProfile: AnimProfile.Wheeled,
+		speedScale: 0.8,
+		idleAmp: 0.05,
+	},
+	{
+		id: VehicleId.Rickshaw,
+		name: "Rickshaw",
+		nameKey: "vehicle_rickshaw",
+		templateName: "RickshawTemplate",
+		price: 350,
+		levelRequired: 2,
+		animProfile: AnimProfile.Wheeled,
+		speedScale: 0.9,
+		idleAmp: 0.08,
+	},
+	{
+		id: VehicleId.Skateboard,
+		name: "Skateboard",
+		nameKey: "vehicle_skateboard",
+		templateName: "SkateboardTemplate",
+		price: 200,
+		levelRequired: 1,
+		animProfile: AnimProfile.Wheeled,
+		speedScale: 1.2,
+		idleAmp: 0.03,
+	},
+	{
+		id: VehicleId.Onigiri,
+		name: "Onigiri",
+		nameKey: "vehicle_onigiri",
+		templateName: "OnigiriTemplate",
+		price: 150,
+		levelRequired: 1,
+		animProfile: AnimProfile.Static,
+		speedScale: 1.0,
+		idleAmp: 0.25,
+	},
+	{
+		id: VehicleId.Shinkansen,
+		name: "Shinkansen",
+		nameKey: "vehicle_shinkansen",
+		templateName: "ShinkansenTemplate",
+		price: 600,
+		levelRequired: 4,
+		animProfile: AnimProfile.Wheeled,
+		speedScale: 1.0,
+		idleAmp: 0.03,
+	},
+];
 
 // Living Shibuya constants moved to shared/living-shibuya-constants.ts

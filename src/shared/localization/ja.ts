@@ -195,6 +195,29 @@ export const JA: Record<string, string> = {
 	poi_claimed: "獲得済み",
 	poi_undiscovered: "未発見",
 
+	// Vehicles
+	vehicle_tab: "のりもの",
+	vehicle_hachi: "ハチ",
+	vehicle_white_cat: "白ネコ",
+	vehicle_calico_cat: "三毛猫",
+	vehicle_kart: "カート",
+	vehicle_white_dragon: "白龍",
+	vehicle_green_dragon: "緑龍",
+	vehicle_bear: "クマ",
+	vehicle_shiba: "柴犬",
+	vehicle_kitsune: "キツネ",
+	vehicle_toy_car: "おもちゃの車",
+	vehicle_maneki: "まねきねこ",
+
+	vehicle_shibuya_bus: "渋谷バス",
+	vehicle_rickshaw: "人力車",
+	vehicle_skateboard: "スケボー",
+	vehicle_onigiri: "おにぎり",
+	vehicle_shinkansen: "新幹線",
+
+	// Cosmetics preview
+	shop_try_on: "試着",
+
 	// Zones
 	zone_ShibuyaSky: "渋谷スカイ",
 	zone_ShibuyaCrossing: "渋谷スクランブル交差点",

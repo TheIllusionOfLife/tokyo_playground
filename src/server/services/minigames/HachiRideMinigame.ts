@@ -2,11 +2,11 @@ import { Janitor } from "@rbxts/janitor";
 import {
 	CollectionService,
 	Players,
-	ServerStorage,
 	TweenService,
 	Workspace,
 } from "@rbxts/services";
 import {
+	AnimProfile,
 	DEFAULT_JUMP_HEIGHT,
 	DEFAULT_WALK_SPEED,
 	HACHI_ANTICHEAT_CHECK_INTERVAL,
@@ -57,6 +57,7 @@ import {
 	HACHI_WALL_RUN_RAYCAST,
 	HACHI_WALL_RUN_SPEED,
 	SCRAMBLE_SLIDE_COOLDOWN,
+	VEHICLE_CATALOG,
 } from "shared/constants";
 import { GlobalEvents } from "shared/network";
 import {
@@ -66,10 +67,11 @@ import {
 	MissionId,
 	PlayerRole,
 	RoundResult,
+	VehicleId,
 } from "shared/types";
 import { buildHachiRaceSnapshot } from "shared/utils/hachiRace";
-import { animateHachi, HachiAnimState } from "../../utils/animateHachi";
 import { animateItemCollect } from "../../utils/animateItemCollect";
+import { animateVehicle, HachiAnimState } from "../../utils/animateVehicle";
 import {
 	equipHachiCostume,
 	forceUnmount,
@@ -78,7 +80,9 @@ import {
 	unequipHachiCostume,
 	updateHachiWalkSpeed,
 } from "../../utils/hachiCostume";
+import { getVehicleTemplate } from "../../utils/vehicleTemplate";
 import { MissionService } from "../MissionService";
+import { PlayerDataService } from "../PlayerDataService";
 import { IMinigame } from "./MinigameBase";
 
 type ServerEvents = ReturnType<typeof GlobalEvents.createServer>;
@@ -99,6 +103,10 @@ export class HachiRideMinigame implements IMinigame {
 	private playerObjects = new Map<number, Player>();
 	private hachiModels = new Map<number, Model>();
 	private hachiAnimStates = new Map<number, HachiAnimState>();
+	private hachiVehicleDefs = new Map<
+		number,
+		(typeof VEHICLE_CATALOG)[number]
+	>();
 	private activeItems: BasePart[] = [];
 	private activeTweens: Tween[] = [];
 	private bonusItems = new Set<BasePart>();
@@ -130,6 +138,7 @@ export class HachiRideMinigame implements IMinigame {
 	constructor(
 		private readonly serverEvents: ServerEvents,
 		private readonly missionService: MissionService,
+		private readonly playerDataService: PlayerDataService,
 	) {
 		HachiRideMinigame.activeInstance = this;
 	}
@@ -247,25 +256,24 @@ export class HachiRideMinigame implements IMinigame {
 			);
 		}
 
-		// Clone HachiTemplate for each player
-		const templateRaw = ServerStorage.FindFirstChild("HachiTemplate");
-		const template = templateRaw?.IsA("Model") ? templateRaw : undefined;
-		if (!templateRaw) {
-			warn(
-				"[HachiRide] Missing ServerStorage.HachiTemplate — Hachi models will not spawn",
-			);
-		} else if (!template) {
-			warn(
-				"[HachiRide] ServerStorage.HachiTemplate is not a Model — Hachi models will not spawn",
-			);
-		}
-
+		// Clone vehicle template for each player (uses their equipped vehicle)
 		for (let i = 0; i < players.size(); i++) {
 			const player = players[i];
-			if (!template) break;
+			const vehicleId = this.playerDataService.getEquippedVehicle(player);
+			const template = getVehicleTemplate(vehicleId);
+			if (!template) {
+				warn(
+					`[HachiRide] Missing vehicle template for ${player.Name} (${vehicleId})`,
+				);
+				continue;
+			}
 
 			const clone = template.Clone();
 			clone.Name = `Hachi_${player.UserId}`;
+
+			// Cache vehicle definition for animation dispatch
+			const vDef = VEHICLE_CATALOG.find((v) => v.id === vehicleId);
+			if (vDef) this.hachiVehicleDefs.set(player.UserId, vDef);
 
 			// Equip costume on player (welds to HRP, sets WalkSpeed/JumpHeight)
 			const evoLevel = HACHI_STARTING_EVOLUTION;
@@ -535,6 +543,7 @@ export class HachiRideMinigame implements IMinigame {
 		this.playerObjects.clear();
 		this.hachiModels.clear();
 		this.hachiAnimStates.clear();
+		this.hachiVehicleDefs.clear();
 		this.wallRunStates.clear();
 		this.jumpCooldowns.clear();
 		this.ejectCooldowns.clear();
@@ -582,6 +591,7 @@ export class HachiRideMinigame implements IMinigame {
 		this.hachiSlideActive.delete(userId);
 		this.slideCooldowns.delete(userId);
 		this.respawnGrace.delete(userId);
+		this.hachiVehicleDefs.delete(userId);
 	}
 
 	private handleJumpRequest(player: Player) {
@@ -1159,7 +1169,18 @@ export class HachiRideMinigame implements IMinigame {
 				animTime: 0,
 				airborne: false,
 			};
-			this.hachiAnimStates.set(userId, animateHachi(body, dt, state));
+			const vDef = this.hachiVehicleDefs.get(userId);
+			this.hachiAnimStates.set(
+				userId,
+				animateVehicle(
+					body,
+					dt,
+					state,
+					vDef?.animProfile ?? AnimProfile.Quadruped,
+					vDef?.speedScale ?? 1.0,
+					vDef?.idleAmp ?? 0.15,
+				),
+			);
 		}
 	}
 

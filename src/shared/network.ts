@@ -17,6 +17,8 @@ import {
 	ScoreboardEntry,
 	ShopItemData,
 	TimePhase,
+	VehicleId,
+	VehicleShopData,
 } from "shared/types";
 
 interface ServerToClientEvents {
@@ -136,6 +138,23 @@ interface ServerToClientEvents {
 	// ── Boundary ────────────────────────────────────────────────────────
 	boundaryWarning(ratio: number): void;
 
+	// ── Vehicles ─────────────────────────────────────────────────────────
+	vehicleCatalog(vehicles: VehicleShopData[]): void;
+	vehiclePurchaseResult(
+		success: boolean,
+		vehicleId: VehicleId,
+		newBalance: number,
+		errorMessage: string,
+	): void;
+	vehicleEquipResult(success: boolean, vehicleId: VehicleId): void;
+
+	// ── Cosmetics Preview ───────────────────────────────────────────────
+	previewEquipped(
+		itemId: ItemId | undefined,
+		category: ItemCategory | undefined,
+		durationSeconds: number,
+	): void;
+
 	// ── Living Shibuya: Weather ──────────────────────────────────────────
 	weatherChanged(weather: string): void;
 
@@ -180,6 +199,14 @@ interface ClientToServerEvents {
 
 	// ── Minigame start request ───────────────────────────────────────────
 	requestMinigameStart(minigameId: MinigameId): void;
+
+	// ── Vehicles ────────────────────────────────────────────────────────
+	requestVehicleCatalog(): void;
+	requestVehiclePurchase(vehicleId: VehicleId): void;
+	requestVehicleEquip(vehicleId: VehicleId): void;
+
+	// ── Cosmetics Preview ───────────────────────────────────────────────
+	requestPreview(itemId: ItemId): void;
 
 	// ── Living Shibuya: Lobby Hachi Abilities ────────────────────────────
 	hachiToggleCostume(equip: boolean): void;

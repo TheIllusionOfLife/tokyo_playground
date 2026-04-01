@@ -20,6 +20,7 @@ import {
 	MinigameId,
 	PlayerRole,
 	RoundResult,
+	VehicleId,
 } from "shared/types";
 import { isInsideJailRattleZone } from "shared/utils/canKickRattle";
 import {
@@ -33,6 +34,7 @@ import {
 	startOniCountdown,
 	stopOniCountdown,
 } from "../../utils/oni-helpers";
+import { getVehicleTemplate } from "../../utils/vehicleTemplate";
 import { IMinigame } from "./MinigameBase";
 
 type ServerEvents = ReturnType<typeof GlobalEvents.createServer>;
@@ -157,6 +159,8 @@ export class CanKickMinigame implements IMinigame {
 			this.serverEvents,
 			"hint_oni_counting",
 			this.lastHintText,
+			undefined,
+			3,
 		);
 
 		this.countdownThread = startOniCountdown(
@@ -486,9 +490,7 @@ export class CanKickMinigame implements IMinigame {
 	}
 
 	private mountOni(player: Player) {
-		const hachiTemplate = ServerStorage.FindFirstChild("HachiTemplate") as
-			| Model
-			| undefined;
+		const hachiTemplate = getVehicleTemplate(VehicleId.DefaultHachi);
 		if (!hachiTemplate) {
 			warn("[CanKick] HachiTemplate not found for Oni mount");
 			return;

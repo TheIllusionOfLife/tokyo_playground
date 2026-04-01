@@ -34,6 +34,7 @@ import {
 	PlayerRole,
 	RoundResult,
 	ShibuyaScramblePlayerState,
+	VehicleId,
 } from "shared/types";
 import { canTriggerSpiritWave } from "shared/utils/scrambleCrowd";
 import {
@@ -47,6 +48,7 @@ import {
 	startOniCountdown,
 	stopOniCountdown,
 } from "../../utils/oni-helpers";
+import { getVehicleTemplate } from "../../utils/vehicleTemplate";
 import { MissionService } from "../MissionService";
 import { IMinigame } from "./MinigameBase";
 
@@ -176,6 +178,8 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 			this.serverEvents,
 			"hint_oni_counting",
 			this.lastHintText,
+			undefined,
+			3,
 		);
 
 		this.countdownThread = startOniCountdown(
@@ -393,9 +397,7 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 	}
 
 	private mountOni(player: Player) {
-		const hachiTemplate = ServerStorage.FindFirstChild("HachiTemplate") as
-			| Model
-			| undefined;
+		const hachiTemplate = getVehicleTemplate(VehicleId.DefaultHachi);
 		if (!hachiTemplate) {
 			warn("[ShibuyaScramble] HachiTemplate not found for Oni mount");
 			return;

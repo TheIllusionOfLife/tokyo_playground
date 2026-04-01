@@ -17,8 +17,30 @@ import {
 	PlayerData,
 	PlayerMissions,
 	RewardBreakdown,
+	VehicleId,
 } from "shared/types";
 import { getCurrentDay } from "shared/utils/dayKey";
+
+/** Valid VehicleId values for post-Reconcile validation. */
+const VEHICLE_ID_VALUES = new Set<VehicleId>([
+	VehicleId.DefaultHachi,
+	VehicleId.WhiteCat,
+	VehicleId.CalicoCat,
+	VehicleId.Kart,
+	VehicleId.WhiteDragon,
+	VehicleId.GreenDragon,
+	VehicleId.Bear,
+	VehicleId.ShibaInu,
+	VehicleId.Kitsune,
+	VehicleId.ToyCar,
+	VehicleId.ManekiNeko,
+	VehicleId.ShibuyaBus,
+	VehicleId.Rickshaw,
+	VehicleId.Skateboard,
+	VehicleId.Onigiri,
+	VehicleId.Shinkansen,
+]);
+
 import { AnalyticsService } from "./AnalyticsService";
 
 const PROFILE_STORE_KEY = "PlayerData_v1";
@@ -104,6 +126,16 @@ export class PlayerDataService implements OnStart {
 		if (!typeIs(data.equippedItems, "table")) data.equippedItems = {};
 		if (!typeIs(data.discoveredPoi, "table")) data.discoveredPoi = [];
 		if (!typeIs(data.poiClaimedRewards, "table")) data.poiClaimedRewards = [];
+		// Vehicle fields
+		if (!typeIs(data.ownedVehicles, "table"))
+			data.ownedVehicles = [VehicleId.DefaultHachi];
+		if (
+			!typeIs(data.equippedVehicle, "string") ||
+			!VEHICLE_ID_VALUES.has(data.equippedVehicle as VehicleId)
+		)
+			data.equippedVehicle = VehicleId.DefaultHachi;
+		if (!data.ownedVehicles.includes(data.equippedVehicle))
+			data.ownedVehicles.push(data.equippedVehicle);
 
 		profile.ListenToRelease(() => {
 			this.profiles.delete(player);
@@ -406,6 +438,34 @@ export class PlayerDataService implements OnStart {
 		const profile = this.profiles.get(player);
 		if (profile) {
 			delete profile.Data.equippedItems[category];
+		}
+	}
+
+	// ── Vehicle methods ─────────────────────────────────────────────────────
+
+	getEquippedVehicle(player: Player): VehicleId {
+		return (
+			this.profiles.get(player)?.Data.equippedVehicle ?? VehicleId.DefaultHachi
+		);
+	}
+
+	setEquippedVehicle(player: Player, vehicleId: VehicleId) {
+		const profile = this.profiles.get(player);
+		if (profile) {
+			profile.Data.equippedVehicle = vehicleId;
+		}
+	}
+
+	getOwnedVehicles(player: Player): VehicleId[] {
+		return (
+			this.profiles.get(player)?.Data.ownedVehicles ?? [VehicleId.DefaultHachi]
+		);
+	}
+
+	addOwnedVehicle(player: Player, vehicleId: VehicleId) {
+		const profile = this.profiles.get(player);
+		if (profile && !profile.Data.ownedVehicles.includes(vehicleId)) {
+			profile.Data.ownedVehicles.push(vehicleId);
 		}
 	}
 

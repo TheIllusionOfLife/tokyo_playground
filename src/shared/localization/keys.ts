@@ -176,6 +176,29 @@ export const L_HINT_ABILITY_3 = "hint_ability_3";
 export const L_HINT_ABILITY_4 = "hint_ability_4";
 export const L_HINT_HACHI_EVOLVED = "hint_hachi_evolved";
 
+// Vehicles
+export const L_VEHICLE_TAB = "vehicle_tab";
+export const L_VEHICLE_HACHI = "vehicle_hachi";
+export const L_VEHICLE_WHITE_CAT = "vehicle_white_cat";
+export const L_VEHICLE_CALICO_CAT = "vehicle_calico_cat";
+export const L_VEHICLE_KART = "vehicle_kart";
+export const L_VEHICLE_WHITE_DRAGON = "vehicle_white_dragon";
+export const L_VEHICLE_GREEN_DRAGON = "vehicle_green_dragon";
+export const L_VEHICLE_BEAR = "vehicle_bear";
+export const L_VEHICLE_SHIBA = "vehicle_shiba";
+export const L_VEHICLE_KITSUNE = "vehicle_kitsune";
+export const L_VEHICLE_TOY_CAR = "vehicle_toy_car";
+export const L_VEHICLE_MANEKI = "vehicle_maneki";
+
+export const L_VEHICLE_SHIBUYA_BUS = "vehicle_shibuya_bus";
+export const L_VEHICLE_RICKSHAW = "vehicle_rickshaw";
+export const L_VEHICLE_SKATEBOARD = "vehicle_skateboard";
+export const L_VEHICLE_ONIGIRI = "vehicle_onigiri";
+export const L_VEHICLE_SHINKANSEN = "vehicle_shinkansen";
+
+// Cosmetics preview
+export const L_SHOP_TRY_ON = "shop_try_on";
+
 // Zone names
 export const L_ZONE_SHIBUYA_SKY = "zone_ShibuyaSky";
 export const L_ZONE_SHIBUYA_CROSSING = "zone_ShibuyaCrossing";

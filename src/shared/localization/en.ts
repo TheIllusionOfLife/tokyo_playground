@@ -195,6 +195,29 @@ export const EN: Record<string, string> = {
 	poi_claimed: "Claimed",
 	poi_undiscovered: "Not found",
 
+	// Vehicles
+	vehicle_tab: "Vehicles",
+	vehicle_hachi: "Hachi",
+	vehicle_white_cat: "White Cat",
+	vehicle_calico_cat: "Calico Cat",
+	vehicle_kart: "Kart",
+	vehicle_white_dragon: "White Dragon",
+	vehicle_green_dragon: "Green Dragon",
+	vehicle_bear: "Bear",
+	vehicle_shiba: "Shiba Inu",
+	vehicle_kitsune: "Kitsune",
+	vehicle_toy_car: "Toy Car",
+	vehicle_maneki: "Maneki-neko",
+
+	vehicle_shibuya_bus: "Shibuya Bus",
+	vehicle_rickshaw: "Rickshaw",
+	vehicle_skateboard: "Skateboard",
+	vehicle_onigiri: "Onigiri",
+	vehicle_shinkansen: "Shinkansen",
+
+	// Cosmetics preview
+	shop_try_on: "TRY ON",
+
 	// Zones
 	zone_ShibuyaSky: "Shibuya Sky",
 	zone_ShibuyaCrossing: "Shibuya Crossing",

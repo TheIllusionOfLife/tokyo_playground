@@ -200,11 +200,18 @@ const TRAIL_COLORS: Partial<Record<ItemId, ColorSequence>> = {
 	]),
 };
 
+const PREVIEW_DURATION = 10; // seconds
+
 @Service()
 export class EquipService implements OnStart {
 	private readonly serverEvents = GlobalEvents.createServer({});
 	private readonly charAddedConns = new Map<number, RBXScriptConnection>();
 	private readonly equipCooldowns = new Map<number, number>();
+	private readonly previewCooldowns = new Map<number, number>();
+	/** Monotonic token per player to prevent stale preview cleanup. */
+	private readonly previewVersions = new Map<number, number>();
+	/** Active preview category per player for proper cleanup. */
+	private readonly activePreviewCategories = new Map<number, ItemCategory>();
 
 	constructor(private readonly playerDataService: PlayerDataService) {}
 
@@ -220,7 +227,22 @@ export class EquipService implements OnStart {
 				)
 					return;
 				this.equipCooldowns.set(player.UserId, now);
+				// Cancel any active preview on equip
+				this.cancelPreview(player);
 				this.handleEquipRequest(player, itemId);
+			}),
+		);
+
+		this.serverEvents.requestPreview.connect(
+			safeHandler("EquipService.requestPreview", (player, itemId) => {
+				const now = os.clock();
+				if (
+					now - (this.previewCooldowns.get(player.UserId) ?? 0) <
+					EQUIP_COOLDOWN
+				)
+					return;
+				this.previewCooldowns.set(player.UserId, now);
+				this.handlePreviewRequest(player, itemId);
 			}),
 		);
 
@@ -244,6 +266,9 @@ export class EquipService implements OnStart {
 				this.charAddedConns.delete(player.UserId);
 			}
 			this.equipCooldowns.delete(player.UserId);
+			this.previewCooldowns.delete(player.UserId);
+			this.previewVersions.delete(player.UserId);
+			this.activePreviewCategories.delete(player.UserId);
 		});
 	}
 
@@ -254,6 +279,8 @@ export class EquipService implements OnStart {
 		}
 		// Apply on future respawns
 		const conn = player.CharacterAdded.Connect((character) => {
+			// Clear preview state without re-applying (applyCosmetics handles the new character)
+			this.clearPreviewState(player);
 			const hrp = character.WaitForChild("HumanoidRootPart", 5);
 			const head = character.WaitForChild("Head", 5);
 			if (!hrp || !head) {
@@ -424,6 +451,77 @@ export class EquipService implements OnStart {
 		} else {
 			hat.Parent = character;
 		}
+	}
+
+	// ── Preview methods ─────────────────────────────────────────────────────
+
+	private handlePreviewRequest(player: Player, itemId: ItemId) {
+		const catalogItem =
+			SHOP_CATALOG.find((item) => item.id === itemId) ??
+			STAMP_REWARD_CATALOG.find((item) => item.id === itemId);
+		if (!catalogItem) return;
+
+		// Cancel any existing preview first (restores previous category)
+		this.cancelPreview(player);
+
+		const category = catalogItem.category;
+
+		// Remove current cosmetic in that category, apply preview
+		this.removeCosmetic(player, category);
+		this.applyCosmetic(player, category, itemId);
+
+		// Track active preview category and bump version token
+		this.activePreviewCategories.set(player.UserId, category);
+		const version = (this.previewVersions.get(player.UserId) ?? 0) + 1;
+		this.previewVersions.set(player.UserId, version);
+
+		// Notify client
+		this.serverEvents.previewEquipped.fire(
+			player,
+			itemId,
+			category,
+			PREVIEW_DURATION,
+		);
+
+		// Schedule cleanup
+		task.delay(PREVIEW_DURATION, () => {
+			// Only clean up if version still matches (not cancelled/replaced)
+			if (this.previewVersions.get(player.UserId) !== version) return;
+			if (!player.Parent) return; // player left
+
+			this.restoreAfterPreview(player, category);
+		});
+	}
+
+	/** Remove preview cosmetic and restore the player's real equipped item. */
+	private restoreAfterPreview(player: Player, category: ItemCategory) {
+		this.removeCosmetic(player, category);
+		const equippedItems = this.playerDataService.getEquippedItems(player);
+		const realItem = equippedItems[category];
+		if (realItem !== undefined) {
+			this.applyCosmetic(player, category, realItem);
+		}
+		this.activePreviewCategories.delete(player.UserId);
+		this.serverEvents.previewEquipped.fire(player, undefined, undefined, 0);
+	}
+
+	private cancelPreview(player: Player) {
+		// Restore cosmetic for the active preview category
+		const category = this.activePreviewCategories.get(player.UserId);
+		if (category !== undefined) {
+			this.restoreAfterPreview(player, category);
+		}
+		// Bump version to invalidate any pending cleanup
+		const version = (this.previewVersions.get(player.UserId) ?? 0) + 1;
+		this.previewVersions.set(player.UserId, version);
+	}
+
+	/** Clear preview state without applying cosmetics (used on respawn where applyCosmetics follows). */
+	private clearPreviewState(player: Player) {
+		this.activePreviewCategories.delete(player.UserId);
+		const version = (this.previewVersions.get(player.UserId) ?? 0) + 1;
+		this.previewVersions.set(player.UserId, version);
+		this.serverEvents.previewEquipped.fire(player, undefined, undefined, 0);
 	}
 
 	private applyTrail(character: Model, itemId: ItemId) {

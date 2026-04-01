@@ -173,6 +173,34 @@ export class HudController implements OnStart {
 			gameStore.pushFeedMessage(`+${points} ${t(L_DAILY_LOGIN_BONUS)}`);
 		});
 
+		// Vehicle catalog/purchase/equip
+		clientEvents.vehicleCatalog.connect((vehicles) => {
+			gameStore.setVehicleItems(vehicles);
+		});
+
+		clientEvents.vehiclePurchaseResult.connect((ok, _vehicleId, newBalance) => {
+			if (ok) {
+				gameStore.setShopBalance(newBalance);
+				this.latestShopBalance = newBalance;
+				clientEvents.requestVehicleCatalog.fire();
+				clientEvents.requestShopCatalog.fire();
+				this.refreshFeaturedUnlock();
+			}
+		});
+
+		clientEvents.vehicleEquipResult.connect((ok) => {
+			if (ok) clientEvents.requestVehicleCatalog.fire();
+		});
+
+		// Cosmetics preview
+		clientEvents.previewEquipped.connect((itemId, category, duration) => {
+			if (itemId !== undefined && category !== undefined) {
+				gameStore.setPreview(itemId, category, os.clock() + duration);
+			} else {
+				gameStore.clearPreview();
+			}
+		});
+
 		clientEvents.hachiCostumeEquipped.connect((equipped) => {
 			gameStore.setHachiCostumed(equipped);
 		});

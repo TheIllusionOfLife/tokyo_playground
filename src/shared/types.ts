@@ -112,6 +112,25 @@ export enum MissionId {
 	WinTwoInARow = "WinTwoInARow",
 }
 
+export enum VehicleId {
+	DefaultHachi = "DefaultHachi",
+	WhiteCat = "WhiteCat",
+	CalicoCat = "CalicoCat",
+	Kart = "Kart",
+	WhiteDragon = "WhiteDragon",
+	GreenDragon = "GreenDragon",
+	Bear = "Bear",
+	ShibaInu = "ShibaInu",
+	Kitsune = "Kitsune",
+	ToyCar = "ToyCar",
+	ManekiNeko = "ManekiNeko",
+	ShibuyaBus = "ShibuyaBus",
+	Rickshaw = "Rickshaw",
+	Skateboard = "Skateboard",
+	Onigiri = "Onigiri",
+	Shinkansen = "Shinkansen",
+}
+
 export enum ItemId {
 	HatCone = "HatCone",
 	HatCrown = "HatCrown",
@@ -267,6 +286,15 @@ export interface ShopItemData {
 	equipped: boolean;
 }
 
+export interface VehicleShopData {
+	id: VehicleId;
+	name: string;
+	price: number;
+	levelRequired: number;
+	owned: boolean;
+	equipped: boolean;
+}
+
 // ── Living Shibuya Interfaces ────────────────────────────────────────────
 
 export interface StampSpotData {
@@ -329,6 +357,9 @@ export interface PlayerData {
 	loginStreak: number;
 	lastSpinDay: number;
 	firstTimeRewardClaimed: boolean;
+	// Vehicles
+	equippedVehicle: VehicleId;
+	ownedVehicles: VehicleId[];
 }
 
 export const DEFAULT_PLAYER_DATA: PlayerData = {
@@ -356,4 +387,6 @@ export const DEFAULT_PLAYER_DATA: PlayerData = {
 	loginStreak: 0,
 	lastSpinDay: 0,
 	firstTimeRewardClaimed: false,
+	equippedVehicle: VehicleId.DefaultHachi,
+	ownedVehicles: [VehicleId.DefaultHachi],
 };

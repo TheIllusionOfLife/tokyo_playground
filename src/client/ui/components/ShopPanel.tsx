@@ -1,4 +1,4 @@
-import React from "@rbxts/react";
+import React, { useState } from "@rbxts/react";
 import { useSelector } from "@rbxts/react-reflex";
 import { clientEvents } from "client/network";
 import { t } from "shared/localization";
@@ -8,10 +8,17 @@ import {
 	L_SHOP_BUY,
 	L_SHOP_EQUIP,
 	L_SHOP_NEED_PTS,
+	L_SHOP_TRY_ON,
 	L_SHOP_UNEQUIP,
+	L_VEHICLE_TAB,
 } from "shared/localization/keys";
 import { GameStoreState, gameStore } from "shared/store/game-store";
-import { MatchPhase, MinigameId, ShopItemData } from "shared/types";
+import {
+	MatchPhase,
+	MinigameId,
+	ShopItemData,
+	VehicleShopData,
+} from "shared/types";
 
 function ShopCard({
 	item,
@@ -100,9 +107,121 @@ function ShopCard({
 			>
 				<uicorner CornerRadius={new UDim(0, 4)} />
 			</textbutton>
+			{/* Try On button for unowned items */}
+			{!item.owned && levelMet && (
+				<textbutton
+					Size={new UDim2(0, 50, 0, 18)}
+					Position={new UDim2(1, -54, 0, 32)}
+					BackgroundColor3={Color3.fromRGB(100, 80, 140)}
+					TextColor3={Color3.fromRGB(220, 220, 255)}
+					TextScaled={true}
+					Font={Enum.Font.Gotham}
+					Text={t(L_SHOP_TRY_ON)}
+					Event={{
+						Activated: () => {
+							clientEvents.requestPreview.fire(item.id);
+						},
+					}}
+				>
+					<uicorner CornerRadius={new UDim(0, 3)} />
+				</textbutton>
+			)}
 		</frame>
 	);
 }
+
+function VehicleCard({
+	vehicle,
+	balance,
+	level,
+}: {
+	vehicle: VehicleShopData;
+	balance: number;
+	level: number;
+}) {
+	const canAfford = balance >= vehicle.price;
+	const levelMet = level >= vehicle.levelRequired;
+
+	let buttonText: string;
+	let buttonColor: Color3;
+	let active: boolean;
+
+	if (vehicle.owned && vehicle.equipped) {
+		buttonText = t(L_SHOP_UNEQUIP);
+		buttonColor = Color3.fromRGB(80, 160, 200);
+		active = false; // can't unequip default vehicle, just swap
+	} else if (vehicle.owned) {
+		buttonText = t(L_SHOP_EQUIP);
+		buttonColor = Color3.fromRGB(80, 200, 180);
+		active = true;
+	} else if (!levelMet) {
+		buttonText = `Lv.${vehicle.levelRequired}`;
+		buttonColor = Color3.fromRGB(80, 50, 50);
+		active = false;
+	} else if (!canAfford) {
+		buttonText = t(L_SHOP_NEED_PTS);
+		buttonColor = Color3.fromRGB(80, 50, 50);
+		active = false;
+	} else {
+		buttonText = t(L_SHOP_BUY);
+		buttonColor = Color3.fromRGB(80, 200, 120);
+		active = true;
+	}
+
+	return (
+		<frame
+			key={vehicle.id}
+			Size={new UDim2(0, 128, 0, 96)}
+			BackgroundColor3={Color3.fromRGB(35, 35, 50)}
+			BackgroundTransparency={0.2}
+			BorderSizePixel={0}
+		>
+			<uicorner CornerRadius={new UDim(0, 6)} />
+			<textlabel
+				Size={new UDim2(1, -8, 0, 26)}
+				Position={new UDim2(0, 4, 0, 4)}
+				BackgroundTransparency={1}
+				TextColor3={Color3.fromRGB(230, 230, 230)}
+				TextScaled={true}
+				Font={Enum.Font.GothamBold}
+				Text={vehicle.name}
+			/>
+			<textlabel
+				Size={new UDim2(1, -8, 0, 18)}
+				Position={new UDim2(0, 4, 0, 32)}
+				BackgroundTransparency={1}
+				TextColor3={Color3.fromRGB(150, 150, 200)}
+				TextScaled={true}
+				Font={Enum.Font.Gotham}
+				Text={vehicle.price > 0 ? `${vehicle.price}pts` : "Free"}
+			/>
+			<textbutton
+				Size={new UDim2(1, -8, 0, 28)}
+				Position={new UDim2(0, 4, 0, 60)}
+				BackgroundColor3={buttonColor}
+				TextColor3={Color3.fromRGB(255, 255, 255)}
+				TextScaled={true}
+				Font={Enum.Font.GothamBold}
+				Text={buttonText}
+				Active={active}
+				Event={{
+					Activated: () => {
+						if (!active) return;
+						if (vehicle.owned) {
+							clientEvents.requestVehicleEquip.fire(vehicle.id);
+						} else {
+							clientEvents.requestVehiclePurchase.fire(vehicle.id);
+						}
+					},
+				}}
+			>
+				<uicorner CornerRadius={new UDim(0, 4)} />
+			</textbutton>
+		</frame>
+	);
+}
+
+type ShopTab = "cosmetics" | "vehicles";
 
 export function ShopPanel() {
 	const activeOverlay = useSelector(
@@ -110,17 +229,29 @@ export function ShopPanel() {
 	);
 	const open = activeOverlay === "shop";
 	const shopItems = useSelector((state: GameStoreState) => state.shopItems);
+	const vehicleItems = useSelector(
+		(state: GameStoreState) => state.vehicleItems,
+	);
 	const shopBalance = useSelector((state: GameStoreState) => state.shopBalance);
 	const level = useSelector((state: GameStoreState) => state.playgroundLevel);
 	const matchPhase = useSelector((state: GameStoreState) => state.matchPhase);
 	const activeMinigameId = useSelector(
 		(state: GameStoreState) => state.activeMinigameId,
 	);
+	const [tab, setTab] = useState<ShopTab>("cosmetics");
 
 	// Hide during HachiRide InProgress (overlaps with rank/skills/points)
 	const hideButton =
 		activeMinigameId === MinigameId.HachiRide &&
 		matchPhase === MatchPhase.InProgress;
+
+	const onOpen = () => {
+		gameStore.setActiveOverlay(open ? "none" : "shop");
+		if (!open) {
+			clientEvents.requestShopCatalog.fire();
+			clientEvents.requestVehicleCatalog.fire();
+		}
+	};
 
 	return (
 		<>
@@ -144,10 +275,7 @@ export function ShopPanel() {
 						TextScaled={true}
 						Font={Enum.Font.GothamBold}
 						Text={t(L_SHOP)}
-						Event={{
-							Activated: () =>
-								gameStore.setActiveOverlay(open ? "none" : "shop"),
-						}}
+						Event={{ Activated: onOpen }}
 					>
 						<uipadding
 							PaddingLeft={new UDim(0, 8)}
@@ -189,8 +317,9 @@ export function ShopPanel() {
 						>
 							<uicorner CornerRadius={new UDim(1, 0)} />
 						</textbutton>
+						{/* Balance */}
 						<textlabel
-							Size={new UDim2(1, -48, 0, 28)}
+							Size={new UDim2(0.5, -48, 0, 28)}
 							Position={new UDim2(0, 12, 0, 12)}
 							BackgroundTransparency={1}
 							TextColor3={Color3.fromRGB(255, 200, 80)}
@@ -200,6 +329,54 @@ export function ShopPanel() {
 							TextXAlignment={Enum.TextXAlignment.Left}
 							ZIndex={19}
 						/>
+						{/* Tab buttons */}
+						<frame
+							Size={new UDim2(0.5, -12, 0, 28)}
+							Position={new UDim2(0.5, 0, 0, 12)}
+							BackgroundTransparency={1}
+							ZIndex={19}
+						>
+							<uilistlayout
+								FillDirection={Enum.FillDirection.Horizontal}
+								Padding={new UDim(0, 4)}
+								HorizontalAlignment={Enum.HorizontalAlignment.Right}
+							/>
+							<textbutton
+								key="tab_cosmetics"
+								Size={new UDim2(0, 80, 1, 0)}
+								BackgroundColor3={
+									tab === "cosmetics"
+										? Color3.fromRGB(80, 60, 120)
+										: Color3.fromRGB(40, 40, 60)
+								}
+								TextColor3={Color3.fromRGB(255, 255, 255)}
+								TextScaled={true}
+								Font={Enum.Font.GothamBold}
+								Text={t(L_SHOP)}
+								ZIndex={19}
+								Event={{ Activated: () => setTab("cosmetics") }}
+							>
+								<uicorner CornerRadius={new UDim(0, 6)} />
+							</textbutton>
+							<textbutton
+								key="tab_vehicles"
+								Size={new UDim2(0, 80, 1, 0)}
+								BackgroundColor3={
+									tab === "vehicles"
+										? Color3.fromRGB(80, 60, 120)
+										: Color3.fromRGB(40, 40, 60)
+								}
+								TextColor3={Color3.fromRGB(255, 255, 255)}
+								TextScaled={true}
+								Font={Enum.Font.GothamBold}
+								Text={t(L_VEHICLE_TAB)}
+								ZIndex={19}
+								Event={{ Activated: () => setTab("vehicles") }}
+							>
+								<uicorner CornerRadius={new UDim(0, 6)} />
+							</textbutton>
+						</frame>
+						{/* Content area */}
 						<scrollingframe
 							Size={new UDim2(1, -24, 1, -52)}
 							Position={new UDim2(0, 12, 0, 44)}
@@ -215,14 +392,23 @@ export function ShopPanel() {
 								CellSize={new UDim2(0, 128, 0, 96)}
 								CellPadding={new UDim2(0, 6, 0, 6)}
 							/>
-							{shopItems.map((item) => (
-								<ShopCard
-									key={item.id}
-									item={item}
-									balance={shopBalance}
-									level={level}
-								/>
-							))}
+							{tab === "cosmetics"
+								? shopItems.map((item) => (
+										<ShopCard
+											key={item.id}
+											item={item}
+											balance={shopBalance}
+											level={level}
+										/>
+									))
+								: vehicleItems.map((v) => (
+										<VehicleCard
+											key={v.id}
+											vehicle={v}
+											balance={shopBalance}
+											level={level}
+										/>
+									))}
 						</scrollingframe>
 					</frame>
 				</>
