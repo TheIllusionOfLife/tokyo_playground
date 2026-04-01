@@ -178,6 +178,7 @@ export interface CanKickPlayerState {
 	isInJail: boolean;
 	rescueCount: number;
 	catchCount: number;
+	canKickCount: number;
 }
 
 export interface ShibuyaScramblePlayerState {

@@ -1,6 +1,6 @@
 # Badge Icon Generation Prompts
 
-All badges: 512x512 px, circular badge design, flat/cartoon style, dark background, bold colors, no text (Roblox shows the name separately).
+All badges: 512x512 px, circular badge design, flat/cartoon style, dark background, bold colors, no text except numeric identifiers (Roblox shows the name separately).
 
 ## 1. First Win
 
@@ -22,7 +22,7 @@ All badges: 512x512 px, circular badge design, flat/cartoon style, dark backgrou
 
 > A compass rose with a Japanese torii gate in the center, on a dark green circular background. Cartoon flat style, golden compass points, red torii gate, small map pin icons around the edge. Adventure/discovery theme. 512x512 badge icon.
 
-## 6. Seven Day Streak
+## 6. Seven-Day Streak
 
 > A calendar page with 7 checkmarks in a row and a flame icon, on a dark orange circular background. Cartoon flat style, white calendar, green checkmarks, orange-red flame above representing a hot streak. Consistency/dedication theme. 512x512 badge icon.
 

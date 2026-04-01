@@ -519,12 +519,21 @@ export class MatchService implements OnStart {
 
 			// Accumulate stats for badges
 			if (data) {
-				data.totalCatches = (data.totalCatches ?? 0) + state.catchCount;
-				data.totalRescues = (data.totalRescues ?? 0) + state.rescueCount;
-				if (state.minigameId === MinigameId.CanKick && "isCaught" in state) {
-					// Can kick count is tracked via rescueCount (freeing = kicking)
-					data.totalCanKicks = (data.totalCanKicks ?? 0) + state.rescueCount;
+				// HachiRide mirrors itemCount to catchCount for scoreboard;
+				// exclude it from totalCatches (meant for actual player catches)
+				if (state.minigameId !== MinigameId.HachiRide) {
+					data.totalCatches = (data.totalCatches ?? 0) + state.catchCount;
 				}
+				data.totalRescues = (data.totalRescues ?? 0) + state.rescueCount;
+				if (
+					state.minigameId === MinigameId.CanKick &&
+					"canKickCount" in state
+				) {
+					data.totalCanKicks =
+						(data.totalCanKicks ?? 0) +
+						(state as { canKickCount: number }).canKickCount;
+				}
+				this.badgeService.checkMilestones(player);
 			}
 
 			entries.push({
