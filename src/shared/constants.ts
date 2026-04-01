@@ -613,6 +613,14 @@ export interface VehicleDef {
 	animProfile: AnimProfile;
 	speedScale: number;
 	idleAmp: number;
+	/** Extra Y-axis rotation (degrees) applied to the mount weld. Default 0. */
+	weldYawOffset?: number;
+	/** Override the default Hachi scale. Default uses HACHI_DEFAULT_SCALE. */
+	scaleOverride?: number;
+	/** Character stands on the vehicle instead of sitting. */
+	standingMount?: boolean;
+	/** Extra vertical offset (studs) for the seat/weld position. */
+	seatHeightOffset?: number;
 }
 
 export const VEHICLE_CATALOG: VehicleDef[] = [
@@ -637,6 +645,7 @@ export const VEHICLE_CATALOG: VehicleDef[] = [
 		animProfile: AnimProfile.Quadruped,
 		speedScale: 1.1,
 		idleAmp: 0.2,
+		weldYawOffset: 90,
 	},
 	{
 		id: VehicleId.CalicoCat,
@@ -648,6 +657,7 @@ export const VEHICLE_CATALOG: VehicleDef[] = [
 		animProfile: AnimProfile.Static,
 		speedScale: 1.0,
 		idleAmp: 0.2,
+		weldYawOffset: 180,
 	},
 	{
 		id: VehicleId.Kart,
@@ -659,6 +669,8 @@ export const VEHICLE_CATALOG: VehicleDef[] = [
 		animProfile: AnimProfile.Wheeled,
 		speedScale: 1.0,
 		idleAmp: 0.05,
+		weldYawOffset: 180,
+		scaleOverride: 2.0,
 	},
 	{
 		id: VehicleId.WhiteDragon,
@@ -670,6 +682,7 @@ export const VEHICLE_CATALOG: VehicleDef[] = [
 		animProfile: AnimProfile.Static,
 		speedScale: 1.0,
 		idleAmp: 0.2,
+		weldYawOffset: 90,
 	},
 	{
 		id: VehicleId.GreenDragon,
@@ -681,6 +694,7 @@ export const VEHICLE_CATALOG: VehicleDef[] = [
 		animProfile: AnimProfile.Static,
 		speedScale: 1.0,
 		idleAmp: 0.2,
+		weldYawOffset: -90,
 	},
 	{
 		id: VehicleId.Bear,
@@ -692,6 +706,7 @@ export const VEHICLE_CATALOG: VehicleDef[] = [
 		animProfile: AnimProfile.Quadruped,
 		speedScale: 0.9,
 		idleAmp: 0.2,
+		weldYawOffset: 180,
 	},
 	{
 		id: VehicleId.ShibaInu,
@@ -703,6 +718,7 @@ export const VEHICLE_CATALOG: VehicleDef[] = [
 		animProfile: AnimProfile.Quadruped,
 		speedScale: 1.0,
 		idleAmp: 0.15,
+		weldYawOffset: 180,
 	},
 	{
 		id: VehicleId.Kitsune,
@@ -714,6 +730,7 @@ export const VEHICLE_CATALOG: VehicleDef[] = [
 		animProfile: AnimProfile.Quadruped,
 		speedScale: 1.15,
 		idleAmp: 0.12,
+		weldYawOffset: 180,
 	},
 	{
 		id: VehicleId.ToyCar,
@@ -725,6 +742,7 @@ export const VEHICLE_CATALOG: VehicleDef[] = [
 		animProfile: AnimProfile.Wheeled,
 		speedScale: 1.0,
 		idleAmp: 0.05,
+		weldYawOffset: 90,
 	},
 	{
 		id: VehicleId.ManekiNeko,
@@ -736,6 +754,8 @@ export const VEHICLE_CATALOG: VehicleDef[] = [
 		animProfile: AnimProfile.Static,
 		speedScale: 1.0,
 		idleAmp: 0.2,
+		weldYawOffset: 180,
+		seatHeightOffset: 2,
 	},
 	{
 		id: VehicleId.ShibuyaBus,
@@ -747,6 +767,7 @@ export const VEHICLE_CATALOG: VehicleDef[] = [
 		animProfile: AnimProfile.Wheeled,
 		speedScale: 0.8,
 		idleAmp: 0.05,
+		weldYawOffset: 180,
 	},
 	{
 		id: VehicleId.Rickshaw,
@@ -758,6 +779,7 @@ export const VEHICLE_CATALOG: VehicleDef[] = [
 		animProfile: AnimProfile.Wheeled,
 		speedScale: 0.9,
 		idleAmp: 0.08,
+		weldYawOffset: 180,
 	},
 	{
 		id: VehicleId.Skateboard,
@@ -769,6 +791,7 @@ export const VEHICLE_CATALOG: VehicleDef[] = [
 		animProfile: AnimProfile.Wheeled,
 		speedScale: 1.2,
 		idleAmp: 0.03,
+		standingMount: true,
 	},
 	{
 		id: VehicleId.Onigiri,
@@ -780,6 +803,7 @@ export const VEHICLE_CATALOG: VehicleDef[] = [
 		animProfile: AnimProfile.Static,
 		speedScale: 1.0,
 		idleAmp: 0.25,
+		weldYawOffset: 180,
 	},
 	{
 		id: VehicleId.Shinkansen,
@@ -791,6 +815,7 @@ export const VEHICLE_CATALOG: VehicleDef[] = [
 		animProfile: AnimProfile.Wheeled,
 		speedScale: 1.0,
 		idleAmp: 0.03,
+		weldYawOffset: 180,
 	},
 ];
 
