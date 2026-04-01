@@ -224,7 +224,7 @@ function ShopCard({
 				Text={item.name}
 			/>
 			<textlabel
-				Size={new UDim2(1, -62, 0, 18)}
+				Size={new UDim2(1, !item.owned && levelMet ? -62 : -8, 0, 18)}
 				Position={new UDim2(0, 4, 0, 32)}
 				BackgroundTransparency={1}
 				TextColor3={Color3.fromRGB(150, 150, 200)}
