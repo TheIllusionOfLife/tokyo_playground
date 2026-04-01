@@ -371,4 +371,28 @@ export class PlayerDataService implements OnStart {
 			delete profile.Data.equippedItems[category];
 		}
 	}
+
+	// ── PoI Discovery methods ───────────────────────────────────────────────
+
+	getDiscoveredPoi(player: Player): string[] {
+		return this.profiles.get(player)?.Data.discoveredPoi ?? [];
+	}
+
+	addDiscoveredPoi(player: Player, zoneName: string) {
+		const profile = this.profiles.get(player);
+		if (profile && !profile.Data.discoveredPoi.includes(zoneName)) {
+			profile.Data.discoveredPoi.push(zoneName);
+		}
+	}
+
+	getPoiClaimedRewards(player: Player): string[] {
+		return this.profiles.get(player)?.Data.poiClaimedRewards ?? [];
+	}
+
+	addPoiClaimedReward(player: Player, zoneName: string) {
+		const profile = this.profiles.get(player);
+		if (profile && !profile.Data.poiClaimedRewards.includes(zoneName)) {
+			profile.Data.poiClaimedRewards.push(zoneName);
+		}
+	}
 }

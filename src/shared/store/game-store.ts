@@ -75,6 +75,9 @@ export interface GameStoreState {
 	bonOdoriState?: { score: number; combo: number };
 	maxHachiLevel: number;
 	badges: string[];
+	// Point of Interest discovery
+	discoveredPoi: string[];
+	poiClaimedRewards: string[];
 	// Zones
 	currentZone: string;
 	// Spectator
@@ -120,6 +123,8 @@ const initialState: GameStoreState = {
 	bonOdoriState: undefined,
 	maxHachiLevel: 0,
 	badges: [],
+	discoveredPoi: [],
+	poiClaimedRewards: [],
 	currentZone: "",
 	spectating: false,
 	spectateTargetName: "",
@@ -387,5 +392,27 @@ export const gameStore = createProducer(initialState, {
 	setCurrentZone: (state, currentZone: string) => ({
 		...state,
 		currentZone,
+	}),
+
+	// ── Point of Interest Discovery ─────────────────────────────────────
+	setDiscoveredPoi: (state, discoveredPoi: string[]) => ({
+		...state,
+		discoveredPoi,
+	}),
+	setPoiClaimedRewards: (state, poiClaimedRewards: string[]) => ({
+		...state,
+		poiClaimedRewards,
+	}),
+	addDiscoveredPoi: (state, zoneName: string) => ({
+		...state,
+		discoveredPoi: state.discoveredPoi.includes(zoneName)
+			? state.discoveredPoi
+			: [...state.discoveredPoi, zoneName],
+	}),
+	addPoiClaimedReward: (state, zoneName: string) => ({
+		...state,
+		poiClaimedRewards: state.poiClaimedRewards.includes(zoneName)
+			? state.poiClaimedRewards
+			: [...state.poiClaimedRewards, zoneName],
 	}),
 });

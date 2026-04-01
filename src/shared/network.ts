@@ -85,10 +85,15 @@ interface ServerToClientEvents {
 	timeSync(serverClock: number): void;
 	lightingOverride(preset: string): void;
 
-	// ── Living Shibuya: Stamps ───────────────────────────────────────────
+	// ── Living Shibuya: Stamps (deprecated, kept for compat) ────────────
 	stampDiscovered(stampId: string, displayName: string): void;
 	stampSetCompleted(setId: string, rewardItemId: string): void;
 	stampCardData(discovered: string[], totalCount: number): void;
+
+	// ── Point of Interest Discovery ─────────────────────────────────────
+	poiDiscoveredConfirm(zoneName: string): void;
+	poiRewardClaimed(zoneName: string, points: number): void;
+	poiSyncAll(discovered: string[], claimed: string[]): void;
 
 	// ── Living Shibuya: NPCs ─────────────────────────────────────────────
 	npcSpawned(npcId: string, position: Vector3): void;
@@ -146,8 +151,12 @@ interface ClientToServerEvents {
 	requestHachiSlide(): void;
 	requestSpiritWave(): void;
 
-	// ── Living Shibuya: Stamps ───────────────────────────────────────────
+	// ── Living Shibuya: Stamps (deprecated) ─────────────────────────────
 	requestStampCard(): void;
+
+	// ── Point of Interest Discovery ─────────────────────────────────────
+	poiDiscovered(zoneName: string): void;
+	claimPoiReward(zoneName: string): void;
 
 	// ── Living Shibuya: NPCs ─────────────────────────────────────────────
 	requestNpcInteraction(npcId: string): void;

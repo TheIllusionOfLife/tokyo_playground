@@ -401,6 +401,9 @@ export const BOUNDARY_AABB_MIN = new Vector3(-11900, -50, 32400);
 export const BOUNDARY_AABB_MAX = new Vector3(-9400, 500, 34500);
 export const BOUNDARY_WARNING_RATIO = 0.6; // start warning at 60% toward edge (covers suburb)
 
+// Point of Interest discovery
+export const POI_DISCOVERY_POINTS = 10;
+
 export const ZONE_TAG = "Zone";
 export const ZONE_DEBOUNCE = 30; // seconds before re-showing same zone
 export const ZONE_DISPLAY_DURATION = 3; // seconds to show zone popup
@@ -542,6 +545,8 @@ export const SE_BONUS_PICKUP = "rbxassetid://6518811702"; // magic pickup (1.2s)
 export const SE_EVOLVE = "rbxassetid://6647877129"; // magic level-up sparkle (3.1s)
 export const SE_SLIDE = "rbxassetid://151284431"; // brief swoosh (2.0s)
 export const SE_JUMP = "rbxassetid://5682262154"; // cartoon bounce (0.5s)
+export const SE_HACHI_JUMP = "rbxassetid://9125402735"; // cute pop bounce
+export const HACHI_PAW_DECAL_ID = "rbxassetid://300134974"; // paw print for jump button
 export const SE_CAN_KICK = "rbxassetid://2865227271"; // triumphant chime (2.0s)
 export const SE_CATCH = SE_CAN_KICK; // reuses can kick chime for catch impact
 export const SE_TICK = "rbxassetid://12221967"; // classic tick (0.3s)

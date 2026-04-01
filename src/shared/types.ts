@@ -322,6 +322,9 @@ export interface PlayerData {
 	obstacleBestTime: number;
 	// Daily login
 	lastLoginDay: number;
+	// Point of Interest discovery (replaces stamps)
+	discoveredPoi: string[];
+	poiClaimedRewards: string[];
 }
 
 export const DEFAULT_PLAYER_DATA: PlayerData = {
@@ -344,4 +347,6 @@ export const DEFAULT_PLAYER_DATA: PlayerData = {
 	badges: [],
 	obstacleBestTime: 0,
 	lastLoginDay: 0,
+	discoveredPoi: [],
+	poiClaimedRewards: [],
 };

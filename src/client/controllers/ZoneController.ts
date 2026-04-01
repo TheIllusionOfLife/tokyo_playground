@@ -1,5 +1,6 @@
 import { Controller, OnStart } from "@flamework/core";
 import { CollectionService, Players, RunService } from "@rbxts/services";
+import { clientEvents } from "client/network";
 import {
 	ZONE_DEBOUNCE,
 	ZONE_DISPLAY_DURATION,
@@ -22,6 +23,18 @@ export class ZoneController implements OnStart {
 	private characterAddedConn?: RBXScriptConnection;
 
 	onStart() {
+		// Wire PoI discovery events from server
+		clientEvents.poiDiscoveredConfirm.connect((zoneName) => {
+			gameStore.addDiscoveredPoi(zoneName);
+		});
+		clientEvents.poiRewardClaimed.connect((zoneName) => {
+			gameStore.addPoiClaimedReward(zoneName);
+		});
+		clientEvents.poiSyncAll.connect((discovered, claimed) => {
+			gameStore.setDiscoveredPoi(discovered);
+			gameStore.setPoiClaimedRewards(claimed);
+		});
+
 		this.zoneParts = CollectionService.GetTagged(ZONE_TAG).filter(
 			(p): p is BasePart => p.IsA("BasePart"),
 		);
@@ -94,6 +107,12 @@ export class ZoneController implements OnStart {
 				this.zoneShownAt = now;
 				this.lastShown.set(nearestZone, now);
 				gameStore.setCurrentZone(nearestZone);
+
+				// Fire PoI discovery if not already discovered
+				const discovered = gameStore.getState().discoveredPoi;
+				if (!discovered.includes(nearestZone)) {
+					clientEvents.poiDiscovered.fire(nearestZone);
+				}
 			}
 		} else if (nearestZone === "" && this.currentZone !== "") {
 			this.currentZone = "";

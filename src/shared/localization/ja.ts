@@ -189,6 +189,12 @@ export const JA: Record<string, string> = {
 	hint_ability_4: "レベル4: もふもふハチ + 四段ジャンプ!",
 	hint_hachi_evolved: "ハチがレベル%1に進化!",
 
+	// Point of Interest
+	poi_header: "名所めぐり",
+	poi_claim: "+10獲得",
+	poi_claimed: "獲得済み",
+	poi_undiscovered: "未発見",
+
 	// Zones
 	zone_ShibuyaSky: "渋谷スカイ",
 	zone_ShibuyaCrossing: "渋谷スクランブル交差点",

@@ -189,6 +189,12 @@ export const EN: Record<string, string> = {
 	hint_ability_4: "Level 4: FLUFFY HACHI + QUADRUPLE JUMP!",
 	hint_hachi_evolved: "Hachi evolved to level %1!",
 
+	// Point of Interest
+	poi_header: "Points of Interest",
+	poi_claim: "Claim +10",
+	poi_claimed: "Claimed",
+	poi_undiscovered: "Not found",
+
 	// Zones
 	zone_ShibuyaSky: "Shibuya Sky",
 	zone_ShibuyaCrossing: "Shibuya Crossing",
