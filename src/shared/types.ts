@@ -116,7 +116,7 @@ export enum VehicleId {
 	DefaultHachi = "DefaultHachi",
 	Neko = "Neko",
 	Kart = "Kart",
-	JapaneseDragon = "JapaneseDragon",
+	WhiteDragon = "WhiteDragon",
 	Tanuki = "Tanuki",
 	ShibaInu = "ShibaInu",
 	Kitsune = "Kitsune",

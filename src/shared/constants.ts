@@ -652,10 +652,10 @@ export const VEHICLE_CATALOG: VehicleDef[] = [
 		idleAmp: 0.05,
 	},
 	{
-		id: VehicleId.JapaneseDragon,
+		id: VehicleId.WhiteDragon,
 		name: "White Dragon",
-		nameKey: "vehicle_dragon",
-		templateName: "JapaneseDragonTemplate",
+		nameKey: "vehicle_white_dragon",
+		templateName: "WhiteDragonTemplate",
 		price: 800,
 		levelRequired: 5,
 		animProfile: AnimProfile.Serpentine,
