@@ -46,22 +46,6 @@ export function HachiPlayButton() {
 			BorderSizePixel={0}
 			ZIndex={10}
 		>
-			{/* Subtle shadow stroke for contrast */}
-			<frame
-				Size={new UDim2(1, 12, 1, 30)}
-				Position={new UDim2(0.5, 0, 0.5, 4)}
-				AnchorPoint={new Vector2(0.5, 0.5)}
-				BackgroundTransparency={1}
-				BorderSizePixel={0}
-				ZIndex={8}
-			>
-				<uicorner CornerRadius={new UDim(0, 14)} />
-				<uistroke
-					Color={Color3.fromRGB(0, 0, 0)}
-					Thickness={2}
-					Transparency={0.4}
-				/>
-			</frame>
 			{/* Left ear */}
 			<frame
 				Size={new UDim2(0, 16, 0, 14)}
@@ -92,9 +76,9 @@ export function HachiPlayButton() {
 				BackgroundColor3={Color3.fromRGB(255, 160, 20)}
 				BorderSizePixel={0}
 				TextColor3={Color3.fromRGB(255, 255, 255)}
-				Text={t("hachi_play")}
+				Text={"\u{1F43E}"}
 				TextScaled={true}
-				Font={Enum.Font.FredokaOne}
+				Font={Enum.Font.GothamBold}
 				ZIndex={10}
 				Event={{
 					Activated: () => {
