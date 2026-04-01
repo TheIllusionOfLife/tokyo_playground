@@ -119,6 +119,9 @@ interface ServerToClientEvents {
 	// ── AFK ─────────────────────────────────────────────────────────────
 	afkRemoved(): void;
 
+	// ── Can Kick: jail teleport ─────────────────────────────────────────
+	jailTeleportFade(): void;
+
 	// ── Boundary ────────────────────────────────────────────────────────
 	boundaryWarning(ratio: number): void;
 
