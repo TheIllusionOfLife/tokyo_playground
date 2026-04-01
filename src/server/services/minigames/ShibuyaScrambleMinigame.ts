@@ -9,6 +9,7 @@ import {
 import {
 	ACTION_COOLDOWN,
 	DEFAULT_WALK_SPEED,
+	HACHI_WALK_SPEEDS,
 	SCRAMBLE_CAR_DODGE_RADIUS,
 	SCRAMBLE_CAR_SPAWN_INTERVAL,
 	SCRAMBLE_CAR_SPEED_DURATION,
@@ -35,7 +36,11 @@ import {
 	ShibuyaScramblePlayerState,
 } from "shared/types";
 import { canTriggerSpiritWave } from "shared/utils/scrambleCrowd";
-import { equipHachiCostume, isPlayerMounted } from "../../utils/hachiCostume";
+import {
+	equipHachiCostume,
+	isPlayerMounted,
+	unequipHachiCostume,
+} from "../../utils/hachiCostume";
 import {
 	fireHintText,
 	startOniCountdown,
@@ -178,7 +183,7 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 			() => {
 				if (!this.oniCounting) return;
 				this.oniCounting = false;
-				this.setOniWalkSpeed(DEFAULT_WALK_SPEED);
+				this.setOniWalkSpeed(HACHI_WALK_SPEEDS[0]);
 				this.lastHintText = fireHintText(
 					this.serverEvents,
 					"hint_oni_hunting",
@@ -355,6 +360,11 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 
 	cleanup() {
 		this.stopCountdown();
+		// Unequip Oni's Hachi mount before clearing state
+		if (this.oniUserId !== undefined) {
+			const oniPlayer = this.playerObjects.get(this.oniUserId);
+			if (oniPlayer) unequipHachiCostume(oniPlayer);
+		}
 		this.crowdLoopRunning = false;
 		if (this.crowdThread) {
 			task.cancel(this.crowdThread);
@@ -386,7 +396,9 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 			return;
 		}
 		const hachiClone = hachiTemplate.Clone();
-		equipHachiCostume(player, hachiClone, 0);
+		if (!equipHachiCostume(player, hachiClone, 0)) {
+			hachiClone.Destroy();
+		}
 	}
 
 	private runCrowdLoop() {

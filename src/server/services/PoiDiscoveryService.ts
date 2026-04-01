@@ -46,20 +46,20 @@ export class PoiDiscoveryService implements OnStart {
 			this.handleClaim(player, zoneName);
 		});
 
-		// Sync PoI data on player join
-		Players.PlayerAdded.Connect((player) => {
-			task.defer(() => this.syncToClient(player));
+		// Sync PoI data after profile loads (not on PlayerAdded, which races profile loading)
+		this.playerDataService.registerOnProfileLoaded((player) => {
+			this.syncToClient(player);
 		});
-		for (const player of Players.GetPlayers()) {
-			task.defer(() => this.syncToClient(player));
-		}
 	}
 
 	private handleDiscovery(player: Player, zoneName: string) {
 		if (!this.validZoneNames.has(zoneName)) return;
 
-		const discovered = this.playerDataService.getDiscoveredPoi(player);
-		if (discovered.includes(zoneName)) return;
+		// Guard: profile must be loaded
+		const data = this.playerDataService.getPlayerData(player);
+		if (!data) return;
+
+		if (data.discoveredPoi.includes(zoneName)) return;
 
 		this.playerDataService.addDiscoveredPoi(player, zoneName);
 		this.serverEvents.poiDiscoveredConfirm.fire(player, zoneName);
@@ -67,11 +67,12 @@ export class PoiDiscoveryService implements OnStart {
 	}
 
 	private handleClaim(player: Player, zoneName: string) {
-		const discovered = this.playerDataService.getDiscoveredPoi(player);
-		if (!discovered.includes(zoneName)) return;
+		// Guard: profile must be loaded
+		const data = this.playerDataService.getPlayerData(player);
+		if (!data) return;
 
-		const claimed = this.playerDataService.getPoiClaimedRewards(player);
-		if (claimed.includes(zoneName)) return;
+		if (!data.discoveredPoi.includes(zoneName)) return;
+		if (data.poiClaimedRewards.includes(zoneName)) return;
 
 		this.playerDataService.addPoiClaimedReward(player, zoneName);
 		this.playerDataService.addPlayPoints(player, POI_DISCOVERY_POINTS);
@@ -83,16 +84,13 @@ export class PoiDiscoveryService implements OnStart {
 		);
 
 		// Send updated balance
-		const data = this.playerDataService.getPlayerData(player);
-		if (data) {
-			const level = this.playerDataService.getPlaygroundLevel(player);
-			this.serverEvents.playPointsUpdate.fire(
-				player,
-				data.totalPlayPoints,
-				level,
-				data.shopBalance,
-			);
-		}
+		const level = this.playerDataService.getPlaygroundLevel(player);
+		this.serverEvents.playPointsUpdate.fire(
+			player,
+			data.totalPlayPoints,
+			level,
+			data.shopBalance,
+		);
 
 		print(
 			`[PoiDiscoveryService] ${player.Name} claimed PoI reward: ${zoneName} (+${POI_DISCOVERY_POINTS})`,

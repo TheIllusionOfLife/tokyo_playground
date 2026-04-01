@@ -52,6 +52,7 @@ export class LeaderboardService implements OnStart {
 	private updateAllPlayers() {
 		for (const player of Players.GetPlayers()) {
 			this.updatePlayerScore(player);
+			task.wait(0.1); // Stagger DataStore writes to avoid throttling
 		}
 	}
 

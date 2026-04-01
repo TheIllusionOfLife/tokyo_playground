@@ -16,8 +16,6 @@ export function LeaderboardPanel() {
 	const open = activeOverlay === "leaderboard";
 	const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
 
-	if (matchPhase !== MatchPhase.WaitingForPlayers) return undefined!;
-
 	useEffect(() => {
 		const conn = clientEvents.leaderboardData.connect(
 			(data: { rank: number; name: string; points: number }[]) => {
@@ -33,6 +31,8 @@ export function LeaderboardPanel() {
 			clientEvents.requestLeaderboard.fire();
 		}
 	}, [open]);
+
+	if (matchPhase !== MatchPhase.WaitingForPlayers) return undefined!;
 
 	return (
 		<>

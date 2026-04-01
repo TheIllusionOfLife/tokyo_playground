@@ -357,7 +357,8 @@ export class HachiRideController implements OnStart {
 		gui.Parent = playerGui;
 
 		// Position matches native jump button (bottom-right)
-		const btn = new Instance("ImageButton");
+		// Use ImageLabel (not ImageButton) so it doesn't intercept touch events
+		const btn = new Instance("ImageLabel");
 		btn.Name = "PawButton";
 		btn.Size = new UDim2(0, 70, 0, 70);
 		btn.Position = new UDim2(1, -25, 1, -25);

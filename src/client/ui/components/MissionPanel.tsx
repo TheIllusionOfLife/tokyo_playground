@@ -1,6 +1,7 @@
 import React from "@rbxts/react";
 import { useSelector } from "@rbxts/react-reflex";
 import { clientEvents } from "client/network";
+import { ALL_POI_ZONES } from "shared/constants";
 import { t, tMission } from "shared/localization";
 import {
 	L_CLAIMED,
@@ -9,19 +10,6 @@ import {
 } from "shared/localization/keys";
 import { GameStoreState, gameStore } from "shared/store/game-store";
 import { MatchPhase, MinigameId, MissionProgressData } from "shared/types";
-
-// All known zone names for PoI list (must match Zone tags in Workspace)
-const ALL_POI_ZONES = [
-	"ShibuyaSky",
-	"ShibuyaCrossing",
-	"HachikoSquare",
-	"CenterGai",
-	"SkySlideHub",
-	"Dogenzaka",
-	"Hikarie",
-	"MiyashitaPark",
-	"ShibuyaStation",
-];
 
 function MissionRow({ mission }: { mission: MissionProgressData }) {
 	const canClaim =

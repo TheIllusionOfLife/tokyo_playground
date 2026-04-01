@@ -14,10 +14,7 @@ export function SpinWheel() {
 	const [lastReward, setLastReward] = useState(0);
 	const wheelRef = useRef<Frame>();
 
-	// Hide during matches
-	if (matchPhase !== MatchPhase.WaitingForPlayers) return undefined!;
-
-	// Listen for spin result
+	// Listen for spin result (must be before early return to satisfy Rules of Hooks)
 	useEffect(() => {
 		const conn = clientEvents.spinResult.connect((reward, success) => {
 			setSpinning(false);
@@ -27,6 +24,9 @@ export function SpinWheel() {
 		});
 		return () => conn.Disconnect();
 	}, []);
+
+	// Hide during matches
+	if (matchPhase !== MatchPhase.WaitingForPlayers) return undefined!;
 
 	return (
 		<>

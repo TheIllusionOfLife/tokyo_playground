@@ -77,6 +77,7 @@ export class CanKickController implements OnStart {
 			const fadeGui = new Instance("ScreenGui");
 			fadeGui.Name = "JailFade";
 			fadeGui.DisplayOrder = 100;
+			fadeGui.IgnoreGuiInset = true;
 			fadeGui.Parent = playerGui;
 			const frame = new Instance("Frame");
 			frame.Size = new UDim2(1, 0, 1, 0);

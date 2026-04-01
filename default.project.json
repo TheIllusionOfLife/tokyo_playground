@@ -42,7 +42,7 @@
 		"ReplicatedFirst": {
 			"$className": "ReplicatedFirst",
 			"TS": {
-				"$path": "out/client/loading"
+				"$path": "out/replicated-first"
 			}
 		},
 		"Workspace": {

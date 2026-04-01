@@ -67,13 +67,17 @@ export class EngagementService implements OnStart {
 		if (!ok || !pages) return;
 
 		const friendIds = new Set<number>();
-		while (true) {
+		let pageCount = 0;
+		const MAX_PAGES = 50;
+		while (pageCount < MAX_PAGES) {
 			for (const item of pages.GetCurrentPage()) {
 				const friendData = item as { Id: number };
 				if (friendData.Id) friendIds.add(friendData.Id);
 			}
 			if (pages.IsFinished) break;
-			pcall(() => pages.AdvanceToNextPageAsync());
+			const [advOk] = pcall(() => pages.AdvanceToNextPageAsync());
+			if (!advOk) break;
+			pageCount++;
 		}
 
 		// Check if any friend is currently in-server

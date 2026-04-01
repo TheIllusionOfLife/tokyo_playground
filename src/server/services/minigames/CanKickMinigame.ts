@@ -8,6 +8,7 @@ import {
 	CAN_RATTLE_TARGET,
 	CAN_RELOCATE_INTERVAL,
 	DEFAULT_WALK_SPEED,
+	HACHI_WALK_SPEEDS,
 	ONI_CATCH_RADIUS,
 	ONI_COUNT_DURATION,
 	ONI_MOUNTED_CATCH_RADIUS,
@@ -21,7 +22,11 @@ import {
 	RoundResult,
 } from "shared/types";
 import { isInsideJailRattleZone } from "shared/utils/canKickRattle";
-import { equipHachiCostume, isPlayerMounted } from "../../utils/hachiCostume";
+import {
+	equipHachiCostume,
+	isPlayerMounted,
+	unequipHachiCostume,
+} from "../../utils/hachiCostume";
 import {
 	fireHintText,
 	startOniCountdown,
@@ -164,7 +169,7 @@ export class CanKickMinigame implements IMinigame {
 					this.serverEvents,
 					this.playerStates,
 					this.playerObjects,
-					DEFAULT_WALK_SPEED,
+					HACHI_WALK_SPEEDS[0],
 				);
 				this.lastHintText = fireHintText(
 					this.serverEvents,
@@ -436,7 +441,7 @@ export class CanKickMinigame implements IMinigame {
 			this.serverEvents,
 			this.playerStates,
 			this.playerObjects,
-			DEFAULT_WALK_SPEED,
+			HACHI_WALK_SPEEDS[0],
 		);
 		this.countdownThread = undefined;
 	}
@@ -444,6 +449,11 @@ export class CanKickMinigame implements IMinigame {
 	cleanup() {
 		// stopCountdown unfreezes Oni and cancels the thread — must run before clearing playerStates
 		this.stopCountdown();
+		// Unequip Oni's Hachi mount before clearing state
+		if (this.oniUserId !== undefined) {
+			const oniPlayer = this.playerObjects.get(this.oniUserId);
+			if (oniPlayer) unequipHachiCostume(oniPlayer);
+		}
 		this.lastHintText = "";
 		this.oniUserId = undefined;
 		this.canRelocateElapsed = 0;
@@ -467,7 +477,9 @@ export class CanKickMinigame implements IMinigame {
 			return;
 		}
 		const hachiClone = hachiTemplate.Clone();
-		equipHachiCostume(player, hachiClone, 0);
+		if (!equipHachiCostume(player, hachiClone, 0)) {
+			hachiClone.Destroy();
+		}
 	}
 
 	private teleportPlayers(players: Player[], roles: Map<Player, PlayerRole>) {
