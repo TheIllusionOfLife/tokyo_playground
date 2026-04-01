@@ -324,6 +324,11 @@ function VehicleCard({
 			BorderSizePixel={0}
 		>
 			<uicorner CornerRadius={new UDim(0, 8)} />
+			<uistroke
+				Color={Color3.fromRGB(60, 60, 80)}
+				Thickness={1}
+				Transparency={0.3}
+			/>
 			{/* Colored icon area */}
 			<frame
 				Size={new UDim2(1, 0, 0, 44)}
@@ -381,8 +386,9 @@ function VehicleCard({
 			/>
 			{/* Action button */}
 			<textbutton
-				Size={new UDim2(1, -8, 0, 28)}
-				Position={new UDim2(0, 4, 1, -32)}
+				Size={new UDim2(1, -16, 0, 26)}
+				Position={new UDim2(0.5, 0, 1, -34)}
+				AnchorPoint={new Vector2(0.5, 0)}
 				BackgroundColor3={buttonColor}
 				TextColor3={Color3.fromRGB(255, 255, 255)}
 				TextScaled={true}
@@ -563,13 +569,13 @@ export function ShopPanel() {
 						</frame>
 						{/* Content area */}
 						<scrollingframe
-							Size={new UDim2(1, -24, 1, -52)}
+							Size={new UDim2(1, -16, 1, -52)}
 							Position={new UDim2(0, 12, 0, 44)}
 							BackgroundTransparency={1}
 							BorderSizePixel={0}
 							CanvasSize={new UDim2(0, 0, 0, 0)}
 							AutomaticCanvasSize={Enum.AutomaticSize.Y}
-							ScrollBarThickness={6}
+							ScrollBarThickness={3}
 							ScrollBarImageColor3={Color3.fromRGB(100, 100, 150)}
 							ZIndex={19}
 						>
