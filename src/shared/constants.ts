@@ -658,9 +658,9 @@ export const VEHICLE_CATALOG: VehicleDef[] = [
 		templateName: "WhiteDragonTemplate",
 		price: 800,
 		levelRequired: 5,
-		animProfile: AnimProfile.Serpentine,
-		speedScale: 0.8,
-		idleAmp: 0.25,
+		animProfile: AnimProfile.Static,
+		speedScale: 1.0,
+		idleAmp: 0.2,
 	},
 	{
 		id: VehicleId.Tanuki,
