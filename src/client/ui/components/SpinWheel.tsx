@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "@rbxts/react";
 import { useSelector } from "@rbxts/react-reflex";
-import { GuiService, RunService } from "@rbxts/services";
+import { RunService } from "@rbxts/services";
 import { clientEvents } from "client/network";
 import { SPIN_REWARDS } from "shared/constants";
 import { t } from "shared/localization";
@@ -82,9 +82,6 @@ export function SpinWheel() {
 
 	const alreadySpun = !spinAvailable;
 
-	const [insetTop] = GuiService.GetGuiInset();
-	const topbarHeight = insetTop.Y;
-
 	return (
 		<>
 			{/* Toggle button in topbar zone */}
@@ -97,8 +94,8 @@ export function SpinWheel() {
 			>
 				<frame
 					key="SpinButton"
-					Size={new UDim2(0, 100, 0, math.max(topbarHeight - 4, 28))}
-					Position={new UDim2(1, -120, 0, 6)}
+					Size={new UDim2(0, 100, 0, 30)}
+					Position={new UDim2(1, -120, 0, 20)}
 					AnchorPoint={new Vector2(1, 0)}
 					BackgroundColor3={Color3.fromRGB(70, 30, 100)}
 					BackgroundTransparency={0.3}

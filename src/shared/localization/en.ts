@@ -60,6 +60,7 @@ export const EN: Record<string, string> = {
 	skill_fluffy_hachi: "Fluffy Hachi",
 	skill_fluffy_hachi_desc: "Maximum cuteness",
 	skill_unlocked: "Unlocked",
+	skills_button: "Skills",
 
 	// Stamp rally
 	stamp_rally: "Stamp Rally",

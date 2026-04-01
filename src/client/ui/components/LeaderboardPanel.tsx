@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "@rbxts/react";
 import { useSelector } from "@rbxts/react-reflex";
-import { GuiService } from "@rbxts/services";
 import { clientEvents } from "client/network";
 import { GameStoreState, gameStore } from "shared/store/game-store";
 import { MatchPhase } from "shared/types";
@@ -35,9 +34,6 @@ export function LeaderboardPanel() {
 
 	if (matchPhase !== MatchPhase.WaitingForPlayers) return undefined!;
 
-	const [insetTop] = GuiService.GetGuiInset();
-	const topbarHeight = insetTop.Y;
-
 	return (
 		<>
 			{/* Toggle button in topbar zone */}
@@ -50,8 +46,8 @@ export function LeaderboardPanel() {
 			>
 				<frame
 					key="LeaderboardButton"
-					Size={new UDim2(0, 100, 0, math.max(topbarHeight - 4, 28))}
-					Position={new UDim2(1, -10, 0, 6)}
+					Size={new UDim2(0, 100, 0, 30)}
+					Position={new UDim2(1, -10, 0, 20)}
 					AnchorPoint={new Vector2(1, 0)}
 					BackgroundColor3={Color3.fromRGB(30, 50, 80)}
 					BackgroundTransparency={0.3}

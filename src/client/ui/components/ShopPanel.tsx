@@ -516,7 +516,7 @@ export function ShopPanel() {
 						/>
 						{/* Tab buttons */}
 						<frame
-							Size={new UDim2(0.5, -12, 0, 28)}
+							Size={new UDim2(0.5, -48, 0, 28)}
 							Position={new UDim2(0.5, 0, 0, 12)}
 							BackgroundTransparency={1}
 							ZIndex={19}

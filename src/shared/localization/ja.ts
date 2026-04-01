@@ -60,6 +60,7 @@ export const JA: Record<string, string> = {
 	skill_fluffy_hachi: "もふもふハチ",
 	skill_fluffy_hachi_desc: "最高のかわいさ",
 	skill_unlocked: "解放済み",
+	skills_button: "スキル",
 
 	// Stamp rally
 	stamp_rally: "スタンプラリー",
