@@ -653,7 +653,7 @@ export const VEHICLE_CATALOG: VehicleDef[] = [
 	},
 	{
 		id: VehicleId.JapaneseDragon,
-		name: "White Shenlong",
+		name: "White Dragon",
 		nameKey: "vehicle_dragon",
 		templateName: "JapaneseDragonTemplate",
 		price: 800,
