@@ -119,7 +119,7 @@ export enum VehicleId {
 	Kart = "Kart",
 	WhiteDragon = "WhiteDragon",
 	GreenDragon = "GreenDragon",
-	Tanuki = "Tanuki",
+	Bear = "Bear",
 	ShibaInu = "ShibaInu",
 	Kitsune = "Kitsune",
 	Daruma = "Daruma",

@@ -29,7 +29,7 @@ const VEHICLE_ID_VALUES = new Set<VehicleId>([
 	VehicleId.Kart,
 	VehicleId.WhiteDragon,
 	VehicleId.GreenDragon,
-	VehicleId.Tanuki,
+	VehicleId.Bear,
 	VehicleId.ShibaInu,
 	VehicleId.Kitsune,
 	VehicleId.Daruma,

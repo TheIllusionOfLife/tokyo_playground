@@ -203,7 +203,7 @@ export const EN: Record<string, string> = {
 	vehicle_kart: "Kart",
 	vehicle_white_dragon: "White Dragon",
 	vehicle_green_dragon: "Green Dragon",
-	vehicle_tanuki: "Tanuki",
+	vehicle_bear: "Bear",
 	vehicle_shiba: "Shiba Inu",
 	vehicle_kitsune: "Kitsune",
 	vehicle_daruma: "Daruma",
