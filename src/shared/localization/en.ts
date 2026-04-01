@@ -218,6 +218,7 @@ export const EN: Record<string, string> = {
 
 	// Cosmetics preview
 	shop_try_on: "TRY ON",
+	shop_tab_accessory: "Accessory",
 
 	// Spin
 	spin_title: "Daily Lucky Spin",

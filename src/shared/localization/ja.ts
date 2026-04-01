@@ -218,6 +218,7 @@ export const JA: Record<string, string> = {
 
 	// Cosmetics preview
 	shop_try_on: "試着",
+	shop_tab_accessory: "アクセサリー",
 
 	// Spin
 	spin_title: "デイリーラッキースピン",

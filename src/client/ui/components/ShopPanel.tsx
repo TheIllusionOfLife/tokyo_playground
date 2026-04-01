@@ -429,7 +429,7 @@ export function ShopPanel() {
 	const activeMinigameId = useSelector(
 		(state: GameStoreState) => state.activeMinigameId,
 	);
-	const [tab, setTab] = useState<ShopTab>("cosmetics");
+	const [tab, setTab] = useState<ShopTab>("vehicles");
 
 	// Hide during HachiRide InProgress (overlaps with rank/skills/points)
 	const hideButton =
@@ -533,25 +533,8 @@ export function ShopPanel() {
 								HorizontalAlignment={Enum.HorizontalAlignment.Right}
 							/>
 							<textbutton
-								key="tab_cosmetics"
-								Size={new UDim2(0, 80, 1, 0)}
-								BackgroundColor3={
-									tab === "cosmetics"
-										? Color3.fromRGB(80, 60, 120)
-										: Color3.fromRGB(40, 40, 60)
-								}
-								TextColor3={Color3.fromRGB(255, 255, 255)}
-								TextScaled={true}
-								Font={Enum.Font.GothamBold}
-								Text={t(L_SHOP)}
-								ZIndex={19}
-								Event={{ Activated: () => setTab("cosmetics") }}
-							>
-								<uicorner CornerRadius={new UDim(0, 6)} />
-							</textbutton>
-							<textbutton
 								key="tab_vehicles"
-								Size={new UDim2(0, 110, 1, 0)}
+								Size={new UDim2(0, 80, 1, 0)}
 								BackgroundColor3={
 									tab === "vehicles"
 										? Color3.fromRGB(80, 60, 120)
@@ -560,9 +543,26 @@ export function ShopPanel() {
 								TextColor3={Color3.fromRGB(255, 255, 255)}
 								TextScaled={true}
 								Font={Enum.Font.GothamBold}
-								Text={`${t(L_VEHICLE_TAB)} (${vehicleItems.filter((v) => v.owned).size()}/${vehicleItems.size()})`}
+								Text={t(L_VEHICLE_TAB)}
 								ZIndex={19}
 								Event={{ Activated: () => setTab("vehicles") }}
+							>
+								<uicorner CornerRadius={new UDim(0, 6)} />
+							</textbutton>
+							<textbutton
+								key="tab_cosmetics"
+								Size={new UDim2(0, 90, 1, 0)}
+								BackgroundColor3={
+									tab === "cosmetics"
+										? Color3.fromRGB(80, 60, 120)
+										: Color3.fromRGB(40, 40, 60)
+								}
+								TextColor3={Color3.fromRGB(255, 255, 255)}
+								TextScaled={true}
+								Font={Enum.Font.GothamBold}
+								Text={t("shop_tab_accessory")}
+								ZIndex={19}
+								Event={{ Activated: () => setTab("cosmetics") }}
 							>
 								<uicorner CornerRadius={new UDim(0, 6)} />
 							</textbutton>
