@@ -178,10 +178,13 @@ export class HudController implements OnStart {
 			gameStore.setVehicleItems(vehicles);
 		});
 
-		clientEvents.vehiclePurchaseResult.connect((ok) => {
+		clientEvents.vehiclePurchaseResult.connect((ok, _vehicleId, newBalance) => {
 			if (ok) {
+				gameStore.setShopBalance(newBalance);
+				this.latestShopBalance = newBalance;
 				clientEvents.requestVehicleCatalog.fire();
 				clientEvents.requestShopCatalog.fire();
+				this.refreshFeaturedUnlock();
 			}
 		});
 

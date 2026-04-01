@@ -28,5 +28,6 @@
 - [ ] `ServerStorage.WhiteDragonTemplate` exists as Model
 - [ ] Body part is set as PrimaryPart
 - [ ] All Anim_Segment* parts are welded to Body
+- [ ] Anim_EarL and Anim_EarR (antlers) are welded to Body
 - [ ] Under 2000 triangles
 - [ ] No VehicleSeat or scripts

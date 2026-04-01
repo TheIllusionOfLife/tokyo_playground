@@ -2,7 +2,7 @@
 
 ## Roblox AI Assistant Prompt
 
-> Create a 3D model named "KitsuneTemplate" in ServerStorage. A mystical Japanese fox (kitsune). Sleek elegant body, four slim athletic legs, three flowing tails fanning out behind (representing a three-tailed kitsune), large pointed ears, narrow elegant snout. White fur with red-tipped ears and red-tipped tail ends. Slightly ethereal, with a mystical aura. Glowing amber eyes. Approximately 7 studs long, 3.5 studs tall. The model must have a Part named "Body" as PrimaryPart. Include separate welded parts named: Anim_LegFL, Anim_LegFR, Anim_LegBL, Anim_LegBR, Anim_EarL, Anim_EarR, Anim_Tail, Head, Anim_Snout. The Anim_Tail should be a single part representing all three tails. Low-poly (under 2000 triangles), SmoothPlastic material. Do NOT create a VehicleSeat or scripts.
+> Create a 3D model named "KitsuneTemplate" in ServerStorage. A mystical Japanese fox (kitsune). Sleek elegant body, four slim athletic legs, three flowing tails fanning out behind (representing a three-tailed kitsune), large pointed ears, narrow elegant snout. White fur with red-tipped ears and red-tipped tail ends. Slightly ethereal, with a mystical aura. Glowing amber eyes. Approximately 7 studs long, 3.5 studs tall. The model must have a Part named "Body" as PrimaryPart. Include separate welded parts named: Anim_LegFL, Anim_LegFR, Anim_LegBL, Anim_LegBR, Anim_EarL, Anim_EarR, Anim_Tail, Anim_Head, Head, Anim_Snout. The Anim_Tail should be a single part representing all three tails. Low-poly (under 2000 triangles), SmoothPlastic material. Do NOT create a VehicleSeat or scripts.
 
 ## AnimProfile: Quadruped
 

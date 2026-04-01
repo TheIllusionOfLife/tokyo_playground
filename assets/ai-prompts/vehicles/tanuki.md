@@ -2,7 +2,7 @@
 
 ## Roblox AI Assistant Prompt
 
-> Create a 3D model named "TanukiTemplate" in ServerStorage. A chubby Japanese raccoon dog (tanuki). Round body wider than tall, four short stubby legs, a large bushy striped tail, small round ears, and a green leaf sitting on top of its head. Dark brown fur with cream belly and dark eye patches around the eyes. Friendly smiling face. Approximately 6 studs long, 3.5 studs tall. The model must have a Part named "Body" as PrimaryPart. Include separate welded parts named: Anim_LegFL, Anim_LegFR, Anim_LegBL, Anim_LegBR, Anim_EarL, Anim_EarR, Anim_Tail, Head. Low-poly (under 2000 triangles), SmoothPlastic material. Do NOT create a VehicleSeat or scripts.
+> Create a 3D model named "TanukiTemplate" in ServerStorage. A chubby Japanese raccoon dog (tanuki). Round body wider than tall, four short stubby legs, a large bushy striped tail, small round ears, and a green leaf sitting on top of its head. Dark brown fur with cream belly and dark eye patches around the eyes. Friendly smiling face. Approximately 6 studs long, 3.5 studs tall. The model must have a Part named "Body" as PrimaryPart. Include separate welded parts named: Anim_LegFL, Anim_LegFR, Anim_LegBL, Anim_LegBR, Anim_EarL, Anim_EarR, Anim_Tail, Anim_Head, Head. Low-poly (under 2000 triangles), SmoothPlastic material. Do NOT create a VehicleSeat or scripts.
 
 ## AnimProfile: Quadruped
 

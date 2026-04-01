@@ -209,6 +209,8 @@ export class EquipService implements OnStart {
 	private readonly equipCooldowns = new Map<number, number>();
 	/** Monotonic token per player to prevent stale preview cleanup. */
 	private readonly previewVersions = new Map<number, number>();
+	/** Active preview category per player for proper cleanup. */
+	private readonly activePreviewCategories = new Map<number, ItemCategory>();
 
 	constructor(private readonly playerDataService: PlayerDataService) {}
 
@@ -232,6 +234,13 @@ export class EquipService implements OnStart {
 
 		this.serverEvents.requestPreview.connect(
 			safeHandler("EquipService.requestPreview", (player, itemId) => {
+				const now = os.clock();
+				if (
+					now - (this.equipCooldowns.get(player.UserId) ?? 0) <
+					EQUIP_COOLDOWN
+				)
+					return;
+				this.equipCooldowns.set(player.UserId, now);
 				this.handlePreviewRequest(player, itemId);
 			}),
 		);
@@ -257,6 +266,7 @@ export class EquipService implements OnStart {
 			}
 			this.equipCooldowns.delete(player.UserId);
 			this.previewVersions.delete(player.UserId);
+			this.activePreviewCategories.delete(player.UserId);
 		});
 	}
 
@@ -449,7 +459,7 @@ export class EquipService implements OnStart {
 			STAMP_REWARD_CATALOG.find((item) => item.id === itemId);
 		if (!catalogItem) return;
 
-		// Cancel any existing preview first
+		// Cancel any existing preview first (restores previous category)
 		this.cancelPreview(player);
 
 		const category = catalogItem.category;
@@ -458,7 +468,8 @@ export class EquipService implements OnStart {
 		this.removeCosmetic(player, category);
 		this.applyCosmetic(player, category, itemId);
 
-		// Bump version token
+		// Track active preview category and bump version token
+		this.activePreviewCategories.set(player.UserId, category);
 		const version = (this.previewVersions.get(player.UserId) ?? 0) + 1;
 		this.previewVersions.set(player.UserId, version);
 
@@ -476,24 +487,31 @@ export class EquipService implements OnStart {
 			if (this.previewVersions.get(player.UserId) !== version) return;
 			if (!player.Parent) return; // player left
 
-			this.removeCosmetic(player, category);
-			// Restore the player's actual equipped cosmetic
-			const equippedItems = this.playerDataService.getEquippedItems(player);
-			const realItem = equippedItems[category];
-			if (realItem !== undefined) {
-				this.applyCosmetic(player, category, realItem);
-			}
-			// Notify client preview ended
-			this.serverEvents.previewEquipped.fire(player, undefined, undefined, 0);
+			this.restoreAfterPreview(player, category);
 		});
 	}
 
+	/** Remove preview cosmetic and restore the player's real equipped item. */
+	private restoreAfterPreview(player: Player, category: ItemCategory) {
+		this.removeCosmetic(player, category);
+		const equippedItems = this.playerDataService.getEquippedItems(player);
+		const realItem = equippedItems[category];
+		if (realItem !== undefined) {
+			this.applyCosmetic(player, category, realItem);
+		}
+		this.activePreviewCategories.delete(player.UserId);
+		this.serverEvents.previewEquipped.fire(player, undefined, undefined, 0);
+	}
+
 	private cancelPreview(player: Player) {
+		// Restore cosmetic for the active preview category
+		const category = this.activePreviewCategories.get(player.UserId);
+		if (category !== undefined) {
+			this.restoreAfterPreview(player, category);
+		}
 		// Bump version to invalidate any pending cleanup
 		const version = (this.previewVersions.get(player.UserId) ?? 0) + 1;
 		this.previewVersions.set(player.UserId, version);
-		// Notify client
-		this.serverEvents.previewEquipped.fire(player, undefined, undefined, 0);
 	}
 
 	private applyTrail(character: Model, itemId: ItemId) {

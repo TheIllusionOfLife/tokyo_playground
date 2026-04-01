@@ -2,7 +2,7 @@
 
 ## Roblox AI Assistant Prompt
 
-> Create a 3D model named "NekoTemplate" in ServerStorage. A cute Japanese calico cat (neko) in a playful sitting pose, ready to be ridden. Round head with large triangular pointed ears, compact oval body, four short legs, and a long elegantly curved tail. White body with orange and black calico patches. Large round cartoon eyes with a small pink nose. Approximately 6 studs long, 3 studs tall. The model must have a Part named "Body" as PrimaryPart. Include separate welded parts named: Anim_LegFL, Anim_LegFR, Anim_LegBL, Anim_LegBR, Anim_EarL, Anim_EarR, Anim_Tail, Head. Low-poly (under 2000 triangles), SmoothPlastic material. Do NOT create a VehicleSeat or scripts.
+> Create a 3D model named "NekoTemplate" in ServerStorage. A cute Japanese calico cat (neko) in a playful sitting pose, ready to be ridden. Round head with large triangular pointed ears, compact oval body, four short legs, and a long elegantly curved tail. White body with orange and black calico patches. Large round cartoon eyes with a small pink nose. Approximately 6 studs long, 3 studs tall. The model must have a Part named "Body" as PrimaryPart. Include separate welded parts named: Anim_LegFL, Anim_LegFR, Anim_LegBL, Anim_LegBR, Anim_EarL, Anim_EarR, Anim_Tail, Anim_Head, Head. Low-poly (under 2000 triangles), SmoothPlastic material. Do NOT create a VehicleSeat or scripts.
 
 ## AnimProfile: Quadruped
 

@@ -103,6 +103,10 @@ export class HachiRideMinigame implements IMinigame {
 	private playerObjects = new Map<number, Player>();
 	private hachiModels = new Map<number, Model>();
 	private hachiAnimStates = new Map<number, HachiAnimState>();
+	private hachiVehicleDefs = new Map<
+		number,
+		(typeof VEHICLE_CATALOG)[number]
+	>();
 	private activeItems: BasePart[] = [];
 	private activeTweens: Tween[] = [];
 	private bonusItems = new Set<BasePart>();
@@ -266,6 +270,10 @@ export class HachiRideMinigame implements IMinigame {
 
 			const clone = template.Clone();
 			clone.Name = `Hachi_${player.UserId}`;
+
+			// Cache vehicle definition for animation dispatch
+			const vDef = VEHICLE_CATALOG.find((v) => v.id === vehicleId);
+			if (vDef) this.hachiVehicleDefs.set(player.UserId, vDef);
 
 			// Equip costume on player (welds to HRP, sets WalkSpeed/JumpHeight)
 			const evoLevel = HACHI_STARTING_EVOLUTION;
@@ -535,6 +543,7 @@ export class HachiRideMinigame implements IMinigame {
 		this.playerObjects.clear();
 		this.hachiModels.clear();
 		this.hachiAnimStates.clear();
+		this.hachiVehicleDefs.clear();
 		this.wallRunStates.clear();
 		this.jumpCooldowns.clear();
 		this.ejectCooldowns.clear();
@@ -1159,11 +1168,7 @@ export class HachiRideMinigame implements IMinigame {
 				animTime: 0,
 				airborne: false,
 			};
-			const player = this.playerObjects.get(userId);
-			const vehicleId = player
-				? this.playerDataService.getEquippedVehicle(player)
-				: VehicleId.DefaultHachi;
-			const vDef = VEHICLE_CATALOG.find((v) => v.id === vehicleId);
+			const vDef = this.hachiVehicleDefs.get(userId);
 			this.hachiAnimStates.set(
 				userId,
 				animateVehicle(

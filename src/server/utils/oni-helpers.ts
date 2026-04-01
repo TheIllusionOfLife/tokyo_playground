@@ -72,11 +72,20 @@ export function fireHintText(
 	// If this is NOT a locking call, check if any active lock suppresses it
 	if (lockDuration === undefined) {
 		const now = os.clock();
+		let suppressed = false;
+		const expiredKeys: string[] = [];
 		for (const [key, lockUntil] of hintLockMap) {
-			if (now < lockUntil) return lastRef;
-			// Clean up expired locks
+			if (now < lockUntil) {
+				suppressed = true;
+			} else {
+				expiredKeys.push(key);
+			}
+		}
+		// Clean up expired locks (safe: not mutating during iteration)
+		for (const key of expiredKeys) {
 			hintLockMap.delete(key);
 		}
+		if (suppressed) return lastRef;
 	}
 
 	// Set lock if requested

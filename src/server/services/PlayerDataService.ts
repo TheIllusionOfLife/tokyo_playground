@@ -20,6 +20,20 @@ import {
 	VehicleId,
 } from "shared/types";
 import { getCurrentDay } from "shared/utils/dayKey";
+
+/** Valid VehicleId values for post-Reconcile validation. */
+const VEHICLE_ID_VALUES = new Set<VehicleId>([
+	VehicleId.DefaultHachi,
+	VehicleId.Neko,
+	VehicleId.Kart,
+	VehicleId.WhiteDragon,
+	VehicleId.Tanuki,
+	VehicleId.ShibaInu,
+	VehicleId.Kitsune,
+	VehicleId.Daruma,
+	VehicleId.ManekiNeko,
+]);
+
 import { AnalyticsService } from "./AnalyticsService";
 
 const PROFILE_STORE_KEY = "PlayerData_v1";
@@ -105,6 +119,16 @@ export class PlayerDataService implements OnStart {
 		if (!typeIs(data.equippedItems, "table")) data.equippedItems = {};
 		if (!typeIs(data.discoveredPoi, "table")) data.discoveredPoi = [];
 		if (!typeIs(data.poiClaimedRewards, "table")) data.poiClaimedRewards = [];
+		// Vehicle fields
+		if (!typeIs(data.ownedVehicles, "table"))
+			data.ownedVehicles = [VehicleId.DefaultHachi];
+		if (
+			!typeIs(data.equippedVehicle, "string") ||
+			!VEHICLE_ID_VALUES.has(data.equippedVehicle as VehicleId)
+		)
+			data.equippedVehicle = VehicleId.DefaultHachi;
+		if (!data.ownedVehicles.includes(data.equippedVehicle))
+			data.ownedVehicles.push(data.equippedVehicle);
 
 		profile.ListenToRelease(() => {
 			this.profiles.delete(player);
