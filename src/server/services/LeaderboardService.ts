@@ -149,6 +149,7 @@ export class LeaderboardService implements OnStart {
 			print(`[LeaderboardService] Weekly store: ${key}`);
 		} else {
 			warn(`[LeaderboardService] Failed to get weekly store: ${key}`);
+			this.weeklyStore = undefined;
 		}
 	}
 }

@@ -239,10 +239,16 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 					part.Transparency = 1;
 				}
 			}
+			const hrp = character.FindFirstChild("HumanoidRootPart") as
+				| BasePart
+				| undefined;
+			if (hrp) {
+				hrp.Anchored = true;
+			}
 			const humanoid = character.FindFirstChildOfClass("Humanoid");
 			if (humanoid) {
 				humanoid.WalkSpeed = 0;
-				humanoid.JumpPower = 0;
+				humanoid.JumpHeight = 0;
 			}
 		}
 
@@ -310,13 +316,17 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 
 	cleanup() {
 		this.stopCountdown();
-		// Restore tagged hiders' characters (visibility, movement, respawn)
+		// Collect tagged hiders before iterating (LoadCharacter yields,
+		// and a disconnect during the yield could modify playerStates)
+		const taggedPlayers: Player[] = [];
 		for (const [userId, state] of this.playerStates) {
 			if (!state.isTagged) continue;
 			const player = this.playerObjects.get(userId);
-			if (!player) continue;
-			// Respawn character to restore visibility and movement
-			player.LoadCharacter();
+			if (player) taggedPlayers.push(player);
+		}
+		// Respawn tagged hiders (each call yields, safe since we're off the map now)
+		for (const player of taggedPlayers) {
+			task.spawn(() => player.LoadCharacter());
 		}
 		// Unequip Oni's Hachi mount before clearing state
 		if (this.oniUserId !== undefined) {

@@ -537,6 +537,7 @@ export class CanKickMinigame implements IMinigame {
 		this.rattleProgress = 0;
 		this.boostEligible.clear();
 		this.lastAutoCatchTime = 0;
+		this.lastAutoKickTime = 0;
 		this.playerStates.clear();
 		this.playerObjects.clear();
 		this.canModel = undefined;
@@ -595,8 +596,12 @@ export class CanKickMinigame implements IMinigame {
 				}
 				// Fallback: push outside jail bounds along X if all random attempts failed
 				if (!spawnPos) {
-					const offsetX = jailHalf ? jailHalf.X + 10 : 50;
-					spawnPos = basePos.add(new Vector3(offsetX, 3, 0));
+					if (jailPos && jailHalf) {
+						const dir = basePos.X >= jailPos.X ? 1 : -1;
+						spawnPos = jailPos.add(new Vector3(dir * (jailHalf.X + 10), 3, 0));
+					} else {
+						spawnPos = basePos.add(new Vector3(50, 3, 0));
+					}
 				}
 				player.Character.PivotTo(new CFrame(spawnPos));
 			}

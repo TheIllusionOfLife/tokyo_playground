@@ -560,7 +560,7 @@ export class MatchService implements OnStart {
 				rescues: state.rescueCount,
 				points:
 					state.minigameId === MinigameId.HachiRide
-						? state.itemCount - HACHI_STARTING_SCORE_OFFSET
+						? math.max(0, state.itemCount - HACHI_STARTING_SCORE_OFFSET)
 						: breakdown.totalPoints,
 			});
 		}
