@@ -188,7 +188,7 @@ export const JA: Record<string, string> = {
 	hint_ability_3: "レベル3: デカハチ + 三段ジャンプ!",
 	hint_ability_4: "レベル4: もふもふハチ + 四段ジャンプ!",
 	hint_hachi_evolved: "ハチがレベル%1に進化!",
-	hint_sky_dragon: "神龍が空を舞う! 背中に乗って30ポイントゲット!",
+	hint_sky_dragon: "神龍が空を舞う! 背中に何かが光っている...",
 	hint_dragon_collected: "%1が龍の秘宝を手に入れた! +%2ポイント!",
 
 	// Point of Interest
