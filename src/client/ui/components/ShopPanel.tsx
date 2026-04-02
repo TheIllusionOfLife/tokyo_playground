@@ -421,10 +421,13 @@ export function ShopPanel() {
 		(state: GameStoreState) => state.activeOverlay,
 	);
 	const open = activeOverlay === "shop";
-	const shopItems = useSelector((state: GameStoreState) => state.shopItems);
-	const vehicleItems = useSelector(
+	const rawShopItems = useSelector((state: GameStoreState) => state.shopItems);
+	const rawVehicleItems = useSelector(
 		(state: GameStoreState) => state.vehicleItems,
 	);
+	// Sort by price ascending
+	const shopItems = [...rawShopItems].sort((a, b) => a.price < b.price);
+	const vehicleItems = [...rawVehicleItems].sort((a, b) => a.price < b.price);
 	const shopBalance = useSelector((state: GameStoreState) => state.shopBalance);
 	const level = useSelector((state: GameStoreState) => state.playgroundLevel);
 	const matchPhase = useSelector((state: GameStoreState) => state.matchPhase);

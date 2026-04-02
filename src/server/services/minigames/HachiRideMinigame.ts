@@ -781,9 +781,6 @@ export class HachiRideMinigame implements IMinigame {
 			// Fire bonus BEFORE item so the client's bonusThisFrame flag
 			// is set when the item handler runs (both arrive same frame).
 			this.serverEvents.hachiBonusCollected.fire(player);
-			this.serverEvents.hintTextChanged.fire(player, "hint_bonus_collected", [
-				`${value}`,
-			]);
 			this.missionService.incrementAndNotify(
 				player,
 				MissionId.CollectBonusItem,
