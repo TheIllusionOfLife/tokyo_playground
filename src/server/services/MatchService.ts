@@ -14,6 +14,7 @@ import {
 } from "shared/constants";
 import { GlobalEvents } from "shared/network";
 import {
+	CanKickPlayerState,
 	GameState,
 	HachiRidePlayerState,
 	MatchPhase,
@@ -22,6 +23,7 @@ import {
 	RewardBreakdown,
 	RoundResult,
 	ScoreboardEntry,
+	ShibuyaScramblePlayerState,
 } from "shared/types";
 import {
 	getHachiRoundOutcome,
@@ -438,11 +440,18 @@ export class MatchService implements OnStart {
 			const player = Players.GetPlayerByUserId(userId);
 			if (!player) continue;
 
+			// Determine if this player won the round
+			const isEliminatedHider =
+				(state.minigameId === MinigameId.ShibuyaScramble &&
+					(state as ShibuyaScramblePlayerState).isTagged) ||
+				(state.minigameId === MinigameId.CanKick &&
+					(state as CanKickPlayerState).isCaught);
 			const won =
 				state.minigameId === MinigameId.HachiRide
 					? hachiWinningPlayerIds.has(userId)
 					: (state.role === PlayerRole.Oni && result === RoundResult.OniWins) ||
 						(state.role === PlayerRole.Hider &&
+							!isEliminatedHider &&
 							(result === RoundResult.HidersWin ||
 								result === RoundResult.TimerExpired));
 
@@ -463,7 +472,7 @@ export class MatchService implements OnStart {
 								won,
 							);
 
-			// Apply streak multiplier (skip for Hachi Ride: reward = pure score)
+			// Apply streak multiplier to each breakdown field (skip for Hachi Ride)
 			if (state.minigameId !== MinigameId.HachiRide) {
 				const streakCount = this.playerDataService.getStreakCount(player);
 				const streakIndex = math.min(
@@ -472,9 +481,23 @@ export class MatchService implements OnStart {
 				);
 				const streakMultiplier = STREAK_MULTIPLIERS[streakIndex];
 				if (streakMultiplier > 1) {
-					breakdown.totalPoints = math.floor(
-						breakdown.totalPoints * streakMultiplier,
+					breakdown.baseReward = math.floor(
+						breakdown.baseReward * streakMultiplier,
 					);
+					breakdown.winBonus = math.floor(
+						breakdown.winBonus * streakMultiplier,
+					);
+					breakdown.roleBonus = math.floor(
+						breakdown.roleBonus * streakMultiplier,
+					);
+					breakdown.rescueBonus = math.floor(
+						breakdown.rescueBonus * streakMultiplier,
+					);
+					breakdown.totalPoints =
+						breakdown.baseReward +
+						breakdown.winBonus +
+						breakdown.roleBonus +
+						breakdown.rescueBonus;
 				}
 			}
 
@@ -544,6 +567,21 @@ export class MatchService implements OnStart {
 
 		entries.sort((a, b) => a.points > b.points);
 
+		// Build set of eliminated hider names for winner filtering
+		const eliminatedNames = new Set<string>();
+		for (const [userId, state] of playerStates) {
+			if (state.role !== PlayerRole.Hider) continue;
+			const eliminated =
+				(state.minigameId === MinigameId.ShibuyaScramble &&
+					(state as ShibuyaScramblePlayerState).isTagged) ||
+				(state.minigameId === MinigameId.CanKick &&
+					(state as CanKickPlayerState).isCaught);
+			if (eliminated) {
+				const p = Players.GetPlayerByUserId(userId);
+				if (p) eliminatedNames.add(p.Name);
+			}
+		}
+
 		// Compute winner name based on actual round result
 		let winnerName = "";
 		if (this.currentMinigameId === MinigameId.HachiRide) {
@@ -552,9 +590,12 @@ export class MatchService implements OnStart {
 			winnerName =
 				entries.find((e) => e.role === PlayerRole.Oni)?.playerName ?? "";
 		} else {
-			// HidersWin or TimerExpired: pick the top-scoring hider
+			// HidersWin or TimerExpired: pick the top-scoring surviving hider
 			winnerName =
-				entries.find((e) => e.role === PlayerRole.Hider)?.playerName ?? "";
+				entries.find(
+					(e) =>
+						e.role === PlayerRole.Hider && !eliminatedNames.has(e.playerName),
+				)?.playerName ?? "";
 		}
 		const roundDuration =
 			MINIGAME_CONFIGS[this.currentMinigameId].roundDuration;
@@ -579,7 +620,10 @@ export class MatchService implements OnStart {
 						?.UserId ?? 0)
 				: 0;
 		} else {
-			const hiderEntry = entries.find((e) => e.role === PlayerRole.Hider);
+			const hiderEntry = entries.find(
+				(e) =>
+					e.role === PlayerRole.Hider && !eliminatedNames.has(e.playerName),
+			);
 			winnerId = hiderEntry
 				? (Players.GetPlayers().find((p) => p.Name === hiderEntry.playerName)
 						?.UserId ?? 0)

@@ -160,6 +160,7 @@ export const JA: Record<string, string> = {
 	hint_can_moved: "缶が新しい路地に転がった!",
 	hint_starting_can_kick: "缶蹴り開始...",
 	hint_starting_scramble: "かくれんぼ開始...",
+	hint_starting_hachi_ride: "ハチ公ライド開始...",
 	hint_hachi_start: "ハチに乗ってジャンプ! コインを集めろ! 3... 2... 1...",
 	hint_items_falling: "空からアイテムが降ってくる! たくさん集めろ!",
 	hint_final_sprint: "ラストスパート! ボーナスアイテム2倍!",

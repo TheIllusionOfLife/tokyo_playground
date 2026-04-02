@@ -32,6 +32,7 @@ import {
 } from "shared/constants";
 import {
 	L_HINT_STARTING_CAN_KICK,
+	L_HINT_STARTING_HACHI_RIDE,
 	L_HINT_STARTING_SCRAMBLE,
 } from "shared/localization/keys";
 import { GlobalEvents } from "shared/network";
@@ -171,6 +172,9 @@ export class LobbyService implements OnStart {
 						);
 						return;
 					}
+					this.serverEvents.hintTextChanged.broadcast(
+						L_HINT_STARTING_HACHI_RIDE,
+					);
 					this.onStartRequested(MinigameId.HachiRide);
 				});
 		}

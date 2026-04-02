@@ -147,6 +147,7 @@ export const L_HINT_ONI_HUNTING = "hint_oni_hunting";
 export const L_HINT_CAN_MOVED = "hint_can_moved";
 export const L_HINT_STARTING_CAN_KICK = "hint_starting_can_kick";
 export const L_HINT_STARTING_SCRAMBLE = "hint_starting_scramble";
+export const L_HINT_STARTING_HACHI_RIDE = "hint_starting_hachi_ride";
 export const L_HINT_HACHI_START = "hint_hachi_start";
 export const L_HINT_ITEMS_FALLING = "hint_items_falling";
 export const L_HINT_FINAL_SPRINT = "hint_final_sprint";

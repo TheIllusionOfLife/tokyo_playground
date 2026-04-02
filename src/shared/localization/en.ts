@@ -160,6 +160,7 @@ export const EN: Record<string, string> = {
 	hint_can_moved: "The can rolled to a new alley!",
 	hint_starting_can_kick: "Starting Can Kick...",
 	hint_starting_scramble: "Starting Hide & Seek...",
+	hint_starting_hachi_ride: "Starting Hachi Ride...",
 	hint_hachi_start: "Mount Hachi and jump! Collect coins! 3... 2... 1...",
 	hint_items_falling: "Items falling from the sky! Collect as much as you can!",
 	hint_final_sprint: "Final sprint! Bonus items are worth double now!",

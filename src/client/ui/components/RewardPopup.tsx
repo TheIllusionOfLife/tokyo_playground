@@ -33,8 +33,9 @@ export function RewardPopup() {
 	return (
 		<frame
 			key="RewardPopup"
-			Size={new UDim2(0.5, 0, 0.4, 0)}
-			Position={new UDim2(0.25, 0, 0.15, 0)}
+			Size={new UDim2(0.5, 0, 0, 0)}
+			AutomaticSize={Enum.AutomaticSize.Y}
+			Position={new UDim2(0.25, 0, 0.2, 0)}
 			BackgroundColor3={Color3.fromRGB(15, 15, 30)}
 			BackgroundTransparency={0.05}
 			BorderSizePixel={0}
@@ -47,10 +48,15 @@ export function RewardPopup() {
 			/>
 			<uilistlayout
 				SortOrder={Enum.SortOrder.LayoutOrder}
-				Padding={new UDim(0, 8)}
+				Padding={new UDim(0, 6)}
 				HorizontalAlignment={Enum.HorizontalAlignment.Center}
 			/>
-			<uipadding PaddingTop={new UDim(0, 12)} PaddingBottom={new UDim(0, 12)} />
+			<uipadding
+				PaddingTop={new UDim(0, 14)}
+				PaddingBottom={new UDim(0, 14)}
+				PaddingLeft={new UDim(0, 8)}
+				PaddingRight={new UDim(0, 8)}
+			/>
 			<textlabel
 				key="Title"
 				Size={new UDim2(0.9, 0, 0, 32)}
@@ -64,7 +70,7 @@ export function RewardPopup() {
 			<frame
 				key="Divider"
 				Size={new UDim2(0.8, 0, 0, 1)}
-				BackgroundColor3={Color3.fromRGB(60, 60, 90)}
+				BackgroundColor3={Color3.fromRGB(100, 100, 140)}
 				BorderSizePixel={0}
 				LayoutOrder={1}
 			/>
@@ -86,7 +92,7 @@ export function RewardPopup() {
 			<frame
 				key="Divider2"
 				Size={new UDim2(0.8, 0, 0, 1)}
-				BackgroundColor3={Color3.fromRGB(60, 60, 90)}
+				BackgroundColor3={Color3.fromRGB(100, 100, 140)}
 				BorderSizePixel={0}
 				LayoutOrder={5}
 			/>
