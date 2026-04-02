@@ -62,7 +62,8 @@ export class LeaderboardService implements OnStart {
 
 		const key = `${player.UserId}`;
 		const [readOk, currentBest] = pcall(() => this.weeklyStore!.GetAsync(key));
-		const existing = readOk && typeIs(currentBest, "number") ? currentBest : 0;
+		if (!readOk) return; // Don't risk overwriting a higher score on read failure
+		const existing = typeIs(currentBest, "number") ? currentBest : 0;
 		if (score > existing) {
 			pcall(() => this.weeklyStore!.SetAsync(key, score));
 		}
@@ -117,35 +118,33 @@ export class LeaderboardService implements OnStart {
 		const now = os.time() + JST_OFFSET;
 		const d = os.date("!*t", now) as {
 			year: number;
-			month: number;
-			day: number;
 			hour: number;
 			min: number;
 			sec: number;
 			wday: number;
-			yday: number;
 		};
 		// wday: 1=Sunday .. 7=Saturday. Convert to days since Monday (Mon=0).
 		const daysSinceMonday = (d.wday + 5) % 7;
 		const mondayEpoch =
 			now - daysSinceMonday * 86400 - d.hour * 3600 - d.min * 60 - d.sec;
-		const mondayDate = os.date("!*t", mondayEpoch) as {
+		// ISO 8601: week year and number are determined by the Thursday of the week.
+		const thursdayEpoch = mondayEpoch + 3 * 86400;
+		const thu = os.date("!*t", thursdayEpoch) as {
 			year: number;
 			yday: number;
 		};
-		// ISO week: week 1 contains the first Thursday of the year.
-		// Approximate via yday of the Monday.
-		const weekNum = math.floor((mondayDate.yday - 1) / 7) + 1;
-		return `WeeklyHachi_${mondayDate.year}-W${string.format("%02d", weekNum)}`;
+		const isoYear = thu.year;
+		const isoWeek = math.floor((thu.yday - 1) / 7) + 1;
+		return `WeeklyHachi_${isoYear}-W${string.format("%02d", isoWeek)}`;
 	}
 
 	/** Lazily get or rotate the weekly OrderedDataStore when the week changes. */
 	private refreshWeeklyStore() {
 		const key = this.getCurrentWeeklyKey();
 		if (key === this.weeklyStoreKey && this.weeklyStore) return;
-		this.weeklyStoreKey = key;
 		const [ok, store] = pcall(() => DataStoreService.GetOrderedDataStore(key));
 		if (ok && store) {
+			this.weeklyStoreKey = key;
 			this.weeklyStore = store;
 			print(`[LeaderboardService] Weekly store: ${key}`);
 		} else {

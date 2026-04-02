@@ -578,13 +578,22 @@ export class MatchService implements OnStart {
 			MINIGAME_CONFIGS[this.currentMinigameId].roundDuration -
 				math.max(0, this.matchTimeRemaining),
 		);
-		const winnerId =
-			this.currentMinigameId === MinigameId.HachiRide
-				? (hachiRoundOutcome?.winningPlayerIds[0] ?? 0)
-				: entries.size() > 0
-					? (Players.GetPlayers().find((p) => p.Name === entries[0].playerName)
-							?.UserId ?? 0)
-					: 0;
+		let winnerId = 0;
+		if (this.currentMinigameId === MinigameId.HachiRide) {
+			winnerId = hachiRoundOutcome?.winningPlayerIds[0] ?? 0;
+		} else if (result === RoundResult.OniWins) {
+			const oniEntry = entries.find((e) => e.role === PlayerRole.Oni);
+			winnerId = oniEntry
+				? (Players.GetPlayers().find((p) => p.Name === oniEntry.playerName)
+						?.UserId ?? 0)
+				: 0;
+		} else {
+			const hiderEntry = entries.find((e) => e.role === PlayerRole.Hider);
+			winnerId = hiderEntry
+				? (Players.GetPlayers().find((p) => p.Name === hiderEntry.playerName)
+						?.UserId ?? 0)
+				: 0;
+		}
 		this.analyticsService.fire({
 			name: "round_end",
 			gameType: this.currentMinigameId,

@@ -579,23 +579,28 @@ export class CanKickMinigame implements IMinigame {
 				const jailHalf = this.jailZone
 					? this.jailZone.Size.mul(0.5)
 					: undefined;
-				let spawnPos: Vector3;
+				let spawnPos: Vector3 | undefined;
 				for (let attempt = 0; attempt < 10; attempt++) {
 					const angle = math.random() * math.pi * 2;
 					const radius = math.random(30, 60);
-					spawnPos = basePos.add(
+					const candidate = basePos.add(
 						new Vector3(math.cos(angle) * radius, 3, math.sin(angle) * radius),
 					);
 					// Check if inside jail bounding box
 					if (jailPos && jailHalf) {
-						const dx = math.abs(spawnPos.X - jailPos.X);
-						const dz = math.abs(spawnPos.Z - jailPos.Z);
+						const dx = math.abs(candidate.X - jailPos.X);
+						const dz = math.abs(candidate.Z - jailPos.Z);
 						if (dx < jailHalf.X + 5 && dz < jailHalf.Z + 5) continue;
 					}
+					spawnPos = candidate;
 					break;
 				}
-				// Fallback: if all attempts landed inside jail, use last generated position anyway
-				player.Character.PivotTo(new CFrame(spawnPos!));
+				// Fallback: push outside jail bounds along X if all random attempts failed
+				if (!spawnPos) {
+					const offsetX = jailHalf ? jailHalf.X + 10 : 50;
+					spawnPos = basePos.add(new Vector3(offsetX, 3, 0));
+				}
+				player.Character.PivotTo(new CFrame(spawnPos));
 			}
 		}
 	}

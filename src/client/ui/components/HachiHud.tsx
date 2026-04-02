@@ -209,7 +209,7 @@ export function HachiHud() {
 					Text={
 						isMaxLevel
 							? `Lv.${evolutionLevel} MAX`
-							: `Lv.${evolutionLevel} → ${nextThreshold}`
+							: `Lv.${evolutionLevel} → ${math.max(0, nextThreshold - HACHI_STARTING_SCORE_OFFSET)}`
 					}
 					TextColor3={Color3.fromRGB(180, 180, 200)}
 					TextScaled={true}
