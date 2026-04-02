@@ -68,7 +68,7 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 	private oniCounting = false;
 	private countdownThread?: thread;
 	private crowdThread?: thread;
-	private crowdLoopRunning = false;
+
 	private activeCrowdNPCs: Model[] = [];
 	private carThread?: thread;
 	private carLoopRunning = false;
@@ -195,7 +195,6 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 					"hint_oni_hunting",
 					this.lastHintText,
 				);
-				this.crowdThread = task.spawn(() => this.runCrowdLoop());
 				this.carThread = task.spawn(() => this.runCarLoop());
 			},
 		);
@@ -256,10 +255,27 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 
 		hiderState.isTagged = true;
 		oniState.catchCount += 1;
-		this.spiritCharges.set(hider.UserId, 1);
 
 		this.serverEvents.playerCaught.broadcast(hider.UserId);
-		this.serverEvents.spiritChargeChanged.fire(hider, 1);
+
+		// Hide tagged hider's character so they disappear from the map
+		const character = hider.Character;
+		if (character) {
+			for (const part of character.GetDescendants()) {
+				if (part.IsA("BasePart")) {
+					part.Transparency = 1;
+					part.CanCollide = false;
+				} else if (part.IsA("Decal") || part.IsA("Texture")) {
+					part.Transparency = 1;
+				}
+			}
+			const humanoid = character.FindFirstChildOfClass("Humanoid");
+			if (humanoid) {
+				humanoid.WalkSpeed = 0;
+				humanoid.JumpPower = 0;
+			}
+		}
+
 		this.lastHintText = fireHintText(
 			this.serverEvents,
 			"hint_player_tagged",
@@ -349,8 +365,7 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 			HACHI_WALK_SPEEDS[0],
 		);
 		this.countdownThread = undefined;
-		// Stop crowd wave loop immediately (called before cleanup during results display)
-		this.crowdLoopRunning = false;
+		// Stop crowd wave loop
 		if (this.crowdThread) {
 			task.cancel(this.crowdThread);
 			this.crowdThread = undefined;
@@ -375,7 +390,6 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 				}
 			}
 		}
-		this.crowdLoopRunning = false;
 		if (this.crowdThread) {
 			task.cancel(this.crowdThread);
 			this.crowdThread = undefined;
@@ -406,18 +420,6 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 		const hachiClone = hachiTemplate.Clone();
 		if (!equipHachiCostume(player, hachiClone, HACHI_ONI_EVOLUTION)) {
 			hachiClone.Destroy();
-		}
-	}
-
-	private runCrowdLoop() {
-		this.crowdLoopRunning = true;
-		while (this.crowdLoopRunning) {
-			task.wait(SCRAMBLE_CROWD_WAVE_INTERVAL);
-			if (!this.crowdLoopRunning) break;
-			const wave = this.spawnCrowdWave();
-			task.wait(SCRAMBLE_CROWD_WAVE_DURATION + 2);
-			if (!this.crowdLoopRunning) break;
-			this.despawnCrowdNPCs(wave);
 		}
 	}
 

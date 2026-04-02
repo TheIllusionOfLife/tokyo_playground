@@ -38,9 +38,9 @@ export function Scoreboard() {
 	return (
 		<frame
 			key="Scoreboard"
-			Size={isHachiRide ? new UDim2(0.5, 0, 0.7, 0) : new UDim2(0.5, 0, 0.5, 0)}
+			Size={isHachiRide ? new UDim2(0.5, 0, 0.7, 0) : new UDim2(0.6, 0, 0.7, 0)}
 			Position={
-				isHachiRide ? new UDim2(0.25, 0, 0.05, 0) : new UDim2(0.25, 0, 0.2, 0)
+				isHachiRide ? new UDim2(0.25, 0, 0.05, 0) : new UDim2(0.2, 0, 0.05, 0)
 			}
 			BackgroundColor3={Color3.fromRGB(15, 15, 30)}
 			BackgroundTransparency={0.1}

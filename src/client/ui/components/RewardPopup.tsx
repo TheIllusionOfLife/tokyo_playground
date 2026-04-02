@@ -33,8 +33,8 @@ export function RewardPopup() {
 	return (
 		<frame
 			key="RewardPopup"
-			Size={new UDim2(0.3, 0, 0.25, 0)}
-			Position={new UDim2(0.35, 0, 0.3, 0)}
+			Size={new UDim2(0.4, 0, 0.3, 0)}
+			Position={new UDim2(0.3, 0, 0.25, 0)}
 			BackgroundColor3={Color3.fromRGB(20, 20, 40)}
 			BackgroundTransparency={0.15}
 			BorderSizePixel={0}

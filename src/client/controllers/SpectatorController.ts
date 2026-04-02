@@ -29,6 +29,13 @@ export class SpectatorController implements OnStart {
 			}
 		});
 
+		// Enter spectator mode when tagged in Hide & Seek
+		clientEvents.playerCaught.connect((userId) => {
+			if (userId === Players.LocalPlayer.UserId) {
+				this.enterSpectatorMode();
+			}
+		});
+
 		clientEvents.matchPhaseChanged.connect((phase) => {
 			if (
 				phase === MatchPhase.WaitingForPlayers ||

@@ -487,11 +487,7 @@ export class MatchService implements OnStart {
 				}
 			}
 
-			const levelResult = this.playerDataService.recordGameResult(
-				player,
-				breakdown,
-				won,
-			);
+			this.playerDataService.recordGameResult(player, breakdown, won);
 			playerBreakdowns.set(player, breakdown);
 
 			const data = this.playerDataService.getPlayerData(player);
@@ -503,10 +499,6 @@ export class MatchService implements OnStart {
 					level,
 					data.shopBalance,
 				);
-			}
-
-			if (levelResult.leveledUp) {
-				this.serverEvents.levelUp.fire(player, levelResult.newLevel);
 			}
 
 			this.missionService.recordGameResult(
@@ -561,13 +553,18 @@ export class MatchService implements OnStart {
 
 		entries.sort((a, b) => b.points > a.points);
 
-		// Compute funny round summary
-		const winnerName =
-			this.currentMinigameId === MinigameId.HachiRide
-				? (hachiRoundOutcome?.winnerName ?? "")
-				: entries.size() > 0
-					? entries[0].playerName
-					: "";
+		// Compute winner name based on actual round result
+		let winnerName = "";
+		if (this.currentMinigameId === MinigameId.HachiRide) {
+			winnerName = hachiRoundOutcome?.winnerName ?? "";
+		} else if (result === RoundResult.OniWins) {
+			winnerName =
+				entries.find((e) => e.role === PlayerRole.Oni)?.playerName ?? "";
+		} else {
+			// HidersWin or TimerExpired: pick the top-scoring hider
+			winnerName =
+				entries.find((e) => e.role === PlayerRole.Hider)?.playerName ?? "";
+		}
 		const roundDuration =
 			MINIGAME_CONFIGS[this.currentMinigameId].roundDuration;
 		const summaryText = this.computeRoundSummary(

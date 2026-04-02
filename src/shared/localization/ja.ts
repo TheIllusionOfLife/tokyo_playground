@@ -100,14 +100,14 @@ export const JA: Record<string, string> = {
 
 	// Minigame names
 	game_can_kick: "缶蹴り",
-	game_scramble: "渋谷かくれんぼ",
+	game_scramble: "かくれんぼ",
 	game_hachi_ride: "ハチ公ライド",
 
 	// Minigame intros
 	intro_can_kick_title: "缶蹴り",
 	intro_can_kick_sub:
 		"1人がオニ。隠れる側: 隠れて缶を蹴り、捕まった仲間を救え! オニ: 全員見つけて捕まえろ!",
-	intro_scramble_title: "渋谷かくれんぼ",
+	intro_scramble_title: "かくれんぼ",
 	intro_scramble_sub:
 		"渋谷中に隠れろ! オニが追いかけてくる。タッチされたらスピリットウェーブで仲間を援護!",
 	intro_hachi_title: "ハチ公ライド",
@@ -122,7 +122,7 @@ export const JA: Record<string, string> = {
 	mission_RescueTeammates: "3人の仲間を救出",
 	mission_KickCan: "缶を2回蹴る",
 	mission_EarnPoints: "100ポイント獲得",
-	mission_SurviveScramble: "渋谷カオスで生き残る",
+	mission_SurviveScramble: "かくれんぼで生き残る",
 	mission_TagInScramble: "オニで3人タッチ",
 	mission_CollectHachiItems: "ハチで20個集める",
 	mission_ReachHachiLevel3: "ハチをデカハチに進化",
@@ -172,7 +172,7 @@ export const JA: Record<string, string> = {
 	hint_cars_crossing: "車が来る! 気をつけろ!",
 	hint_can_moved: "缶が新しい路地に転がった!",
 	hint_starting_can_kick: "缶蹴り開始...",
-	hint_starting_scramble: "渋谷スクランブル開始...",
+	hint_starting_scramble: "かくれんぼ開始...",
 	hint_hachi_start: "ハチに乗ってジャンプ! コインを集めろ! 3... 2... 1...",
 	hint_items_falling: "空からアイテムが降ってくる! たくさん集めろ!",
 	hint_final_sprint: "ラストスパート! ボーナスアイテム2倍!",

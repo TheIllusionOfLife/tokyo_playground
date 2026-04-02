@@ -100,14 +100,14 @@ export const EN: Record<string, string> = {
 
 	// Minigame names
 	game_can_kick: "Can Kick",
-	game_scramble: "Shibuya Hide & Seek",
+	game_scramble: "Hide & Seek",
 	game_hachi_ride: "Hachi Ride",
 
 	// Minigame intros
 	intro_can_kick_title: "Can Kick",
 	intro_can_kick_sub:
 		"One player is the Oni. Hiders: stay hidden and kick the can to free caught friends! Oni: find and catch all hiders.",
-	intro_scramble_title: "Shibuya Hide & Seek",
+	intro_scramble_title: "Hide & Seek",
 	intro_scramble_sub:
 		"Hide anywhere in Shibuya! Oni hunts you down. Tagged hiders get Spirit Wave to help teammates.",
 	intro_hachi_title: "Ride Hachi",
@@ -122,7 +122,7 @@ export const EN: Record<string, string> = {
 	mission_RescueTeammates: "Rescue 3 Teammates",
 	mission_KickCan: "Kick the Can 2 Times",
 	mission_EarnPoints: "Earn 100 Points",
-	mission_SurviveScramble: "Survive Shibuya Scramble",
+	mission_SurviveScramble: "Survive Hide & Seek",
 	mission_TagInScramble: "Tag 3 Hiders as Oni",
 	mission_CollectHachiItems: "Collect 20 Items on Hachi",
 	mission_ReachHachiLevel3: "Evolve Hachi to Big Hachi",
@@ -172,7 +172,7 @@ export const EN: Record<string, string> = {
 	hint_cars_crossing: "Cars crossing! Watch out!",
 	hint_can_moved: "The can rolled to a new alley!",
 	hint_starting_can_kick: "Starting Can Kick...",
-	hint_starting_scramble: "Starting Shibuya Scramble...",
+	hint_starting_scramble: "Starting Hide & Seek...",
 	hint_hachi_start: "Mount Hachi and jump! Collect coins! 3... 2... 1...",
 	hint_items_falling: "Items falling from the sky! Collect as much as you can!",
 	hint_final_sprint: "Final sprint! Bonus items are worth double now!",
