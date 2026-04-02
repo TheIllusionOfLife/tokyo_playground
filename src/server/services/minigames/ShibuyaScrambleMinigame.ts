@@ -110,10 +110,62 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 				"[ShibuyaScramble] Missing Studio asset: ShibuyaScrambleOniSpawn — check map setup",
 			);
 		}
-		if (CollectionService.GetTagged(HIDER_SPAWN_TAG).size() === 0) {
+		const hiderSpawns = CollectionService.GetTagged(HIDER_SPAWN_TAG).filter(
+			(i): i is BasePart => i.IsA("BasePart"),
+		);
+		if (hiderSpawns.size() === 0) {
 			warn(
 				"[ShibuyaScramble] Missing Studio asset: ShibuyaScrambleHiderSpawn — check map setup",
 			);
+		}
+
+		// Handle mid-match respawns (player resets or falls off map)
+		for (const player of players) {
+			const conn = player.CharacterAdded.Connect(() => {
+				task.wait(0.5);
+				const state = this.playerStates.get(player.UserId);
+				if (!state || !player.Character) return;
+				if (state.isTagged) {
+					// Tagged hiders: re-anchor and hide (they're in spectator mode)
+					const character = player.Character;
+					for (const part of character.GetDescendants()) {
+						if (part.IsA("BasePart")) {
+							part.Transparency = 1;
+							part.CanCollide = false;
+						} else if (part.IsA("Decal") || part.IsA("Texture")) {
+							part.Transparency = 1;
+						}
+					}
+					const hrp = character.FindFirstChild("HumanoidRootPart") as
+						| BasePart
+						| undefined;
+					if (hrp) hrp.Anchored = true;
+					const humanoid = character.FindFirstChildOfClass("Humanoid");
+					if (humanoid) {
+						humanoid.WalkSpeed = 0;
+						humanoid.JumpHeight = 0;
+					}
+				} else if (state.role === PlayerRole.Oni) {
+					// Oni: respawn near oni spawn
+					const oniSpawns = CollectionService.GetTagged(ONI_SPAWN_TAG).filter(
+						(i): i is BasePart => i.IsA("BasePart"),
+					);
+					if (oniSpawns.size() > 0) {
+						player.Character.PivotTo(
+							new CFrame(oniSpawns[0].Position.add(new Vector3(0, 3, 0))),
+						);
+					}
+					this.mountOni(player);
+				} else if (hiderSpawns.size() > 0) {
+					// Hider: respawn at a random hider spawn
+					const spawn =
+						hiderSpawns[math.random(0, hiderSpawns.size() - 1)];
+					player.Character.PivotTo(
+						new CFrame(spawn.Position.add(new Vector3(0, 3, 0))),
+					);
+				}
+			});
+			matchJanitor.Add(conn);
 		}
 	}
 

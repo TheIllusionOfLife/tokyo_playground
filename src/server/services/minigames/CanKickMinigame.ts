@@ -53,6 +53,7 @@ export class CanKickMinigame implements IMinigame {
 	private canModel?: Model;
 	private jailModel?: Model;
 	private jailZone?: Part;
+	private matchJanitor?: Janitor;
 	private oniCounting = false;
 	private countdownThread?: thread;
 	private lastHintText = "";
@@ -68,6 +69,7 @@ export class CanKickMinigame implements IMinigame {
 	constructor(private readonly serverEvents: ServerEvents) {}
 
 	prepare(players: Player[], matchJanitor: Janitor) {
+		this.matchJanitor = matchJanitor;
 		// Clone GiantCan from ServerStorage
 		const canTemplate = ServerStorage.FindFirstChild("GiantCan") as
 			| Model
@@ -143,6 +145,47 @@ export class CanKickMinigame implements IMinigame {
 			if (roles.get(player) === PlayerRole.Oni) {
 				this.mountOni(player);
 			}
+		}
+
+		// Handle mid-match respawns (player resets or falls off map)
+		for (const player of players) {
+			const conn = player.CharacterAdded.Connect(() => {
+				task.wait(0.5);
+				const state = this.playerStates.get(player.UserId);
+				if (!state || !player.Character) return;
+				if (state.isInJail && this.jailZone) {
+					// Re-teleport jailed players inside the jail
+					const jailFloorY =
+						this.jailZone.Position.Y - this.jailZone.Size.Y * 0.5;
+					player.Character.PivotTo(
+						new CFrame(
+							this.jailZone.Position.X,
+							jailFloorY + 3,
+							this.jailZone.Position.Z,
+						),
+					);
+				} else if (state.role === PlayerRole.Oni && this.canModel) {
+					const pos = this.canModel
+						.GetPivot()
+						.Position.add(new Vector3(5, 3, 0));
+					player.Character.PivotTo(new CFrame(pos));
+					this.mountOni(player);
+				} else if (this.canModel) {
+					// Free hider: respawn near the can
+					const basePos = this.canModel.GetPivot().Position;
+					const angle = math.random() * math.pi * 2;
+					const radius = math.random(30, 60);
+					const pos = basePos.add(
+						new Vector3(
+							math.cos(angle) * radius,
+							3,
+							math.sin(angle) * radius,
+						),
+					);
+					player.Character.PivotTo(new CFrame(pos));
+				}
+			});
+			this.matchJanitor?.Add(conn);
 		}
 
 		return roles;
@@ -335,12 +378,13 @@ export class CanKickMinigame implements IMinigame {
 				hider.Character &&
 				hider.Character === caughtCharacter
 			) {
-				// Teleport onto the top surface of the jail zone
-				const jailTop = this.jailZone.Position.Y + this.jailZone.Size.Y * 0.5;
+				// Teleport inside the jail (floor level + 3 studs clearance)
+				const jailFloorY =
+					this.jailZone.Position.Y - this.jailZone.Size.Y * 0.5;
 				hider.Character.PivotTo(
 					new CFrame(
 						this.jailZone.Position.X,
-						jailTop + 3,
+						jailFloorY + 3,
 						this.jailZone.Position.Z,
 					),
 				);
@@ -547,6 +591,7 @@ export class CanKickMinigame implements IMinigame {
 		this.canModel = undefined;
 		this.jailModel = undefined;
 		this.jailZone = undefined;
+		this.matchJanitor = undefined;
 	}
 
 	private mountOni(player: Player) {
