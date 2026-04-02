@@ -51,6 +51,7 @@ export class CanKickMinigame implements IMinigame {
 	private playerStates = new Map<number, CanKickPlayerState>();
 	private playerObjects = new Map<number, Player>();
 	private canModel?: Model;
+	private jailModel?: Model;
 	private jailZone?: Part;
 	private oniCounting = false;
 	private countdownThread?: thread;
@@ -83,14 +84,17 @@ export class CanKickMinigame implements IMinigame {
 			warn("[CanKick] GiantCan not found in ServerStorage");
 		}
 
-		// Clone JailZone from ServerStorage
+		// Clone JailZone model from ServerStorage (Model with detection zone Part inside)
 		const jailTemplate = ServerStorage.FindFirstChild("JailZone") as
-			| Part
+			| Model
 			| undefined;
 		if (jailTemplate) {
-			this.jailZone = jailTemplate.Clone();
-			this.jailZone.Parent = Workspace;
-			matchJanitor.Add(this.jailZone);
+			this.jailModel = jailTemplate.Clone();
+			this.jailModel.Parent = Workspace;
+			matchJanitor.Add(this.jailModel);
+			this.jailZone = this.jailModel.FindFirstChild("JailZone") as
+				| Part
+				| undefined;
 		} else {
 			warn("[CanKick] JailZone not found in ServerStorage");
 		}
@@ -541,6 +545,7 @@ export class CanKickMinigame implements IMinigame {
 		this.playerStates.clear();
 		this.playerObjects.clear();
 		this.canModel = undefined;
+		this.jailModel = undefined;
 		this.jailZone = undefined;
 	}
 
