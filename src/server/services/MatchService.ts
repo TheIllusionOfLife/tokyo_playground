@@ -551,7 +551,7 @@ export class MatchService implements OnStart {
 			});
 		}
 
-		entries.sort((a, b) => b.points > a.points);
+		entries.sort((a, b) => a.points > b.points);
 
 		// Compute winner name based on actual round result
 		let winnerName = "";

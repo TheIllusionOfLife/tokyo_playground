@@ -59,6 +59,7 @@ export class CanKickMinigame implements IMinigame {
 	private canRelocateElapsed = 0;
 	private canSocketIndex = 0;
 	private canOrigin?: Vector3;
+	private canRotation?: CFrame;
 	private rattleProgress = 0;
 	private readonly boostEligible = new Set<number>();
 	private lastAutoCatchTime = 0;
@@ -72,14 +73,12 @@ export class CanKickMinigame implements IMinigame {
 			| undefined;
 		if (canTemplate) {
 			this.canModel = canTemplate.Clone();
-			// Rotate can 90 degrees on X so it stands upright
-			const originPos = canTemplate.GetPivot().Position;
-			this.canModel.PivotTo(
-				new CFrame(originPos).mul(CFrame.Angles(math.rad(-90), 0, 0)),
-			);
+			// Keep the model's original pivot rotation (stands upright)
 			this.canModel.Parent = Workspace;
 			matchJanitor.Add(this.canModel);
-			this.canOrigin = this.canModel.GetPivot().Position;
+			const pivot = this.canModel.GetPivot();
+			this.canOrigin = pivot.Position;
+			this.canRotation = pivot.sub(pivot.Position);
 		} else {
 			warn("[CanKick] GiantCan not found in ServerStorage");
 		}
@@ -212,7 +211,7 @@ export class CanKickMinigame implements IMinigame {
 			CAN_SOCKET_OFFSETS[this.canSocketIndex],
 		);
 		this.canModel.PivotTo(
-			new CFrame(nextPosition).mul(CFrame.Angles(math.rad(-90), 0, 0)),
+			new CFrame(nextPosition).mul(this.canRotation ?? new CFrame()),
 		);
 		this.lastHintText = fireHintText(
 			this.serverEvents,
@@ -265,10 +264,25 @@ export class CanKickMinigame implements IMinigame {
 	}
 
 	/** Auto-kick: if any free hider is within CAN_KICK_RADIUS of the can, trigger a kick. */
+	private lastAutoKickTime = 0;
 	private checkAutoKick() {
 		if (!this.canModel) return;
-		const canPos = this.canModel.GetPivot().Position;
 
+		// Only auto-kick when someone is actually in jail
+		let anyoneInJail = false;
+		for (const [, state] of this.playerStates) {
+			if (state.isInJail) {
+				anyoneInJail = true;
+				break;
+			}
+		}
+		if (!anyoneInJail) return;
+
+		// Cooldown: 5 seconds between auto-kicks
+		const now = os.clock();
+		if (now - this.lastAutoKickTime < 5) return;
+
+		const canPos = this.canModel.GetPivot().Position;
 		for (const [userId, state] of this.playerStates) {
 			if (state.role !== PlayerRole.Hider || state.isCaught) continue;
 			const player = this.playerObjects.get(userId);
@@ -279,8 +293,9 @@ export class CanKickMinigame implements IMinigame {
 			if (!hrp) continue;
 			const dist = hrp.Position.sub(canPos).Magnitude;
 			if (dist <= CAN_KICK_RADIUS) {
+				this.lastAutoKickTime = now;
 				this.handleKickCanRequest(player);
-				return; // one kick per tick
+				return;
 			}
 		}
 	}
@@ -520,6 +535,7 @@ export class CanKickMinigame implements IMinigame {
 		this.canRelocateElapsed = 0;
 		this.canSocketIndex = 0;
 		this.canOrigin = undefined;
+		this.canRotation = undefined;
 		this.rattleProgress = 0;
 		this.boostEligible.clear();
 		this.lastAutoCatchTime = 0;
@@ -555,18 +571,30 @@ export class CanKickMinigame implements IMinigame {
 					player.Character.PivotTo(new CFrame(pos));
 				}
 			} else {
-				// Hiders scatter around
-				const angle = math.random() * math.pi * 2;
-				const radius = math.random(30, 60);
-				const offset = new Vector3(
-					math.cos(angle) * radius,
-					3,
-					math.sin(angle) * radius,
-				);
+				// Hiders scatter around, avoiding the jail zone
 				const basePos = this.canModel
 					? this.canModel.GetPivot().Position
 					: new Vector3(0, 0, 0);
-				player.Character.PivotTo(new CFrame(basePos.add(offset)));
+				const jailPos = this.jailZone?.Position;
+				const jailHalf = this.jailZone
+					? this.jailZone.Size.mul(0.5)
+					: undefined;
+				let spawnPos: Vector3;
+				for (let attempt = 0; attempt < 10; attempt++) {
+					const angle = math.random() * math.pi * 2;
+					const radius = math.random(30, 60);
+					spawnPos = basePos.add(
+						new Vector3(math.cos(angle) * radius, 3, math.sin(angle) * radius),
+					);
+					// Check if inside jail bounding box
+					if (jailPos && jailHalf) {
+						const dx = math.abs(spawnPos.X - jailPos.X);
+						const dz = math.abs(spawnPos.Z - jailPos.Z);
+						if (dx < jailHalf.X + 5 && dz < jailHalf.Z + 5) continue;
+					}
+					break;
+				}
+				player.Character.PivotTo(new CFrame(spawnPos!));
 			}
 		}
 	}

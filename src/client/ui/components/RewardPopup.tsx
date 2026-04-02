@@ -33,52 +33,72 @@ export function RewardPopup() {
 	return (
 		<frame
 			key="RewardPopup"
-			Size={new UDim2(0.4, 0, 0.3, 0)}
-			Position={new UDim2(0.3, 0, 0.25, 0)}
-			BackgroundColor3={Color3.fromRGB(20, 20, 40)}
-			BackgroundTransparency={0.15}
+			Size={new UDim2(0.5, 0, 0.4, 0)}
+			Position={new UDim2(0.25, 0, 0.15, 0)}
+			BackgroundColor3={Color3.fromRGB(15, 15, 30)}
+			BackgroundTransparency={0.05}
 			BorderSizePixel={0}
 		>
-			<uicorner CornerRadius={new UDim(0, 10)} />
+			<uicorner CornerRadius={new UDim(0, 12)} />
+			<uistroke
+				Color={Color3.fromRGB(80, 80, 120)}
+				Thickness={2}
+				Transparency={0.3}
+			/>
 			<uilistlayout
 				SortOrder={Enum.SortOrder.LayoutOrder}
-				Padding={new UDim(0, 4)}
+				Padding={new UDim(0, 8)}
 				HorizontalAlignment={Enum.HorizontalAlignment.Center}
 			/>
+			<uipadding PaddingTop={new UDim(0, 12)} PaddingBottom={new UDim(0, 12)} />
 			<textlabel
 				key="Title"
-				Size={new UDim2(0.9, 0, 0.2, 0)}
+				Size={new UDim2(0.9, 0, 0, 32)}
 				BackgroundTransparency={1}
 				TextColor3={Color3.fromRGB(255, 220, 100)}
 				TextScaled={true}
-				Font={Enum.Font.GothamBold}
+				Font={Enum.Font.FredokaOne}
 				Text={t(L_REWARDS)}
 				LayoutOrder={0}
+			/>
+			<frame
+				key="Divider"
+				Size={new UDim2(0.8, 0, 0, 1)}
+				BackgroundColor3={Color3.fromRGB(60, 60, 90)}
+				BorderSizePixel={0}
+				LayoutOrder={1}
 			/>
 			<RewardLine
 				label={t(L_REWARD_BASE)}
 				value={breakdown.baseReward}
-				order={1}
+				order={2}
 			/>
 			<RewardLine
 				label={t(L_REWARD_WIN_BONUS)}
 				value={breakdown.winBonus}
-				order={2}
+				order={3}
 			/>
 			<RewardLine
 				label={t(L_REWARD_ROLE_BONUS)}
 				value={breakdown.roleBonus}
-				order={3}
+				order={4}
+			/>
+			<frame
+				key="Divider2"
+				Size={new UDim2(0.8, 0, 0, 1)}
+				BackgroundColor3={Color3.fromRGB(60, 60, 90)}
+				BorderSizePixel={0}
+				LayoutOrder={5}
 			/>
 			<textlabel
 				key="Total"
-				Size={new UDim2(0.9, 0, 0.2, 0)}
+				Size={new UDim2(0.9, 0, 0, 36)}
 				BackgroundTransparency={1}
 				TextColor3={Color3.fromRGB(100, 255, 100)}
 				TextScaled={true}
 				Font={Enum.Font.GothamBold}
 				Text={`${t(L_REWARD_TOTAL)}  +${breakdown.totalPoints}`}
-				LayoutOrder={4}
+				LayoutOrder={6}
 			/>
 		</frame>
 	);
@@ -92,7 +112,7 @@ function RewardLine(props: { label: string; value: number; order: number }) {
 	return (
 		<textlabel
 			key={props.label}
-			Size={new UDim2(0.9, 0, 0.15, 0)}
+			Size={new UDim2(0.9, 0, 0, 24)}
 			BackgroundTransparency={1}
 			TextColor3={Color3.fromRGB(200, 200, 200)}
 			TextScaled={true}

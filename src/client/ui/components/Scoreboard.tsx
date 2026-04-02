@@ -108,8 +108,8 @@ export function Scoreboard() {
 							isHachiRide
 								? ""
 								: entry.role === PlayerRole.Oni
-									? `${entry.catches}C`
-									: `${entry.rescues}R`
+									? `${entry.catches} caught`
+									: `${entry.rescues} saved`
 						}
 						points={tostring(entry.points)}
 						color={ROLE_COLORS[entry.role] ?? Color3.fromRGB(200, 200, 200)}

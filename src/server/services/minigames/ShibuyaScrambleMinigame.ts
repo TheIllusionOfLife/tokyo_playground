@@ -195,7 +195,6 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 					"hint_oni_hunting",
 					this.lastHintText,
 				);
-				this.carThread = task.spawn(() => this.runCarLoop());
 			},
 		);
 	}
@@ -381,6 +380,14 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 
 	cleanup() {
 		this.stopCountdown();
+		// Restore tagged hiders' characters (visibility, movement, respawn)
+		for (const [userId, state] of this.playerStates) {
+			if (!state.isTagged) continue;
+			const player = this.playerObjects.get(userId);
+			if (!player) continue;
+			// Respawn character to restore visibility and movement
+			player.LoadCharacter();
+		}
 		// Unequip Oni's Hachi mount before clearing state
 		if (this.oniUserId !== undefined) {
 			const oniPlayer = this.playerObjects.get(this.oniUserId);

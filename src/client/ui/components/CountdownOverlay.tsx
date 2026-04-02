@@ -18,7 +18,7 @@ export function CountdownOverlay() {
 			<frame
 				key="OniReveal"
 				Size={new UDim2(0.6, 0, 0.25, 0)}
-				Position={new UDim2(0.2, 0, 0.3, 0)}
+				Position={new UDim2(0.2, 0, 0.4, 0)}
 				BackgroundTransparency={1}
 			>
 				<textlabel
