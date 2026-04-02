@@ -4,6 +4,7 @@ import {
 	HachiRaceStateData,
 	ItemCategory,
 	ItemId,
+	LeaderboardTab,
 	MatchPhase,
 	MicroEventData,
 	MinigameId,
@@ -127,6 +128,7 @@ interface ServerToClientEvents {
 	spinResult(reward: number, success: boolean): void;
 	spinStatusSync(available: boolean): void;
 	leaderboardData(
+		tab: LeaderboardTab,
 		entries: { rank: number; name: string; points: number }[],
 	): void;
 
@@ -196,7 +198,7 @@ interface ClientToServerEvents {
 
 	// ── Engagement ──────────────────────────────────────────────────────
 	requestSpin(): void;
-	requestLeaderboard(): void;
+	requestLeaderboard(tab: LeaderboardTab): void;
 
 	// ── Minigame start request ───────────────────────────────────────────
 	requestMinigameStart(minigameId: MinigameId): void;

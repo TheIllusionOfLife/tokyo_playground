@@ -32,6 +32,7 @@ import { AnalyticsService } from "./AnalyticsService";
 import { BadgeService } from "./BadgeService";
 import { BoundaryService } from "./BoundaryService";
 import { GameStateService } from "./GameStateService";
+import { LeaderboardService } from "./LeaderboardService";
 import { LobbyService } from "./LobbyService";
 import { MinigameService } from "./MinigameService";
 import { MissionService } from "./MissionService";
@@ -78,6 +79,7 @@ export class MatchService implements OnStart {
 		private readonly ambientCityService: AmbientCityService,
 		private readonly boundaryService: BoundaryService,
 		private readonly badgeService: BadgeService,
+		private readonly leaderboardService: LeaderboardService,
 	) {}
 
 	onStart() {
@@ -516,6 +518,7 @@ export class MatchService implements OnStart {
 					state.evolutionLevel,
 				);
 				this.badgeService.checkRoundItemCount(player, state.itemCount);
+				this.leaderboardService.updateWeeklyHachiScore(player, state.itemCount);
 			}
 
 			// Accumulate stats for badges
@@ -646,7 +649,7 @@ export class MatchService implements OnStart {
 			const topItems = hachiRoundOutcome?.topItemCount ?? 0;
 			if (topItems > 0) {
 				const winnerName = hachiRoundOutcome?.winnerName ?? "A rider";
-				return `${winnerName} collected ${topItems} items!`;
+				return `${winnerName} scored ${topItems} points!`;
 			}
 			return "What a ride!";
 		}

@@ -1,16 +1,20 @@
 import { OnStart, Service } from "@flamework/core";
 import { DataStoreService, Players } from "@rbxts/services";
 import { GlobalEvents } from "shared/network";
+import { LeaderboardTab } from "shared/types";
 import { PlayerDataService } from "./PlayerDataService";
 
-const LEADERBOARD_KEY = "AllTimePoints";
+const ALL_TIME_KEY = "AllTimePoints";
 const MAX_ENTRIES = 10;
 const UPDATE_INTERVAL = 30; // seconds between leaderboard writes
+const JST_OFFSET = 9 * 3600; // UTC+9 in seconds
 
 @Service()
 export class LeaderboardService implements OnStart {
 	private readonly serverEvents = GlobalEvents.createServer({});
 	private orderedStore?: OrderedDataStore;
+	private weeklyStoreKey = "";
+	private weeklyStore?: OrderedDataStore;
 
 	constructor(private readonly playerDataService: PlayerDataService) {}
 
@@ -18,7 +22,7 @@ export class LeaderboardService implements OnStart {
 		print("[LeaderboardService] Started");
 
 		const [ok, store] = pcall(() =>
-			DataStoreService.GetOrderedDataStore(LEADERBOARD_KEY),
+			DataStoreService.GetOrderedDataStore(ALL_TIME_KEY),
 		);
 		if (ok && store) {
 			this.orderedStore = store;
@@ -26,12 +30,14 @@ export class LeaderboardService implements OnStart {
 			warn("[LeaderboardService] Failed to get OrderedDataStore");
 		}
 
+		this.refreshWeeklyStore();
+
 		// Handle leaderboard request
-		this.serverEvents.requestLeaderboard.connect((player) => {
-			this.sendLeaderboard(player);
+		this.serverEvents.requestLeaderboard.connect((player, tab) => {
+			this.sendLeaderboard(player, tab ?? "allTime");
 		});
 
-		// Periodically update leaderboard entries for all online players
+		// Periodically update all-time leaderboard entries for all online players
 		task.spawn(() => {
 			while (true) {
 				task.wait(UPDATE_INTERVAL);
@@ -40,13 +46,26 @@ export class LeaderboardService implements OnStart {
 		});
 	}
 
-	/** Update a single player's score in the leaderboard. */
+	/** Update a single player's all-time score in the leaderboard. */
 	updatePlayerScore(player: Player) {
 		if (!this.orderedStore) return;
 		const data = this.playerDataService.getPlayerData(player);
 		if (!data) return;
 		const score = math.floor(data.totalPlayPoints);
 		pcall(() => this.orderedStore!.SetAsync(`${player.UserId}`, score));
+	}
+
+	/** Record a Hachi Ride round score. Writes only if it beats the current weekly best. */
+	updateWeeklyHachiScore(player: Player, score: number) {
+		this.refreshWeeklyStore();
+		if (!this.weeklyStore || score <= 0) return;
+
+		const key = `${player.UserId}`;
+		const [readOk, currentBest] = pcall(() => this.weeklyStore!.GetAsync(key));
+		const existing = readOk && typeIs(currentBest, "number") ? currentBest : 0;
+		if (score > existing) {
+			pcall(() => this.weeklyStore!.SetAsync(key, score));
+		}
 	}
 
 	private updateAllPlayers() {
@@ -56,17 +75,18 @@ export class LeaderboardService implements OnStart {
 		}
 	}
 
-	private sendLeaderboard(player: Player) {
-		if (!this.orderedStore) {
-			this.serverEvents.leaderboardData.fire(player, []);
+	private sendLeaderboard(player: Player, tab: LeaderboardTab) {
+		if (tab === "weeklyHachi") this.refreshWeeklyStore();
+		const store = tab === "weeklyHachi" ? this.weeklyStore : this.orderedStore;
+
+		if (!store) {
+			this.serverEvents.leaderboardData.fire(player, tab, []);
 			return;
 		}
 
-		const [ok, pages] = pcall(() =>
-			this.orderedStore!.GetSortedAsync(false, MAX_ENTRIES),
-		);
+		const [ok, pages] = pcall(() => store.GetSortedAsync(false, MAX_ENTRIES));
 		if (!ok || !pages) {
-			this.serverEvents.leaderboardData.fire(player, []);
+			this.serverEvents.leaderboardData.fire(player, tab, []);
 			return;
 		}
 
@@ -86,6 +106,50 @@ export class LeaderboardService implements OnStart {
 			rank++;
 		}
 
-		this.serverEvents.leaderboardData.fire(player, entries);
+		this.serverEvents.leaderboardData.fire(player, tab, entries);
+	}
+
+	/**
+	 * Compute the current weekly DataStore key based on JST Monday 00:00 reset.
+	 * Format: "WeeklyHachi_YYYY-WNN"
+	 */
+	private getCurrentWeeklyKey(): string {
+		const now = os.time() + JST_OFFSET;
+		const d = os.date("!*t", now) as {
+			year: number;
+			month: number;
+			day: number;
+			hour: number;
+			min: number;
+			sec: number;
+			wday: number;
+			yday: number;
+		};
+		// wday: 1=Sunday .. 7=Saturday. Convert to days since Monday (Mon=0).
+		const daysSinceMonday = (d.wday + 5) % 7;
+		const mondayEpoch =
+			now - daysSinceMonday * 86400 - d.hour * 3600 - d.min * 60 - d.sec;
+		const mondayDate = os.date("!*t", mondayEpoch) as {
+			year: number;
+			yday: number;
+		};
+		// ISO week: week 1 contains the first Thursday of the year.
+		// Approximate via yday of the Monday.
+		const weekNum = math.floor((mondayDate.yday - 1) / 7) + 1;
+		return `WeeklyHachi_${mondayDate.year}-W${string.format("%02d", weekNum)}`;
+	}
+
+	/** Lazily get or rotate the weekly OrderedDataStore when the week changes. */
+	private refreshWeeklyStore() {
+		const key = this.getCurrentWeeklyKey();
+		if (key === this.weeklyStoreKey && this.weeklyStore) return;
+		this.weeklyStoreKey = key;
+		const [ok, store] = pcall(() => DataStoreService.GetOrderedDataStore(key));
+		if (ok && store) {
+			this.weeklyStore = store;
+			print(`[LeaderboardService] Weekly store: ${key}`);
+		} else {
+			warn(`[LeaderboardService] Failed to get weekly store: ${key}`);
+		}
 	}
 }

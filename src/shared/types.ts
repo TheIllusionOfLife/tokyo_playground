@@ -89,6 +89,8 @@ export enum RoundResult {
 	TimerExpired = "TimerExpired",
 }
 
+export type LeaderboardTab = "allTime" | "weeklyHachi";
+
 export enum MissionId {
 	PlayGames = "PlayGames",
 	WinAsOni = "WinAsOni",

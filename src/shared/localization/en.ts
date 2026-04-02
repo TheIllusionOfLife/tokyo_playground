@@ -243,4 +243,8 @@ export const EN: Record<string, string> = {
 	zone_Hikarie: "Shibuya Hikarie",
 	["zone_Miyashita Park"]: "Miyashita Park",
 	["zone_Shibuya Station"]: "Shibuya Station",
+
+	// Leaderboard tabs
+	leaderboard_all_time: "All Time",
+	leaderboard_weekly_hachi: "Weekly Hachi",
 };

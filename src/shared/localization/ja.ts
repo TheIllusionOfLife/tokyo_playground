@@ -242,4 +242,8 @@ export const JA: Record<string, string> = {
 	zone_Hikarie: "渋谷ヒカリエ",
 	["zone_Miyashita Park"]: "宮下パーク",
 	["zone_Shibuya Station"]: "渋谷駅",
+
+	// Leaderboard tabs
+	leaderboard_all_time: "歴代",
+	leaderboard_weekly_hachi: "今週のハチ",
 };

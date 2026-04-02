@@ -218,3 +218,7 @@ export const L_ZONE_DOGENZAKA = "zone_Dogenzaka";
 export const L_ZONE_HIKARIE = "zone_Hikarie";
 export const L_ZONE_MIYASHITA_PARK = "zone_Miyashita Park";
 export const L_ZONE_SHIBUYA_STATION = "zone_Shibuya Station";
+
+// Leaderboard tabs
+export const L_LEADERBOARD_ALL_TIME = "leaderboard_all_time";
+export const L_LEADERBOARD_WEEKLY_HACHI = "leaderboard_weekly_hachi";
