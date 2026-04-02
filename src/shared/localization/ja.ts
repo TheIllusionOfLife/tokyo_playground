@@ -98,8 +98,7 @@ export const JA: Record<string, string> = {
 	intro_can_kick_sub:
 		"1人がオニ。隠れる側: 隠れて缶を蹴り、捕まった仲間を救え! オニ: 全員見つけて捕まえろ!",
 	intro_scramble_title: "かくれんぼ",
-	intro_scramble_sub:
-		"渋谷中に隠れろ! オニが追いかけてくる。最後まで生き残れ!",
+	intro_scramble_sub: "渋谷中に隠れろ! オニが追いかけてくる。最後まで生き残れ!",
 	intro_hachi_title: "ハチ公ライド",
 	intro_hachi_sub:
 		"ハチに乗ってレース! アイテムを集めて進化。二段ジャンプ、壁走り。最多ポイントで勝利!",

@@ -176,11 +176,7 @@ export class CanKickMinigame implements IMinigame {
 					const angle = math.random() * math.pi * 2;
 					const radius = math.random(30, 60);
 					const pos = basePos.add(
-						new Vector3(
-							math.cos(angle) * radius,
-							3,
-							math.sin(angle) * radius,
-						),
+						new Vector3(math.cos(angle) * radius, 3, math.sin(angle) * radius),
 					);
 					player.Character.PivotTo(new CFrame(pos));
 				}

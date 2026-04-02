@@ -158,8 +158,7 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 					this.mountOni(player);
 				} else if (hiderSpawns.size() > 0) {
 					// Hider: respawn at a random hider spawn
-					const spawn =
-						hiderSpawns[math.random(0, hiderSpawns.size() - 1)];
+					const spawn = hiderSpawns[math.random(0, hiderSpawns.size() - 1)];
 					player.Character.PivotTo(
 						new CFrame(spawn.Position.add(new Vector3(0, 3, 0))),
 					);
