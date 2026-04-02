@@ -85,124 +85,178 @@ export function SkillsPanel() {
 	}
 
 	return (
-		<frame
-			key="SkillsPanel"
-			Size={new UDim2(0, 70, 0, 30)}
-			Position={new UDim2(1, -10, 0, 110)}
-			AnchorPoint={new Vector2(1, 0)}
-			BackgroundColor3={Color3.fromRGB(50, 30, 70)}
-			BackgroundTransparency={0.3}
-			BorderSizePixel={0}
-			ZIndex={10}
-		>
-			<uicorner CornerRadius={new UDim(0, 15)} />
-			<textbutton
-				Size={new UDim2(1, 0, 1, 0)}
-				BackgroundTransparency={1}
-				TextColor3={Color3.fromRGB(200, 150, 255)}
-				TextScaled={true}
-				Font={Enum.Font.GothamBold}
-				Text={t(L_SKILLS_BUTTON)}
-				Event={{
-					Activated: () => gameStore.setActiveOverlay(open ? "none" : "skills"),
-				}}
+		<>
+			{/* Toggle button in topbar zone */}
+			<frame
+				key="SkillsPanel"
+				Size={new UDim2(0, 70, 0, 30)}
+				Position={new UDim2(1, -10, 0, 110)}
+				AnchorPoint={new Vector2(1, 0)}
+				BackgroundColor3={Color3.fromRGB(50, 30, 70)}
+				BackgroundTransparency={0.3}
+				BorderSizePixel={0}
+				ZIndex={10}
 			>
-				<uipadding PaddingLeft={new UDim(0, 4)} PaddingRight={new UDim(0, 4)} />
-			</textbutton>
-			{open ? (
-				<frame
-					Size={new UDim2(0, 240, 0, 220)}
-					Position={new UDim2(1, 0, 1, 4)}
-					AnchorPoint={new Vector2(1, 0)}
-					BackgroundColor3={Color3.fromRGB(20, 15, 30)}
-					BackgroundTransparency={0.1}
-					BorderSizePixel={0}
-					ZIndex={11}
+				<uicorner CornerRadius={new UDim(0, 15)} />
+				<textbutton
+					Size={new UDim2(1, 0, 1, 0)}
+					BackgroundTransparency={1}
+					TextColor3={Color3.fromRGB(200, 150, 255)}
+					TextScaled={true}
+					Font={Enum.Font.GothamBold}
+					Text={t(L_SKILLS_BUTTON)}
+					Event={{
+						Activated: () =>
+							gameStore.setActiveOverlay(open ? "none" : "skills"),
+					}}
 				>
-					<uicorner CornerRadius={new UDim(0, 8)} />
-					<uilistlayout
-						FillDirection={Enum.FillDirection.Vertical}
-						Padding={new UDim(0, 3)}
-						HorizontalAlignment={Enum.HorizontalAlignment.Center}
-					/>
 					<uipadding
-						PaddingLeft={new UDim(0, 6)}
-						PaddingRight={new UDim(0, 6)}
-						PaddingTop={new UDim(0, 6)}
-						PaddingBottom={new UDim(0, 6)}
+						PaddingLeft={new UDim(0, 4)}
+						PaddingRight={new UDim(0, 4)}
 					/>
-					{SKILLS.map((skill) => {
-						const unlocked = evolutionLevel >= skill.level;
-						const isCurrent = evolutionLevel === skill.level;
-						return (
-							<frame
-								key={`skill-${skill.level}`}
-								LayoutOrder={skill.level}
-								Size={new UDim2(1, 0, 0, 36)}
-								BackgroundColor3={
-									isCurrent
-										? CURRENT_COLOR
-										: unlocked
-											? UNLOCKED_COLOR
-											: LOCKED_COLOR
-								}
-								BackgroundTransparency={isCurrent ? 0.3 : 0.5}
-								BorderSizePixel={0}
-							>
-								<uicorner CornerRadius={new UDim(0, 4)} />
-								<textlabel
-									Size={new UDim2(0.15, 0, 1, 0)}
-									Position={new UDim2(0, 4, 0, 0)}
-									BackgroundTransparency={1}
-									TextColor3={Color3.fromRGB(255, 255, 255)}
-									TextScaled={true}
-									Font={Enum.Font.GothamBold}
-									Text={`${skill.level}`}
-								/>
-								<textlabel
-									Size={new UDim2(0.45, 0, 0.55, 0)}
-									Position={new UDim2(0.18, 0, 0, 2)}
-									BackgroundTransparency={1}
-									TextColor3={Color3.fromRGB(255, 255, 255)}
-									TextScaled={true}
-									Font={Enum.Font.GothamBold}
-									Text={t(skill.nameKey)}
-									TextXAlignment={Enum.TextXAlignment.Left}
-								/>
-								<textlabel
-									Size={new UDim2(0.45, 0, 0.45, 0)}
-									Position={new UDim2(0.18, 0, 0.55, 0)}
-									BackgroundTransparency={1}
-									TextColor3={Color3.fromRGB(180, 180, 200)}
-									TextScaled={true}
-									Font={Enum.Font.Gotham}
-									Text={t(skill.descKey)}
-									TextXAlignment={Enum.TextXAlignment.Left}
-								/>
-								<textlabel
-									Size={new UDim2(0.3, 0, 1, 0)}
-									Position={new UDim2(0.7, 0, 0, 0)}
-									BackgroundTransparency={1}
-									TextColor3={
-										unlocked
-											? Color3.fromRGB(150, 255, 150)
-											: Color3.fromRGB(150, 150, 150)
-									}
-									TextScaled={true}
-									Font={Enum.Font.Gotham}
-									Text={
-										unlocked
-											? t(L_SKILL_UNLOCKED)
-											: string.format(t(L_SKILL_PTS_FMT), skill.items)
-									}
-								/>
-							</frame>
-						);
-					})}
-				</frame>
+				</textbutton>
+			</frame>
+			{/* Centered overlay */}
+			{open ? (
+				<screengui
+					key="SkillsOverlayGui"
+					ResetOnSpawn={false}
+					DisplayOrder={10}
+					ZIndexBehavior={Enum.ZIndexBehavior.Sibling}
+				>
+					<frame
+						key="SkillsOverlay"
+						Size={new UDim2(0, 260, 0, 290)}
+						Position={new UDim2(0.5, 0, 0.5, 0)}
+						AnchorPoint={new Vector2(0.5, 0.5)}
+						BackgroundColor3={Color3.fromRGB(20, 15, 30)}
+						BackgroundTransparency={0.05}
+						BorderSizePixel={0}
+						ZIndex={19}
+					>
+						<uicorner CornerRadius={new UDim(0, 12)} />
+						<textbutton
+							Size={new UDim2(0, 32, 0, 32)}
+							Position={new UDim2(1, -8, 0, 8)}
+							AnchorPoint={new Vector2(1, 0)}
+							BackgroundColor3={Color3.fromRGB(60, 40, 60)}
+							BackgroundTransparency={0.3}
+							TextColor3={Color3.fromRGB(255, 255, 255)}
+							TextScaled={true}
+							Font={Enum.Font.GothamBold}
+							Text="X"
+							ZIndex={20}
+							Event={{
+								Activated: () => gameStore.setActiveOverlay("none"),
+							}}
+						>
+							<uicorner CornerRadius={new UDim(1, 0)} />
+						</textbutton>
+						<textlabel
+							Size={new UDim2(0.8, 0, 0, 28)}
+							Position={new UDim2(0.1, 0, 0, 10)}
+							BackgroundTransparency={1}
+							TextColor3={Color3.fromRGB(200, 150, 255)}
+							TextScaled={true}
+							Font={Enum.Font.FredokaOne}
+							Text={t(L_SKILLS_BUTTON)}
+							ZIndex={19}
+						/>
+						<scrollingframe
+							Size={new UDim2(1, -16, 1, -50)}
+							Position={new UDim2(0, 8, 0, 44)}
+							BackgroundTransparency={1}
+							BorderSizePixel={0}
+							ScrollBarThickness={4}
+							CanvasSize={new UDim2(0, 0, 0, 0)}
+							AutomaticCanvasSize={Enum.AutomaticSize.Y}
+							ZIndex={19}
+						>
+							<uilistlayout
+								FillDirection={Enum.FillDirection.Vertical}
+								Padding={new UDim(0, 3)}
+								HorizontalAlignment={Enum.HorizontalAlignment.Center}
+							/>
+							<uipadding
+								PaddingLeft={new UDim(0, 4)}
+								PaddingRight={new UDim(0, 4)}
+								PaddingTop={new UDim(0, 4)}
+								PaddingBottom={new UDim(0, 4)}
+							/>
+							{SKILLS.map((skill) => {
+								const unlocked = evolutionLevel >= skill.level;
+								const isCurrent = evolutionLevel === skill.level;
+								return (
+									<frame
+										key={`skill-${skill.level}`}
+										LayoutOrder={skill.level}
+										Size={new UDim2(1, 0, 0, 40)}
+										BackgroundColor3={
+											isCurrent
+												? CURRENT_COLOR
+												: unlocked
+													? UNLOCKED_COLOR
+													: LOCKED_COLOR
+										}
+										BackgroundTransparency={isCurrent ? 0.3 : 0.5}
+										BorderSizePixel={0}
+									>
+										<uicorner CornerRadius={new UDim(0, 4)} />
+										<textlabel
+											Size={new UDim2(0.15, 0, 1, 0)}
+											Position={new UDim2(0, 4, 0, 0)}
+											BackgroundTransparency={1}
+											TextColor3={Color3.fromRGB(255, 255, 255)}
+											TextScaled={true}
+											Font={Enum.Font.GothamBold}
+											Text={`${skill.level}`}
+										/>
+										<textlabel
+											Size={new UDim2(0.45, 0, 0.55, 0)}
+											Position={new UDim2(0.18, 0, 0, 2)}
+											BackgroundTransparency={1}
+											TextColor3={Color3.fromRGB(255, 255, 255)}
+											TextScaled={true}
+											Font={Enum.Font.GothamBold}
+											Text={t(skill.nameKey)}
+											TextXAlignment={Enum.TextXAlignment.Left}
+										/>
+										<textlabel
+											Size={new UDim2(0.45, 0, 0.45, 0)}
+											Position={new UDim2(0.18, 0, 0.55, 0)}
+											BackgroundTransparency={1}
+											TextColor3={Color3.fromRGB(180, 180, 200)}
+											TextScaled={true}
+											Font={Enum.Font.Gotham}
+											Text={t(skill.descKey)}
+											TextXAlignment={Enum.TextXAlignment.Left}
+										/>
+										<textlabel
+											Size={new UDim2(0.3, 0, 1, 0)}
+											Position={new UDim2(0.7, 0, 0, 0)}
+											BackgroundTransparency={1}
+											TextColor3={
+												unlocked
+													? Color3.fromRGB(150, 255, 150)
+													: Color3.fromRGB(150, 150, 150)
+											}
+											TextScaled={true}
+											Font={Enum.Font.Gotham}
+											Text={
+												unlocked
+													? t(L_SKILL_UNLOCKED)
+													: string.format(t(L_SKILL_PTS_FMT), skill.items)
+											}
+										/>
+									</frame>
+								);
+							})}
+						</scrollingframe>
+					</frame>
+				</screengui>
 			) : (
 				undefined!
 			)}
-		</frame>
+		</>
 	);
 }
