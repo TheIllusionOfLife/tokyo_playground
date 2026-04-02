@@ -176,7 +176,7 @@ export const EN: Record<string, string> = {
 	hint_hachi_start: "Mount Hachi and jump! Collect coins! 3... 2... 1...",
 	hint_items_falling: "Items falling from the sky! Collect as much as you can!",
 	hint_keep_collecting: "Keep collecting!",
-	hint_final_sprint: "Final sprint! Bonus items are worth triple now!",
+	hint_final_sprint: "Final sprint! Bonus items are worth double now!",
 	hint_player_tagged: "%1 was tagged!",
 	hint_player_caught: "%1 was caught!",
 	hint_can_kicked: "%1 kicked the can!",

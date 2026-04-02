@@ -183,8 +183,7 @@ export class HachiRideMinigame implements IMinigame {
 			const part = this.createCollectible(skyPos, new Vector3(5, 5, 5), true);
 			this.activeItems.push(part);
 			this.bonusItems.add(part);
-			// Land 5 studs above rooftop so the star mesh doesn't embed
-			this.itemLandingY.set(part, bldg.topY + 5);
+			this.itemLandingY.set(part, bldg.topY + 2);
 		}
 
 		// Generate all candidate positions, then randomly select a subset
@@ -732,9 +731,15 @@ export class HachiRideMinigame implements IMinigame {
 					item.CanQuery = false;
 					item.CanCollide = false;
 					item.Transparency = 1;
+					// Disable particle emitter so it doesn't linger
+					const shine = item.FindFirstChild("Shine") as
+						| ParticleEmitter
+						| undefined;
+					if (shine) shine.Enabled = false;
 					toRemove.push(item);
 					this.onItemCollected(userId, state, player, item);
 					const tween = animateItemCollect(item, this.bonusItems.has(item));
+					tween.Completed.Once(() => item.Destroy());
 					this.activeTweens.push(tween);
 				}
 			}
@@ -754,6 +759,10 @@ export class HachiRideMinigame implements IMinigame {
 					item.CanQuery = false;
 					item.CanCollide = false;
 					item.Transparency = 1;
+					const shine = item.FindFirstChild("Shine") as
+						| ParticleEmitter
+						| undefined;
+					if (shine) shine.Enabled = false;
 					this.onItemCollected(userId, state, player, item);
 					const tween = animateItemCollect(item, this.bonusItems.has(item));
 					this.activeTweens.push(tween);
@@ -1714,14 +1723,17 @@ export class HachiRideMinigame implements IMinigame {
 						this.skyDragonCollectible.FindFirstChildWhichIsA("PointLight");
 					if (treasureLight) treasureLight.Enabled = false;
 
-					// Award points
-					state.itemCount += SKY_DRAGON_BONUS_VALUE;
+					// Award points (doubled during final sprint)
+					const dragonValue = this.finalSprintStarted
+						? SKY_DRAGON_BONUS_VALUE * HACHI_FINAL_SPRINT_MULTIPLIER
+						: SKY_DRAGON_BONUS_VALUE;
+					state.itemCount += dragonValue;
 					state.catchCount = state.itemCount;
 					this.serverEvents.hachiItemCollected.fire(player, state.itemCount);
 					this.serverEvents.hachiBonusCollected.fire(player);
 					this.serverEvents.hintTextChanged.broadcast("hint_dragon_collected", [
 						player.Name,
-						`${SKY_DRAGON_BONUS_VALUE}`,
+						`${dragonValue}`,
 					]);
 					this.missionService.incrementAndNotify(
 						player,

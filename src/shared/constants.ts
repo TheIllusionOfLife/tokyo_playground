@@ -465,7 +465,7 @@ export const HACHI_JUMP_VELOCITY = 106; // 150 * sqrt(0.5) for half jump apex
 export const HACHI_JUMP_COOLDOWN = 0.1; // seconds between jump requests
 export const HACHI_EJECT_COOLDOWN = 1.0; // seconds between eject requests
 export const HACHI_FINAL_SPRINT_WINDOW = 30;
-export const HACHI_FINAL_SPRINT_MULTIPLIER = 3;
+export const HACHI_FINAL_SPRINT_MULTIPLIER = 2;
 
 // Can Kick visual
 export const CAN_KICK_RISE = 15; // studs the can flies up
@@ -501,36 +501,36 @@ export const HACHI_CITY_MAX_Z = 34286;
 export const HACHI_ROOFTOP_BONUS_OFFSET_Y = 50;
 export const HACHI_ROOFTOP_BUILDINGS: { topY: number; x: number; z: number }[] =
 	[
-		{ topY: 216.7, x: -10476, z: 33443 },
+		{ topY: 216.7, x: -10467, z: 33444 },
 		{ topY: 187.2, x: -10689, z: 33634 },
-		{ topY: 178.3, x: -10362, z: 33374 },
-		{ topY: 173.8, x: -10475, z: 33623 },
+		{ topY: 178.3, x: -10376, z: 33377 },
+		{ topY: 173.8, x: -10510, z: 33577 },
 		{ topY: 172.0, x: -10402, z: 33557 },
 		{ topY: 156.0, x: -10833, z: 32873 },
 		{ topY: 139.5, x: -10227, z: 33406 },
 		{ topY: 137.6, x: -11133, z: 33876 },
-		{ topY: 137.1, x: -10466, z: 33710 },
-		{ topY: 135.1, x: -9942, z: 33484 },
+		{ topY: 137.1, x: -10468, z: 33719 },
+		{ topY: 135.1, x: -9947, z: 33475 },
 		{ topY: 129.6, x: -10252, z: 33066 },
 		{ topY: 124.4, x: -10938, z: 33638 },
-		{ topY: 121.7, x: -10882, z: 33278 },
-		{ topY: 116.8, x: -10586, z: 33750 },
-		{ topY: 116.2, x: -10956, z: 33046 },
-		{ topY: 114.0, x: -10764, z: 33454 },
-		{ topY: 112.6, x: -10153, z: 33369 },
-		{ topY: 111.6, x: -10752, z: 33093 },
+		{ topY: 121.7, x: -10884, z: 33297 },
+		{ topY: 116.8, x: -10576, z: 33735 },
+		{ topY: 116.2, x: -10967, z: 33046 },
+		{ topY: 114.0, x: -10835, z: 33496 },
+		{ topY: 112.6, x: -10150, z: 33360 },
+		{ topY: 111.6, x: -10761, z: 33100 },
 		{ topY: 108.3, x: -10642, z: 33514 },
 		{ topY: 101.1, x: -10673, z: 32777 },
 		{ topY: 92.4, x: -10183, z: 33494 },
 		{ topY: 92.0, x: -11008, z: 33520 },
-		{ topY: 91.9, x: -10837, z: 32919 },
-		{ topY: 88.1, x: -9982, z: 33037 },
-		{ topY: 87.7, x: -9936, z: 33018 },
+		{ topY: 91.9, x: -10847, z: 32921 },
+		{ topY: 88.1, x: -9990, z: 33055 },
+		{ topY: 87.7, x: -9945, z: 33020 },
 		{ topY: 87.6, x: -10506, z: 32968 },
 		{ topY: 87.2, x: -11048, z: 33626 },
 		{ topY: 86.4, x: -10122, z: 33115 },
-		{ topY: 85.8, x: -10944, z: 32914 },
-		{ topY: 85.7, x: -10081, z: 33148 },
+		{ topY: 85.8, x: -10935, z: 32895 },
+		{ topY: 85.7, x: -10072, z: 33154 },
 	];
 
 // Sky Dragon (Hachi Ride boss collectible)

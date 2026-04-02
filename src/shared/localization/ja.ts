@@ -176,7 +176,7 @@ export const JA: Record<string, string> = {
 	hint_hachi_start: "ハチに乗ってジャンプ! コインを集めろ! 3... 2... 1...",
 	hint_items_falling: "空からアイテムが降ってくる! たくさん集めろ!",
 	hint_keep_collecting: "どんどん集めろ!",
-	hint_final_sprint: "ラストスパート! ボーナスアイテム3倍!",
+	hint_final_sprint: "ラストスパート! ボーナスアイテム2倍!",
 	hint_player_tagged: "%1がタッチされた!",
 	hint_player_caught: "%1が捕まった!",
 	hint_can_kicked: "%1が缶を蹴った!",
