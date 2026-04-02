@@ -190,7 +190,6 @@ export interface ShibuyaScramblePlayerState {
 	isTagged: boolean;
 	catchCount: number;
 	rescueCount: number;
-	carWavesSurvived: number;
 }
 
 export interface HachiRidePlayerState {

@@ -22,9 +22,6 @@ export const L_ACTION_KICK = "action_kick";
 // Countdown / Oni reveal
 export const L_ONI_REVEAL = "oni_reveal";
 
-// Level up
-export const L_LEVEL_UP = "level_up";
-
 // Rewards
 export const L_REWARDS = "rewards";
 export const L_REWARD_BASE = "reward_base";
@@ -91,7 +88,6 @@ export const L_OBSTACLE_ACTIVE = "obstacle_active";
 export const L_SPECTATOR_TAP = "spectator_tap";
 
 // Misc formatting
-export const L_LV_PREFIX = "lv_prefix";
 export const L_SKILL_PTS_FMT = "skill_pts_fmt";
 
 // Today's goal

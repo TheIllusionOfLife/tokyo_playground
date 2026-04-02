@@ -43,8 +43,6 @@ export interface GameStoreState {
 	missions: MissionProgressData[];
 	shopItems: ShopItemData[];
 	shopBalance: number;
-	showLevelUp: boolean;
-	levelUpNewLevel: number;
 	hachiCostumed: boolean;
 	hachiItemCount: number;
 	hachiEvolutionLevel: number;
@@ -118,8 +116,6 @@ const initialState: GameStoreState = {
 	missions: [],
 	shopItems: [],
 	shopBalance: 0,
-	showLevelUp: false,
-	levelUpNewLevel: 1,
 	hachiCostumed: false,
 	hachiItemCount: 0,
 	hachiEvolutionLevel: 0,
@@ -311,7 +307,6 @@ export const gameStore = createProducer(initialState, {
 		scoreboard: [],
 		showRewardAnimation: false,
 		roundResult: undefined,
-		showLevelUp: false,
 		hachiCostumed: false,
 		hachiItemCount: 0,
 		hachiEvolutionLevel: 0,
@@ -347,16 +342,6 @@ export const gameStore = createProducer(initialState, {
 		...state,
 		shopBalance,
 	}),
-	setLevelUp: (state, levelUpNewLevel: number) => ({
-		...state,
-		showLevelUp: true,
-		levelUpNewLevel,
-	}),
-	hideLevelUp: (state) => ({
-		...state,
-		showLevelUp: false,
-	}),
-
 	// ── Living Shibuya Mutations ─────────────────────────────────────────
 	setTimePhase: (state, timePhase: TimePhase) => ({
 		...state,

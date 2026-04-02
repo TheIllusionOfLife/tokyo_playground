@@ -594,6 +594,7 @@ export class CanKickMinigame implements IMinigame {
 					}
 					break;
 				}
+				// Fallback: if all attempts landed inside jail, use last generated position anyway
 				player.Character.PivotTo(new CFrame(spawnPos!));
 			}
 		}

@@ -21,9 +21,6 @@ export const EN: Record<string, string> = {
 	// Countdown
 	oni_reveal: "The Oni is...",
 
-	// Level up
-	level_up: "LEVEL UP!",
-
 	// Rewards
 	rewards: "REWARDS",
 	reward_base: "Base",
@@ -91,7 +88,6 @@ export const EN: Record<string, string> = {
 	spectator_tap: "Tap to switch",
 
 	// Misc formatting
-	lv_prefix: "Lv.",
 	skill_pts_fmt: "%d pts",
 
 	// Today's goal

@@ -178,7 +178,7 @@ export function HachiHud() {
 					Size={new UDim2(1, 0, 0, 14)}
 					Position={new UDim2(0, 0, 0, 0)}
 					BackgroundTransparency={1}
-					Text={`${itemCount - HACHI_STARTING_SCORE_OFFSET} pts`}
+					Text={`${math.max(0, itemCount - HACHI_STARTING_SCORE_OFFSET)} pts`}
 					TextColor3={Color3.fromRGB(255, 220, 80)}
 					TextScaled={true}
 					Font={Enum.Font.GothamBold}

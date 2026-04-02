@@ -11,10 +11,6 @@ import {
 	DEFAULT_WALK_SPEED,
 	HACHI_ONI_EVOLUTION,
 	HACHI_WALK_SPEEDS,
-	SCRAMBLE_CAR_DODGE_RADIUS,
-	SCRAMBLE_CAR_SPAWN_INTERVAL,
-	SCRAMBLE_CAR_SPEED_DURATION,
-	SCRAMBLE_CAR_WAVE_DURATION,
 	SCRAMBLE_CROWD_NPC_COUNT,
 	SCRAMBLE_CROWD_WAVE_DURATION,
 	SCRAMBLE_CROWD_WAVE_INTERVAL,
@@ -31,7 +27,6 @@ import { GlobalEvents } from "shared/network";
 import {
 	AnyPlayerState,
 	MinigameId,
-	MissionId,
 	PlayerRole,
 	RoundResult,
 	ShibuyaScramblePlayerState,
@@ -70,9 +65,6 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 	private crowdThread?: thread;
 
 	private activeCrowdNPCs: Model[] = [];
-	private carThread?: thread;
-	private carLoopRunning = false;
-	private activeCarNPCs: Model[] = [];
 	private slideCooldowns = new Map<number, number>();
 	private lastHintText = "";
 	private spiritCharges = new Map<number, number>();
@@ -94,8 +86,7 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 				isTagged: false,
 				catchCount: 0,
 				rescueCount: 0,
-				carWavesSurvived: 0,
-			});
+				});
 			this.playerObjects.set(player.UserId, player);
 			this.spiritCharges.set(player.UserId, 0);
 		}
@@ -370,12 +361,6 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 			this.crowdThread = undefined;
 		}
 		this.despawnCrowdNPCs();
-		this.carLoopRunning = false;
-		if (this.carThread) {
-			task.cancel(this.carThread);
-			this.carThread = undefined;
-		}
-		this.despawnCarNPCs();
 	}
 
 	cleanup() {
@@ -402,12 +387,6 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 			this.crowdThread = undefined;
 		}
 		this.despawnCrowdNPCs();
-		this.carLoopRunning = false;
-		if (this.carThread) {
-			task.cancel(this.carThread);
-			this.carThread = undefined;
-		}
-		this.despawnCarNPCs();
 		this.lastHintText = "";
 		this.lastAutoCatchTime = 0;
 		this.oniUserId = undefined;
@@ -564,167 +543,6 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 		task.delay(FADE_OUT_DURATION + 0.1, () => {
 			for (const npc of npcs) {
 				if (npc.Parent) npc.Destroy();
-			}
-		});
-	}
-
-	private runCarLoop() {
-		this.carLoopRunning = true;
-		while (this.carLoopRunning) {
-			task.wait(SCRAMBLE_CAR_SPAWN_INTERVAL);
-			if (!this.carLoopRunning) break;
-			const wave = this.spawnCarWave();
-			task.wait(SCRAMBLE_CAR_WAVE_DURATION);
-			if (!this.carLoopRunning) break;
-			this.awardDodgeCars(wave);
-			this.despawnCarNPCs(wave);
-		}
-	}
-
-	private spawnCarWave(): Model[] {
-		const carWP =
-			Workspace.FindFirstChild("CarWaypoints") ??
-			ServerStorage.FindFirstChild("CarWaypoints");
-		if (!carWP) return [];
-
-		const templateNames = ["CarTemplate_1", "CarTemplate_2", "CarTemplate_3"];
-		const wave: Model[] = [];
-
-		for (let i = 1; i <= 3; i++) {
-			const pathFolder = carWP.FindFirstChild(`Path${i}`);
-			if (!pathFolder) continue;
-			const startPart = pathFolder.FindFirstChild("Start") as
-				| BasePart
-				| undefined;
-			const endPart = pathFolder.FindFirstChild("End") as BasePart | undefined;
-			if (!startPart || !endPart) continue;
-
-			const templateName =
-				templateNames[math.random(0, templateNames.size() - 1)];
-			const template = ServerStorage.FindFirstChild(templateName) as
-				| Model
-				| undefined;
-			if (!template) continue;
-
-			const car = template.Clone();
-			// Only PrimaryPart anchored; rest unanchored so welded parts follow tween
-			const primary = car.PrimaryPart;
-			for (const desc of car.GetDescendants()) {
-				if (desc.IsA("BasePart")) {
-					desc.Anchored = desc === primary;
-					desc.CanCollide = true;
-					desc.CanTouch = false;
-					desc.CanQuery = false;
-				}
-			}
-
-			const rawDir = endPart.Position.sub(startPart.Position);
-			// Flatten direction so cars stay level on the street
-			const carDir =
-				new Vector3(rawDir.X, 0, rawDir.Z).Magnitude > 0.1
-					? new Vector3(rawDir.X, 0, rawDir.Z)
-					: new Vector3(0, 0, 1);
-			const startPos = new Vector3(
-				startPart.Position.X,
-				startPart.Position.Y,
-				startPart.Position.Z,
-			);
-			const endPos = new Vector3(
-				endPart.Position.X,
-				startPart.Position.Y,
-				endPart.Position.Z,
-			);
-			// CarTemplate_3 has a 5° pitch baked into its mesh; compensate
-			const pitchFix =
-				templateName === "CarTemplate_3"
-					? CFrame.Angles(math.rad(-5), 0, 0)
-					: new CFrame();
-			car.PivotTo(CFrame.lookAt(startPos, startPos.add(carDir)).mul(pitchFix));
-			car.Parent = Workspace;
-
-			if (primary) {
-				TweenService.Create(
-					primary,
-					new TweenInfo(SCRAMBLE_CAR_SPEED_DURATION, Enum.EasingStyle.Linear),
-					{
-						CFrame: CFrame.lookAt(endPos, endPos.add(carDir)).mul(pitchFix),
-					},
-				).Play();
-			}
-
-			this.activeCarNPCs.push(car);
-			wave.push(car);
-		}
-
-		if (wave.size() > 0) {
-			this.lastHintText = fireHintText(
-				this.serverEvents,
-				"hint_cars_crossing",
-				this.lastHintText,
-			);
-		}
-
-		return wave;
-	}
-
-	/** Award DodgeCars mission to hiders alive when car wave ends. */
-	private awardDodgeCars(wave: Model[]) {
-		if (wave.size() === 0) return;
-
-		for (const [userId, state] of this.playerStates) {
-			if (state.role !== PlayerRole.Hider || state.isTagged) continue;
-			const player = this.playerObjects.get(userId);
-			if (!player?.Character) continue;
-			const hrp = player.Character.FindFirstChild("HumanoidRootPart") as
-				| BasePart
-				| undefined;
-			if (!hrp) continue;
-
-			// Only award if player was near at least one car during this wave
-			let nearCar = false;
-			for (const car of wave) {
-				const primary = car.PrimaryPart;
-				if (!primary) continue;
-				if (
-					hrp.Position.sub(primary.Position).Magnitude <=
-					SCRAMBLE_CAR_DODGE_RADIUS
-				) {
-					nearCar = true;
-					break;
-				}
-			}
-			if (!nearCar) continue;
-
-			state.carWavesSurvived += 1;
-			this.missionService.incrementAndNotify(player, MissionId.DodgeCars, 1);
-		}
-	}
-
-	private despawnCarNPCs(cars = this.activeCarNPCs) {
-		// Remove from tracking immediately
-		this.activeCarNPCs = this.activeCarNPCs.filter(
-			(car) => !cars.includes(car),
-		);
-		// Disable collision and stop motion immediately, then fade visually
-		for (const car of cars) {
-			for (const desc of car.GetDescendants()) {
-				if (desc.IsA("BasePart")) {
-					desc.CanCollide = false;
-					TweenService.Create(
-						desc,
-						new TweenInfo(FADE_OUT_DURATION, Enum.EasingStyle.Linear),
-						{
-							Transparency: 1,
-						},
-					).Play();
-				} else if (desc.IsA("ParticleEmitter") || desc.IsA("Trail")) {
-					desc.Enabled = false;
-				}
-			}
-		}
-		task.delay(FADE_OUT_DURATION + 0.1, () => {
-			for (const car of cars) {
-				if (car.Parent) car.Destroy();
 			}
 		});
 	}

@@ -58,7 +58,6 @@ interface ServerToClientEvents {
 		category: ItemCategory,
 		itemId: ItemId | undefined,
 	): void;
-	levelUp(newLevel: number): void;
 	slideImpulse(dir: Vector3, speed: number): void;
 	hachiEvolved(newLevel: number): void;
 	hachiItemCollected(itemCount: number): void;

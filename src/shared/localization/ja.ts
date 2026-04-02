@@ -21,9 +21,6 @@ export const JA: Record<string, string> = {
 	// Countdown
 	oni_reveal: "オニは...",
 
-	// Level up
-	level_up: "レベルアップ!",
-
 	// Rewards
 	rewards: "リザルト",
 	reward_base: "参加",
@@ -91,7 +88,6 @@ export const JA: Record<string, string> = {
 	spectator_tap: "タップで切替",
 
 	// Misc formatting
-	lv_prefix: "Lv.",
 	skill_pts_fmt: "%d pts",
 
 	// Today's goal
