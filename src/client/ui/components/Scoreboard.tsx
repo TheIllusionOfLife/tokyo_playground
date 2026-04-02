@@ -30,24 +30,28 @@ export function Scoreboard() {
 		return undefined!;
 	}
 
+	// Hachi Ride has no roles; all entries are PlayerRole.None
+	const isHachiRide =
+		scoreboard.size() > 0 &&
+		scoreboard.every((e) => e.role === PlayerRole.None);
+
 	return (
 		<frame
 			key="Scoreboard"
-			Size={new UDim2(0.5, 0, 0.5, 0)}
-			Position={new UDim2(0.25, 0, 0.2, 0)}
+			Size={isHachiRide ? new UDim2(0.5, 0, 0.7, 0) : new UDim2(0.6, 0, 0.7, 0)}
+			Position={
+				isHachiRide ? new UDim2(0.25, 0, 0.05, 0) : new UDim2(0.2, 0, 0.05, 0)
+			}
 			BackgroundColor3={Color3.fromRGB(15, 15, 30)}
 			BackgroundTransparency={0.1}
 			BorderSizePixel={0}
 		>
 			<uicorner CornerRadius={new UDim(0, 10)} />
-			<uilistlayout
-				SortOrder={Enum.SortOrder.LayoutOrder}
-				Padding={new UDim(0, 2)}
-			/>
 			{winnerName !== undefined && (
 				<textlabel
 					key="WinnerName"
 					Size={new UDim2(1, 0, 0, 36)}
+					Position={new UDim2(0, 0, 0, 4)}
 					BackgroundTransparency={1}
 					TextColor3={Color3.fromRGB(255, 215, 0)}
 					TextStrokeColor3={Color3.fromRGB(0, 0, 0)}
@@ -55,13 +59,13 @@ export function Scoreboard() {
 					TextScaled={true}
 					Font={Enum.Font.GothamBlack}
 					Text={`${winnerName} ${t(L_WINS)}`}
-					LayoutOrder={-2}
 				/>
 			)}
-			{summaryText !== undefined && (
+			{!isHachiRide && summaryText !== undefined && (
 				<textlabel
 					key="SummaryText"
 					Size={new UDim2(1, 0, 0, 28)}
+					Position={new UDim2(0, 0, 0, 40)}
 					BackgroundTransparency={1}
 					TextColor3={Color3.fromRGB(255, 220, 100)}
 					TextStrokeColor3={Color3.fromRGB(0, 0, 0)}
@@ -69,36 +73,51 @@ export function Scoreboard() {
 					TextScaled={true}
 					Font={Enum.Font.GothamBold}
 					Text={summaryText}
-					LayoutOrder={-1}
 				/>
 			)}
-			<ScoreRow
-				rank="#"
-				playerName={t(L_PLAYER)}
-				role={t(L_ROLE)}
-				stat={t(L_STATS)}
-				points={t(L_PTS)}
-				color={Color3.fromRGB(255, 220, 100)}
-				order={0}
-			/>
-			{scoreboard.map((entry, i) => (
-				<ScoreRow
-					key={`score-${i}`}
-					rank={tostring(i + 1)}
-					playerName={entry.playerName}
-					role={entry.role}
-					stat={
-						entry.role === PlayerRole.None
-							? `${entry.catches} items`
-							: entry.role === PlayerRole.Oni
-								? `${entry.catches}C`
-								: `${entry.rescues}R`
-					}
-					points={tostring(entry.points)}
-					color={ROLE_COLORS[entry.role] ?? Color3.fromRGB(200, 200, 200)}
-					order={i + 1}
+			<scrollingframe
+				Size={isHachiRide ? new UDim2(1, -8, 1, -46) : new UDim2(1, -8, 1, -74)}
+				Position={isHachiRide ? new UDim2(0, 4, 0, 42) : new UDim2(0, 4, 0, 70)}
+				BackgroundTransparency={1}
+				BorderSizePixel={0}
+				ScrollBarThickness={4}
+				CanvasSize={new UDim2(0, 0, 0, 0)}
+				AutomaticCanvasSize={Enum.AutomaticSize.Y}
+			>
+				<uilistlayout
+					SortOrder={Enum.SortOrder.LayoutOrder}
+					Padding={new UDim(0, 2)}
 				/>
-			))}
+				<ScoreRow
+					rank="#"
+					playerName={t(L_PLAYER)}
+					role={isHachiRide ? "" : t(L_ROLE)}
+					stat={isHachiRide ? "" : t(L_STATS)}
+					points={t(L_PTS)}
+					color={Color3.fromRGB(255, 220, 100)}
+					order={0}
+					compact={isHachiRide}
+				/>
+				{scoreboard.map((entry, i) => (
+					<ScoreRow
+						key={`score-${i}`}
+						rank={tostring(i + 1)}
+						playerName={entry.playerName}
+						role={isHachiRide ? "" : entry.role}
+						stat={
+							isHachiRide
+								? ""
+								: entry.role === PlayerRole.Oni
+									? `${entry.catches} caught`
+									: `${entry.rescues} saved`
+						}
+						points={tostring(entry.points)}
+						color={ROLE_COLORS[entry.role] ?? Color3.fromRGB(200, 200, 200)}
+						order={i + 1}
+						compact={isHachiRide}
+					/>
+				))}
+			</scrollingframe>
 		</frame>
 	);
 }
@@ -111,6 +130,7 @@ function ScoreRow(props: {
 	points: string;
 	color: Color3;
 	order: number;
+	compact: boolean;
 }) {
 	return (
 		<frame
@@ -119,16 +139,40 @@ function ScoreRow(props: {
 			BackgroundTransparency={1}
 			LayoutOrder={props.order}
 		>
-			<Cell text={props.rank} pos={0} width={0.08} color={props.color} />
-			<Cell
-				text={props.playerName}
-				pos={0.08}
-				width={0.4}
-				color={props.color}
-			/>
-			<Cell text={props.role} pos={0.48} width={0.2} color={props.color} />
-			<Cell text={props.stat} pos={0.68} width={0.15} color={props.color} />
-			<Cell text={props.points} pos={0.83} width={0.17} color={props.color} />
+			<Cell text={props.rank} pos={0} width={0.1} color={props.color} />
+			{props.compact ? (
+				<>
+					<Cell
+						text={props.playerName}
+						pos={0.1}
+						width={0.65}
+						color={props.color}
+					/>
+					<Cell
+						text={props.points}
+						pos={0.75}
+						width={0.25}
+						color={props.color}
+					/>
+				</>
+			) : (
+				<>
+					<Cell
+						text={props.playerName}
+						pos={0.08}
+						width={0.4}
+						color={props.color}
+					/>
+					<Cell text={props.role} pos={0.48} width={0.2} color={props.color} />
+					<Cell text={props.stat} pos={0.68} width={0.15} color={props.color} />
+					<Cell
+						text={props.points}
+						pos={0.83}
+						width={0.17}
+						color={props.color}
+					/>
+				</>
+			)}
 		</frame>
 	);
 }

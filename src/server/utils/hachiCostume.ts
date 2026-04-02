@@ -69,7 +69,7 @@ export function forceUnmount(player: Player, notifyClient = false): void {
 		originalHipHeights.delete(player.UserId);
 	}
 	const model = mountedPlayers.get(player.UserId);
-	if (model && model.Parent) model.Destroy();
+	if (model?.Parent) model.Destroy();
 	mountedPlayers.delete(player.UserId);
 	if (notifyClient) {
 		serverEvents.hachiCostumeEquipped.fire(player, false);

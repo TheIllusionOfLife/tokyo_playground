@@ -1,7 +1,6 @@
 import { OnStart, Service } from "@flamework/core";
 import { ServerStorage, TweenService, Workspace } from "@rbxts/services";
 
-const CROWD_WAVE_INTERVAL = 18; // seconds between crowd waves
 const CROWD_WAVE_DURATION = 12; // seconds for NPCs to cross
 const CROWD_NPCS_PER_PATH = 2; // reduced for lobby performance
 const CAR_WAVE_DURATION = 10; // seconds for cars to cross

@@ -1,6 +1,9 @@
 import React from "@rbxts/react";
 import { useSelector } from "@rbxts/react-reflex";
-import { HACHI_EVOLUTION_THRESHOLDS } from "shared/constants";
+import {
+	HACHI_EVOLUTION_THRESHOLDS,
+	HACHI_STARTING_SCORE_OFFSET,
+} from "shared/constants";
 import { GameStoreState } from "shared/store/game-store";
 import { MatchPhase, MinigameId } from "shared/types";
 
@@ -175,7 +178,7 @@ export function HachiHud() {
 					Size={new UDim2(1, 0, 0, 14)}
 					Position={new UDim2(0, 0, 0, 0)}
 					BackgroundTransparency={1}
-					Text={`${itemCount} pts`}
+					Text={`${math.max(0, itemCount - HACHI_STARTING_SCORE_OFFSET)} pts`}
 					TextColor3={Color3.fromRGB(255, 220, 80)}
 					TextScaled={true}
 					Font={Enum.Font.GothamBold}
@@ -206,7 +209,7 @@ export function HachiHud() {
 					Text={
 						isMaxLevel
 							? `Lv.${evolutionLevel} MAX`
-							: `Lv.${evolutionLevel} → ${nextThreshold}`
+							: `Lv.${evolutionLevel} → ${math.max(0, nextThreshold - HACHI_STARTING_SCORE_OFFSET)}`
 					}
 					TextColor3={Color3.fromRGB(180, 180, 200)}
 					TextScaled={true}

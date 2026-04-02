@@ -87,7 +87,7 @@ export class DayNightController implements OnStart {
 				inst.FindFirstChildOfClass("PointLight") ??
 				inst.FindFirstChildOfClass("SurfaceLight") ??
 				inst.FindFirstChildOfClass("SpotLight");
-			if (light && light.IsA("Light")) {
+			if (light?.IsA("Light")) {
 				light.Enabled = isEvening || isNight;
 			}
 			// Boost material emission

@@ -51,7 +51,9 @@ export class CanKickMinigame implements IMinigame {
 	private playerStates = new Map<number, CanKickPlayerState>();
 	private playerObjects = new Map<number, Player>();
 	private canModel?: Model;
+	private jailModel?: Model;
 	private jailZone?: Part;
+	private matchJanitor?: Janitor;
 	private oniCounting = false;
 	private countdownThread?: thread;
 	private lastHintText = "";
@@ -59,6 +61,7 @@ export class CanKickMinigame implements IMinigame {
 	private canRelocateElapsed = 0;
 	private canSocketIndex = 0;
 	private canOrigin?: Vector3;
+	private canRotation?: CFrame;
 	private rattleProgress = 0;
 	private readonly boostEligible = new Set<number>();
 	private lastAutoCatchTime = 0;
@@ -66,27 +69,34 @@ export class CanKickMinigame implements IMinigame {
 	constructor(private readonly serverEvents: ServerEvents) {}
 
 	prepare(players: Player[], matchJanitor: Janitor) {
+		this.matchJanitor = matchJanitor;
 		// Clone GiantCan from ServerStorage
 		const canTemplate = ServerStorage.FindFirstChild("GiantCan") as
 			| Model
 			| undefined;
 		if (canTemplate) {
 			this.canModel = canTemplate.Clone();
+			// Keep the model's original pivot rotation (stands upright)
 			this.canModel.Parent = Workspace;
 			matchJanitor.Add(this.canModel);
-			this.canOrigin = this.canModel.GetPivot().Position;
+			const pivot = this.canModel.GetPivot();
+			this.canOrigin = pivot.Position;
+			this.canRotation = pivot.sub(pivot.Position);
 		} else {
 			warn("[CanKick] GiantCan not found in ServerStorage");
 		}
 
-		// Clone JailZone from ServerStorage
+		// Clone JailZone model from ServerStorage (Model with detection zone Part inside)
 		const jailTemplate = ServerStorage.FindFirstChild("JailZone") as
-			| Part
+			| Model
 			| undefined;
 		if (jailTemplate) {
-			this.jailZone = jailTemplate.Clone();
-			this.jailZone.Parent = Workspace;
-			matchJanitor.Add(this.jailZone);
+			this.jailModel = jailTemplate.Clone();
+			this.jailModel.Parent = Workspace;
+			matchJanitor.Add(this.jailModel);
+			this.jailZone = this.jailModel.FindFirstChild("JailZone") as
+				| Part
+				| undefined;
 		} else {
 			warn("[CanKick] JailZone not found in ServerStorage");
 		}
@@ -135,6 +145,43 @@ export class CanKickMinigame implements IMinigame {
 			if (roles.get(player) === PlayerRole.Oni) {
 				this.mountOni(player);
 			}
+		}
+
+		// Handle mid-match respawns (player resets or falls off map)
+		for (const player of players) {
+			const conn = player.CharacterAdded.Connect(() => {
+				task.wait(0.5);
+				const state = this.playerStates.get(player.UserId);
+				if (!state || !player.Character) return;
+				if (state.isInJail && this.jailZone) {
+					// Re-teleport jailed players inside the jail
+					const jailFloorY =
+						this.jailZone.Position.Y - this.jailZone.Size.Y * 0.5;
+					player.Character.PivotTo(
+						new CFrame(
+							this.jailZone.Position.X,
+							jailFloorY + 3,
+							this.jailZone.Position.Z,
+						),
+					);
+				} else if (state.role === PlayerRole.Oni && this.canModel) {
+					const pos = this.canModel
+						.GetPivot()
+						.Position.add(new Vector3(5, 3, 0));
+					player.Character.PivotTo(new CFrame(pos));
+					this.mountOni(player);
+				} else if (this.canModel) {
+					// Free hider: respawn near the can
+					const basePos = this.canModel.GetPivot().Position;
+					const angle = math.random() * math.pi * 2;
+					const radius = math.random(30, 60);
+					const pos = basePos.add(
+						new Vector3(math.cos(angle) * radius, 3, math.sin(angle) * radius),
+					);
+					player.Character.PivotTo(new CFrame(pos));
+				}
+			});
+			this.matchJanitor?.Add(conn);
 		}
 
 		return roles;
@@ -193,6 +240,9 @@ export class CanKickMinigame implements IMinigame {
 		// Auto-catch: check if Oni is near any uncaught hider
 		this.checkAutoCatch();
 
+		// Auto-kick: free hider near the can triggers a kick automatically
+		this.checkAutoKick();
+
 		// Can relocation
 		if (!this.canModel || !this.canOrigin) return;
 		this.canRelocateElapsed += _dt;
@@ -203,7 +253,9 @@ export class CanKickMinigame implements IMinigame {
 		const nextPosition = this.canOrigin.add(
 			CAN_SOCKET_OFFSETS[this.canSocketIndex],
 		);
-		this.canModel.PivotTo(new CFrame(nextPosition));
+		this.canModel.PivotTo(
+			new CFrame(nextPosition).mul(this.canRotation ?? new CFrame()),
+		);
 		this.lastHintText = fireHintText(
 			this.serverEvents,
 			"hint_can_moved",
@@ -254,6 +306,43 @@ export class CanKickMinigame implements IMinigame {
 		this.catchHider(oniPlayer, closestHider);
 	}
 
+	/** Auto-kick: if any free hider is within CAN_KICK_RADIUS of the can, trigger a kick. */
+	private lastAutoKickTime = 0;
+	private checkAutoKick() {
+		if (!this.canModel) return;
+
+		// Only auto-kick when someone is actually in jail
+		let anyoneInJail = false;
+		for (const [, state] of this.playerStates) {
+			if (state.isInJail) {
+				anyoneInJail = true;
+				break;
+			}
+		}
+		if (!anyoneInJail) return;
+
+		// Cooldown: 5 seconds between auto-kicks
+		const now = os.clock();
+		if (now - this.lastAutoKickTime < 5) return;
+
+		const canPos = this.canModel.GetPivot().Position;
+		for (const [userId, state] of this.playerStates) {
+			if (state.role !== PlayerRole.Hider || state.isCaught) continue;
+			const player = this.playerObjects.get(userId);
+			if (!player?.Character) continue;
+			const hrp = player.Character.FindFirstChild("HumanoidRootPart") as
+				| BasePart
+				| undefined;
+			if (!hrp) continue;
+			const dist = hrp.Position.sub(canPos).Magnitude;
+			if (dist <= CAN_KICK_RADIUS) {
+				this.lastAutoKickTime = now;
+				this.handleKickCanRequest(player);
+				return;
+			}
+		}
+	}
+
 	private catchHider(oniPlayer: Player, hider: Player) {
 		const oniState = this.playerStates.get(oniPlayer.UserId);
 		const hiderState = this.playerStates.get(hider.UserId);
@@ -285,8 +374,15 @@ export class CanKickMinigame implements IMinigame {
 				hider.Character &&
 				hider.Character === caughtCharacter
 			) {
+				// Teleport inside the jail (floor level + 3 studs clearance)
+				const jailFloorY =
+					this.jailZone.Position.Y - this.jailZone.Size.Y * 0.5;
 				hider.Character.PivotTo(
-					new CFrame(this.jailZone.Position.add(new Vector3(0, 3, 0))),
+					new CFrame(
+						this.jailZone.Position.X,
+						jailFloorY + 3,
+						this.jailZone.Position.Z,
+					),
 				);
 			}
 		});
@@ -420,8 +516,6 @@ export class CanKickMinigame implements IMinigame {
 		return true;
 	}
 
-	handleSpiritWaveRequest(_player: Player): void {}
-
 	checkWinCondition(): RoundResult | undefined {
 		if (this.oniCounting) return undefined;
 
@@ -483,13 +577,17 @@ export class CanKickMinigame implements IMinigame {
 		this.canRelocateElapsed = 0;
 		this.canSocketIndex = 0;
 		this.canOrigin = undefined;
+		this.canRotation = undefined;
 		this.rattleProgress = 0;
 		this.boostEligible.clear();
 		this.lastAutoCatchTime = 0;
+		this.lastAutoKickTime = 0;
 		this.playerStates.clear();
 		this.playerObjects.clear();
 		this.canModel = undefined;
+		this.jailModel = undefined;
 		this.jailZone = undefined;
+		this.matchJanitor = undefined;
 	}
 
 	private mountOni(player: Player) {
@@ -518,18 +616,40 @@ export class CanKickMinigame implements IMinigame {
 					player.Character.PivotTo(new CFrame(pos));
 				}
 			} else {
-				// Hiders scatter around
-				const angle = math.random() * math.pi * 2;
-				const radius = math.random(30, 60);
-				const offset = new Vector3(
-					math.cos(angle) * radius,
-					3,
-					math.sin(angle) * radius,
-				);
+				// Hiders scatter around, avoiding the jail zone
 				const basePos = this.canModel
 					? this.canModel.GetPivot().Position
 					: new Vector3(0, 0, 0);
-				player.Character.PivotTo(new CFrame(basePos.add(offset)));
+				const jailPos = this.jailZone?.Position;
+				const jailHalf = this.jailZone
+					? this.jailZone.Size.mul(0.5)
+					: undefined;
+				let spawnPos: Vector3 | undefined;
+				for (let attempt = 0; attempt < 10; attempt++) {
+					const angle = math.random() * math.pi * 2;
+					const radius = math.random(30, 60);
+					const candidate = basePos.add(
+						new Vector3(math.cos(angle) * radius, 3, math.sin(angle) * radius),
+					);
+					// Check if inside jail bounding box
+					if (jailPos && jailHalf) {
+						const dx = math.abs(candidate.X - jailPos.X);
+						const dz = math.abs(candidate.Z - jailPos.Z);
+						if (dx < jailHalf.X + 5 && dz < jailHalf.Z + 5) continue;
+					}
+					spawnPos = candidate;
+					break;
+				}
+				// Fallback: push outside jail bounds along X if all random attempts failed
+				if (!spawnPos) {
+					if (jailPos && jailHalf) {
+						const dir = basePos.X >= jailPos.X ? 1 : -1;
+						spawnPos = jailPos.add(new Vector3(dir * (jailHalf.X + 10), 3, 0));
+					} else {
+						spawnPos = basePos.add(new Vector3(50, 3, 0));
+					}
+				}
+				player.Character.PivotTo(new CFrame(spawnPos));
 			}
 		}
 	}

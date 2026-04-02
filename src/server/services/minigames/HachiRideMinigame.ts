@@ -478,7 +478,6 @@ export class HachiRideMinigame implements IMinigame {
 	handleKickCanRequest(_player: Player): boolean {
 		return false;
 	}
-	handleSpiritWaveRequest(_player: Player): void {}
 	stopCountdown(): void {}
 
 	checkWinCondition(): RoundResult | undefined {

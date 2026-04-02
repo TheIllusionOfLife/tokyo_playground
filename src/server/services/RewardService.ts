@@ -2,9 +2,9 @@ import { Service } from "@flamework/core";
 import {
 	BASE_PARTICIPATION_POINTS,
 	CAN_KICK_BONUS,
-	HACHI_ITEM_POINT_VALUE,
-	HACHI_WIN_ITEM_BONUS,
+	HACHI_STARTING_SCORE_OFFSET,
 	HIDER_RESCUE_BONUS,
+	ONI_BASE_POINTS,
 	ONI_CATCH_BONUS,
 	SCRAMBLE_TAG_BONUS_PER_TAG,
 	WIN_BONUS_POINTS,
@@ -25,7 +25,7 @@ export class RewardService {
 		won: boolean,
 	): RewardBreakdown {
 		const isOni = role === PlayerRole.Oni;
-		const baseReward = BASE_PARTICIPATION_POINTS;
+		const baseReward = isOni ? ONI_BASE_POINTS : BASE_PARTICIPATION_POINTS;
 
 		const winBonus = won ? WIN_BONUS_POINTS : 0;
 
@@ -47,16 +47,19 @@ export class RewardService {
 
 	calculateHachiRideRewards(
 		playerState: HachiRidePlayerState,
-		won: boolean,
-		playerCount: number,
 	): RewardBreakdown {
-		const baseReward = BASE_PARTICIPATION_POINTS;
-		// Win bonus only when multiple players (prevent solo farming)
-		const winBonus = won && playerCount > 1 ? HACHI_WIN_ITEM_BONUS : 0;
-		const roleBonus = playerState.itemCount * HACHI_ITEM_POINT_VALUE;
-		const rescueBonus = 0;
-		const totalPoints = baseReward + winBonus + roleBonus + rescueBonus;
-		return { baseReward, winBonus, roleBonus, rescueBonus, totalPoints };
+		// Hachi Ride: reward = display score only. No base, win, or streak bonuses.
+		const displayScore = math.max(
+			0,
+			playerState.itemCount - HACHI_STARTING_SCORE_OFFSET,
+		);
+		return {
+			baseReward: 0,
+			winBonus: 0,
+			roleBonus: 0,
+			rescueBonus: 0,
+			totalPoints: displayScore,
+		};
 	}
 
 	calculateShibuyaScrambleRewards(
@@ -66,7 +69,7 @@ export class RewardService {
 	): RewardBreakdown {
 		const isOni = role === PlayerRole.Oni;
 
-		const baseReward = BASE_PARTICIPATION_POINTS;
+		const baseReward = isOni ? ONI_BASE_POINTS : BASE_PARTICIPATION_POINTS;
 		const winBonus = won ? WIN_BONUS_POINTS : 0;
 		const roleBonus = isOni
 			? SCRAMBLE_TAG_BONUS_PER_TAG * playerState.catchCount

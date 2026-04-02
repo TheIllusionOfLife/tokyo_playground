@@ -19,6 +19,7 @@ export const CLEANUP_DURATION = 3;
 
 // Economy
 export const BASE_PARTICIPATION_POINTS = 25;
+export const ONI_BASE_POINTS = 40;
 export const WIN_BONUS_POINTS = 25;
 export const ONI_CATCH_BONUS = 15;
 export const HIDER_RESCUE_BONUS = 15;
@@ -38,8 +39,8 @@ export const SPIN_REWARDS = [5, 10, 10, 15, 15, 20, 25, 50];
 export const FRIEND_REFERRAL_BONUS = 15;
 
 // Can Kick
-export const ONI_CATCH_RADIUS = 10;
-export const ONI_MOUNTED_CATCH_RADIUS = 14;
+export const ONI_CATCH_RADIUS = 5;
+export const ONI_MOUNTED_CATCH_RADIUS = 7;
 export const CAN_KICK_RADIUS = 10;
 export const ONI_COUNT_DURATION = 10;
 export const CAN_RELOCATE_INTERVAL = 35;
@@ -100,7 +101,7 @@ export const MINIGAME_INTROS: Record<
 	[MinigameId.HachiRide]: {
 		titleKey: "intro_hachi_title",
 		subtitleKey: "intro_hachi_sub",
-		durationSeconds: 10,
+		durationSeconds: 5,
 	},
 };
 
@@ -212,7 +213,6 @@ export const ALL_MISSION_IDS: MissionId[] = [
 	MissionId.ReachHachiLevel3,
 	MissionId.WinHachiRide,
 	MissionId.CollectBonusItem,
-	MissionId.DodgeCars,
 	MissionId.PlayWithFriends,
 	MissionId.PlayAllGames,
 	MissionId.CatchStreak,
@@ -229,7 +229,6 @@ export const MINIGAME_MISSION_IDS: MissionId[] = [
 	MissionId.ReachHachiLevel3,
 	MissionId.WinHachiRide,
 	MissionId.CollectBonusItem,
-	MissionId.DodgeCars,
 	MissionId.PlayAllGames,
 	MissionId.CatchStreak,
 	MissionId.CollectHachiItems30,
@@ -443,6 +442,9 @@ export const HACHI_STARTING_EVOLUTION = 1; // start with double jump
 export const HACHI_LOBBY_MIN_LEVEL = 1; // all vehicles always have double jump
 export const HACHI_ONI_EVOLUTION = 1; // Oni mount gets double jump
 export const HACHI_EVOLUTION_THRESHOLDS = [0, 10, 24, 40, 60];
+/** Points already baked into itemCount at round start due to starting evolution. */
+export const HACHI_STARTING_SCORE_OFFSET =
+	HACHI_EVOLUTION_THRESHOLDS[HACHI_STARTING_EVOLUTION] ?? 0;
 // Max air jumps per evolution level (index = level)
 // Level 0: 0, Level 1-2: 1 (double), Level 3: 2 (triple), Level 4: 3 (quadruple)
 export const HACHI_MAX_AIR_JUMPS = [0, 1, 1, 2, 3];
@@ -558,20 +560,9 @@ export const SKY_DRAGON_YAW_OFFSET = -90;
 export const SCRAMBLE_TAG_RADIUS = 10;
 export const SCRAMBLE_MOUNTED_TAG_RADIUS = 14;
 export const SCRAMBLE_ONI_COUNT_DURATION = 10;
-export const SCRAMBLE_CROWD_WAVE_INTERVAL = 20;
-export const SCRAMBLE_CROWD_WAVE_DURATION = 10;
-export const SCRAMBLE_CROWD_NPC_COUNT = 12;
-export const SCRAMBLE_MAX_ACTIVE_SPIRIT_WAVES = 1;
 export const SCRAMBLE_SLIDE_SPEED = 800;
 export const SCRAMBLE_SLIDE_COOLDOWN = 8;
 export const SCRAMBLE_TAG_BONUS_PER_TAG = 15;
-export const SCRAMBLE_SPIRIT_WAVE_DURATION = 5;
-
-// Scramble cars
-export const SCRAMBLE_CAR_SPEED_DURATION = 10; // seconds for car tween across road
-export const SCRAMBLE_CAR_SPAWN_INTERVAL = 15; // seconds between car waves
-export const SCRAMBLE_CAR_WAVE_DURATION = 10; // seconds cars are present (matches tween)
-export const SCRAMBLE_CAR_DODGE_RADIUS = 12; // proximity check for dodge mission
 
 // Hachi anti-cheat
 export const HACHI_MAX_SPEED_TOLERANCE = 1.5; // multiplier over max expected speed

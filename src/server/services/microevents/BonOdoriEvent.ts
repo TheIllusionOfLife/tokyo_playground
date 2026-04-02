@@ -27,7 +27,6 @@ export class BonOdoriEvent implements IMicroEvent {
 	private readonly radiusSq = BON_ODORI_RADIUS * BON_ODORI_RADIUS;
 	private connections: RBXScriptConnection[] = [];
 	private centerPos = Vector3.zero;
-	private centerValid = false;
 	private beatCount = 0;
 	/** Direction of the current active note. */
 	private activeNoteDirection = -1;
@@ -43,7 +42,6 @@ export class BonOdoriEvent implements IMicroEvent {
 		const centers = CollectionService.GetTagged(BON_ODORI_CENTER_TAG);
 		if (centers.size() > 0 && centers[0].IsA("BasePart")) {
 			this.centerPos = centers[0].Position;
-			this.centerValid = true;
 		} else {
 			// No valid center found: abort event immediately
 			warn("[BonOdoriEvent] No BonOdoriCenter tag found, aborting");

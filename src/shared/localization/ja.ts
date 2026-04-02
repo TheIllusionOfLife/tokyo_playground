@@ -12,17 +12,8 @@ export const JA: Record<string, string> = {
 	role_hider: "かくれんぼ",
 	role_spectator: "観戦中",
 
-	// Action buttons
-	action_spirit_wave: "スピリットウェーブ!",
-	action_rattle: "ガタガタ!",
-	action_catch: "つかまえる!",
-	action_kick: "蹴る!",
-
 	// Countdown
 	oni_reveal: "オニは...",
-
-	// Level up
-	level_up: "レベルアップ!",
 
 	// Rewards
 	rewards: "リザルト",
@@ -91,7 +82,6 @@ export const JA: Record<string, string> = {
 	spectator_tap: "タップで切替",
 
 	// Misc formatting
-	lv_prefix: "Lv.",
 	skill_pts_fmt: "%d pts",
 
 	// Today's goal
@@ -100,16 +90,15 @@ export const JA: Record<string, string> = {
 
 	// Minigame names
 	game_can_kick: "缶蹴り",
-	game_scramble: "渋谷かくれんぼ",
+	game_scramble: "かくれんぼ",
 	game_hachi_ride: "ハチ公ライド",
 
 	// Minigame intros
 	intro_can_kick_title: "缶蹴り",
 	intro_can_kick_sub:
 		"1人がオニ。隠れる側: 隠れて缶を蹴り、捕まった仲間を救え! オニ: 全員見つけて捕まえろ!",
-	intro_scramble_title: "渋谷かくれんぼ",
-	intro_scramble_sub:
-		"渋谷中に隠れろ! オニが追いかけてくる。タッチされたらスピリットウェーブで仲間を援護!",
+	intro_scramble_title: "かくれんぼ",
+	intro_scramble_sub: "渋谷中に隠れろ! オニが追いかけてくる。最後まで生き残れ!",
 	intro_hachi_title: "ハチ公ライド",
 	intro_hachi_sub:
 		"ハチに乗ってレース! アイテムを集めて進化。二段ジャンプ、壁走り。最多ポイントで勝利!",
@@ -122,7 +111,7 @@ export const JA: Record<string, string> = {
 	mission_RescueTeammates: "3人の仲間を救出",
 	mission_KickCan: "缶を2回蹴る",
 	mission_EarnPoints: "100ポイント獲得",
-	mission_SurviveScramble: "渋谷カオスで生き残る",
+	mission_SurviveScramble: "かくれんぼで生き残る",
 	mission_TagInScramble: "オニで3人タッチ",
 	mission_CollectHachiItems: "ハチで20個集める",
 	mission_ReachHachiLevel3: "ハチをデカハチに進化",
@@ -167,12 +156,10 @@ export const JA: Record<string, string> = {
 	// Hint texts
 	hint_oni_counting: "オニが数えている…隠れて!",
 	hint_oni_hunting: "オニが追いかけてくる! 逃げて隠れろ!",
-	hint_spirit_wave: "クラウドスピリット! 隠れる側の援護!",
-	hint_crowd_crossing: "群衆が横断中 — 紛れろ!",
-	hint_cars_crossing: "車が来る! 気をつけろ!",
 	hint_can_moved: "缶が新しい路地に転がった!",
 	hint_starting_can_kick: "缶蹴り開始...",
-	hint_starting_scramble: "渋谷スクランブル開始...",
+	hint_starting_scramble: "かくれんぼ開始...",
+	hint_starting_hachi_ride: "ハチ公ライド開始...",
 	hint_hachi_start: "ハチに乗ってジャンプ! コインを集めろ! 3... 2... 1...",
 	hint_items_falling: "空からアイテムが降ってくる! たくさん集めろ!",
 	hint_final_sprint: "ラストスパート! ボーナスアイテム2倍!",
@@ -235,11 +222,15 @@ export const JA: Record<string, string> = {
 	vehicle_family_mount: "マウント",
 
 	// Zones (keys match ZoneName attributes in Studio)
-	["zone_Shibuya Sky"]: "渋谷スカイ",
-	["zone_Shibuya Crossing"]: "渋谷スクランブル交差点",
-	["zone_Center Gai"]: "センター街",
+	"zone_Shibuya Sky": "渋谷スカイ",
+	"zone_Shibuya Crossing": "渋谷スクランブル交差点",
+	"zone_Center Gai": "センター街",
 	zone_Dogenzaka: "道玄坂",
 	zone_Hikarie: "渋谷ヒカリエ",
-	["zone_Miyashita Park"]: "宮下パーク",
-	["zone_Shibuya Station"]: "渋谷駅",
+	"zone_Miyashita Park": "宮下パーク",
+	"zone_Shibuya Station": "渋谷駅",
+
+	// Leaderboard tabs
+	leaderboard_all_time: "歴代",
+	leaderboard_weekly_hachi: "今週のハチ",
 };

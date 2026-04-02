@@ -1,8 +1,13 @@
 import React, { useEffect, useState } from "@rbxts/react";
 import { useSelector } from "@rbxts/react-reflex";
 import { clientEvents } from "client/network";
+import { t } from "shared/localization";
+import {
+	L_LEADERBOARD_ALL_TIME,
+	L_LEADERBOARD_WEEKLY_HACHI,
+} from "shared/localization/keys";
 import { GameStoreState, gameStore } from "shared/store/game-store";
-import { MatchPhase } from "shared/types";
+import { LeaderboardTab, MatchPhase } from "shared/types";
 
 interface LeaderboardEntry {
 	rank: number;
@@ -15,22 +20,29 @@ export function LeaderboardPanel() {
 	const activeOverlay = useSelector((s: GameStoreState) => s.activeOverlay);
 	const open = activeOverlay === "leaderboard";
 	const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
+	const [activeTab, setActiveTab] = useState<LeaderboardTab>("allTime");
 
 	useEffect(() => {
 		const conn = clientEvents.leaderboardData.connect(
-			(data: { rank: number; name: string; points: number }[]) => {
-				setEntries(data);
+			(
+				tab: LeaderboardTab,
+				data: { rank: number; name: string; points: number }[],
+			) => {
+				if (tab === activeTab) {
+					setEntries(data);
+				}
 			},
 		);
 		return () => conn.Disconnect();
-	}, []);
+	}, [activeTab]);
 
-	// Request leaderboard data when panel opens
+	// Request leaderboard data when panel opens or tab changes
 	useEffect(() => {
 		if (open) {
-			clientEvents.requestLeaderboard.fire();
+			setEntries([]);
+			clientEvents.requestLeaderboard.fire(activeTab);
 		}
-	}, [open]);
+	}, [open, activeTab]);
 
 	if (matchPhase !== MatchPhase.WaitingForPlayers) return undefined!;
 
@@ -85,7 +97,7 @@ export function LeaderboardPanel() {
 				>
 					<frame
 						key="LeaderboardOverlay"
-						Size={new UDim2(0, 280, 0, 320)}
+						Size={new UDim2(0, 280, 0, 350)}
 						Position={new UDim2(0.5, 0, 0.5, 0)}
 						AnchorPoint={new Vector2(0.5, 0.5)}
 						BackgroundColor3={Color3.fromRGB(15, 25, 45)}
@@ -121,9 +133,82 @@ export function LeaderboardPanel() {
 							Text="Leaderboard"
 							ZIndex={19}
 						/>
+						<frame
+							key="TabBar"
+							Size={new UDim2(1, -24, 0, 28)}
+							Position={new UDim2(0, 12, 0, 44)}
+							BackgroundTransparency={1}
+							ZIndex={19}
+						>
+							<uilistlayout
+								FillDirection={Enum.FillDirection.Horizontal}
+								Padding={new UDim(0, 4)}
+								HorizontalAlignment={Enum.HorizontalAlignment.Center}
+							/>
+							<textbutton
+								key="tab_allTime"
+								LayoutOrder={1}
+								Size={new UDim2(0.48, 0, 1, 0)}
+								BackgroundColor3={
+									activeTab === "allTime"
+										? Color3.fromRGB(60, 60, 100)
+										: Color3.fromRGB(30, 30, 50)
+								}
+								BackgroundTransparency={activeTab === "allTime" ? 0.1 : 0.4}
+								BorderSizePixel={0}
+								TextColor3={
+									activeTab === "allTime"
+										? Color3.fromRGB(255, 255, 200)
+										: Color3.fromRGB(150, 150, 170)
+								}
+								TextScaled={true}
+								Font={
+									activeTab === "allTime"
+										? Enum.Font.GothamBold
+										: Enum.Font.Gotham
+								}
+								Text={t(L_LEADERBOARD_ALL_TIME)}
+								ZIndex={19}
+								Event={{
+									Activated: () => setActiveTab("allTime"),
+								}}
+							>
+								<uicorner CornerRadius={new UDim(0, 6)} />
+							</textbutton>
+							<textbutton
+								key="tab_weeklyHachi"
+								LayoutOrder={2}
+								Size={new UDim2(0.48, 0, 1, 0)}
+								BackgroundColor3={
+									activeTab === "weeklyHachi"
+										? Color3.fromRGB(60, 60, 100)
+										: Color3.fromRGB(30, 30, 50)
+								}
+								BackgroundTransparency={activeTab === "weeklyHachi" ? 0.1 : 0.4}
+								BorderSizePixel={0}
+								TextColor3={
+									activeTab === "weeklyHachi"
+										? Color3.fromRGB(255, 255, 200)
+										: Color3.fromRGB(150, 150, 170)
+								}
+								TextScaled={true}
+								Font={
+									activeTab === "weeklyHachi"
+										? Enum.Font.GothamBold
+										: Enum.Font.Gotham
+								}
+								Text={t(L_LEADERBOARD_WEEKLY_HACHI)}
+								ZIndex={19}
+								Event={{
+									Activated: () => setActiveTab("weeklyHachi"),
+								}}
+							>
+								<uicorner CornerRadius={new UDim(0, 6)} />
+							</textbutton>
+						</frame>
 						<scrollingframe
-							Size={new UDim2(1, -24, 1, -52)}
-							Position={new UDim2(0, 12, 0, 46)}
+							Size={new UDim2(1, -24, 1, -84)}
+							Position={new UDim2(0, 12, 0, 78)}
 							BackgroundTransparency={1}
 							BorderSizePixel={0}
 							ScrollBarThickness={4}
@@ -143,7 +228,7 @@ export function LeaderboardPanel() {
 									TextColor3={Color3.fromRGB(120, 120, 140)}
 									TextScaled={true}
 									Font={Enum.Font.Gotham}
-									Text="No data yet. Play more games!"
+									Text="No data yet."
 								/>
 							) : (
 								entries.map((entry) => (

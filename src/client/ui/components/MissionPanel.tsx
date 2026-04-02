@@ -9,7 +9,7 @@ import {
 	L_MISSIONS,
 } from "shared/localization/keys";
 import { GameStoreState, gameStore } from "shared/store/game-store";
-import { MatchPhase, MinigameId, MissionProgressData } from "shared/types";
+import { MatchPhase, MissionProgressData } from "shared/types";
 
 type MissionTab = "missions" | "poi";
 
@@ -238,9 +238,6 @@ export function MissionPanel() {
 	const open = activeOverlay === "missions";
 	const missions = useSelector((state: GameStoreState) => state.missions);
 	const matchPhase = useSelector((state: GameStoreState) => state.matchPhase);
-	const activeMinigameId = useSelector(
-		(state: GameStoreState) => state.activeMinigameId,
-	);
 	const claimReady = useSelector(
 		(state: GameStoreState) => state.missionClaimReady,
 	);
@@ -252,9 +249,12 @@ export function MissionPanel() {
 	);
 	const [activeTab, setActiveTab] = useState<MissionTab>("missions");
 
-	const isHachiInProgress =
-		activeMinigameId === MinigameId.HachiRide &&
-		matchPhase === MatchPhase.InProgress;
+	const isGameplayPhase =
+		matchPhase === MatchPhase.Countdown ||
+		matchPhase === MatchPhase.Preparing ||
+		matchPhase === MatchPhase.InProgress ||
+		matchPhase === MatchPhase.RoundOver ||
+		matchPhase === MatchPhase.Rewarding;
 
 	// Check for notification dot (claimable missions or PoI rewards)
 	const hasClaimableMission = missions.some(
@@ -265,8 +265,8 @@ export function MissionPanel() {
 	);
 	const showNotifDot = hasClaimableMission || hasClaimablePoi;
 
-	// During HachiRide, only show the claim toast (not the full panel)
-	if (isHachiInProgress) {
+	// During gameplay, only show the claim toast (not the full panel/button)
+	if (isGameplayPhase) {
 		return (
 			<>
 				{claimReady ? (

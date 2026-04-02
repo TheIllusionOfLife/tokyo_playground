@@ -7,7 +7,7 @@ import {
 } from "@rbxts/services";
 import { clientEvents } from "client/network";
 import { gameStore } from "shared/store/game-store";
-import { MatchPhase, PlayerRole } from "shared/types";
+import { MatchPhase, MinigameId, PlayerRole } from "shared/types";
 
 const CAMERA_OFFSET = new Vector3(0, 8, 16);
 const CAMERA_LERP_SPEED = 5;
@@ -27,6 +27,14 @@ export class SpectatorController implements OnStart {
 			if (role === PlayerRole.Spectator) {
 				this.enterSpectatorMode();
 			}
+		});
+
+		// Enter spectator mode when tagged in Hide & Seek (not Can Kick, where jailed players can be freed)
+		clientEvents.playerCaught.connect((userId) => {
+			if (userId !== Players.LocalPlayer.UserId) return;
+			const state = gameStore.getState();
+			if (state.activeMinigameId !== MinigameId.ShibuyaScramble) return;
+			this.enterSpectatorMode();
 		});
 
 		clientEvents.matchPhaseChanged.connect((phase) => {

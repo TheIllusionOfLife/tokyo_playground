@@ -24,8 +24,6 @@ const BADGE_IDS = {
 	VehicleCollector: 0,
 };
 
-const gameId = game.GameId;
-
 @Service()
 export class BadgeService implements OnStart {
 	private readonly pendingAwards = new Map<number, Set<string>>();

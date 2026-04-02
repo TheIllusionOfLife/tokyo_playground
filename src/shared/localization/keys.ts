@@ -13,17 +13,8 @@ export const L_ROLE_ONI = "role_oni";
 export const L_ROLE_HIDER = "role_hider";
 export const L_ROLE_SPECTATOR = "role_spectator";
 
-// Action buttons
-export const L_ACTION_SPIRIT_WAVE = "action_spirit_wave";
-export const L_ACTION_RATTLE = "action_rattle";
-export const L_ACTION_CATCH = "action_catch";
-export const L_ACTION_KICK = "action_kick";
-
 // Countdown / Oni reveal
 export const L_ONI_REVEAL = "oni_reveal";
-
-// Level up
-export const L_LEVEL_UP = "level_up";
 
 // Rewards
 export const L_REWARDS = "rewards";
@@ -91,7 +82,6 @@ export const L_OBSTACLE_ACTIVE = "obstacle_active";
 export const L_SPECTATOR_TAP = "spectator_tap";
 
 // Misc formatting
-export const L_LV_PREFIX = "lv_prefix";
 export const L_SKILL_PTS_FMT = "skill_pts_fmt";
 
 // Today's goal
@@ -154,12 +144,10 @@ export const L_HACHI_PLAY = "hachi_play";
 // Hint texts
 export const L_HINT_ONI_COUNTING = "hint_oni_counting";
 export const L_HINT_ONI_HUNTING = "hint_oni_hunting";
-export const L_HINT_SPIRIT_WAVE = "hint_spirit_wave";
-export const L_HINT_CROWD_CROSSING = "hint_crowd_crossing";
-export const L_HINT_CARS_CROSSING = "hint_cars_crossing";
 export const L_HINT_CAN_MOVED = "hint_can_moved";
 export const L_HINT_STARTING_CAN_KICK = "hint_starting_can_kick";
 export const L_HINT_STARTING_SCRAMBLE = "hint_starting_scramble";
+export const L_HINT_STARTING_HACHI_RIDE = "hint_starting_hachi_ride";
 export const L_HINT_HACHI_START = "hint_hachi_start";
 export const L_HINT_ITEMS_FALLING = "hint_items_falling";
 export const L_HINT_FINAL_SPRINT = "hint_final_sprint";
@@ -218,3 +206,7 @@ export const L_ZONE_DOGENZAKA = "zone_Dogenzaka";
 export const L_ZONE_HIKARIE = "zone_Hikarie";
 export const L_ZONE_MIYASHITA_PARK = "zone_Miyashita Park";
 export const L_ZONE_SHIBUYA_STATION = "zone_Shibuya Station";
+
+// Leaderboard tabs
+export const L_LEADERBOARD_ALL_TIME = "leaderboard_all_time";
+export const L_LEADERBOARD_WEEKLY_HACHI = "leaderboard_weekly_hachi";

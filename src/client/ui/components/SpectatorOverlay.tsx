@@ -16,7 +16,7 @@ export function SpectatorOverlay() {
 		<frame
 			key="SpectatorOverlay"
 			Size={new UDim2(0.3, 0, 0.06, 0)}
-			Position={new UDim2(0.5, 0, 0.92, 0)}
+			Position={new UDim2(0.5, 0, 0.82, 0)}
 			AnchorPoint={new Vector2(0.5, 1)}
 			BackgroundColor3={Color3.fromRGB(0, 0, 0)}
 			BackgroundTransparency={0.5}

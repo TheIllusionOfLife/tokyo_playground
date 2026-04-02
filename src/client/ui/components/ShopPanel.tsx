@@ -14,12 +14,7 @@ import {
 	L_VEHICLE_TAB,
 } from "shared/localization/keys";
 import { GameStoreState, gameStore } from "shared/store/game-store";
-import {
-	MatchPhase,
-	MinigameId,
-	ShopItemData,
-	VehicleShopData,
-} from "shared/types";
+import { MatchPhase, ShopItemData, VehicleShopData } from "shared/types";
 
 interface VehicleDisplayInfo {
 	emoji: string;
@@ -437,15 +432,15 @@ export function ShopPanel() {
 	const shopBalance = useSelector((state: GameStoreState) => state.shopBalance);
 	const level = useSelector((state: GameStoreState) => state.playgroundLevel);
 	const matchPhase = useSelector((state: GameStoreState) => state.matchPhase);
-	const activeMinigameId = useSelector(
-		(state: GameStoreState) => state.activeMinigameId,
-	);
 	const [tab, setTab] = useState<ShopTab>("vehicles");
 
-	// Hide during HachiRide InProgress (overlaps with rank/skills/points)
+	// Hide during gameplay phases (Countdown through Rewarding)
 	const hideButton =
-		activeMinigameId === MinigameId.HachiRide &&
-		matchPhase === MatchPhase.InProgress;
+		matchPhase === MatchPhase.Countdown ||
+		matchPhase === MatchPhase.Preparing ||
+		matchPhase === MatchPhase.InProgress ||
+		matchPhase === MatchPhase.RoundOver ||
+		matchPhase === MatchPhase.Rewarding;
 
 	const onOpen = () => {
 		gameStore.setActiveOverlay(open ? "none" : "shop");

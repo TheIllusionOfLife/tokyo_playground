@@ -43,8 +43,6 @@ export interface GameStoreState {
 	missions: MissionProgressData[];
 	shopItems: ShopItemData[];
 	shopBalance: number;
-	showLevelUp: boolean;
-	levelUpNewLevel: number;
 	hachiCostumed: boolean;
 	hachiItemCount: number;
 	hachiEvolutionLevel: number;
@@ -53,7 +51,6 @@ export interface GameStoreState {
 	missionClaimReady?: { id: MissionId; pointsReward: number };
 	localCaught: boolean;
 	localTagged: boolean;
-	spiritCharges: number;
 	featuredUnlock?: FeaturedUnlockData;
 	hachiRaceState?: HachiRaceStateData;
 	hachiFieldRegular: number;
@@ -118,8 +115,6 @@ const initialState: GameStoreState = {
 	missions: [],
 	shopItems: [],
 	shopBalance: 0,
-	showLevelUp: false,
-	levelUpNewLevel: 1,
 	hachiCostumed: false,
 	hachiItemCount: 0,
 	hachiEvolutionLevel: 0,
@@ -129,7 +124,6 @@ const initialState: GameStoreState = {
 	hachiFieldBonusTotal: 0,
 	localCaught: false,
 	localTagged: false,
-	spiritCharges: 0,
 	activeOverlay: "none" as const,
 	feedMessages: [],
 	// Living Shibuya
@@ -237,10 +231,6 @@ export const gameStore = createProducer(initialState, {
 		...state,
 		localTagged,
 	}),
-	setSpiritCharges: (state, spiritCharges: number) => ({
-		...state,
-		spiritCharges,
-	}),
 	setFeaturedUnlock: (
 		state,
 		featuredUnlock: FeaturedUnlockData | undefined,
@@ -311,7 +301,6 @@ export const gameStore = createProducer(initialState, {
 		scoreboard: [],
 		showRewardAnimation: false,
 		roundResult: undefined,
-		showLevelUp: false,
 		hachiCostumed: false,
 		hachiItemCount: 0,
 		hachiEvolutionLevel: 0,
@@ -327,7 +316,6 @@ export const gameStore = createProducer(initialState, {
 		missionClaimReady: undefined,
 		localCaught: false,
 		localTagged: false,
-		spiritCharges: 0,
 		activeOverlay: "none" as const,
 		hachiRaceState: undefined,
 		feedMessages: [],
@@ -347,16 +335,6 @@ export const gameStore = createProducer(initialState, {
 		...state,
 		shopBalance,
 	}),
-	setLevelUp: (state, levelUpNewLevel: number) => ({
-		...state,
-		showLevelUp: true,
-		levelUpNewLevel,
-	}),
-	hideLevelUp: (state) => ({
-		...state,
-		showLevelUp: false,
-	}),
-
 	// ── Living Shibuya Mutations ─────────────────────────────────────────
 	setTimePhase: (state, timePhase: TimePhase) => ({
 		...state,

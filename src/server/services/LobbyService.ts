@@ -32,6 +32,7 @@ import {
 } from "shared/constants";
 import {
 	L_HINT_STARTING_CAN_KICK,
+	L_HINT_STARTING_HACHI_RIDE,
 	L_HINT_STARTING_SCRAMBLE,
 } from "shared/localization/keys";
 import { GlobalEvents } from "shared/network";
@@ -171,6 +172,9 @@ export class LobbyService implements OnStart {
 						);
 						return;
 					}
+					this.serverEvents.hintTextChanged.broadcast(
+						L_HINT_STARTING_HACHI_RIDE,
+					);
 					this.onStartRequested(MinigameId.HachiRide);
 				});
 		}
@@ -250,17 +254,14 @@ export class LobbyService implements OnStart {
 			if (!portal.IsA("BasePart")) continue;
 			const prompt = portal.FindFirstChildOfClass("ProximityPrompt");
 			if (!prompt) continue;
-			prompt.Triggered.Connect((player: Player) => {
+			prompt.Triggered.Connect(() => {
 				if (!this.onStartRequested) {
 					warn(
 						"[LobbyService] CanKick portal triggered before onStartRequested registered",
 					);
 					return;
 				}
-				this.serverEvents.hintTextChanged.fire(
-					player,
-					L_HINT_STARTING_CAN_KICK,
-				);
+				this.serverEvents.hintTextChanged.broadcast(L_HINT_STARTING_CAN_KICK);
 				this.onStartRequested(MinigameId.CanKick);
 			});
 		}
@@ -269,21 +270,16 @@ export class LobbyService implements OnStart {
 		const scramblePortals = CollectionService.GetTagged(SCRAMBLE_PORTAL_TAG);
 		for (const portal of scramblePortals) {
 			if (!portal.IsA("BasePart")) continue;
-			portal
-				.FindFirstChildOfClass("ProximityPrompt")
-				?.Triggered.Connect((player: Player) => {
-					if (!this.onStartRequested) {
-						warn(
-							"[LobbyService] Scramble portal triggered before onStartRequested registered",
-						);
-						return;
-					}
-					this.serverEvents.hintTextChanged.fire(
-						player,
-						L_HINT_STARTING_SCRAMBLE,
+			portal.FindFirstChildOfClass("ProximityPrompt")?.Triggered.Connect(() => {
+				if (!this.onStartRequested) {
+					warn(
+						"[LobbyService] Scramble portal triggered before onStartRequested registered",
 					);
-					this.onStartRequested(MinigameId.ShibuyaScramble);
-				});
+					return;
+				}
+				this.serverEvents.hintTextChanged.broadcast(L_HINT_STARTING_SCRAMBLE);
+				this.onStartRequested(MinigameId.ShibuyaScramble);
+			});
 		}
 		print(`[LobbyService] Set up ${scramblePortals.size()} Scramble portals`);
 	}

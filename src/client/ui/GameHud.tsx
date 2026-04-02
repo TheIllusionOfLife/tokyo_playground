@@ -9,7 +9,6 @@ import { HachiPlayButton } from "./components/HachiPlayButton";
 import { HachiToggleButton } from "./components/HachiToggleButton";
 import { HintText } from "./components/HintText";
 import { LeaderboardPanel } from "./components/LeaderboardPanel";
-import { LevelUpOverlay } from "./components/LevelUpOverlay";
 import { MicroEventIndicator } from "./components/MicroEventIndicator";
 import { MissionPanel } from "./components/MissionPanel";
 import { ObstacleCourseTimer } from "./components/ObstacleCourseTimer";
@@ -54,7 +53,6 @@ export function GameHud() {
 				<RewardPopup />
 				<Scoreboard />
 				<ActionButton />
-				<LevelUpOverlay />
 				<MissionPanel />
 				<ShopPanel />
 				<SpectatorOverlay />

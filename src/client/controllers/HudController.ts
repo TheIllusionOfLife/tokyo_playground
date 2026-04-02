@@ -164,11 +164,6 @@ export class HudController implements OnStart {
 			clientEvents.requestShopCatalog.fire(); // refresh equipped flags
 		});
 
-		clientEvents.levelUp.connect((lv) => {
-			gameStore.setLevelUp(lv);
-			task.delay(3, () => gameStore.hideLevelUp());
-		});
-
 		clientEvents.dailyLoginBonus.connect((points) => {
 			gameStore.pushFeedMessage(`+${points} ${t(L_DAILY_LOGIN_BONUS)}`);
 		});
@@ -258,7 +253,6 @@ export class HudController implements OnStart {
 			}
 			if (activeMinigameId === MinigameId.ShibuyaScramble) {
 				gameStore.setLocalTagged(true);
-				gameStore.setSpiritCharges(1);
 			}
 		});
 
@@ -297,10 +291,6 @@ export class HudController implements OnStart {
 					}
 				});
 			}
-		});
-
-		clientEvents.spiritChargeChanged.connect((charges) => {
-			gameStore.setSpiritCharges(charges);
 		});
 
 		clientEvents.hachiRaceState.connect((state) => {

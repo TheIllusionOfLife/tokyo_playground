@@ -89,6 +89,8 @@ export enum RoundResult {
 	TimerExpired = "TimerExpired",
 }
 
+export type LeaderboardTab = "allTime" | "weeklyHachi";
+
 export enum MissionId {
 	PlayGames = "PlayGames",
 	WinAsOni = "WinAsOni",
@@ -188,7 +190,6 @@ export interface ShibuyaScramblePlayerState {
 	isTagged: boolean;
 	catchCount: number;
 	rescueCount: number;
-	carWavesSurvived: number;
 }
 
 export interface HachiRidePlayerState {

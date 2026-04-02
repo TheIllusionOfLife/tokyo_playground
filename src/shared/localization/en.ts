@@ -12,17 +12,8 @@ export const EN: Record<string, string> = {
 	role_hider: "HIDER",
 	role_spectator: "SPECTATOR",
 
-	// Action buttons
-	action_spirit_wave: "SPIRIT WAVE!",
-	action_rattle: "RATTLE!",
-	action_catch: "CATCH!",
-	action_kick: "KICK!",
-
 	// Countdown
 	oni_reveal: "The Oni is...",
-
-	// Level up
-	level_up: "LEVEL UP!",
 
 	// Rewards
 	rewards: "REWARDS",
@@ -91,7 +82,6 @@ export const EN: Record<string, string> = {
 	spectator_tap: "Tap to switch",
 
 	// Misc formatting
-	lv_prefix: "Lv.",
 	skill_pts_fmt: "%d pts",
 
 	// Today's goal
@@ -100,19 +90,19 @@ export const EN: Record<string, string> = {
 
 	// Minigame names
 	game_can_kick: "Can Kick",
-	game_scramble: "Shibuya Hide & Seek",
+	game_scramble: "Hide & Seek",
 	game_hachi_ride: "Hachi Ride",
 
 	// Minigame intros
 	intro_can_kick_title: "Can Kick",
 	intro_can_kick_sub:
 		"One player is the Oni. Hiders: stay hidden and kick the can to free caught friends! Oni: find and catch all hiders.",
-	intro_scramble_title: "Shibuya Hide & Seek",
+	intro_scramble_title: "Hide & Seek",
 	intro_scramble_sub:
-		"Hide anywhere in Shibuya! Oni hunts you down. Tagged hiders get Spirit Wave to help teammates.",
+		"Hide anywhere in Shibuya! Oni hunts you down. Last one standing wins!",
 	intro_hachi_title: "Ride Hachi",
 	intro_hachi_sub:
-		"Race on Hachi! Collect items to evolve: double jump, wall run, and more. Most points wins!",
+		"Race on Hachi! Collect items to evolve: wall run, triple jump, and more. Most points wins!",
 
 	// Mission labels
 	mission_PlayGames: "Play 3 Games",
@@ -122,7 +112,7 @@ export const EN: Record<string, string> = {
 	mission_RescueTeammates: "Rescue 3 Teammates",
 	mission_KickCan: "Kick the Can 2 Times",
 	mission_EarnPoints: "Earn 100 Points",
-	mission_SurviveScramble: "Survive Shibuya Scramble",
+	mission_SurviveScramble: "Survive Hide & Seek",
 	mission_TagInScramble: "Tag 3 Hiders as Oni",
 	mission_CollectHachiItems: "Collect 20 Items on Hachi",
 	mission_ReachHachiLevel3: "Evolve Hachi to Big Hachi",
@@ -167,12 +157,10 @@ export const EN: Record<string, string> = {
 	// Hint texts
 	hint_oni_counting: "Oni is counting... Hide!",
 	hint_oni_hunting: "Oni is hunting! Run and hide!",
-	hint_spirit_wave: "Crowd Spirit! Extra cover for the hiders!",
-	hint_crowd_crossing: "Crowd crossing — use them!",
-	hint_cars_crossing: "Cars crossing! Watch out!",
 	hint_can_moved: "The can rolled to a new alley!",
 	hint_starting_can_kick: "Starting Can Kick...",
-	hint_starting_scramble: "Starting Shibuya Scramble...",
+	hint_starting_scramble: "Starting Hide & Seek...",
+	hint_starting_hachi_ride: "Starting Hachi Ride...",
 	hint_hachi_start: "Mount Hachi and jump! Collect coins! 3... 2... 1...",
 	hint_items_falling: "Items falling from the sky! Collect as much as you can!",
 	hint_final_sprint: "Final sprint! Bonus items are worth double now!",
@@ -236,11 +224,15 @@ export const EN: Record<string, string> = {
 	vehicle_family_mount: "Mount",
 
 	// Zones (keys match ZoneName attributes in Studio)
-	["zone_Shibuya Sky"]: "Shibuya Sky",
-	["zone_Shibuya Crossing"]: "Shibuya Crossing",
-	["zone_Center Gai"]: "Center-gai",
+	"zone_Shibuya Sky": "Shibuya Sky",
+	"zone_Shibuya Crossing": "Shibuya Crossing",
+	"zone_Center Gai": "Center-gai",
 	zone_Dogenzaka: "Dogenzaka",
 	zone_Hikarie: "Shibuya Hikarie",
-	["zone_Miyashita Park"]: "Miyashita Park",
-	["zone_Shibuya Station"]: "Shibuya Station",
+	"zone_Miyashita Park": "Miyashita Park",
+	"zone_Shibuya Station": "Shibuya Station",
+
+	// Leaderboard tabs
+	leaderboard_all_time: "All Time",
+	leaderboard_weekly_hachi: "Weekly Hachi",
 };

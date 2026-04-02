@@ -4,6 +4,7 @@ import {
 	HachiRaceStateData,
 	ItemCategory,
 	ItemId,
+	LeaderboardTab,
 	MatchPhase,
 	MicroEventData,
 	MinigameId,
@@ -26,7 +27,6 @@ interface ServerToClientEvents {
 	scoreUpdated(coins: number): void;
 	matchPhaseChanged(phase: MatchPhase): void;
 	roleAssigned(role: PlayerRole, minigameId: MinigameId): void;
-	crowdWaveStarted(pathCount: number): void;
 	roundTimerUpdate(timeRemaining: number): void;
 	hintTextChanged(hint: string, hintArgs?: string[]): void;
 	rewardGranted(breakdown: RewardBreakdown): void;
@@ -57,7 +57,6 @@ interface ServerToClientEvents {
 		category: ItemCategory,
 		itemId: ItemId | undefined,
 	): void;
-	levelUp(newLevel: number): void;
 	slideImpulse(dir: Vector3, speed: number): void;
 	hachiEvolved(newLevel: number): void;
 	hachiItemCollected(itemCount: number): void;
@@ -70,7 +69,6 @@ interface ServerToClientEvents {
 	oniReveal(oniUserId: number, durationSeconds: number): void;
 	canKickVisual(canPosition: Vector3): void;
 	catchHighlight(caughtUserId: number): void;
-	spiritChargeChanged(charges: number): void;
 	hachiRaceState(state: HachiRaceStateData): void;
 	hachiFieldItems(
 		remainingRegular: number,
@@ -127,6 +125,7 @@ interface ServerToClientEvents {
 	spinResult(reward: number, success: boolean): void;
 	spinStatusSync(available: boolean): void;
 	leaderboardData(
+		tab: LeaderboardTab,
 		entries: { rank: number; name: string; points: number }[],
 	): void;
 
@@ -175,8 +174,6 @@ interface ClientToServerEvents {
 	hachiEject(): void;
 	hachiDoubleJump(): void;
 	requestHachiSlide(): void;
-	requestSpiritWave(): void;
-
 	// ── Living Shibuya: Stamps (deprecated) ─────────────────────────────
 	requestStampCard(): void;
 
@@ -196,7 +193,7 @@ interface ClientToServerEvents {
 
 	// ── Engagement ──────────────────────────────────────────────────────
 	requestSpin(): void;
-	requestLeaderboard(): void;
+	requestLeaderboard(tab: LeaderboardTab): void;
 
 	// ── Minigame start request ───────────────────────────────────────────
 	requestMinigameStart(minigameId: MinigameId): void;
