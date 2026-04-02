@@ -162,7 +162,6 @@ export const L_HINT_STARTING_CAN_KICK = "hint_starting_can_kick";
 export const L_HINT_STARTING_SCRAMBLE = "hint_starting_scramble";
 export const L_HINT_HACHI_START = "hint_hachi_start";
 export const L_HINT_ITEMS_FALLING = "hint_items_falling";
-export const L_HINT_KEEP_COLLECTING = "hint_keep_collecting";
 export const L_HINT_FINAL_SPRINT = "hint_final_sprint";
 export const L_HINT_PLAYER_TAGGED = "hint_player_tagged";
 export const L_HINT_PLAYER_CAUGHT = "hint_player_caught";
@@ -175,6 +174,8 @@ export const L_HINT_ABILITY_2 = "hint_ability_2";
 export const L_HINT_ABILITY_3 = "hint_ability_3";
 export const L_HINT_ABILITY_4 = "hint_ability_4";
 export const L_HINT_HACHI_EVOLVED = "hint_hachi_evolved";
+export const L_HINT_SKY_DRAGON = "hint_sky_dragon";
+export const L_HINT_DRAGON_COLLECTED = "hint_dragon_collected";
 
 // Vehicles
 export const L_VEHICLE_TAB = "vehicle_tab";

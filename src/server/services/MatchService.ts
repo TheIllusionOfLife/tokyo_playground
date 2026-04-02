@@ -455,6 +455,7 @@ export class MatchService implements OnStart {
 					? this.rewardService.calculateHachiRideRewards(
 							state as HachiRidePlayerState,
 							won,
+							playerStates.size(),
 						)
 					: state.minigameId === MinigameId.ShibuyaScramble
 						? this.rewardService.calculateShibuyaScrambleRewards(

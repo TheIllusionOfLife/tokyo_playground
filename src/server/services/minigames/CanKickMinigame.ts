@@ -8,6 +8,7 @@ import {
 	CAN_RATTLE_TARGET,
 	CAN_RELOCATE_INTERVAL,
 	DEFAULT_WALK_SPEED,
+	HACHI_ONI_EVOLUTION,
 	HACHI_WALK_SPEEDS,
 	ONI_CATCH_RADIUS,
 	ONI_COUNT_DURATION,
@@ -498,7 +499,7 @@ export class CanKickMinigame implements IMinigame {
 			return;
 		}
 		const hachiClone = hachiTemplate.Clone();
-		if (!equipHachiCostume(player, hachiClone, 0)) {
+		if (!equipHachiCostume(player, hachiClone, HACHI_ONI_EVOLUTION)) {
 			hachiClone.Destroy();
 		}
 	}

@@ -217,14 +217,9 @@ export class LobbyService implements OnStart {
 				const template = getVehicleTemplate(vehicleId);
 				if (!template) return;
 				const clone = template.Clone();
-				// During matches, Oni remounts at level 0 (no evolution abilities)
-				// In lobby, use player's max level with lobby minimum
-				const evoLevel = this.matchActive
-					? 0
-					: math.max(
-							this.playerDataService.getPlayerData(player)?.maxHachiLevel ?? 0,
-							HACHI_LOBBY_MIN_LEVEL,
-						);
+				// During matches, Oni remounts via minigame service.
+				// In lobby, all vehicles use the baseline level (double jump).
+				const evoLevel = this.matchActive ? 0 : HACHI_LOBBY_MIN_LEVEL;
 				const vDef = VEHICLE_CATALOG.find((v) => v.id === vehicleId);
 				if (
 					!equipHachiCostume(
@@ -365,12 +360,7 @@ export class LobbyService implements OnStart {
 				if (!humanoid.Parent) return;
 				humanoid.PlatformStand = false;
 				if (isPlayerMounted(player)) {
-					const data = this.playerDataService.getPlayerData(player);
-					const evoLevel = math.max(
-						data?.maxHachiLevel ?? 0,
-						HACHI_LOBBY_MIN_LEVEL,
-					);
-					updateHachiWalkSpeed(player, evoLevel);
+					updateHachiWalkSpeed(player, HACHI_LOBBY_MIN_LEVEL);
 				} else {
 					humanoid.WalkSpeed = DEFAULT_WALK_SPEED;
 				}
@@ -458,12 +448,7 @@ export class LobbyService implements OnStart {
 		this.serverEvents.hachiLobbyDoubleJump.connect((player) => {
 			if (this.matchActive) return;
 
-			const data = this.playerDataService.getPlayerData(player);
-			const maxLevel = math.max(
-				data?.maxHachiLevel ?? 0,
-				HACHI_LOBBY_MIN_LEVEL,
-			);
-			if (maxLevel < 1) return;
+			if (HACHI_LOBBY_MIN_LEVEL < 1) return;
 
 			// Lobby caps at 1 air jump (double); multi-jump is minigame-only
 			const used = this.lobbyAirJumpsUsed.get(player.UserId) ?? 0;
@@ -488,9 +473,8 @@ export class LobbyService implements OnStart {
 		this.serverEvents.hachiLobbyWallRun.connect((player, wallNormal) => {
 			if (this.matchActive) return;
 
-			const data = this.playerDataService.getPlayerData(player);
-			if (!data || math.max(data.maxHachiLevel, HACHI_LOBBY_MIN_LEVEL) < 3)
-				return;
+			// Wall-run requires evolution level >= 2, only available during Hachi Ride
+			if (HACHI_LOBBY_MIN_LEVEL < 2) return;
 
 			if (!isPlayerMounted(player)) return;
 			const character = player.Character;
@@ -545,12 +529,7 @@ export class LobbyService implements OnStart {
 				humanoid.PlatformStand = false;
 				humanoid.AutoRotate = true;
 				if (isPlayerMounted(player)) {
-					const data = this.playerDataService.getPlayerData(player);
-					const evoLevel = math.max(
-						data?.maxHachiLevel ?? 0,
-						HACHI_LOBBY_MIN_LEVEL,
-					);
-					updateHachiWalkSpeed(player, evoLevel);
+					updateHachiWalkSpeed(player, HACHI_LOBBY_MIN_LEVEL);
 				} else {
 					humanoid.WalkSpeed = DEFAULT_WALK_SPEED;
 				}

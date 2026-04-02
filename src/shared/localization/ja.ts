@@ -56,9 +56,9 @@ export const JA: Record<string, string> = {
 	skill_wall_run: "壁走り",
 	skill_wall_run_desc: "壁の近くでジャンプ",
 	skill_big_hachi: "デカハチ",
-	skill_big_hachi_desc: "大きくて速い",
+	skill_big_hachi_desc: "デカい + 三段ジャンプ",
 	skill_fluffy_hachi: "もふもふハチ",
-	skill_fluffy_hachi_desc: "最高のかわいさ",
+	skill_fluffy_hachi_desc: "もふもふ + 四段ジャンプ",
 	skill_unlocked: "解放済み",
 	skills_button: "スキル",
 
@@ -175,8 +175,7 @@ export const JA: Record<string, string> = {
 	hint_starting_scramble: "渋谷スクランブル開始...",
 	hint_hachi_start: "ハチに乗ってジャンプ! コインを集めろ! 3... 2... 1...",
 	hint_items_falling: "空からアイテムが降ってくる! たくさん集めろ!",
-	hint_keep_collecting: "どんどん集めろ!",
-	hint_final_sprint: "ラストスパート! ボーナスアイテム3倍!",
+	hint_final_sprint: "ラストスパート! ボーナスアイテム2倍!",
 	hint_player_tagged: "%1がタッチされた!",
 	hint_player_caught: "%1が捕まった!",
 	hint_can_kicked: "%1が缶を蹴った!",
@@ -189,6 +188,8 @@ export const JA: Record<string, string> = {
 	hint_ability_3: "レベル3: デカハチ + 三段ジャンプ!",
 	hint_ability_4: "レベル4: もふもふハチ + 四段ジャンプ!",
 	hint_hachi_evolved: "ハチがレベル%1に進化!",
+	hint_sky_dragon: "神龍が空を舞う! 背中に何かが光っている...",
+	hint_dragon_collected: "%1が龍の秘宝を手に入れた! +%2ポイント!",
 
 	// Point of Interest
 	poi_header: "名所めぐり",

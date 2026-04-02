@@ -171,10 +171,12 @@ function ShopCard({
 	item,
 	balance,
 	level,
+	order,
 }: {
 	item: ShopItemData;
 	balance: number;
 	level: number;
+	order: number;
 }) {
 	const canAfford = balance >= item.price;
 	const levelMet = level >= item.levelRequired;
@@ -212,6 +214,7 @@ function ShopCard({
 			BackgroundColor3={Color3.fromRGB(35, 35, 50)}
 			BackgroundTransparency={0.2}
 			BorderSizePixel={0}
+			LayoutOrder={order}
 		>
 			<uicorner CornerRadius={new UDim(0, 6)} />
 			<textlabel
@@ -282,10 +285,12 @@ function VehicleCard({
 	vehicle,
 	balance,
 	level,
+	order,
 }: {
 	vehicle: VehicleShopData;
 	balance: number;
 	level: number;
+	order: number;
 }) {
 	const canAfford = balance >= vehicle.price;
 	const levelMet = level >= vehicle.levelRequired;
@@ -324,6 +329,7 @@ function VehicleCard({
 			BackgroundColor3={Color3.fromRGB(35, 35, 50)}
 			BackgroundTransparency={0.2}
 			BorderSizePixel={0}
+			LayoutOrder={order}
 		>
 			<uicorner CornerRadius={new UDim(0, 8)} />
 			<uistroke
@@ -421,10 +427,13 @@ export function ShopPanel() {
 		(state: GameStoreState) => state.activeOverlay,
 	);
 	const open = activeOverlay === "shop";
-	const shopItems = useSelector((state: GameStoreState) => state.shopItems);
-	const vehicleItems = useSelector(
+	const rawShopItems = useSelector((state: GameStoreState) => state.shopItems);
+	const rawVehicleItems = useSelector(
 		(state: GameStoreState) => state.vehicleItems,
 	);
+	// Sort by price ascending
+	const shopItems = [...rawShopItems].sort((a, b) => a.price < b.price);
+	const vehicleItems = [...rawVehicleItems].sort((a, b) => a.price < b.price);
 	const shopBalance = useSelector((state: GameStoreState) => state.shopBalance);
 	const level = useSelector((state: GameStoreState) => state.playgroundLevel);
 	const matchPhase = useSelector((state: GameStoreState) => state.matchPhase);
@@ -595,22 +604,25 @@ export function ShopPanel() {
 										: new UDim2(0, 6, 0, 6)
 								}
 								HorizontalAlignment={Enum.HorizontalAlignment.Center}
+								SortOrder={Enum.SortOrder.LayoutOrder}
 							/>
 							{tab === "cosmetics"
-								? shopItems.map((item) => (
+								? shopItems.map((item, i) => (
 										<ShopCard
 											key={item.id}
 											item={item}
 											balance={shopBalance}
 											level={level}
+											order={i}
 										/>
 									))
-								: vehicleItems.map((v) => (
+								: vehicleItems.map((v, i) => (
 										<VehicleCard
 											key={v.id}
 											vehicle={v}
 											balance={shopBalance}
 											level={level}
+											order={i}
 										/>
 									))}
 						</scrollingframe>

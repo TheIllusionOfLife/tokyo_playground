@@ -5,7 +5,6 @@ import {
 	HACHI_ITEM_POINT_VALUE,
 	HACHI_WIN_ITEM_BONUS,
 	HIDER_RESCUE_BONUS,
-	LOSS_MULTIPLIER,
 	ONI_CATCH_BONUS,
 	SCRAMBLE_TAG_BONUS_PER_TAG,
 	WIN_BONUS_POINTS,
@@ -26,10 +25,7 @@ export class RewardService {
 		won: boolean,
 	): RewardBreakdown {
 		const isOni = role === PlayerRole.Oni;
-
-		const baseReward = won
-			? BASE_PARTICIPATION_POINTS
-			: math.floor(BASE_PARTICIPATION_POINTS * LOSS_MULTIPLIER);
+		const baseReward = BASE_PARTICIPATION_POINTS;
 
 		const winBonus = won ? WIN_BONUS_POINTS : 0;
 
@@ -52,9 +48,11 @@ export class RewardService {
 	calculateHachiRideRewards(
 		playerState: HachiRidePlayerState,
 		won: boolean,
+		playerCount: number,
 	): RewardBreakdown {
 		const baseReward = BASE_PARTICIPATION_POINTS;
-		const winBonus = won ? HACHI_WIN_ITEM_BONUS : 0;
+		// Win bonus only when multiple players (prevent solo farming)
+		const winBonus = won && playerCount > 1 ? HACHI_WIN_ITEM_BONUS : 0;
 		const roleBonus = playerState.itemCount * HACHI_ITEM_POINT_VALUE;
 		const rescueBonus = 0;
 		const totalPoints = baseReward + winBonus + roleBonus + rescueBonus;
@@ -68,9 +66,7 @@ export class RewardService {
 	): RewardBreakdown {
 		const isOni = role === PlayerRole.Oni;
 
-		const baseReward = won
-			? BASE_PARTICIPATION_POINTS
-			: math.floor(BASE_PARTICIPATION_POINTS * LOSS_MULTIPLIER);
+		const baseReward = BASE_PARTICIPATION_POINTS;
 		const winBonus = won ? WIN_BONUS_POINTS : 0;
 		const roleBonus = isOni
 			? SCRAMBLE_TAG_BONUS_PER_TAG * playerState.catchCount

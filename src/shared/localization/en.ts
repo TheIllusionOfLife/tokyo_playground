@@ -56,9 +56,9 @@ export const EN: Record<string, string> = {
 	skill_wall_run: "Wall Run",
 	skill_wall_run_desc: "Jump near walls",
 	skill_big_hachi: "Big Hachi",
-	skill_big_hachi_desc: "Bigger and faster",
+	skill_big_hachi_desc: "Bigger + Triple Jump",
 	skill_fluffy_hachi: "Fluffy Hachi",
-	skill_fluffy_hachi_desc: "Maximum cuteness",
+	skill_fluffy_hachi_desc: "Fluffy + Quadruple Jump",
 	skill_unlocked: "Unlocked",
 	skills_button: "Skills",
 
@@ -175,8 +175,7 @@ export const EN: Record<string, string> = {
 	hint_starting_scramble: "Starting Shibuya Scramble...",
 	hint_hachi_start: "Mount Hachi and jump! Collect coins! 3... 2... 1...",
 	hint_items_falling: "Items falling from the sky! Collect as much as you can!",
-	hint_keep_collecting: "Keep collecting!",
-	hint_final_sprint: "Final sprint! Bonus items are worth triple now!",
+	hint_final_sprint: "Final sprint! Bonus items are worth double now!",
 	hint_player_tagged: "%1 was tagged!",
 	hint_player_caught: "%1 was caught!",
 	hint_can_kicked: "%1 kicked the can!",
@@ -189,6 +188,9 @@ export const EN: Record<string, string> = {
 	hint_ability_3: "Level 3: BIG HACHI + TRIPLE JUMP!",
 	hint_ability_4: "Level 4: FLUFFY HACHI + QUADRUPLE JUMP!",
 	hint_hachi_evolved: "Hachi evolved to level %1!",
+	hint_sky_dragon:
+		"A divine dragon soars above! Something glows on its back...",
+	hint_dragon_collected: "%1 claimed the Dragon's treasure! +%2 points!",
 
 	// Point of Interest
 	poi_header: "Landmarks",

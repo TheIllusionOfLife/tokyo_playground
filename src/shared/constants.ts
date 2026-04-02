@@ -18,12 +18,11 @@ export const RESULTS_DISPLAY_DURATION = 5;
 export const CLEANUP_DURATION = 3;
 
 // Economy
-export const BASE_PARTICIPATION_POINTS = 10;
+export const BASE_PARTICIPATION_POINTS = 25;
 export const WIN_BONUS_POINTS = 25;
-export const ONI_CATCH_BONUS = 5;
+export const ONI_CATCH_BONUS = 15;
 export const HIDER_RESCUE_BONUS = 15;
 export const CAN_KICK_BONUS = 20;
-export const LOSS_MULTIPLIER = 0.6;
 export const DAILY_LOGIN_BONUS_POINTS = 20;
 
 // Login streak bonuses (index = day in streak, capped at day 7)
@@ -440,8 +439,9 @@ export const HACHI_SPAWN_TAG = "HachiRideSpawn";
 // Hachi Ride tuning
 export const HACHI_ROUND_DURATION =
 	MINIGAME_CONFIGS[MinigameId.HachiRide].roundDuration;
-export const HACHI_STARTING_EVOLUTION = 2; // start with double jump + wall run
-export const HACHI_LOBBY_MIN_LEVEL = 3; // lobby Hachi always has double jump + wall run
+export const HACHI_STARTING_EVOLUTION = 1; // start with double jump
+export const HACHI_LOBBY_MIN_LEVEL = 1; // all vehicles always have double jump
+export const HACHI_ONI_EVOLUTION = 1; // Oni mount gets double jump
 export const HACHI_EVOLUTION_THRESHOLDS = [0, 10, 24, 40, 60];
 // Max air jumps per evolution level (index = level)
 // Level 0: 0, Level 1-2: 1 (double), Level 3: 2 (triple), Level 4: 3 (quadruple)
@@ -453,7 +453,7 @@ export const HACHI_DEFAULT_SCALE = CHARACTER_SCALE; // matches character scale
 export const HACHI_BIG_SCALE = 1.5;
 export const HACHI_DOUBLE_JUMP_IMPULSE = 106; // same as HACHI_JUMP_VELOCITY
 export const HACHI_WALL_RUN_SPEED = 75;
-export const HACHI_WALL_RUN_RAYCAST = 3;
+export const HACHI_WALL_RUN_RAYCAST = 5;
 export const HACHI_WALL_RUN_MAX_DUR = 3;
 export const HACHI_ITEM_POINT_VALUE = 1;
 export const HACHI_BONUS_ITEM_COUNT = 50;
@@ -465,7 +465,7 @@ export const HACHI_JUMP_VELOCITY = 106; // 150 * sqrt(0.5) for half jump apex
 export const HACHI_JUMP_COOLDOWN = 0.1; // seconds between jump requests
 export const HACHI_EJECT_COOLDOWN = 1.0; // seconds between eject requests
 export const HACHI_FINAL_SPRINT_WINDOW = 30;
-export const HACHI_FINAL_SPRINT_MULTIPLIER = 3;
+export const HACHI_FINAL_SPRINT_MULTIPLIER = 2;
 
 // Can Kick visual
 export const CAN_KICK_RISE = 15; // studs the can flies up
@@ -501,37 +501,57 @@ export const HACHI_CITY_MAX_Z = 34286;
 export const HACHI_ROOFTOP_BONUS_OFFSET_Y = 50;
 export const HACHI_ROOFTOP_BUILDINGS: { topY: number; x: number; z: number }[] =
 	[
-		{ topY: 216.7, x: -10476, z: 33443 },
+		{ topY: 216.7, x: -10467, z: 33444 },
 		{ topY: 187.2, x: -10689, z: 33634 },
-		{ topY: 178.3, x: -10362, z: 33374 },
-		{ topY: 173.8, x: -10475, z: 33623 },
+		{ topY: 178.3, x: -10376, z: 33377 },
+		{ topY: 173.8, x: -10510, z: 33577 },
 		{ topY: 172.0, x: -10402, z: 33557 },
 		{ topY: 156.0, x: -10833, z: 32873 },
 		{ topY: 139.5, x: -10227, z: 33406 },
 		{ topY: 137.6, x: -11133, z: 33876 },
-		{ topY: 137.1, x: -10466, z: 33710 },
-		{ topY: 135.1, x: -9942, z: 33484 },
+		{ topY: 137.1, x: -10468, z: 33719 },
+		{ topY: 135.1, x: -9947, z: 33475 },
 		{ topY: 129.6, x: -10252, z: 33066 },
 		{ topY: 124.4, x: -10938, z: 33638 },
-		{ topY: 121.7, x: -10882, z: 33278 },
-		{ topY: 116.8, x: -10586, z: 33750 },
-		{ topY: 116.2, x: -10956, z: 33046 },
-		{ topY: 114.0, x: -10764, z: 33454 },
-		{ topY: 112.6, x: -10153, z: 33369 },
-		{ topY: 111.6, x: -10752, z: 33093 },
+		{ topY: 121.7, x: -10884, z: 33297 },
+		{ topY: 116.8, x: -10576, z: 33735 },
+		{ topY: 116.2, x: -10967, z: 33046 },
+		{ topY: 114.0, x: -10835, z: 33496 },
+		{ topY: 112.6, x: -10150, z: 33360 },
+		{ topY: 111.6, x: -10761, z: 33100 },
 		{ topY: 108.3, x: -10642, z: 33514 },
 		{ topY: 101.1, x: -10673, z: 32777 },
 		{ topY: 92.4, x: -10183, z: 33494 },
 		{ topY: 92.0, x: -11008, z: 33520 },
-		{ topY: 91.9, x: -10837, z: 32919 },
-		{ topY: 88.1, x: -9982, z: 33037 },
-		{ topY: 87.7, x: -9936, z: 33018 },
+		{ topY: 91.9, x: -10847, z: 32921 },
+		{ topY: 88.1, x: -9990, z: 33055 },
+		{ topY: 87.7, x: -9945, z: 33020 },
 		{ topY: 87.6, x: -10506, z: 32968 },
 		{ topY: 87.2, x: -11048, z: 33626 },
 		{ topY: 86.4, x: -10122, z: 33115 },
-		{ topY: 85.8, x: -10944, z: 32914 },
-		{ topY: 85.7, x: -10081, z: 33148 },
+		{ topY: 85.8, x: -10935, z: 32895 },
+		{ topY: 85.7, x: -10072, z: 33154 },
 	];
+
+// Sky Dragon (Hachi Ride boss collectible)
+export const SKY_DRAGON_SCALE = 15;
+export const SKY_DRAGON_HEIGHT = 300;
+export const SKY_DRAGON_SPEED = 80; // studs per second
+export const SKY_DRAGON_BONUS_VALUE = 30;
+export const SKY_DRAGON_COLLECTION_RADIUS = 25;
+// Route endpoints: extend bldg1→bldg2 direction to DEM edges
+export const SKY_DRAGON_ROUTE_START = new Vector3(
+	-10984,
+	SKY_DRAGON_HEIGHT,
+	32634,
+);
+export const SKY_DRAGON_ROUTE_END = new Vector3(
+	-9948,
+	SKY_DRAGON_HEIGHT,
+	34286,
+);
+// Yaw correction for the white dragon mesh visual (empirical)
+export const SKY_DRAGON_YAW_OFFSET = -90;
 
 // Shibuya Scramble
 
@@ -544,7 +564,7 @@ export const SCRAMBLE_CROWD_NPC_COUNT = 12;
 export const SCRAMBLE_MAX_ACTIVE_SPIRIT_WAVES = 1;
 export const SCRAMBLE_SLIDE_SPEED = 800;
 export const SCRAMBLE_SLIDE_COOLDOWN = 8;
-export const SCRAMBLE_TAG_BONUS_PER_TAG = 5;
+export const SCRAMBLE_TAG_BONUS_PER_TAG = 15;
 export const SCRAMBLE_SPIRIT_WAVE_DURATION = 5;
 
 // Scramble cars
@@ -590,7 +610,8 @@ export const SE_RAIN_AMBIENT = "rbxassetid://9112758242"; // rain ambience (reus
 export const SE_GOLDEN_HOUR_CHIME = "rbxassetid://6518811702"; // warm shimmer
 
 // Streak bonuses — multiplier by consecutive games played (index = streak count, capped)
-export const STREAK_MULTIPLIERS = [1.0, 1.0, 1.1, 1.2, 1.2, 1.35];
+// Index = consecutive win count. 0 wins = no streak yet.
+export const STREAK_MULTIPLIERS = [1.0, 1.0, 1.2, 1.4, 1.7, 2.0];
 
 // ── Vehicle System ──────────────────────────────────────────────────────
 
