@@ -529,7 +529,10 @@ export class MatchService implements OnStart {
 					player,
 					state.evolutionLevel,
 				);
-				const displayScore = state.itemCount - HACHI_STARTING_SCORE_OFFSET;
+				const displayScore = math.max(
+					0,
+					state.itemCount - HACHI_STARTING_SCORE_OFFSET,
+				);
 				this.badgeService.checkRoundItemCount(player, displayScore);
 				this.leaderboardService.updateWeeklyHachiScore(player, displayScore);
 			}

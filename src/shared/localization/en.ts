@@ -99,7 +99,7 @@ export const EN: Record<string, string> = {
 		"One player is the Oni. Hiders: stay hidden and kick the can to free caught friends! Oni: find and catch all hiders.",
 	intro_scramble_title: "Hide & Seek",
 	intro_scramble_sub:
-		"Hide anywhere in Shibuya! Oni hunts you down. Tagged hiders get Spirit Wave to help teammates.",
+		"Hide anywhere in Shibuya! Oni hunts you down. Last one standing wins!",
 	intro_hachi_title: "Ride Hachi",
 	intro_hachi_sub:
 		"Race on Hachi! Collect items to evolve: wall run, triple jump, and more. Most points wins!",
