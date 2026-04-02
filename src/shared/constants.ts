@@ -538,7 +538,7 @@ export const HACHI_ROOFTOP_BUILDINGS: { topY: number; x: number; z: number }[] =
 export const SKY_DRAGON_SCALE = 15;
 export const SKY_DRAGON_HEIGHT = 300;
 export const SKY_DRAGON_SPEED = 80; // studs per second
-export const SKY_DRAGON_BONUS_VALUE = 50;
+export const SKY_DRAGON_BONUS_VALUE = 30;
 export const SKY_DRAGON_COLLECTION_RADIUS = 25;
 // Route endpoints: extend bldg1→bldg2 direction to DEM edges
 export const SKY_DRAGON_ROUTE_START = new Vector3(-10984, 300, 32634);
@@ -603,7 +603,8 @@ export const SE_RAIN_AMBIENT = "rbxassetid://9112758242"; // rain ambience (reus
 export const SE_GOLDEN_HOUR_CHIME = "rbxassetid://6518811702"; // warm shimmer
 
 // Streak bonuses — multiplier by consecutive games played (index = streak count, capped)
-export const STREAK_MULTIPLIERS = [1.0, 1.0, 1.1, 1.2, 1.2, 1.35];
+// Index = consecutive win count. 0 wins = no streak yet.
+export const STREAK_MULTIPLIERS = [1.0, 1.0, 1.2, 1.4, 1.7, 2.0];
 
 // ── Vehicle System ──────────────────────────────────────────────────────
 
