@@ -209,13 +209,11 @@ export const L_SPIN_BUTTON = "spin_button";
 export const L_SPIN_SPINNING = "spin_spinning";
 export const L_SPIN_COME_BACK = "spin_come_back";
 
-// Zone names
-export const L_ZONE_SHIBUYA_SKY = "zone_ShibuyaSky";
-export const L_ZONE_SHIBUYA_CROSSING = "zone_ShibuyaCrossing";
-export const L_ZONE_HACHIKO_SQUARE = "zone_HachikoSquare";
-export const L_ZONE_CENTER_GAI = "zone_CenterGai";
-export const L_ZONE_SKY_SLIDE_HUB = "zone_SkySlideHub";
+// Zone names (keys match ZoneName attributes in Studio — use spaces)
+export const L_ZONE_SHIBUYA_SKY = "zone_Shibuya Sky";
+export const L_ZONE_SHIBUYA_CROSSING = "zone_Shibuya Crossing";
+export const L_ZONE_CENTER_GAI = "zone_Center Gai";
 export const L_ZONE_DOGENZAKA = "zone_Dogenzaka";
 export const L_ZONE_HIKARIE = "zone_Hikarie";
-export const L_ZONE_MIYASHITA_PARK = "zone_MiyashitaPark";
-export const L_ZONE_SHIBUYA_STATION = "zone_ShibuyaStation";
+export const L_ZONE_MIYASHITA_PARK = "zone_Miyashita Park";
+export const L_ZONE_SHIBUYA_STATION = "zone_Shibuya Station";

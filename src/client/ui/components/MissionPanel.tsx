@@ -110,7 +110,9 @@ function PoiRow({
 	claimed: boolean;
 	layoutOrder: number;
 }) {
-	const displayName = t(`zone_${zoneName}`) || zoneName;
+	const zoneKey = `zone_${zoneName}`;
+	const localized = t(zoneKey);
+	const displayName = localized === zoneKey ? zoneName : localized;
 	const canClaim = discovered && !claimed;
 
 	return (

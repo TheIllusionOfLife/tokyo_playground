@@ -417,15 +417,13 @@ export const BOUNDARY_WARNING_RATIO = 0.6; // start warning at 60% toward edge (
 // Point of Interest discovery
 export const POI_DISCOVERY_POINTS = 10;
 export const ALL_POI_ZONES = [
-	"ShibuyaSky",
-	"ShibuyaCrossing",
-	"HachikoSquare",
-	"CenterGai",
-	"SkySlideHub",
+	"Shibuya Sky",
+	"Shibuya Crossing",
+	"Center Gai",
 	"Dogenzaka",
 	"Hikarie",
-	"MiyashitaPark",
-	"ShibuyaStation",
+	"Miyashita Park",
+	"Shibuya Station",
 ];
 
 export const ZONE_TAG = "Zone";
