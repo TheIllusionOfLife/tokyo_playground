@@ -56,9 +56,9 @@ export const JA: Record<string, string> = {
 	skill_wall_run: "壁走り",
 	skill_wall_run_desc: "壁の近くでジャンプ",
 	skill_big_hachi: "デカハチ",
-	skill_big_hachi_desc: "大きくて速い",
+	skill_big_hachi_desc: "デカい + 三段ジャンプ",
 	skill_fluffy_hachi: "もふもふハチ",
-	skill_fluffy_hachi_desc: "最高のかわいさ",
+	skill_fluffy_hachi_desc: "もふもふ + 四段ジャンプ",
 	skill_unlocked: "解放済み",
 	skills_button: "スキル",
 

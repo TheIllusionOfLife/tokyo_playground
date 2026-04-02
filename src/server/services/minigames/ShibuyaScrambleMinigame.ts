@@ -9,6 +9,7 @@ import {
 import {
 	ACTION_COOLDOWN,
 	DEFAULT_WALK_SPEED,
+	HACHI_ONI_EVOLUTION,
 	HACHI_WALK_SPEEDS,
 	SCRAMBLE_CAR_DODGE_RADIUS,
 	SCRAMBLE_CAR_SPAWN_INTERVAL,
@@ -403,7 +404,7 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 			return;
 		}
 		const hachiClone = hachiTemplate.Clone();
-		if (!equipHachiCostume(player, hachiClone, 0)) {
+		if (!equipHachiCostume(player, hachiClone, HACHI_ONI_EVOLUTION)) {
 			hachiClone.Destroy();
 		}
 	}

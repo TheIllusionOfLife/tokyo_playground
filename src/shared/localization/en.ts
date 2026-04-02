@@ -56,9 +56,9 @@ export const EN: Record<string, string> = {
 	skill_wall_run: "Wall Run",
 	skill_wall_run_desc: "Jump near walls",
 	skill_big_hachi: "Big Hachi",
-	skill_big_hachi_desc: "Bigger and faster",
+	skill_big_hachi_desc: "Bigger + Triple Jump",
 	skill_fluffy_hachi: "Fluffy Hachi",
-	skill_fluffy_hachi_desc: "Maximum cuteness",
+	skill_fluffy_hachi_desc: "Fluffy + Quadruple Jump",
 	skill_unlocked: "Unlocked",
 	skills_button: "Skills",
 

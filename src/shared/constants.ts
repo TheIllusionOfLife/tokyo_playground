@@ -440,8 +440,9 @@ export const HACHI_SPAWN_TAG = "HachiRideSpawn";
 // Hachi Ride tuning
 export const HACHI_ROUND_DURATION =
 	MINIGAME_CONFIGS[MinigameId.HachiRide].roundDuration;
-export const HACHI_STARTING_EVOLUTION = 2; // start with double jump + wall run
-export const HACHI_LOBBY_MIN_LEVEL = 3; // lobby Hachi always has double jump + wall run
+export const HACHI_STARTING_EVOLUTION = 1; // start with double jump
+export const HACHI_LOBBY_MIN_LEVEL = 1; // all vehicles always have double jump
+export const HACHI_ONI_EVOLUTION = 1; // Oni mount gets double jump
 export const HACHI_EVOLUTION_THRESHOLDS = [0, 10, 24, 40, 60];
 // Max air jumps per evolution level (index = level)
 // Level 0: 0, Level 1-2: 1 (double), Level 3: 2 (triple), Level 4: 3 (quadruple)
