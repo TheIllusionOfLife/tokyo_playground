@@ -609,9 +609,28 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 			}
 
 			const rawDir = endPart.Position.sub(startPart.Position);
-			const carDir = rawDir.Magnitude > 0.1 ? rawDir : new Vector3(0, 0, 1);
+			// Flatten direction so cars stay level on the street
+			const carDir =
+				new Vector3(rawDir.X, 0, rawDir.Z).Magnitude > 0.1
+					? new Vector3(rawDir.X, 0, rawDir.Z)
+					: new Vector3(0, 0, 1);
+			const startPos = new Vector3(
+				startPart.Position.X,
+				startPart.Position.Y,
+				startPart.Position.Z,
+			);
+			const endPos = new Vector3(
+				endPart.Position.X,
+				startPart.Position.Y,
+				endPart.Position.Z,
+			);
+			// CarTemplate_3 has a 5° pitch baked into its mesh; compensate
+			const pitchFix =
+				templateName === "CarTemplate_3"
+					? CFrame.Angles(math.rad(-5), 0, 0)
+					: new CFrame();
 			car.PivotTo(
-				CFrame.lookAt(startPart.Position, startPart.Position.add(carDir)),
+				CFrame.lookAt(startPos, startPos.add(carDir)).mul(pitchFix),
 			);
 			car.Parent = Workspace;
 
@@ -620,10 +639,7 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 					primary,
 					new TweenInfo(SCRAMBLE_CAR_SPEED_DURATION, Enum.EasingStyle.Linear),
 					{
-						CFrame: CFrame.lookAt(
-							endPart.Position,
-							endPart.Position.add(carDir),
-						),
+						CFrame: CFrame.lookAt(endPos, endPos.add(carDir)).mul(pitchFix),
 					},
 				).Play();
 			}

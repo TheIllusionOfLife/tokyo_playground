@@ -173,19 +173,18 @@ export class HachiRideMinigame implements IMinigame {
 			this.playerObjects.set(player.UserId, player);
 		}
 
-		// Rooftop bonus items: 30 deterministic (one per top building)
+		// Rooftop bonus items: 30 deterministic (one per top building, centered)
 		for (const bldg of HACHI_ROOFTOP_BUILDINGS) {
-			const xOff = (math.random() - 0.5) * 10;
-			const zOff = (math.random() - 0.5) * 10;
 			const skyPos = new Vector3(
-				bldg.x + xOff,
+				bldg.x,
 				bldg.topY + HACHI_ROOFTOP_BONUS_OFFSET_Y,
-				bldg.z + zOff,
+				bldg.z,
 			);
 			const part = this.createCollectible(skyPos, new Vector3(5, 5, 5), true);
 			this.activeItems.push(part);
 			this.bonusItems.add(part);
-			this.itemLandingY.set(part, bldg.topY);
+			// Land 5 studs above rooftop so the star mesh doesn't embed
+			this.itemLandingY.set(part, bldg.topY + 5);
 		}
 
 		// Generate all candidate positions, then randomly select a subset
@@ -1468,11 +1467,13 @@ export class HachiRideMinigame implements IMinigame {
 			if (desc.IsA("BasePart")) {
 				desc.Size = desc.Size.mul(SKY_DRAGON_SCALE);
 				desc.Anchored = true;
-				desc.CanCollide = false;
+				desc.CanCollide = true;
 				desc.CanTouch = false;
 				desc.CanQuery = false;
 				desc.CastShadow = false;
 				desc.Transparency = 0;
+				// CollisionFidelity is read-only in roblox-ts;
+				// set PCD on the WhiteDragonTemplate in Studio instead.
 			}
 			// Scale SpecialMesh if present
 			if (desc.IsA("SpecialMesh")) {
@@ -1587,20 +1588,19 @@ export class HachiRideMinigame implements IMinigame {
 		part.CanQuery = true;
 		part.CastShadow = false;
 		part.Material = Enum.Material.Neon;
-		part.Color = Color3.fromRGB(255, 215, 0);
+		part.Color = Color3.fromRGB(255, 100, 100);
 		part.Transparency = 0;
 
-		// Star mesh
+		// Star mesh (no texture so neon color shows)
 		const mesh = new Instance("SpecialMesh");
 		mesh.MeshType = Enum.MeshType.FileMesh;
 		mesh.MeshId = HACHI_STAR_MESH_ID;
-		mesh.TextureId = HACHI_STAR_TEXTURE_ID;
 		mesh.Scale = new Vector3(3, 3, 3);
 		mesh.Parent = part;
 
-		// Intense golden glow
+		// Rainbow glow
 		const light = new Instance("PointLight");
-		light.Color = Color3.fromRGB(255, 200, 50);
+		light.Color = Color3.fromRGB(255, 255, 255);
 		light.Brightness = 5;
 		light.Range = 60;
 		light.Parent = part;
@@ -1625,10 +1625,15 @@ export class HachiRideMinigame implements IMinigame {
 			new NumberSequenceKeypoint(0.5, 0.3),
 			new NumberSequenceKeypoint(1, 1),
 		]);
-		emitter.Color = new ColorSequence(
-			Color3.fromRGB(255, 255, 100),
-			Color3.fromRGB(255, 180, 0),
-		);
+		emitter.Color = new ColorSequence([
+			new ColorSequenceKeypoint(0, Color3.fromRGB(255, 50, 50)),
+			new ColorSequenceKeypoint(0.17, Color3.fromRGB(255, 165, 0)),
+			new ColorSequenceKeypoint(0.33, Color3.fromRGB(255, 255, 50)),
+			new ColorSequenceKeypoint(0.5, Color3.fromRGB(50, 255, 50)),
+			new ColorSequenceKeypoint(0.67, Color3.fromRGB(50, 150, 255)),
+			new ColorSequenceKeypoint(0.83, Color3.fromRGB(150, 50, 255)),
+			new ColorSequenceKeypoint(1, Color3.fromRGB(255, 50, 200)),
+		]);
 		emitter.Parent = part;
 
 		// Position above dragon back (updated each tick)
@@ -1671,7 +1676,7 @@ export class HachiRideMinigame implements IMinigame {
 		const dragonCF = new CFrame(pos).mul(CFrame.Angles(0, yawRad, 0));
 		this.skyDragon.PivotTo(dragonCF);
 
-		// Update collectible position: above the dragon's back
+		// Update collectible position and rainbow color
 		if (this.skyDragonCollectible) {
 			const body = this.skyDragon.PrimaryPart;
 			const collectiblePos = body.Position.add(
@@ -1680,6 +1685,9 @@ export class HachiRideMinigame implements IMinigame {
 			this.skyDragonCollectible.CFrame = new CFrame(collectiblePos).mul(
 				CFrame.Angles(0, os.clock() * 2, 0),
 			);
+			// Rainbow color cycle
+			const hue = (os.clock() * 0.5) % 1;
+			this.skyDragonCollectible.Color = Color3.fromHSV(hue, 0.8, 1);
 		}
 
 		// Check collection

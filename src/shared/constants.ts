@@ -543,7 +543,7 @@ export const SKY_DRAGON_COLLECTION_RADIUS = 25;
 export const SKY_DRAGON_ROUTE_START = new Vector3(-10984, 300, 32634);
 export const SKY_DRAGON_ROUTE_END = new Vector3(-9948, 300, 34286);
 // Yaw correction for the white dragon mesh visual (empirical)
-export const SKY_DRAGON_YAW_OFFSET = 0;
+export const SKY_DRAGON_YAW_OFFSET = -90;
 
 // Shibuya Scramble
 
