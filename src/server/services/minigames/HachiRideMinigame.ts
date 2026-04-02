@@ -2,6 +2,7 @@ import { Janitor } from "@rbxts/janitor";
 import {
 	CollectionService,
 	Players,
+	ServerStorage,
 	TweenService,
 	Workspace,
 } from "@rbxts/services";
@@ -57,6 +58,14 @@ import {
 	HACHI_WALL_RUN_RAYCAST,
 	HACHI_WALL_RUN_SPEED,
 	SCRAMBLE_SLIDE_COOLDOWN,
+	SKY_DRAGON_BONUS_VALUE,
+	SKY_DRAGON_COLLECTION_RADIUS,
+	SKY_DRAGON_HEIGHT,
+	SKY_DRAGON_ROUTE_END,
+	SKY_DRAGON_ROUTE_START,
+	SKY_DRAGON_SCALE,
+	SKY_DRAGON_SPEED,
+	SKY_DRAGON_YAW_OFFSET,
 	VEHICLE_CATALOG,
 } from "shared/constants";
 import { GlobalEvents } from "shared/network";
@@ -134,6 +143,12 @@ export class HachiRideMinigame implements IMinigame {
 	private totalBonusSpawned = 0;
 	private remainingRegular = 0;
 	private remainingBonus = 0;
+	// Sky Dragon
+	private skyDragon?: Model;
+	private skyDragonCollectible?: BasePart;
+	private skyDragonProgress = 0;
+	private skyDragonCollected = false;
+	private skyDragonRouteLength = 0;
 
 	constructor(
 		private readonly serverEvents: ServerEvents,
@@ -227,6 +242,9 @@ export class HachiRideMinigame implements IMinigame {
 		this.totalRegularSpawned = this.activeItems.size() - this.totalBonusSpawned;
 		this.remainingBonus = this.totalBonusSpawned;
 		this.remainingRegular = this.totalRegularSpawned;
+
+		// Spawn the divine sky dragon
+		this.spawnSkyDragon();
 
 		// Register cleanup: cancel tweens, destroy dynamic parts
 		matchJanitor.Add(() => {
@@ -440,6 +458,11 @@ export class HachiRideMinigame implements IMinigame {
 			});
 		}
 		this.serverEvents.hintTextChanged.broadcast("hint_items_falling");
+		// Announce the sky dragon after a short delay
+		task.delay(5, () => {
+			if (!this.roundStarted) return;
+			this.serverEvents.hintTextChanged.broadcast("hint_sky_dragon");
+		});
 		this.broadcastRaceState();
 	}
 
@@ -448,6 +471,7 @@ export class HachiRideMinigame implements IMinigame {
 		this.roundElapsed += dt;
 		this.raceUpdateElapsed += dt;
 		this.checkItemCollection();
+		this.tickSkyDragon(dt);
 		this.resetLandedJumps();
 		this.detectWallRun(dt);
 		this.tickHachiAnimation(dt);
@@ -548,6 +572,9 @@ export class HachiRideMinigame implements IMinigame {
 		for (const item of this.keyItems) {
 			item.Transparency = 0;
 		}
+
+		// Destroy sky dragon
+		this.cleanupSkyDragon();
 
 		this.playerStates.clear();
 		this.playerObjects.clear();
@@ -1420,5 +1447,300 @@ export class HachiRideMinigame implements IMinigame {
 				this.stopWallRun(userId, player);
 			}
 		}
+	}
+
+	// ── Sky Dragon ───────────────────────────────────────────────────────
+
+	private spawnSkyDragon() {
+		const template = ServerStorage.FindFirstChild("WhiteDragonTemplate") as
+			| Model
+			| undefined;
+		if (!template) {
+			warn("[HachiRide] WhiteDragonTemplate not found in ServerStorage");
+			return;
+		}
+
+		const dragon = template.Clone();
+		dragon.Name = "SkyDragon";
+
+		// Scale all parts
+		for (const desc of dragon.GetDescendants()) {
+			if (desc.IsA("BasePart")) {
+				desc.Size = desc.Size.mul(SKY_DRAGON_SCALE);
+				desc.Anchored = true;
+				desc.CanCollide = false;
+				desc.CanTouch = false;
+				desc.CanQuery = false;
+				desc.CastShadow = false;
+				desc.Transparency = 0;
+			}
+			// Scale SpecialMesh if present
+			if (desc.IsA("SpecialMesh")) {
+				desc.Scale = desc.Scale.mul(SKY_DRAGON_SCALE);
+			}
+		}
+
+		// Set PrimaryPart for PivotTo
+		const body = dragon.FindFirstChild("Body") as BasePart | undefined;
+		if (body) {
+			dragon.PrimaryPart = body;
+
+			// Divine glow: PointLight
+			const light = new Instance("PointLight");
+			light.Color = Color3.fromRGB(255, 240, 200);
+			light.Brightness = 3;
+			light.Range = 120;
+			light.Parent = body;
+
+			// Divine aura particles
+			const aura = new Instance("ParticleEmitter");
+			aura.Name = "DivineAura";
+			aura.Rate = 30;
+			aura.Lifetime = new NumberRange(1, 2);
+			aura.Speed = new NumberRange(2, 6);
+			aura.SpreadAngle = new Vector2(180, 180);
+			aura.LightEmission = 1;
+			aura.LightInfluence = 0;
+			aura.Brightness = 3;
+			aura.Size = new NumberSequence([
+				new NumberSequenceKeypoint(0, 3),
+				new NumberSequenceKeypoint(0.5, 1.5),
+				new NumberSequenceKeypoint(1, 0),
+			]);
+			aura.Transparency = new NumberSequence([
+				new NumberSequenceKeypoint(0, 0.3),
+				new NumberSequenceKeypoint(0.5, 0.6),
+				new NumberSequenceKeypoint(1, 1),
+			]);
+			aura.Color = new ColorSequence(
+				Color3.fromRGB(255, 255, 255),
+				Color3.fromRGB(255, 220, 100),
+			);
+			aura.RotSpeed = new NumberRange(-60, 60);
+			aura.Parent = body;
+
+			// Trail: attach two points at head and tail
+			const trailAttach0 = new Instance("Attachment");
+			trailAttach0.Position = new Vector3(0, 0, body.Size.Z / 2);
+			trailAttach0.Parent = body;
+
+			const trailAttach1 = new Instance("Attachment");
+			trailAttach1.Position = new Vector3(0, 0, -body.Size.Z / 2);
+			trailAttach1.Parent = body;
+
+			const trail = new Instance("Trail");
+			trail.Attachment0 = trailAttach0;
+			trail.Attachment1 = trailAttach1;
+			trail.Lifetime = 3;
+			trail.MinLength = 0.1;
+			trail.FaceCamera = true;
+			trail.LightEmission = 0.8;
+			trail.Transparency = new NumberSequence([
+				new NumberSequenceKeypoint(0, 0.2),
+				new NumberSequenceKeypoint(0.5, 0.5),
+				new NumberSequenceKeypoint(1, 1),
+			]);
+			trail.Color = new ColorSequence([
+				new ColorSequenceKeypoint(0, Color3.fromRGB(255, 255, 255)),
+				new ColorSequenceKeypoint(0.5, Color3.fromRGB(255, 220, 100)),
+				new ColorSequenceKeypoint(1, Color3.fromRGB(255, 180, 50)),
+			]);
+			trail.WidthScale = new NumberSequence([
+				new NumberSequenceKeypoint(0, 1),
+				new NumberSequenceKeypoint(1, 0.3),
+			]);
+			trail.Parent = body;
+		}
+
+		// Position at route start
+		const dir = SKY_DRAGON_ROUTE_END.sub(SKY_DRAGON_ROUTE_START).Unit;
+		this.skyDragonRouteLength = SKY_DRAGON_ROUTE_END.sub(
+			SKY_DRAGON_ROUTE_START,
+		).Magnitude;
+		const yawRad = math.atan2(-dir.X, -dir.Z) + math.rad(SKY_DRAGON_YAW_OFFSET);
+		const startCF = new CFrame(SKY_DRAGON_ROUTE_START).mul(
+			CFrame.Angles(0, yawRad, 0),
+		);
+		dragon.PivotTo(startCF);
+		dragon.Parent = Workspace;
+
+		this.skyDragon = dragon;
+		this.skyDragonProgress = 0;
+		this.skyDragonCollected = false;
+
+		// Create the 50pts collectible on the dragon's back
+		this.createDragonCollectible();
+
+		print(
+			`[HachiRide] Sky Dragon spawned. Route length: ${math.floor(this.skyDragonRouteLength)} studs`,
+		);
+	}
+
+	private createDragonCollectible() {
+		const part = new Instance("Part");
+		part.Name = "DragonTreasure";
+		part.Size = new Vector3(8, 8, 8);
+		part.Shape = Enum.PartType.Ball;
+		part.Anchored = true;
+		part.CanCollide = false;
+		part.CanTouch = false;
+		part.CanQuery = true;
+		part.CastShadow = false;
+		part.Material = Enum.Material.Neon;
+		part.Color = Color3.fromRGB(255, 215, 0);
+		part.Transparency = 0;
+
+		// Star mesh
+		const mesh = new Instance("SpecialMesh");
+		mesh.MeshType = Enum.MeshType.FileMesh;
+		mesh.MeshId = HACHI_STAR_MESH_ID;
+		mesh.TextureId = HACHI_STAR_TEXTURE_ID;
+		mesh.Scale = new Vector3(3, 3, 3);
+		mesh.Parent = part;
+
+		// Intense golden glow
+		const light = new Instance("PointLight");
+		light.Color = Color3.fromRGB(255, 200, 50);
+		light.Brightness = 5;
+		light.Range = 60;
+		light.Parent = part;
+
+		// Sparkle emitter
+		const emitter = new Instance("ParticleEmitter");
+		emitter.Name = "TreasureGlow";
+		emitter.Rate = 20;
+		emitter.Lifetime = new NumberRange(0.5, 1);
+		emitter.Speed = new NumberRange(2, 5);
+		emitter.SpreadAngle = new Vector2(180, 180);
+		emitter.LightEmission = 1;
+		emitter.LightInfluence = 0;
+		emitter.Brightness = 4;
+		emitter.Size = new NumberSequence([
+			new NumberSequenceKeypoint(0, 1.5),
+			new NumberSequenceKeypoint(0.5, 0.5),
+			new NumberSequenceKeypoint(1, 0),
+		]);
+		emitter.Transparency = new NumberSequence([
+			new NumberSequenceKeypoint(0, 0),
+			new NumberSequenceKeypoint(0.5, 0.3),
+			new NumberSequenceKeypoint(1, 1),
+		]);
+		emitter.Color = new ColorSequence(
+			Color3.fromRGB(255, 255, 100),
+			Color3.fromRGB(255, 180, 0),
+		);
+		emitter.Parent = part;
+
+		// Position above dragon back (updated each tick)
+		part.Parent = Workspace;
+		this.skyDragonCollectible = part;
+	}
+
+	private tickSkyDragon(dt: number) {
+		if (!this.skyDragon || !this.skyDragon.PrimaryPart) return;
+
+		// Advance along route
+		this.skyDragonProgress +=
+			(SKY_DRAGON_SPEED * dt) / this.skyDragonRouteLength;
+
+		// Loop: reset to start when reaching end
+		if (this.skyDragonProgress >= 1) {
+			this.skyDragonProgress -= 1;
+			this.skyDragonCollected = false; // respawn collectible
+			if (this.skyDragonCollectible) {
+				this.skyDragonCollectible.Transparency = 0;
+				const glow = this.skyDragonCollectible.FindFirstChild("TreasureGlow") as
+					| ParticleEmitter
+					| undefined;
+				if (glow) glow.Enabled = true;
+				const treasureLight =
+					this.skyDragonCollectible.FindFirstChildWhichIsA("PointLight");
+				if (treasureLight) treasureLight.Enabled = true;
+			}
+		}
+
+		// Interpolate position
+		const pos = SKY_DRAGON_ROUTE_START.Lerp(
+			SKY_DRAGON_ROUTE_END,
+			this.skyDragonProgress,
+		);
+
+		// Face direction of travel
+		const dir = SKY_DRAGON_ROUTE_END.sub(SKY_DRAGON_ROUTE_START).Unit;
+		const yawRad = math.atan2(-dir.X, -dir.Z) + math.rad(SKY_DRAGON_YAW_OFFSET);
+		const dragonCF = new CFrame(pos).mul(CFrame.Angles(0, yawRad, 0));
+		this.skyDragon.PivotTo(dragonCF);
+
+		// Update collectible position: above the dragon's back
+		if (this.skyDragonCollectible) {
+			const body = this.skyDragon.PrimaryPart;
+			const collectiblePos = body.Position.add(
+				new Vector3(0, body.Size.Y / 2 + 10, 0),
+			);
+			this.skyDragonCollectible.CFrame = new CFrame(collectiblePos).mul(
+				CFrame.Angles(0, os.clock() * 2, 0),
+			);
+		}
+
+		// Check collection
+		if (!this.skyDragonCollected && this.skyDragonCollectible) {
+			for (const [userId, state] of this.playerStates) {
+				const player = this.playerObjects.get(userId);
+				if (!player?.Character) continue;
+				const hrp = player.Character.FindFirstChild("HumanoidRootPart") as
+					| BasePart
+					| undefined;
+				if (!hrp) continue;
+
+				const dist = hrp.Position.sub(
+					this.skyDragonCollectible.Position,
+				).Magnitude;
+				if (dist <= SKY_DRAGON_COLLECTION_RADIUS) {
+					this.skyDragonCollected = true;
+					this.skyDragonCollectible.Transparency = 1;
+					const glow = this.skyDragonCollectible.FindFirstChild(
+						"TreasureGlow",
+					) as ParticleEmitter | undefined;
+					if (glow) glow.Enabled = false;
+					const treasureLight =
+						this.skyDragonCollectible.FindFirstChildWhichIsA("PointLight");
+					if (treasureLight) treasureLight.Enabled = false;
+
+					// Award points
+					state.itemCount += SKY_DRAGON_BONUS_VALUE;
+					state.catchCount = state.itemCount;
+					this.serverEvents.hachiItemCollected.fire(player, state.itemCount);
+					this.serverEvents.hachiBonusCollected.fire(player);
+					this.serverEvents.hintTextChanged.broadcast("hint_dragon_collected", [
+						player.Name,
+						`${SKY_DRAGON_BONUS_VALUE}`,
+					]);
+					this.missionService.incrementAndNotify(
+						player,
+						MissionId.CollectBonusItem,
+						1,
+					);
+					this.tryEvolve(userId, state, player);
+
+					print(
+						`[HachiRide] ${player.Name} collected Dragon Treasure! +${SKY_DRAGON_BONUS_VALUE} pts`,
+					);
+					break;
+				}
+			}
+		}
+	}
+
+	private cleanupSkyDragon() {
+		if (this.skyDragon) {
+			this.skyDragon.Destroy();
+			this.skyDragon = undefined;
+		}
+		if (this.skyDragonCollectible) {
+			this.skyDragonCollectible.Destroy();
+			this.skyDragonCollectible = undefined;
+		}
+		this.skyDragonProgress = 0;
+		this.skyDragonCollected = false;
 	}
 }

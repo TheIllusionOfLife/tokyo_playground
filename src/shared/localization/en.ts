@@ -189,6 +189,9 @@ export const EN: Record<string, string> = {
 	hint_ability_3: "Level 3: BIG HACHI + TRIPLE JUMP!",
 	hint_ability_4: "Level 4: FLUFFY HACHI + QUADRUPLE JUMP!",
 	hint_hachi_evolved: "Hachi evolved to level %1!",
+	hint_sky_dragon:
+		"A divine dragon soars above! Reach its back for 50 bonus points!",
+	hint_dragon_collected: "%1 claimed the Dragon's treasure! +%2 points!",
 
 	// Point of Interest
 	poi_header: "Landmarks",

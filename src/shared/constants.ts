@@ -533,6 +533,18 @@ export const HACHI_ROOFTOP_BUILDINGS: { topY: number; x: number; z: number }[] =
 		{ topY: 85.7, x: -10081, z: 33148 },
 	];
 
+// Sky Dragon (Hachi Ride boss collectible)
+export const SKY_DRAGON_SCALE = 15;
+export const SKY_DRAGON_HEIGHT = 300;
+export const SKY_DRAGON_SPEED = 80; // studs per second
+export const SKY_DRAGON_BONUS_VALUE = 50;
+export const SKY_DRAGON_COLLECTION_RADIUS = 25;
+// Route endpoints: extend bldg1→bldg2 direction to DEM edges
+export const SKY_DRAGON_ROUTE_START = new Vector3(-10984, 300, 32634);
+export const SKY_DRAGON_ROUTE_END = new Vector3(-9948, 300, 34286);
+// Yaw correction for the white dragon mesh visual (empirical)
+export const SKY_DRAGON_YAW_OFFSET = 0;
+
 // Shibuya Scramble
 
 export const SCRAMBLE_TAG_RADIUS = 10;
