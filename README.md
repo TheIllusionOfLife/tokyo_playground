@@ -79,21 +79,6 @@ git push origin v0.6.0
 | Studio (.rbxl) | Part positions, sizes, colors, tags, attributes, models, audio refs |
 | Git tags | Release version markers, synced with Studio Version History |
 
-### Version History
-
-| Version | Date | Summary |
-|---------|------|---------|
-| v0.1.0 | 2026-03-12 | PLATEAU spike: Shibuya buildings, Flamework, persistence |
-| v0.3.0 | 2026-03-14 | Shibuya Scramble minigame |
-| v0.4.0 | 2026-03-15 | Hachi Polish: speed, animation, slides, audio |
-| v0.5.0 | 2026-03-17 | Equip system, portal-only matches, mobile landscape |
-| v0.6.0 | 2026-03-17 | Bonus items, Hachi mechanics rewrite, skills panel |
-| v0.7.0 | 2026-03-19 | Fun Pass: SFX, haptics, event feed, streak bonuses |
-| v0.8.0 | 2026-03-20 | Dismount fix, client jump prediction, HUD redesign |
-| v0.9.0 | 2026-03-20 | Living Shibuya: day/night, stamps, NPCs, micro-events |
-| v0.10.0 | 2026-03-20 | Visual enhancements, torii portals, collectible glow |
-| v0.11.0 | 2026-03-22 | HUD cleanup, GetMoveVector movement, half-size Hachi |
-
 ## Mini-games
 
 - **Can Kick** (缶蹴り): Oni vs. Hiders. Oni counts, then hunts. Hiders can kick the can to free jailed teammates.
