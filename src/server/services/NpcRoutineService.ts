@@ -183,7 +183,7 @@ export class NpcRoutineService implements OnStart {
 	private checkAutoInteraction(
 		player: Player,
 		npcId: NpcId,
-		active: ActiveNpc,
+		_active: ActiveNpc,
 	) {
 		const cooldownKey = `${npcId}_${player.UserId}`;
 		const now = os.clock();

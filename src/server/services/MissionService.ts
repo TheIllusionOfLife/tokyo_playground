@@ -194,10 +194,7 @@ export class MissionService implements OnStart {
 
 		// PlayWithFriends: only check if mission is assigned (avoid unnecessary HTTP calls)
 		const data = this.playerDataService.getPlayerData(player);
-		if (
-			data &&
-			data.missions.slots.some((s) => s.id === MissionId.PlayWithFriends)
-		) {
+		if (data?.missions.slots.some((s) => s.id === MissionId.PlayWithFriends)) {
 			this.checkPlayWithFriends(player);
 		}
 

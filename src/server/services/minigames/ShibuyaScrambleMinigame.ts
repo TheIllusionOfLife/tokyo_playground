@@ -86,7 +86,7 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 				isTagged: false,
 				catchCount: 0,
 				rescueCount: 0,
-				});
+			});
 			this.playerObjects.set(player.UserId, player);
 			this.spiritCharges.set(player.UserId, 0);
 		}

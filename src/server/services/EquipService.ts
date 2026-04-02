@@ -360,7 +360,7 @@ export class EquipService implements OnStart {
 				}
 			}
 		} else if (category === ItemCategory.Trail) {
-			const particleName = EQUIPPED_TRAIL_TAG + "_particles";
+			const particleName = `${EQUIPPED_TRAIL_TAG}_particles`;
 			for (const child of character.GetDescendants()) {
 				if (
 					(child.IsA("Trail") && child.Name === EQUIPPED_TRAIL_TAG) ||
@@ -583,7 +583,7 @@ export class EquipService implements OnStart {
 		const particleCfg = TRAIL_PARTICLES[itemId];
 		if (particleCfg) {
 			const emitter = new Instance("ParticleEmitter");
-			emitter.Name = EQUIPPED_TRAIL_TAG + "_particles";
+			emitter.Name = `${EQUIPPED_TRAIL_TAG}_particles`;
 			emitter.Color = particleCfg.color;
 			emitter.Rate = particleCfg.rate;
 			emitter.Lifetime = particleCfg.lifetime;

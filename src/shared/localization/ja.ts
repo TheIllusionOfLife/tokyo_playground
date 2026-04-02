@@ -231,13 +231,13 @@ export const JA: Record<string, string> = {
 	vehicle_family_mount: "マウント",
 
 	// Zones (keys match ZoneName attributes in Studio)
-	["zone_Shibuya Sky"]: "渋谷スカイ",
-	["zone_Shibuya Crossing"]: "渋谷スクランブル交差点",
-	["zone_Center Gai"]: "センター街",
+	"zone_Shibuya Sky": "渋谷スカイ",
+	"zone_Shibuya Crossing": "渋谷スクランブル交差点",
+	"zone_Center Gai": "センター街",
 	zone_Dogenzaka: "道玄坂",
 	zone_Hikarie: "渋谷ヒカリエ",
-	["zone_Miyashita Park"]: "宮下パーク",
-	["zone_Shibuya Station"]: "渋谷駅",
+	"zone_Miyashita Park": "宮下パーク",
+	"zone_Shibuya Station": "渋谷駅",
 
 	// Leaderboard tabs
 	leaderboard_all_time: "歴代",
