@@ -149,6 +149,7 @@ export class HachiRideMinigame implements IMinigame {
 	private skyDragonProgress = 0;
 	private skyDragonCollected = false;
 	private skyDragonRouteLength = 0;
+	private skyDragonSpawned = false;
 
 	constructor(
 		private readonly serverEvents: ServerEvents,
@@ -240,9 +241,6 @@ export class HachiRideMinigame implements IMinigame {
 		this.totalRegularSpawned = this.activeItems.size() - this.totalBonusSpawned;
 		this.remainingBonus = this.totalBonusSpawned;
 		this.remainingRegular = this.totalRegularSpawned;
-
-		// Spawn the divine sky dragon
-		this.spawnSkyDragon();
 
 		// Register cleanup: cancel tweens, destroy dynamic parts
 		matchJanitor.Add(() => {
@@ -456,11 +454,6 @@ export class HachiRideMinigame implements IMinigame {
 			});
 		}
 		this.serverEvents.hintTextChanged.broadcast("hint_items_falling");
-		// Announce the sky dragon after a short delay
-		task.delay(5, () => {
-			if (!this.roundStarted) return;
-			this.serverEvents.hintTextChanged.broadcast("hint_sky_dragon");
-		});
 		this.broadcastRaceState();
 	}
 
@@ -893,12 +886,6 @@ export class HachiRideMinigame implements IMinigame {
 			abilityHint.args,
 		);
 
-		// Also show level-up in generic hint after a delay
-		task.delay(3, () => {
-			if (!this.roundStarted) return;
-			this.serverEvents.hintTextChanged.fire(player, "hint_keep_collecting");
-		});
-
 		print(
 			`[HachiRide] ${player.Name} evolved to level ${newLevel} (${state.itemCount} items)`,
 		);
@@ -1176,6 +1163,14 @@ export class HachiRideMinigame implements IMinigame {
 
 	private updateFinalSprintState() {
 		const timeRemaining = HACHI_ROUND_DURATION - this.roundElapsed;
+
+		// Spawn sky dragon at 60 seconds remaining
+		if (!this.skyDragonSpawned && timeRemaining <= 60) {
+			this.skyDragonSpawned = true;
+			this.spawnSkyDragon();
+			this.serverEvents.hintTextChanged.broadcast("hint_sky_dragon");
+		}
+
 		if (
 			!this.finalSprintStarted &&
 			timeRemaining <= HACHI_FINAL_SPRINT_WINDOW
@@ -1762,5 +1757,6 @@ export class HachiRideMinigame implements IMinigame {
 		}
 		this.skyDragonProgress = 0;
 		this.skyDragonCollected = false;
+		this.skyDragonSpawned = false;
 	}
 }

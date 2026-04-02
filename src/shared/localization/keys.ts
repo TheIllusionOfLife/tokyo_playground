@@ -162,7 +162,6 @@ export const L_HINT_STARTING_CAN_KICK = "hint_starting_can_kick";
 export const L_HINT_STARTING_SCRAMBLE = "hint_starting_scramble";
 export const L_HINT_HACHI_START = "hint_hachi_start";
 export const L_HINT_ITEMS_FALLING = "hint_items_falling";
-export const L_HINT_KEEP_COLLECTING = "hint_keep_collecting";
 export const L_HINT_FINAL_SPRINT = "hint_final_sprint";
 export const L_HINT_PLAYER_TAGGED = "hint_player_tagged";
 export const L_HINT_PLAYER_CAUGHT = "hint_player_caught";
