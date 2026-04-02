@@ -17,8 +17,10 @@ export function RewardPopup() {
 	const breakdown = useSelector(
 		(state: GameStoreState) => state.rewardBreakdown,
 	);
+	const scoreboard = useSelector((state: GameStoreState) => state.scoreboard);
 
-	if (!showReward || !breakdown) {
+	// Hide when scoreboard is visible to avoid overlapping panels
+	if (!showReward || !breakdown || scoreboard.size() > 0) {
 		return undefined!;
 	}
 

@@ -30,6 +30,11 @@ export function Scoreboard() {
 		return undefined!;
 	}
 
+	// Hachi Ride has no roles; all entries are PlayerRole.None
+	const isHachiRide =
+		scoreboard.size() > 0 &&
+		scoreboard.every((e) => e.role === PlayerRole.None);
+
 	return (
 		<frame
 			key="Scoreboard"
@@ -75,20 +80,21 @@ export function Scoreboard() {
 			<ScoreRow
 				rank="#"
 				playerName={t(L_PLAYER)}
-				role={t(L_ROLE)}
-				stat={t(L_STATS)}
+				role={isHachiRide ? "" : t(L_ROLE)}
+				stat={isHachiRide ? "" : t(L_STATS)}
 				points={t(L_PTS)}
 				color={Color3.fromRGB(255, 220, 100)}
 				order={0}
+				compact={isHachiRide}
 			/>
 			{scoreboard.map((entry, i) => (
 				<ScoreRow
 					key={`score-${i}`}
 					rank={tostring(i + 1)}
 					playerName={entry.playerName}
-					role={entry.role}
+					role={isHachiRide ? "" : entry.role}
 					stat={
-						entry.role === PlayerRole.None
+						isHachiRide
 							? ""
 							: entry.role === PlayerRole.Oni
 								? `${entry.catches}C`
@@ -97,6 +103,7 @@ export function Scoreboard() {
 					points={tostring(entry.points)}
 					color={ROLE_COLORS[entry.role] ?? Color3.fromRGB(200, 200, 200)}
 					order={i + 1}
+					compact={isHachiRide}
 				/>
 			))}
 		</frame>
@@ -111,6 +118,7 @@ function ScoreRow(props: {
 	points: string;
 	color: Color3;
 	order: number;
+	compact: boolean;
 }) {
 	return (
 		<frame
@@ -119,16 +127,40 @@ function ScoreRow(props: {
 			BackgroundTransparency={1}
 			LayoutOrder={props.order}
 		>
-			<Cell text={props.rank} pos={0} width={0.08} color={props.color} />
-			<Cell
-				text={props.playerName}
-				pos={0.08}
-				width={0.4}
-				color={props.color}
-			/>
-			<Cell text={props.role} pos={0.48} width={0.2} color={props.color} />
-			<Cell text={props.stat} pos={0.68} width={0.15} color={props.color} />
-			<Cell text={props.points} pos={0.83} width={0.17} color={props.color} />
+			<Cell text={props.rank} pos={0} width={0.1} color={props.color} />
+			{props.compact ? (
+				<>
+					<Cell
+						text={props.playerName}
+						pos={0.1}
+						width={0.65}
+						color={props.color}
+					/>
+					<Cell
+						text={props.points}
+						pos={0.75}
+						width={0.25}
+						color={props.color}
+					/>
+				</>
+			) : (
+				<>
+					<Cell
+						text={props.playerName}
+						pos={0.08}
+						width={0.4}
+						color={props.color}
+					/>
+					<Cell text={props.role} pos={0.48} width={0.2} color={props.color} />
+					<Cell text={props.stat} pos={0.68} width={0.15} color={props.color} />
+					<Cell
+						text={props.points}
+						pos={0.83}
+						width={0.17}
+						color={props.color}
+					/>
+				</>
+			)}
 		</frame>
 	);
 }
