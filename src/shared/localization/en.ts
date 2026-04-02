@@ -12,12 +12,6 @@ export const EN: Record<string, string> = {
 	role_hider: "HIDER",
 	role_spectator: "SPECTATOR",
 
-	// Action buttons
-	action_spirit_wave: "SPIRIT WAVE!",
-	action_rattle: "RATTLE!",
-	action_catch: "CATCH!",
-	action_kick: "KICK!",
-
 	// Countdown
 	oni_reveal: "The Oni is...",
 
@@ -163,9 +157,6 @@ export const EN: Record<string, string> = {
 	// Hint texts
 	hint_oni_counting: "Oni is counting... Hide!",
 	hint_oni_hunting: "Oni is hunting! Run and hide!",
-	hint_spirit_wave: "Crowd Spirit! Extra cover for the hiders!",
-	hint_crowd_crossing: "Crowd crossing — use them!",
-	hint_cars_crossing: "Cars crossing! Watch out!",
 	hint_can_moved: "The can rolled to a new alley!",
 	hint_starting_can_kick: "Starting Can Kick...",
 	hint_starting_scramble: "Starting Hide & Seek...",

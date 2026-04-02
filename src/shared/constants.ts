@@ -561,20 +561,9 @@ export const SKY_DRAGON_YAW_OFFSET = -90;
 export const SCRAMBLE_TAG_RADIUS = 10;
 export const SCRAMBLE_MOUNTED_TAG_RADIUS = 14;
 export const SCRAMBLE_ONI_COUNT_DURATION = 10;
-export const SCRAMBLE_CROWD_WAVE_INTERVAL = 20;
-export const SCRAMBLE_CROWD_WAVE_DURATION = 10;
-export const SCRAMBLE_CROWD_NPC_COUNT = 12;
-export const SCRAMBLE_MAX_ACTIVE_SPIRIT_WAVES = 1;
 export const SCRAMBLE_SLIDE_SPEED = 800;
 export const SCRAMBLE_SLIDE_COOLDOWN = 8;
 export const SCRAMBLE_TAG_BONUS_PER_TAG = 15;
-export const SCRAMBLE_SPIRIT_WAVE_DURATION = 5;
-
-// Scramble cars
-export const SCRAMBLE_CAR_SPEED_DURATION = 10; // seconds for car tween across road
-export const SCRAMBLE_CAR_SPAWN_INTERVAL = 15; // seconds between car waves
-export const SCRAMBLE_CAR_WAVE_DURATION = 10; // seconds cars are present (matches tween)
-export const SCRAMBLE_CAR_DODGE_RADIUS = 12; // proximity check for dodge mission
 
 // Hachi anti-cheat
 export const HACHI_MAX_SPEED_TOLERANCE = 1.5; // multiplier over max expected speed

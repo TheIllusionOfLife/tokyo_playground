@@ -1,25 +1,14 @@
 import { Janitor } from "@rbxts/janitor";
-import {
-	CollectionService,
-	Players,
-	ServerStorage,
-	TweenService,
-	Workspace,
-} from "@rbxts/services";
+import { CollectionService, Players, Workspace } from "@rbxts/services";
 import {
 	ACTION_COOLDOWN,
 	DEFAULT_WALK_SPEED,
 	HACHI_ONI_EVOLUTION,
 	HACHI_WALK_SPEEDS,
-	SCRAMBLE_CROWD_NPC_COUNT,
-	SCRAMBLE_CROWD_WAVE_DURATION,
-	SCRAMBLE_CROWD_WAVE_INTERVAL,
-	SCRAMBLE_MAX_ACTIVE_SPIRIT_WAVES,
 	SCRAMBLE_MOUNTED_TAG_RADIUS,
 	SCRAMBLE_ONI_COUNT_DURATION,
 	SCRAMBLE_SLIDE_COOLDOWN,
 	SCRAMBLE_SLIDE_SPEED,
-	SCRAMBLE_SPIRIT_WAVE_DURATION,
 	SCRAMBLE_TAG_RADIUS,
 	SLIDE_DIR_Y_OFFSET,
 } from "shared/constants";
@@ -32,7 +21,6 @@ import {
 	ShibuyaScramblePlayerState,
 	VehicleId,
 } from "shared/types";
-import { canTriggerSpiritWave } from "shared/utils/scrambleCrowd";
 import {
 	equipHachiCostume,
 	forceUnmount,
@@ -53,8 +41,6 @@ type ServerEvents = ReturnType<typeof GlobalEvents.createServer>;
 const ONI_SPAWN_TAG = "ShibuyaScrambleOniSpawn";
 const HIDER_SPAWN_TAG = "ShibuyaScrambleHiderSpawn";
 const SLIDE_RAMP_TAG = "ShibuyaSlideRamp";
-const FADE_OUT_DURATION = 1; // seconds for NPC/car fade-out
-
 export class ShibuyaScrambleMinigame implements IMinigame {
 	readonly id = MinigameId.ShibuyaScramble;
 
@@ -62,13 +48,8 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 	private playerObjects = new Map<number, Player>();
 	private oniCounting = false;
 	private countdownThread?: thread;
-	private crowdThread?: thread;
-
-	private activeCrowdNPCs: Model[] = [];
 	private slideCooldowns = new Map<number, number>();
 	private lastHintText = "";
-	private spiritCharges = new Map<number, number>();
-	private activeSpiritWaveCount = 0;
 	private lastAutoCatchTime = 0;
 	private oniUserId?: number;
 
@@ -88,7 +69,6 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 				rescueCount: 0,
 			});
 			this.playerObjects.set(player.UserId, player);
-			this.spiritCharges.set(player.UserId, 0);
 		}
 
 		// Connect slide ramp touch handlers
@@ -306,34 +286,6 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 		return false;
 	}
 
-	handleSpiritWaveRequest(player: Player) {
-		const state = this.playerStates.get(player.UserId);
-		if (!state || state.role !== PlayerRole.Hider || !state.isTagged) return;
-		const charges = this.spiritCharges.get(player.UserId) ?? 0;
-		if (
-			!canTriggerSpiritWave(
-				charges,
-				this.activeSpiritWaveCount,
-				SCRAMBLE_MAX_ACTIVE_SPIRIT_WAVES,
-			)
-		)
-			return;
-
-		const wave = this.spawnCrowdWave(
-			SCRAMBLE_SPIRIT_WAVE_DURATION,
-			"hint_spirit_wave",
-		);
-		if (wave.size() === 0) return;
-
-		this.spiritCharges.set(player.UserId, 0);
-		this.serverEvents.spiritChargeChanged.fire(player, 0);
-		this.activeSpiritWaveCount += 1;
-		task.delay(SCRAMBLE_SPIRIT_WAVE_DURATION + 1, () => {
-			this.despawnCrowdNPCs(wave);
-			this.activeSpiritWaveCount = math.max(0, this.activeSpiritWaveCount - 1);
-		});
-	}
-
 	handleCatchRequest(_player: Player) {
 		// Auto-catch in tick() handles all tagging now
 	}
@@ -342,7 +294,6 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 		this.playerStates.delete(userId);
 		this.playerObjects.delete(userId);
 		this.slideCooldowns.delete(userId);
-		this.spiritCharges.delete(userId);
 	}
 
 	stopCountdown() {
@@ -355,12 +306,6 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 			HACHI_WALK_SPEEDS[0],
 		);
 		this.countdownThread = undefined;
-		// Stop crowd wave loop
-		if (this.crowdThread) {
-			task.cancel(this.crowdThread);
-			this.crowdThread = undefined;
-		}
-		this.despawnCrowdNPCs();
 	}
 
 	cleanup() {
@@ -382,19 +327,12 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 				}
 			}
 		}
-		if (this.crowdThread) {
-			task.cancel(this.crowdThread);
-			this.crowdThread = undefined;
-		}
-		this.despawnCrowdNPCs();
 		this.lastHintText = "";
 		this.lastAutoCatchTime = 0;
 		this.oniUserId = undefined;
 		this.playerStates.clear();
 		this.playerObjects.clear();
 		this.slideCooldowns.clear();
-		this.spiritCharges.clear();
-		this.activeSpiritWaveCount = 0;
 	}
 
 	private mountOni(player: Player) {
@@ -407,144 +345,6 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 		if (!equipHachiCostume(player, hachiClone, HACHI_ONI_EVOLUTION)) {
 			hachiClone.Destroy();
 		}
-	}
-
-	private spawnCrowdWave(
-		duration = SCRAMBLE_CROWD_WAVE_DURATION,
-		hintText = "hint_crowd_crossing",
-	) {
-		const waypointsFolder = Workspace.FindFirstChild("CrowdWaypoints");
-		if (!waypointsFolder) return [];
-		const noobTemplate = ServerStorage.FindFirstChild("NoobTemplate") as
-			| Model
-			| undefined;
-		const waveNpcs: Model[] = [];
-
-		const npcsPerPath = math.floor(SCRAMBLE_CROWD_NPC_COUNT / 4);
-		for (let i = 1; i <= 4; i++) {
-			const pathFolder = waypointsFolder.FindFirstChild(`Path${i}`);
-			if (!pathFolder) continue;
-			const startPart = pathFolder.FindFirstChild("Start") as
-				| BasePart
-				| undefined;
-			const endPart = pathFolder.FindFirstChild("End") as BasePart | undefined;
-			if (!startPart || !endPart) continue;
-
-			for (let j = 0; j < npcsPerPath; j++) {
-				const offset = new Vector3(
-					(math.random() - 0.5) * 6,
-					0,
-					(math.random() - 0.5) * 6,
-				);
-				const npc = this.createCrowdNpc(
-					noobTemplate,
-					startPart.Position.add(offset),
-					endPart.Position.add(offset),
-					duration,
-				);
-				this.activeCrowdNPCs.push(npc);
-				waveNpcs.push(npc);
-			}
-		}
-
-		if (waveNpcs.size() === 0) return [];
-
-		this.serverEvents.crowdWaveStarted.broadcast(4);
-		this.lastHintText = fireHintText(
-			this.serverEvents,
-			hintText,
-			this.lastHintText,
-		);
-
-		return waveNpcs;
-	}
-
-	private createCrowdNpc(
-		template: Model | undefined,
-		startPos: Vector3,
-		endPos: Vector3,
-		duration: number,
-	): Model {
-		const rawDir = endPos.sub(startPos);
-		const dir = rawDir.Magnitude > 0.1 ? rawDir : new Vector3(0, 0, 1);
-
-		if (template) {
-			const npc = template.Clone();
-			for (const desc of npc.GetDescendants()) {
-				if (desc.IsA("BasePart")) {
-					desc.CanCollide = false;
-					desc.CanTouch = false;
-					desc.CanQuery = false;
-				}
-			}
-			const hrp = npc.FindFirstChild("HumanoidRootPart") as
-				| BasePart
-				| undefined;
-			if (hrp) {
-				hrp.Anchored = true;
-				hrp.CFrame = CFrame.lookAt(startPos, startPos.add(dir));
-				npc.Parent = Workspace;
-				TweenService.Create(
-					hrp,
-					new TweenInfo(duration, Enum.EasingStyle.Linear),
-					{ CFrame: CFrame.lookAt(endPos, endPos.add(dir)) },
-				).Play();
-			} else {
-				npc.PivotTo(CFrame.lookAt(startPos, startPos.add(dir)));
-				npc.Parent = Workspace;
-			}
-			return npc;
-		}
-		// Fallback: gray Part model
-		const fallback = new Instance("Model");
-		const body = new Instance("Part");
-		body.Name = "HumanoidRootPart";
-		body.Size = new Vector3(1, 3, 1);
-		body.Anchored = true;
-		body.CanCollide = false;
-		body.CanTouch = false;
-		body.CanQuery = false;
-		body.Color = Color3.fromRGB(150, 150, 150);
-		body.CFrame = CFrame.lookAt(startPos, startPos.add(dir));
-		body.Parent = fallback;
-		fallback.PrimaryPart = body;
-		fallback.Parent = Workspace;
-		TweenService.Create(
-			body,
-			new TweenInfo(duration, Enum.EasingStyle.Linear),
-			{ CFrame: CFrame.lookAt(endPos, endPos.add(dir)) },
-		).Play();
-		return fallback;
-	}
-
-	private despawnCrowdNPCs(npcs = this.activeCrowdNPCs) {
-		// Filter out already-destroyed NPCs (e.g., spirit wave + cleanup overlap)
-		const alive = npcs.filter((npc) => npc.Parent !== undefined);
-		// Remove from tracking immediately so next-wave timing isn't blocked
-		this.activeCrowdNPCs = this.activeCrowdNPCs.filter(
-			(npc) => !alive.includes(npc),
-		);
-		// Fade out then destroy
-		for (const npc of alive) {
-			for (const desc of npc.GetDescendants()) {
-				if (desc.IsA("BasePart")) {
-					TweenService.Create(
-						desc,
-						new TweenInfo(FADE_OUT_DURATION, Enum.EasingStyle.Linear),
-						{
-							Transparency: 1,
-						},
-					).Play();
-				} else if (desc.IsA("ParticleEmitter") || desc.IsA("Trail")) {
-					desc.Enabled = false;
-				}
-			}
-		}
-		task.delay(FADE_OUT_DURATION + 0.1, () => {
-			for (const npc of npcs) {
-				if (npc.Parent) npc.Destroy();
-			}
-		});
 	}
 
 	private handleSlideTouch(touching: BasePart, ramp: BasePart) {

@@ -27,7 +27,6 @@ interface ServerToClientEvents {
 	scoreUpdated(coins: number): void;
 	matchPhaseChanged(phase: MatchPhase): void;
 	roleAssigned(role: PlayerRole, minigameId: MinigameId): void;
-	crowdWaveStarted(pathCount: number): void;
 	roundTimerUpdate(timeRemaining: number): void;
 	hintTextChanged(hint: string, hintArgs?: string[]): void;
 	rewardGranted(breakdown: RewardBreakdown): void;
@@ -70,7 +69,6 @@ interface ServerToClientEvents {
 	oniReveal(oniUserId: number, durationSeconds: number): void;
 	canKickVisual(canPosition: Vector3): void;
 	catchHighlight(caughtUserId: number): void;
-	spiritChargeChanged(charges: number): void;
 	hachiRaceState(state: HachiRaceStateData): void;
 	hachiFieldItems(
 		remainingRegular: number,
@@ -176,8 +174,6 @@ interface ClientToServerEvents {
 	hachiEject(): void;
 	hachiDoubleJump(): void;
 	requestHachiSlide(): void;
-	requestSpiritWave(): void;
-
 	// ── Living Shibuya: Stamps (deprecated) ─────────────────────────────
 	requestStampCard(): void;
 

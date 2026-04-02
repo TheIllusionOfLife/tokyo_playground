@@ -472,8 +472,6 @@ export class CanKickMinigame implements IMinigame {
 		return true;
 	}
 
-	handleSpiritWaveRequest(_player: Player): void {}
-
 	checkWinCondition(): RoundResult | undefined {
 		if (this.oniCounting) return undefined;
 

@@ -121,15 +121,6 @@ export class MatchService implements OnStart {
 			}),
 		);
 
-		this.serverEvents.requestSpiritWave.connect(
-			safeHandler("MatchService.requestSpiritWave", (player) => {
-				if (this.currentPhase !== MatchPhase.InProgress) return;
-				if (!this.activeMinigame) return;
-				if (!this.matchPlayers.has(player)) return;
-				this.activeMinigame.handleSpiritWaveRequest(player);
-			}),
-		);
-
 		this.serverEvents.clientActivity.connect(
 			safeHandler("MatchService.clientActivity", (player) => {
 				this.lastActivity.set(player.UserId, os.clock());

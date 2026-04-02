@@ -253,7 +253,6 @@ export class HudController implements OnStart {
 			}
 			if (activeMinigameId === MinigameId.ShibuyaScramble) {
 				gameStore.setLocalTagged(true);
-				gameStore.setSpiritCharges(1);
 			}
 		});
 
@@ -292,10 +291,6 @@ export class HudController implements OnStart {
 					}
 				});
 			}
-		});
-
-		clientEvents.spiritChargeChanged.connect((charges) => {
-			gameStore.setSpiritCharges(charges);
 		});
 
 		clientEvents.hachiRaceState.connect((state) => {

@@ -61,12 +61,12 @@ export class LeaderboardService implements OnStart {
 		if (!this.weeklyStore || score <= 0) return;
 
 		const key = `${player.UserId}`;
-		const [readOk, currentBest] = pcall(() => this.weeklyStore!.GetAsync(key));
-		if (!readOk) return; // Don't risk overwriting a higher score on read failure
-		const existing = typeIs(currentBest, "number") ? currentBest : 0;
-		if (score > existing) {
-			pcall(() => this.weeklyStore!.SetAsync(key, score));
-		}
+		pcall(() =>
+			this.weeklyStore!.UpdateAsync(key, (existing) => {
+				const current = typeIs(existing, "number") ? existing : 0;
+				return score > current ? score : current;
+			}),
+		);
 	}
 
 	private updateAllPlayers() {

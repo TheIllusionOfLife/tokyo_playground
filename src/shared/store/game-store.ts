@@ -51,7 +51,6 @@ export interface GameStoreState {
 	missionClaimReady?: { id: MissionId; pointsReward: number };
 	localCaught: boolean;
 	localTagged: boolean;
-	spiritCharges: number;
 	featuredUnlock?: FeaturedUnlockData;
 	hachiRaceState?: HachiRaceStateData;
 	hachiFieldRegular: number;
@@ -125,7 +124,6 @@ const initialState: GameStoreState = {
 	hachiFieldBonusTotal: 0,
 	localCaught: false,
 	localTagged: false,
-	spiritCharges: 0,
 	activeOverlay: "none" as const,
 	feedMessages: [],
 	// Living Shibuya
@@ -233,10 +231,6 @@ export const gameStore = createProducer(initialState, {
 		...state,
 		localTagged,
 	}),
-	setSpiritCharges: (state, spiritCharges: number) => ({
-		...state,
-		spiritCharges,
-	}),
 	setFeaturedUnlock: (
 		state,
 		featuredUnlock: FeaturedUnlockData | undefined,
@@ -322,7 +316,6 @@ export const gameStore = createProducer(initialState, {
 		missionClaimReady: undefined,
 		localCaught: false,
 		localTagged: false,
-		spiritCharges: 0,
 		activeOverlay: "none" as const,
 		hachiRaceState: undefined,
 		feedMessages: [],

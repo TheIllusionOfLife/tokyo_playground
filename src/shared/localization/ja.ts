@@ -12,12 +12,6 @@ export const JA: Record<string, string> = {
 	role_hider: "かくれんぼ",
 	role_spectator: "観戦中",
 
-	// Action buttons
-	action_spirit_wave: "スピリットウェーブ!",
-	action_rattle: "ガタガタ!",
-	action_catch: "つかまえる!",
-	action_kick: "蹴る!",
-
 	// Countdown
 	oni_reveal: "オニは...",
 
@@ -163,9 +157,6 @@ export const JA: Record<string, string> = {
 	// Hint texts
 	hint_oni_counting: "オニが数えている…隠れて!",
 	hint_oni_hunting: "オニが追いかけてくる! 逃げて隠れろ!",
-	hint_spirit_wave: "クラウドスピリット! 隠れる側の援護!",
-	hint_crowd_crossing: "群衆が横断中 — 紛れろ!",
-	hint_cars_crossing: "車が来る! 気をつけろ!",
 	hint_can_moved: "缶が新しい路地に転がった!",
 	hint_starting_can_kick: "缶蹴り開始...",
 	hint_starting_scramble: "かくれんぼ開始...",

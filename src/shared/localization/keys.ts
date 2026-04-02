@@ -13,12 +13,6 @@ export const L_ROLE_ONI = "role_oni";
 export const L_ROLE_HIDER = "role_hider";
 export const L_ROLE_SPECTATOR = "role_spectator";
 
-// Action buttons
-export const L_ACTION_SPIRIT_WAVE = "action_spirit_wave";
-export const L_ACTION_RATTLE = "action_rattle";
-export const L_ACTION_CATCH = "action_catch";
-export const L_ACTION_KICK = "action_kick";
-
 // Countdown / Oni reveal
 export const L_ONI_REVEAL = "oni_reveal";
 
@@ -150,9 +144,6 @@ export const L_HACHI_PLAY = "hachi_play";
 // Hint texts
 export const L_HINT_ONI_COUNTING = "hint_oni_counting";
 export const L_HINT_ONI_HUNTING = "hint_oni_hunting";
-export const L_HINT_SPIRIT_WAVE = "hint_spirit_wave";
-export const L_HINT_CROWD_CROSSING = "hint_crowd_crossing";
-export const L_HINT_CARS_CROSSING = "hint_cars_crossing";
 export const L_HINT_CAN_MOVED = "hint_can_moved";
 export const L_HINT_STARTING_CAN_KICK = "hint_starting_can_kick";
 export const L_HINT_STARTING_SCRAMBLE = "hint_starting_scramble";

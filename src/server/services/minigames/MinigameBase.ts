@@ -45,9 +45,6 @@ export interface IMinigame {
 	/** Server-validated can kick action. Returns true if the can was actually kicked. */
 	handleKickCanRequest(player: Player): boolean;
 
-	/** Server-validated spirit wave action (Shibuya Scramble only). */
-	handleSpiritWaveRequest(player: Player): void;
-
 	/** Handle mid-match disconnect. Called by MatchService.handlePlayerLeaveMidMatch. */
 	removePlayer(userId: number): void;
 
