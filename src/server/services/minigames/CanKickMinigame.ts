@@ -72,6 +72,11 @@ export class CanKickMinigame implements IMinigame {
 			| undefined;
 		if (canTemplate) {
 			this.canModel = canTemplate.Clone();
+			// Rotate can 90 degrees on X so it stands upright
+			const originPos = canTemplate.GetPivot().Position;
+			this.canModel.PivotTo(
+				new CFrame(originPos).mul(CFrame.Angles(math.rad(-90), 0, 0)),
+			);
 			this.canModel.Parent = Workspace;
 			matchJanitor.Add(this.canModel);
 			this.canOrigin = this.canModel.GetPivot().Position;
@@ -193,6 +198,9 @@ export class CanKickMinigame implements IMinigame {
 		// Auto-catch: check if Oni is near any uncaught hider
 		this.checkAutoCatch();
 
+		// Auto-kick: free hider near the can triggers a kick automatically
+		this.checkAutoKick();
+
 		// Can relocation
 		if (!this.canModel || !this.canOrigin) return;
 		this.canRelocateElapsed += _dt;
@@ -203,7 +211,9 @@ export class CanKickMinigame implements IMinigame {
 		const nextPosition = this.canOrigin.add(
 			CAN_SOCKET_OFFSETS[this.canSocketIndex],
 		);
-		this.canModel.PivotTo(new CFrame(nextPosition));
+		this.canModel.PivotTo(
+			new CFrame(nextPosition).mul(CFrame.Angles(math.rad(-90), 0, 0)),
+		);
 		this.lastHintText = fireHintText(
 			this.serverEvents,
 			"hint_can_moved",
@@ -254,6 +264,27 @@ export class CanKickMinigame implements IMinigame {
 		this.catchHider(oniPlayer, closestHider);
 	}
 
+	/** Auto-kick: if any free hider is within CAN_KICK_RADIUS of the can, trigger a kick. */
+	private checkAutoKick() {
+		if (!this.canModel) return;
+		const canPos = this.canModel.GetPivot().Position;
+
+		for (const [userId, state] of this.playerStates) {
+			if (state.role !== PlayerRole.Hider || state.isCaught) continue;
+			const player = this.playerObjects.get(userId);
+			if (!player?.Character) continue;
+			const hrp = player.Character.FindFirstChild("HumanoidRootPart") as
+				| BasePart
+				| undefined;
+			if (!hrp) continue;
+			const dist = hrp.Position.sub(canPos).Magnitude;
+			if (dist <= CAN_KICK_RADIUS) {
+				this.handleKickCanRequest(player);
+				return; // one kick per tick
+			}
+		}
+	}
+
 	private catchHider(oniPlayer: Player, hider: Player) {
 		const oniState = this.playerStates.get(oniPlayer.UserId);
 		const hiderState = this.playerStates.get(hider.UserId);
@@ -285,8 +316,14 @@ export class CanKickMinigame implements IMinigame {
 				hider.Character &&
 				hider.Character === caughtCharacter
 			) {
+				// Teleport onto the top surface of the jail zone
+				const jailTop = this.jailZone.Position.Y + this.jailZone.Size.Y * 0.5;
 				hider.Character.PivotTo(
-					new CFrame(this.jailZone.Position.add(new Vector3(0, 3, 0))),
+					new CFrame(
+						this.jailZone.Position.X,
+						jailTop + 3,
+						this.jailZone.Position.Z,
+					),
 				);
 			}
 		});

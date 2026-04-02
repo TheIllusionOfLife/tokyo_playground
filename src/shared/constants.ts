@@ -38,8 +38,8 @@ export const SPIN_REWARDS = [5, 10, 10, 15, 15, 20, 25, 50];
 export const FRIEND_REFERRAL_BONUS = 15;
 
 // Can Kick
-export const ONI_CATCH_RADIUS = 10;
-export const ONI_MOUNTED_CATCH_RADIUS = 14;
+export const ONI_CATCH_RADIUS = 5;
+export const ONI_MOUNTED_CATCH_RADIUS = 7;
 export const CAN_KICK_RADIUS = 10;
 export const ONI_COUNT_DURATION = 10;
 export const CAN_RELOCATE_INTERVAL = 35;
