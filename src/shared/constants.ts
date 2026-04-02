@@ -19,6 +19,7 @@ export const CLEANUP_DURATION = 3;
 
 // Economy
 export const BASE_PARTICIPATION_POINTS = 25;
+export const ONI_BASE_POINTS = 40;
 export const WIN_BONUS_POINTS = 25;
 export const ONI_CATCH_BONUS = 15;
 export const HIDER_RESCUE_BONUS = 15;

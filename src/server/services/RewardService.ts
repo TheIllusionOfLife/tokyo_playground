@@ -4,6 +4,7 @@ import {
 	CAN_KICK_BONUS,
 	HACHI_STARTING_SCORE_OFFSET,
 	HIDER_RESCUE_BONUS,
+	ONI_BASE_POINTS,
 	ONI_CATCH_BONUS,
 	SCRAMBLE_TAG_BONUS_PER_TAG,
 	WIN_BONUS_POINTS,
@@ -24,7 +25,7 @@ export class RewardService {
 		won: boolean,
 	): RewardBreakdown {
 		const isOni = role === PlayerRole.Oni;
-		const baseReward = BASE_PARTICIPATION_POINTS;
+		const baseReward = isOni ? ONI_BASE_POINTS : BASE_PARTICIPATION_POINTS;
 
 		const winBonus = won ? WIN_BONUS_POINTS : 0;
 
@@ -68,7 +69,7 @@ export class RewardService {
 	): RewardBreakdown {
 		const isOni = role === PlayerRole.Oni;
 
-		const baseReward = BASE_PARTICIPATION_POINTS;
+		const baseReward = isOni ? ONI_BASE_POINTS : BASE_PARTICIPATION_POINTS;
 		const winBonus = won ? WIN_BONUS_POINTS : 0;
 		const roleBonus = isOni
 			? SCRAMBLE_TAG_BONUS_PER_TAG * playerState.catchCount
