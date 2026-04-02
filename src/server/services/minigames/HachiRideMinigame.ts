@@ -1463,22 +1463,17 @@ export class HachiRideMinigame implements IMinigame {
 		const dragon = template.Clone();
 		dragon.Name = "SkyDragon";
 
-		// Scale all parts
+		// Scale using Model:ScaleTo (consistent with hachiCostume/LobbyService)
+		dragon.ScaleTo(SKY_DRAGON_SCALE);
+
 		for (const desc of dragon.GetDescendants()) {
 			if (desc.IsA("BasePart")) {
-				desc.Size = desc.Size.mul(SKY_DRAGON_SCALE);
 				desc.Anchored = true;
 				desc.CanCollide = true;
 				desc.CanTouch = false;
 				desc.CanQuery = false;
 				desc.CastShadow = false;
 				desc.Transparency = 0;
-				// CollisionFidelity is read-only in roblox-ts;
-				// set PCD on the WhiteDragonTemplate in Studio instead.
-			}
-			// Scale SpecialMesh if present
-			if (desc.IsA("SpecialMesh")) {
-				desc.Scale = desc.Scale.mul(SKY_DRAGON_SCALE);
 			}
 		}
 
@@ -1735,7 +1730,7 @@ export class HachiRideMinigame implements IMinigame {
 					this.tryEvolve(userId, state, player);
 
 					print(
-						`[HachiRide] ${player.Name} collected Dragon Treasure! +${SKY_DRAGON_BONUS_VALUE} pts`,
+						`[HachiRide] ${player.Name} collected Dragon Treasure! +${dragonValue} pts`,
 					);
 					break;
 				}

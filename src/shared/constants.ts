@@ -23,7 +23,6 @@ export const WIN_BONUS_POINTS = 25;
 export const ONI_CATCH_BONUS = 15;
 export const HIDER_RESCUE_BONUS = 15;
 export const CAN_KICK_BONUS = 20;
-export const LOSS_MULTIPLIER = 0.6;
 export const DAILY_LOGIN_BONUS_POINTS = 20;
 
 // Login streak bonuses (index = day in streak, capped at day 7)
@@ -541,8 +540,16 @@ export const SKY_DRAGON_SPEED = 80; // studs per second
 export const SKY_DRAGON_BONUS_VALUE = 30;
 export const SKY_DRAGON_COLLECTION_RADIUS = 25;
 // Route endpoints: extend bldg1→bldg2 direction to DEM edges
-export const SKY_DRAGON_ROUTE_START = new Vector3(-10984, 300, 32634);
-export const SKY_DRAGON_ROUTE_END = new Vector3(-9948, 300, 34286);
+export const SKY_DRAGON_ROUTE_START = new Vector3(
+	-10984,
+	SKY_DRAGON_HEIGHT,
+	32634,
+);
+export const SKY_DRAGON_ROUTE_END = new Vector3(
+	-9948,
+	SKY_DRAGON_HEIGHT,
+	34286,
+);
 // Yaw correction for the white dragon mesh visual (empirical)
 export const SKY_DRAGON_YAW_OFFSET = -90;
 

@@ -630,9 +630,7 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 				templateName === "CarTemplate_3"
 					? CFrame.Angles(math.rad(-5), 0, 0)
 					: new CFrame();
-			car.PivotTo(
-				CFrame.lookAt(startPos, startPos.add(carDir)).mul(pitchFix),
-			);
+			car.PivotTo(CFrame.lookAt(startPos, startPos.add(carDir)).mul(pitchFix));
 			car.Parent = Workspace;
 
 			if (primary) {

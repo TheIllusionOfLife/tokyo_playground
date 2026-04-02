@@ -174,6 +174,8 @@ export const L_HINT_ABILITY_2 = "hint_ability_2";
 export const L_HINT_ABILITY_3 = "hint_ability_3";
 export const L_HINT_ABILITY_4 = "hint_ability_4";
 export const L_HINT_HACHI_EVOLVED = "hint_hachi_evolved";
+export const L_HINT_SKY_DRAGON = "hint_sky_dragon";
+export const L_HINT_DRAGON_COLLECTED = "hint_dragon_collected";
 
 // Vehicles
 export const L_VEHICLE_TAB = "vehicle_tab";
