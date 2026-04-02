@@ -304,7 +304,7 @@ describe("getHachiRoundOutcome", () => {
 				]),
 			),
 		).toEqual({
-			topItemCount: 24,
+			topScore: 14,
 			winnerName: "Mika",
 			winningPlayerIds: [22],
 		});
@@ -347,7 +347,7 @@ describe("getHachiRoundOutcome", () => {
 				]),
 			),
 		).toEqual({
-			topItemCount: 30,
+			topScore: 20,
 			winnerName: "Akira",
 			winningPlayerIds: [11, 22],
 		});

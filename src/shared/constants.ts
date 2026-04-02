@@ -443,6 +443,9 @@ export const HACHI_STARTING_EVOLUTION = 1; // start with double jump
 export const HACHI_LOBBY_MIN_LEVEL = 1; // all vehicles always have double jump
 export const HACHI_ONI_EVOLUTION = 1; // Oni mount gets double jump
 export const HACHI_EVOLUTION_THRESHOLDS = [0, 10, 24, 40, 60];
+/** Points already baked into itemCount at round start due to starting evolution. */
+export const HACHI_STARTING_SCORE_OFFSET =
+	HACHI_EVOLUTION_THRESHOLDS[HACHI_STARTING_EVOLUTION] ?? 0;
 // Max air jumps per evolution level (index = level)
 // Level 0: 0, Level 1-2: 1 (double), Level 3: 2 (triple), Level 4: 3 (quadruple)
 export const HACHI_MAX_AIR_JUMPS = [0, 1, 1, 2, 3];

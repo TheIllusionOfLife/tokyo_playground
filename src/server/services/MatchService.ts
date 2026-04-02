@@ -5,6 +5,7 @@ import {
 	ACTION_COOLDOWN,
 	AFK_TIMEOUT,
 	CLEANUP_DURATION,
+	HACHI_STARTING_SCORE_OFFSET,
 	LOBBY_INTERMISSION,
 	MINIGAME_CONFIGS,
 	MINIGAME_INTROS,
@@ -517,8 +518,9 @@ export class MatchService implements OnStart {
 					player,
 					state.evolutionLevel,
 				);
-				this.badgeService.checkRoundItemCount(player, state.itemCount);
-				this.leaderboardService.updateWeeklyHachiScore(player, state.itemCount);
+				const displayScore = state.itemCount - HACHI_STARTING_SCORE_OFFSET;
+				this.badgeService.checkRoundItemCount(player, displayScore);
+				this.leaderboardService.updateWeeklyHachiScore(player, displayScore);
 			}
 
 			// Accumulate stats for badges
@@ -547,7 +549,7 @@ export class MatchService implements OnStart {
 				rescues: state.rescueCount,
 				points:
 					state.minigameId === MinigameId.HachiRide
-						? state.itemCount
+						? state.itemCount - HACHI_STARTING_SCORE_OFFSET
 						: breakdown.totalPoints,
 			});
 		}
@@ -649,7 +651,7 @@ export class MatchService implements OnStart {
 		const totalRescues = entries.reduce((sum, e) => sum + e.rescues, 0);
 
 		if (this.currentMinigameId === MinigameId.HachiRide) {
-			const topItems = hachiRoundOutcome?.topItemCount ?? 0;
+			const topItems = hachiRoundOutcome?.topScore ?? 0;
 			if (topItems > 0) {
 				const winnerName = hachiRoundOutcome?.winnerName ?? "A rider";
 				return `${winnerName} scored ${topItems} points!`;
