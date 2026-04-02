@@ -545,7 +545,10 @@ export class MatchService implements OnStart {
 				role: state.role,
 				catches: state.catchCount,
 				rescues: state.rescueCount,
-				points: breakdown.totalPoints,
+				points:
+					state.minigameId === MinigameId.HachiRide
+						? state.itemCount
+						: breakdown.totalPoints,
 			});
 		}
 

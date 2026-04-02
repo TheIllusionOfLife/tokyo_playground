@@ -89,7 +89,7 @@ export function Scoreboard() {
 					role={entry.role}
 					stat={
 						entry.role === PlayerRole.None
-							? `${entry.catches} items`
+							? ""
 							: entry.role === PlayerRole.Oni
 								? `${entry.catches}C`
 								: `${entry.rescues}R`

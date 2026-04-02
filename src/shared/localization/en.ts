@@ -112,7 +112,7 @@ export const EN: Record<string, string> = {
 		"Hide anywhere in Shibuya! Oni hunts you down. Tagged hiders get Spirit Wave to help teammates.",
 	intro_hachi_title: "Ride Hachi",
 	intro_hachi_sub:
-		"Race on Hachi! Collect items to evolve: double jump, wall run, and more. Most points wins!",
+		"Race on Hachi! Collect items to evolve: wall run, triple jump, and more. Most points wins!",
 
 	// Mission labels
 	mission_PlayGames: "Play 3 Games",

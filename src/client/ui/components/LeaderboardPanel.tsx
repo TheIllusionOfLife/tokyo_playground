@@ -228,7 +228,7 @@ export function LeaderboardPanel() {
 									TextColor3={Color3.fromRGB(120, 120, 140)}
 									TextScaled={true}
 									Font={Enum.Font.Gotham}
-									Text="No data yet. Play more games!"
+									Text="No data yet."
 								/>
 							) : (
 								entries.map((entry) => (

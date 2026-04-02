@@ -100,7 +100,7 @@ export const MINIGAME_INTROS: Record<
 	[MinigameId.HachiRide]: {
 		titleKey: "intro_hachi_title",
 		subtitleKey: "intro_hachi_sub",
-		durationSeconds: 10,
+		durationSeconds: 5,
 	},
 };
 
