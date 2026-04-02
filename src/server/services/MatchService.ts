@@ -19,6 +19,7 @@ import {
 	MatchPhase,
 	MinigameId,
 	PlayerRole,
+	RewardBreakdown,
 	RoundResult,
 	ScoreboardEntry,
 } from "shared/types";
@@ -436,6 +437,7 @@ export class MatchService implements OnStart {
 
 		// Build scoreboard
 		const entries: ScoreboardEntry[] = [];
+		const playerBreakdowns = new Map<Player, RewardBreakdown>();
 
 		// Rewarding phase
 		this.transitionPhase(MatchPhase.Rewarding);
@@ -457,8 +459,6 @@ export class MatchService implements OnStart {
 				state.minigameId === MinigameId.HachiRide
 					? this.rewardService.calculateHachiRideRewards(
 							state as HachiRidePlayerState,
-							won,
-							playerStates.size(),
 						)
 					: state.minigameId === MinigameId.ShibuyaScramble
 						? this.rewardService.calculateShibuyaScrambleRewards(
@@ -472,14 +472,19 @@ export class MatchService implements OnStart {
 								won,
 							);
 
-			// Apply streak multiplier to totalPoints only (not per-pickup events)
-			const streakCount = this.playerDataService.getStreakCount(player);
-			const streakIndex = math.min(streakCount, STREAK_MULTIPLIERS.size() - 1);
-			const streakMultiplier = STREAK_MULTIPLIERS[streakIndex];
-			if (streakMultiplier > 1) {
-				breakdown.totalPoints = math.floor(
-					breakdown.totalPoints * streakMultiplier,
+			// Apply streak multiplier (skip for Hachi Ride: reward = pure score)
+			if (state.minigameId !== MinigameId.HachiRide) {
+				const streakCount = this.playerDataService.getStreakCount(player);
+				const streakIndex = math.min(
+					streakCount,
+					STREAK_MULTIPLIERS.size() - 1,
 				);
+				const streakMultiplier = STREAK_MULTIPLIERS[streakIndex];
+				if (streakMultiplier > 1) {
+					breakdown.totalPoints = math.floor(
+						breakdown.totalPoints * streakMultiplier,
+					);
+				}
 			}
 
 			const levelResult = this.playerDataService.recordGameResult(
@@ -487,7 +492,7 @@ export class MatchService implements OnStart {
 				breakdown,
 				won,
 			);
-			this.serverEvents.rewardGranted.fire(player, breakdown);
+			playerBreakdowns.set(player, breakdown);
 
 			const data = this.playerDataService.getPlayerData(player);
 			if (data) {
@@ -591,10 +596,22 @@ export class MatchService implements OnStart {
 		});
 
 		this.serverEvents.roundSummary.broadcast(summaryText, winnerName);
-
 		this.serverEvents.scoreboard.broadcast(entries);
 
-		task.wait(RESULTS_DISPLAY_DURATION);
+		const isHachiRide = this.currentMinigameId === MinigameId.HachiRide;
+		if (isHachiRide) {
+			// Hachi Ride: scoreboard only, no breakdown popup
+			task.wait(RESULTS_DISPLAY_DURATION);
+		} else {
+			// Other games: scoreboard 5s, then reward breakdown 4s
+			task.wait(RESULTS_DISPLAY_DURATION);
+			// Clear scoreboard before showing breakdown
+			this.serverEvents.scoreboard.broadcast([]);
+			for (const [player, breakdown] of playerBreakdowns) {
+				this.serverEvents.rewardGranted.fire(player, breakdown);
+			}
+			task.wait(4);
+		}
 		this.cleanup();
 	}
 

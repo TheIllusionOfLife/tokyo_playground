@@ -17,10 +17,16 @@ export function RewardPopup() {
 	const breakdown = useSelector(
 		(state: GameStoreState) => state.rewardBreakdown,
 	);
-	const scoreboard = useSelector((state: GameStoreState) => state.scoreboard);
 
-	// Hide when scoreboard is visible to avoid overlapping panels
-	if (!showReward || !breakdown || scoreboard.size() > 0) {
+	// Hide when no breakdown, or when all bonus lines are zero (Hachi Ride)
+	if (!showReward || !breakdown) {
+		return undefined!;
+	}
+	const hasAnyBonus =
+		breakdown.baseReward > 0 ||
+		breakdown.winBonus > 0 ||
+		breakdown.roleBonus > 0;
+	if (!hasAnyBonus) {
 		return undefined!;
 	}
 

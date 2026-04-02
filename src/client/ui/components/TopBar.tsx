@@ -84,10 +84,11 @@ export function TopBarTimer() {
 export function TopBar() {
 	const matchPhase = useSelector((state: GameStoreState) => state.matchPhase);
 
-	// Hide in lobby and during InProgress (timer handles that)
+	// Hide in lobby, during InProgress (timer handles that), and Rewarding (scoreboard handles that)
 	if (
 		matchPhase === MatchPhase.WaitingForPlayers ||
-		matchPhase === MatchPhase.InProgress
+		matchPhase === MatchPhase.InProgress ||
+		matchPhase === MatchPhase.Rewarding
 	) {
 		return undefined!;
 	}
