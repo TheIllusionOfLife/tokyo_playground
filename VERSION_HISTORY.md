@@ -27,3 +27,5 @@
 | v0.21.0 | 2026-04-01 | Cross-platform playtest: loading screen, auto-catch, Oni mounts Hachi, PoI discovery, engagement features (login streak, spin, leaderboard, badges), UI overhaul, immersive ads infrastructure |
 | v0.22.0 | 2026-04-02 | Vehicles, badges, UI polish: 16 rideable vehicles with AnimProfile dispatch, cosmetics preview, 15 achievement badges with stat tracking, spin wheel visual overhaul, tabbed missions/PoI, mobile button layout fix |
 | v0.23.0 | 2026-04-02 | Vehicle tuning + UI fixes: per-vehicle weld rotation/height/hip offsets for all 16 mounts, floating dragons, standing skateboard, topbar Spin/Ranks buttons, shop tab redesign, PoI sync fix, /balance debug command |
+| v0.24.0 | 2026-04-02 | PoI zone name fix: spaced names matching Studio ZoneName attributes, MissionPanel fallback fix |
+| v0.25.0 | 2026-04-02 | Sky dragon + Hachi Ride overhaul: divine sky dragon boss (airplane-scale, rainbow treasure, 60s trigger), evolution rebalance (Level 1 baseline, double jump everywhere), economy rebalance (flat 25pts base, 15pts/catch, streak 2x cap, solo guard), rooftop item calibration, particle cleanup, car tilt fix, shop price sort |
