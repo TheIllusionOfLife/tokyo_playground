@@ -18,9 +18,9 @@ export const RESULTS_DISPLAY_DURATION = 5;
 export const CLEANUP_DURATION = 3;
 
 // Economy
-export const BASE_PARTICIPATION_POINTS = 10;
+export const BASE_PARTICIPATION_POINTS = 25;
 export const WIN_BONUS_POINTS = 25;
-export const ONI_CATCH_BONUS = 5;
+export const ONI_CATCH_BONUS = 15;
 export const HIDER_RESCUE_BONUS = 15;
 export const CAN_KICK_BONUS = 20;
 export const LOSS_MULTIPLIER = 0.6;
@@ -557,7 +557,7 @@ export const SCRAMBLE_CROWD_NPC_COUNT = 12;
 export const SCRAMBLE_MAX_ACTIVE_SPIRIT_WAVES = 1;
 export const SCRAMBLE_SLIDE_SPEED = 800;
 export const SCRAMBLE_SLIDE_COOLDOWN = 8;
-export const SCRAMBLE_TAG_BONUS_PER_TAG = 5;
+export const SCRAMBLE_TAG_BONUS_PER_TAG = 15;
 export const SCRAMBLE_SPIRIT_WAVE_DURATION = 5;
 
 // Scramble cars
