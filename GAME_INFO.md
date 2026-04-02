@@ -67,8 +67,8 @@ Bring your friends or make new ones. The next game starts in seconds.
 | Name | EN Title | JA Title | Description |
 |------|----------|----------|-------------|
 | Can Kick | Can Kick | 缶蹴り | Oni hunts hiders in the back alleys. Kick the can to free your friends. |
-| Shibuya Scramble | Shibuya Hide & Seek | 渋谷かくれんぼ | Hide anywhere in Shibuya. Oni chases you down. Dodge cars and blend into the crowd. |
-| Hachi Ride | Ride Hachi | ハチ公ライド | Race on Hachi the dog. Collect items, evolve, and steal the lead. |
+| Hide & Seek | Hide & Seek | かくれんぼ | Hide anywhere in Shibuya. Oni chases you down. Last one standing wins. |
+| Hachi Ride | Ride Hachi | ハチ公ライド | Race on Hachi the dog. Collect items, evolve, and compete for the weekly high score. |
 
 ---
 
