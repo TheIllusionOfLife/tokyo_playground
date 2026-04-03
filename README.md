@@ -97,7 +97,7 @@ out/                         Compiled Luau output (git-ignored)
 |------|---------|-------------|
 | **Can Kick** (缶蹴り) | 2-10 | Oni vs Hiders. Oni counts, then hunts. Hiders can kick the can to free jailed teammates. |
 | **Hide & Seek** (渋谷スクランブル) | 2-10 | Tag game at the famous Shibuya crossing. Oni tags hiders with periodic slide mechanics. |
-| **Hachi Ride** (ハチ公ライド) | 1-10 | Collect items while riding Hachi vehicles. Evolve through 5 levels (start at Lv.2 with double-jump and wall-run). Sky dragon bonus events. |
+| **Hachi Ride** (ハチ公ライド) | 1-8 | Collect items while riding Hachi vehicles. Evolve through 5 levels (start at Lv.2 with double-jump and wall-run). Sky dragon bonus events. |
 
 ## Living Shibuya Systems
 

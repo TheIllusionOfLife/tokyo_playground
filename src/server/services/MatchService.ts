@@ -248,9 +248,14 @@ export class MatchService implements OnStart {
 		const config = MINIGAME_CONFIGS[minigameId];
 		const eligible = Players.GetPlayers().filter((p) => !this.isPlayerAfk(p));
 
-		// Cap to maxPlayers — excess players remain in lobby
+		// Cap to maxPlayers — excess players remain in lobby (Fisher-Yates shuffle)
 		if (eligible.size() > config.maxPlayers) {
-			eligible.sort(() => math.random() > 0.5);
+			for (let i = eligible.size() - 1; i > 0; i--) {
+				const j = math.random(0, i);
+				const tmp = eligible[i];
+				eligible[i] = eligible[j];
+				eligible[j] = tmp;
+			}
 			while (eligible.size() > config.maxPlayers) {
 				eligible.pop();
 			}
@@ -325,22 +330,25 @@ export class MatchService implements OnStart {
 			}
 		}
 
-		// Route AFK-excluded players to spectator so they get proper UI state
+		// Route AFK-excluded and cap-excluded players to spectator
+		// so they get proper UI state while remaining in the lobby
 		for (const player of Players.GetPlayers()) {
-			if (!this.matchPlayers.has(player)) {
-				this.serverEvents.roleAssigned.fire(
-					player,
-					PlayerRole.Spectator,
-					minigameId,
-				);
-				this.serverEvents.matchSnapshot.fire(
-					player,
-					this.currentPhase,
-					0,
-					PlayerRole.Spectator,
-					minigameId,
-				);
-			}
+			if (this.matchPlayers.has(player)) continue;
+			// Only spectate players who weren't already filtered out as AFK
+			// (AFK players got notified separately above)
+			if (this.isPlayerAfk(player)) continue;
+			this.serverEvents.roleAssigned.fire(
+				player,
+				PlayerRole.Spectator,
+				minigameId,
+			);
+			this.serverEvents.matchSnapshot.fire(
+				player,
+				this.currentPhase,
+				0,
+				PlayerRole.Spectator,
+				minigameId,
+			);
 		}
 
 		// Dramatic Oni reveal — runs during Preparing phase (no round time lost)

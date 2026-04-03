@@ -73,7 +73,10 @@ export class PlayerDataService implements OnStart {
 			// Run pre-shutdown callbacks first (e.g. MatchService.forceCleanup)
 			// so final data writes complete before profiles are released.
 			for (const cb of this.preShutdownCallbacks) {
-				cb();
+				const [ok, err] = pcall(() => cb());
+				if (!ok) {
+					warn(`[PlayerDataService] preShutdown callback failed: ${err}`);
+				}
 			}
 			for (const [player, profile] of this.profiles) {
 				this.expectedReleases.add(player);

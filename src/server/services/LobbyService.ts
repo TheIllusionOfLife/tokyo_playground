@@ -103,13 +103,6 @@ export class LobbyService implements OnStart {
 				task.wait(0.5);
 				// Clear stale Hachi mount state from previous life (e.g. died while riding)
 				forceUnmount(player, true);
-				// Clean up anim/vehicle state keyed by old Model to prevent memory leak
-				for (const [model] of this.hachiAnimStates) {
-					if (!model.Parent) {
-						this.hachiAnimStates.delete(model);
-						this.mountedVehicleDefs.delete(model);
-					}
-				}
 				const humanoid = character.WaitForChild("Humanoid") as Humanoid;
 				humanoid.WalkSpeed = DEFAULT_WALK_SPEED;
 				humanoid.UseJumpPower = false;

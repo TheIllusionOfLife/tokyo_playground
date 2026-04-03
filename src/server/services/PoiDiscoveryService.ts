@@ -56,6 +56,11 @@ export class PoiDiscoveryService implements OnStart {
 		this.playerDataService.registerOnProfileLoaded((player) => {
 			this.syncToClient(player);
 		});
+
+		// Clean up cooldown entries on leave to prevent memory leak
+		Players.PlayerRemoving.Connect((player) => {
+			this.discoveryCooldowns.delete(player.UserId);
+		});
 	}
 
 	private handleDiscovery(player: Player, zoneName: string) {
