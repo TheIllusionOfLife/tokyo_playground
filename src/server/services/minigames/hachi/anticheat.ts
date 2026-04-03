@@ -118,7 +118,6 @@ export function checkSpeedViolations(
 			warn(
 				`[HachiRide] Speed warning for ${player.Name}: ${math.floor(dist)} studs in ${string.format("%.1f", elapsed)}s (strike ${currentStrikes})`,
 			);
-			ctx.lastPositions.set(userId, lastPos);
 		} else {
 			warn(
 				`[HachiRide] Snapback for ${player.Name}: ${math.floor(dist)} studs in ${string.format("%.1f", elapsed)}s (strike ${currentStrikes})`,
