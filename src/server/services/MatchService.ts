@@ -248,7 +248,8 @@ export class MatchService implements OnStart {
 		const config = MINIGAME_CONFIGS[minigameId];
 		const eligible = Players.GetPlayers().filter((p) => !this.isPlayerAfk(p));
 
-		// Cap to maxPlayers — excess players remain in lobby (Fisher-Yates shuffle)
+		// Cap to maxPlayers — Fisher-Yates shuffle, then take first maxPlayers
+		let selected = eligible;
 		if (eligible.size() > config.maxPlayers) {
 			for (let i = eligible.size() - 1; i > 0; i--) {
 				const j = math.random(0, i);
@@ -256,11 +257,12 @@ export class MatchService implements OnStart {
 				eligible[i] = eligible[j];
 				eligible[j] = tmp;
 			}
-			while (eligible.size() > config.maxPlayers) {
-				eligible.pop();
+			selected = [];
+			for (let i = 0; i < config.maxPlayers; i++) {
+				selected.push(eligible[i]);
 			}
 		}
-		this.matchPlayers = new Set(eligible);
+		this.matchPlayers = new Set(selected);
 
 		// Notify AFK players and fire analytics
 		for (const player of Players.GetPlayers()) {
@@ -330,13 +332,10 @@ export class MatchService implements OnStart {
 			}
 		}
 
-		// Route AFK-excluded and cap-excluded players to spectator
-		// so they get proper UI state while remaining in the lobby
+		// Route all non-match players (AFK + cap-excluded) to spectator
+		// so their HUD shows correct state if they return during the match
 		for (const player of Players.GetPlayers()) {
 			if (this.matchPlayers.has(player)) continue;
-			// Only spectate players who weren't already filtered out as AFK
-			// (AFK players got notified separately above)
-			if (this.isPlayerAfk(player)) continue;
 			this.serverEvents.roleAssigned.fire(
 				player,
 				PlayerRole.Spectator,
