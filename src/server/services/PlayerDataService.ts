@@ -11,12 +11,10 @@ import {
 import { GlobalEvents } from "shared/network";
 import {
 	DEFAULT_PLAYER_DATA,
-	ItemCategory,
 	ItemId,
 	MissionId,
 	PlayerData,
 	PlayerMissions,
-	RewardBreakdown,
 	VehicleId,
 } from "shared/types";
 import { getCurrentDay } from "shared/utils/dayKey";
@@ -175,7 +173,7 @@ export class PlayerDataService implements OnStart {
 
 		this.profiles.set(player, profile);
 		print(
-			`[PlayerDataService] Loaded profile for ${player.Name}: ${profile.Data.totalPlayPoints} pts, level ${this.getPlaygroundLevel(player)}`,
+			`[PlayerDataService] Loaded profile for ${player.Name}: ${profile.Data.totalPlayPoints} pts, level ${this.getPlaygroundLevelInternal(player)}`,
 		);
 
 		// Notify all registered callbacks (e.g. MissionService) that profile is ready
@@ -190,7 +188,7 @@ export class PlayerDataService implements OnStart {
 			data.totalPlayPoints === 0
 		) {
 			data.firstTimeRewardClaimed = true;
-			this.addPlayPoints(player, FIRST_TIME_REWARD_POINTS);
+			this.addPlayPointsInternal(player, FIRST_TIME_REWARD_POINTS);
 			// Grant Cherry Blossom Trail
 			if (!data.ownedItems.includes(ItemId.TrailCherryBlossom)) {
 				data.ownedItems.push(ItemId.TrailCherryBlossom);
@@ -222,8 +220,8 @@ export class PlayerDataService implements OnStart {
 					math.min(data.loginStreak, LOGIN_STREAK_BONUSES.size() - 1)
 				];
 			data.lastLoginDay = today;
-			this.addPlayPoints(player, bonusPoints);
-			const level = this.getPlaygroundLevel(player);
+			this.addPlayPointsInternal(player, bonusPoints);
+			const level = this.getPlaygroundLevelInternal(player);
 			this.serverEvents.playPointsUpdate.fire(
 				player,
 				data.totalPlayPoints,
@@ -258,19 +256,8 @@ export class PlayerDataService implements OnStart {
 		return this.profiles.get(player)?.Data;
 	}
 
-	getCoins(player: Player): number {
-		return this.profiles.get(player)?.Data.coins ?? 0;
-	}
-
-	addCoins(player: Player, amount: number) {
-		if (!(amount > 0 && amount < math.huge)) return;
-		const profile = this.profiles.get(player);
-		if (profile) {
-			profile.Data.coins += amount;
-		}
-	}
-
-	addPlayPoints(player: Player, amount: number) {
+	/** Private: used only for login bonus bootstrap. External callers use EconomyService. */
+	private addPlayPointsInternal(player: Player, amount: number) {
 		if (!(amount > 0 && amount < math.huge)) return;
 		const profile = this.profiles.get(player);
 		if (profile) {
@@ -282,7 +269,8 @@ export class PlayerDataService implements OnStart {
 		}
 	}
 
-	getPlaygroundLevel(player: Player): number {
+	/** Private: used only for login bonus bootstrap. External callers use EconomyService. */
+	private getPlaygroundLevelInternal(player: Player): number {
 		const data = this.profiles.get(player)?.Data;
 		if (!data) return 1;
 
@@ -295,55 +283,6 @@ export class PlayerDataService implements OnStart {
 			}
 		}
 		return level;
-	}
-
-	recordGameResult(
-		player: Player,
-		breakdown: RewardBreakdown,
-		won: boolean,
-	): { leveledUp: boolean; newLevel: number } {
-		const profile = this.profiles.get(player);
-		if (!profile) return { leveledUp: false, newLevel: 1 };
-
-		// Track win streak
-		if (won) {
-			profile.Data.streakCount += 1;
-			profile.Data.gamesWon += 1;
-		} else {
-			profile.Data.streakCount = 0;
-		}
-
-		const oldLevel = this.getPlaygroundLevel(player);
-		profile.Data.totalPlayPoints += breakdown.totalPoints;
-		profile.Data.shopBalance += breakdown.totalPoints;
-		profile.Data.gamesPlayed += 1;
-
-		const newLevel = this.getPlaygroundLevel(player);
-		if (newLevel > oldLevel) {
-			print(
-				`[PlayerDataService] ${player.Name} leveled up! ${oldLevel} → ${newLevel}`,
-			);
-		}
-
-		return { leveledUp: newLevel > oldLevel, newLevel };
-	}
-
-	getStreakCount(player: Player): number {
-		return this.profiles.get(player)?.Data.streakCount ?? 0;
-	}
-
-	resetStreak(player: Player) {
-		const profile = this.profiles.get(player);
-		if (profile) {
-			profile.Data.streakCount = 0;
-		}
-	}
-
-	incrementGamesPlayed(player: Player) {
-		const profile = this.profiles.get(player);
-		if (profile) {
-			profile.Data.gamesPlayed += 1;
-		}
 	}
 
 	// ── Living Shibuya methods ───────────────────────────────────────────────
@@ -418,79 +357,6 @@ export class PlayerDataService implements OnStart {
 		return false;
 	}
 
-	// ── Shop methods ─────────────────────────────────────────────────────────
-
-	getOwnedItems(player: Player): ItemId[] {
-		return this.profiles.get(player)?.Data.ownedItems ?? [];
-	}
-
-	addOwnedItem(player: Player, id: ItemId) {
-		const profile = this.profiles.get(player);
-		if (profile && !profile.Data.ownedItems.includes(id)) {
-			profile.Data.ownedItems.push(id);
-		}
-	}
-
-	spendShopBalance(player: Player, amount: number): boolean {
-		const profile = this.profiles.get(player);
-		if (!profile) return false;
-		if (profile.Data.shopBalance < amount) return false;
-		profile.Data.shopBalance -= amount;
-		return true;
-	}
-
-	getShopBalance(player: Player): number {
-		return this.profiles.get(player)?.Data.shopBalance ?? 0;
-	}
-
-	// ── Equip methods ────────────────────────────────────────────────────────
-
-	getEquippedItems(player: Player): Partial<Record<ItemCategory, ItemId>> {
-		return this.profiles.get(player)?.Data.equippedItems ?? {};
-	}
-
-	equipItem(player: Player, category: ItemCategory, itemId: ItemId) {
-		const profile = this.profiles.get(player);
-		if (profile) {
-			profile.Data.equippedItems[category] = itemId;
-		}
-	}
-
-	unequipItem(player: Player, category: ItemCategory) {
-		const profile = this.profiles.get(player);
-		if (profile) {
-			delete profile.Data.equippedItems[category];
-		}
-	}
-
-	// ── Vehicle methods ─────────────────────────────────────────────────────
-
-	getEquippedVehicle(player: Player): VehicleId {
-		return (
-			this.profiles.get(player)?.Data.equippedVehicle ?? VehicleId.DefaultHachi
-		);
-	}
-
-	setEquippedVehicle(player: Player, vehicleId: VehicleId) {
-		const profile = this.profiles.get(player);
-		if (profile) {
-			profile.Data.equippedVehicle = vehicleId;
-		}
-	}
-
-	getOwnedVehicles(player: Player): VehicleId[] {
-		return (
-			this.profiles.get(player)?.Data.ownedVehicles ?? [VehicleId.DefaultHachi]
-		);
-	}
-
-	addOwnedVehicle(player: Player, vehicleId: VehicleId) {
-		const profile = this.profiles.get(player);
-		if (profile && !profile.Data.ownedVehicles.includes(vehicleId)) {
-			profile.Data.ownedVehicles.push(vehicleId);
-		}
-	}
-
 	// ── PoI Discovery methods ───────────────────────────────────────────────
 
 	getDiscoveredPoi(player: Player): string[] {
@@ -498,9 +364,9 @@ export class PlayerDataService implements OnStart {
 	}
 
 	addDiscoveredPoi(player: Player, zoneName: string) {
-		const profile = this.profiles.get(player);
-		if (profile && !profile.Data.discoveredPoi.includes(zoneName)) {
-			profile.Data.discoveredPoi.push(zoneName);
+		const data = this.getPlayerData(player);
+		if (data && !data.discoveredPoi.includes(zoneName)) {
+			data.discoveredPoi.push(zoneName);
 		}
 	}
 
@@ -509,9 +375,9 @@ export class PlayerDataService implements OnStart {
 	}
 
 	addPoiClaimedReward(player: Player, zoneName: string) {
-		const profile = this.profiles.get(player);
-		if (profile && !profile.Data.poiClaimedRewards.includes(zoneName)) {
-			profile.Data.poiClaimedRewards.push(zoneName);
+		const data = this.getPlayerData(player);
+		if (data && !data.poiClaimedRewards.includes(zoneName)) {
+			data.poiClaimedRewards.push(zoneName);
 		}
 	}
 }

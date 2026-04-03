@@ -11,7 +11,7 @@ import {
 import { GlobalEvents } from "shared/network";
 import { MicroEventId } from "shared/types";
 import { safeHandler } from "../../utils/safeConnect";
-import { PlayerDataService } from "../PlayerDataService";
+import { EconomyService } from "../EconomyService";
 import { IMicroEvent } from "./MicroEventBase";
 
 type ServerEvents = ReturnType<typeof GlobalEvents.createServer>;
@@ -36,7 +36,7 @@ export class BonOdoriEvent implements IMicroEvent {
 
 	constructor(
 		private readonly serverEvents: ServerEvents,
-		private readonly playerDataService: PlayerDataService,
+		private readonly economyService: EconomyService,
 	) {}
 
 	start() {
@@ -145,7 +145,7 @@ export class BonOdoriEvent implements IMicroEvent {
 
 			const score = this.playerScores.get(userId) ?? 0;
 			const totalPts = BON_ODORI_PARTICIPATION_POINTS + score;
-			this.playerDataService.addPlayPoints(player, totalPts);
+			this.economyService.addPlayPoints(player, totalPts);
 		}
 		this.playerScores.clear();
 		this.participated.clear();

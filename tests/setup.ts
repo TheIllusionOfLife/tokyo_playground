@@ -36,13 +36,25 @@ class Vector3Polyfill {
 	) {}
 	static zero = new Vector3Polyfill(0, 0, 0);
 	add(other: Vector3Polyfill) {
-		return new Vector3Polyfill(this.X + other.X, this.Y + other.Y, this.Z + other.Z);
+		return new Vector3Polyfill(
+			this.X + other.X,
+			this.Y + other.Y,
+			this.Z + other.Z,
+		);
 	}
 	sub(other: Vector3Polyfill) {
-		return new Vector3Polyfill(this.X - other.X, this.Y - other.Y, this.Z - other.Z);
+		return new Vector3Polyfill(
+			this.X - other.X,
+			this.Y - other.Y,
+			this.Z - other.Z,
+		);
 	}
 	mul(scalar: number) {
-		return new Vector3Polyfill(this.X * scalar, this.Y * scalar, this.Z * scalar);
+		return new Vector3Polyfill(
+			this.X * scalar,
+			this.Y * scalar,
+			this.Z * scalar,
+		);
 	}
 	get Magnitude() {
 		return Math.sqrt(this.X ** 2 + this.Y ** 2 + this.Z ** 2);
@@ -82,13 +94,17 @@ class CFramePolyfill {
 };
 
 // Roblox string.format polyfill (Lua-style)
-(globalThis as unknown as { string: { format: typeof Intl.NumberFormat } }).string = {
+(
+	globalThis as unknown as { string: { format: typeof Intl.NumberFormat } }
+).string = {
 	...(globalThis as unknown as { string: object }).string,
 	format: (...args: unknown[]) => String(args[0]),
 };
 
 // os polyfill (clock + time)
-(globalThis as unknown as { os: { clock: () => number; time: () => number } }).os = {
+(
+	globalThis as unknown as { os: { clock: () => number; time: () => number } }
+).os = {
 	clock: () => performance.now() / 1000,
 	time: () => Math.floor(Date.now() / 1000),
 };

@@ -20,6 +20,7 @@ import { NpcId, TimePhase } from "shared/types";
 import { getCurrentDay } from "shared/utils/dayKey";
 import { safeHandler } from "../utils/safeConnect";
 import { DayNightService } from "./DayNightService";
+import { EconomyService } from "./EconomyService";
 import { PlayerDataService } from "./PlayerDataService";
 
 interface ActiveNpc {
@@ -46,6 +47,7 @@ export class NpcRoutineService implements OnStart {
 
 	constructor(
 		private readonly dayNightService: DayNightService,
+		private readonly economyService: EconomyService,
 		private readonly playerDataService: PlayerDataService,
 	) {}
 
@@ -192,7 +194,7 @@ export class NpcRoutineService implements OnStart {
 		if (npcId === NpcId.RamenChef) {
 			this.treatCooldowns.set(cooldownKey, now + NPC_TREAT_COOLDOWN);
 			const pts = this.getDailyInteractionPoints(player, npcId);
-			this.playerDataService.addPlayPoints(player, pts);
+			this.economyService.addPlayPoints(player, pts);
 			this.serverEvents.npcInteraction.fire(player, npcId, "treat", pts);
 		} else if (npcId === NpcId.Shopkeeper) {
 			this.treatCooldowns.set(cooldownKey, now + 60);
@@ -231,7 +233,7 @@ export class NpcRoutineService implements OnStart {
 
 		if (npcId === NpcId.Photographer) {
 			this.treatCooldowns.set(cooldownKey, now + NPC_TREAT_COOLDOWN);
-			this.playerDataService.addPlayPoints(player, PHOTOGRAPHER_POSE_REWARD);
+			this.economyService.addPlayPoints(player, PHOTOGRAPHER_POSE_REWARD);
 			this.serverEvents.npcInteraction.fire(
 				player,
 				npcId,
@@ -268,7 +270,7 @@ export class NpcRoutineService implements OnStart {
 		const fortune = OMIKUJI_FORTUNES[tier];
 		const points = OMIKUJI_POINTS[tier];
 
-		this.playerDataService.addPlayPoints(player, points);
+		this.economyService.addPlayPoints(player, points);
 		this.serverEvents.omikujiResult.fire(
 			player,
 			fortune.fortune,

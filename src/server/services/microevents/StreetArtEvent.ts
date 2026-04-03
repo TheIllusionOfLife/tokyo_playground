@@ -8,7 +8,7 @@ import {
 } from "shared/living-shibuya-constants";
 import { GlobalEvents } from "shared/network";
 import { MicroEventId } from "shared/types";
-import { PlayerDataService } from "../PlayerDataService";
+import { EconomyService } from "../EconomyService";
 import { IMicroEvent } from "./MicroEventBase";
 
 type ServerEvents = ReturnType<typeof GlobalEvents.createServer>;
@@ -28,7 +28,7 @@ export class StreetArtEvent implements IMicroEvent {
 
 	constructor(
 		private readonly serverEvents: ServerEvents,
-		private readonly playerDataService: PlayerDataService,
+		private readonly economyService: EconomyService,
 	) {}
 
 	start() {
@@ -80,12 +80,9 @@ export class StreetArtEvent implements IMicroEvent {
 			const watched = this.watchTime.get(userId) ?? 0;
 
 			if (watched >= fullWatchThreshold) {
-				this.playerDataService.addPlayPoints(
-					player,
-					STREET_ART_FULL_WATCH_POINTS,
-				);
+				this.economyService.addPlayPoints(player, STREET_ART_FULL_WATCH_POINTS);
 			} else if (this.partialVisitors.has(userId)) {
-				this.playerDataService.addPlayPoints(player, STREET_ART_PARTIAL_POINTS);
+				this.economyService.addPlayPoints(player, STREET_ART_PARTIAL_POINTS);
 			}
 		}
 		this.watchTime.clear();

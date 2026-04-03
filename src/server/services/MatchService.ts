@@ -14,7 +14,6 @@ import {
 } from "shared/constants";
 import { GlobalEvents } from "shared/network";
 import {
-	CanKickPlayerState,
 	GameState,
 	HachiRidePlayerState,
 	MatchPhase,
@@ -23,7 +22,6 @@ import {
 	RewardBreakdown,
 	RoundResult,
 	ScoreboardEntry,
-	ShibuyaScramblePlayerState,
 } from "shared/types";
 import {
 	getHachiRoundOutcome,
@@ -32,12 +30,21 @@ import {
 import { VALID_TRANSITIONS } from "shared/utils/matchPhase";
 import { CooldownTracker } from "../utils/cooldown";
 import { unequipHachiCostume } from "../utils/hachiCostume";
+import {
+	computeRoundSummary,
+	didPlayerWin,
+	isHiderEliminated,
+	resolveWinnerName,
+	sortScoreboard,
+} from "../utils/roundResolution";
 import { safeHandler } from "../utils/safeConnect";
 import { AmbientCityService } from "./AmbientCityService";
 import { AnalyticsService } from "./AnalyticsService";
 import { BadgeService } from "./BadgeService";
 import { BoundaryService } from "./BoundaryService";
+import { EconomyService } from "./EconomyService";
 import { GameStateService } from "./GameStateService";
+import { InventoryService } from "./InventoryService";
 import { LeaderboardService } from "./LeaderboardService";
 import { LobbyService } from "./LobbyService";
 import { MinigameService } from "./MinigameService";
@@ -69,6 +76,8 @@ export class MatchService implements OnStart {
 		private readonly gameStateService: GameStateService,
 		private readonly minigameService: MinigameService,
 		private readonly playerDataService: PlayerDataService,
+		private readonly economyService: EconomyService,
+		private readonly inventoryService: InventoryService,
 		private readonly rewardService: RewardService,
 		private readonly missionService: MissionService,
 		private readonly lobbyService: LobbyService,
@@ -97,6 +106,7 @@ export class MatchService implements OnStart {
 				new HachiRideMinigame(
 					events,
 					this.missionService,
+					this.inventoryService,
 					this.playerDataService,
 				),
 		);
@@ -448,19 +458,12 @@ export class MatchService implements OnStart {
 			if (!player) continue;
 
 			// Determine if this player won the round
-			const isEliminatedHider =
-				(state.minigameId === MinigameId.ShibuyaScramble &&
-					(state as ShibuyaScramblePlayerState).isTagged) ||
-				(state.minigameId === MinigameId.CanKick &&
-					(state as CanKickPlayerState).isCaught);
-			const won =
-				state.minigameId === MinigameId.HachiRide
-					? hachiWinningPlayerIds.has(userId)
-					: (state.role === PlayerRole.Oni && result === RoundResult.OniWins) ||
-						(state.role === PlayerRole.Hider &&
-							!isEliminatedHider &&
-							(result === RoundResult.HidersWin ||
-								result === RoundResult.TimerExpired));
+			const won = didPlayerWin(
+				state,
+				result,
+				isHiderEliminated(state),
+				hachiWinningPlayerIds.has(userId),
+			);
 
 			const breakdown =
 				state.minigameId === MinigameId.HachiRide
@@ -481,7 +484,7 @@ export class MatchService implements OnStart {
 
 			// Apply streak multiplier to each breakdown field (skip for Hachi Ride)
 			if (state.minigameId !== MinigameId.HachiRide) {
-				const streakCount = this.playerDataService.getStreakCount(player);
+				const streakCount = this.economyService.getStreakCount(player);
 				const streakIndex = math.min(
 					streakCount,
 					STREAK_MULTIPLIERS.size() - 1,
@@ -508,12 +511,12 @@ export class MatchService implements OnStart {
 				}
 			}
 
-			this.playerDataService.recordGameResult(player, breakdown, won);
+			this.economyService.recordGameResult(player, breakdown, won);
 			playerBreakdowns.set(player, breakdown);
 
 			const data = this.playerDataService.getPlayerData(player);
 			if (data) {
-				const level = this.playerDataService.getPlaygroundLevel(player);
+				const level = this.economyService.getPlaygroundLevel(player);
 				this.serverEvents.playPointsUpdate.fire(
 					player,
 					data.totalPlayPoints,
@@ -575,51 +578,37 @@ export class MatchService implements OnStart {
 			});
 		}
 
-		entries.sort((a, b) => a.points > b.points);
+		sortScoreboard(entries);
 
 		// Build set of eliminated hider names for winner filtering
 		const eliminatedNames = new Set<string>();
 		for (const [userId, state] of playerStates) {
-			if (state.role !== PlayerRole.Hider) continue;
-			const eliminated =
-				(state.minigameId === MinigameId.ShibuyaScramble &&
-					(state as ShibuyaScramblePlayerState).isTagged) ||
-				(state.minigameId === MinigameId.CanKick &&
-					(state as CanKickPlayerState).isCaught);
-			if (eliminated) {
-				const p = Players.GetPlayerByUserId(userId);
-				if (p) eliminatedNames.add(p.Name);
-			}
+			if (!isHiderEliminated(state)) continue;
+			const p = Players.GetPlayerByUserId(userId);
+			if (p) eliminatedNames.add(p.Name);
 		}
 
 		// Compute winner name based on actual round result
-		let winnerName = "";
-		if (this.currentMinigameId === MinigameId.HachiRide) {
-			winnerName = hachiRoundOutcome?.winnerName ?? "";
-		} else if (result === RoundResult.OniWins) {
-			winnerName =
-				entries.find((e) => e.role === PlayerRole.Oni)?.playerName ?? "";
-		} else {
-			// HidersWin or TimerExpired: pick the top-scoring surviving hider
-			winnerName =
-				entries.find(
-					(e) =>
-						e.role === PlayerRole.Hider && !eliminatedNames.has(e.playerName),
-				)?.playerName ?? "";
-		}
-		const roundDuration =
-			MINIGAME_CONFIGS[this.currentMinigameId].roundDuration;
-		const summaryText = this.computeRoundSummary(
+		const winnerName = resolveWinnerName(
+			this.currentMinigameId,
 			result,
 			entries,
-			roundDuration,
+			eliminatedNames,
+			hachiRoundOutcome,
+		);
+		const roundDuration =
+			MINIGAME_CONFIGS[this.currentMinigameId].roundDuration;
+		const elapsed = math.floor(
+			roundDuration - math.max(0, this.matchTimeRemaining),
+		);
+		const summaryText = computeRoundSummary(
+			this.currentMinigameId,
+			result,
+			entries,
+			elapsed,
 			hachiRoundOutcome,
 		);
 		// Analytics: fire after winner is determined
-		const elapsedDuration = math.floor(
-			MINIGAME_CONFIGS[this.currentMinigameId].roundDuration -
-				math.max(0, this.matchTimeRemaining),
-		);
 		let winnerId = 0;
 		if (this.currentMinigameId === MinigameId.HachiRide) {
 			winnerId = hachiRoundOutcome?.winningPlayerIds[0] ?? 0;
@@ -643,7 +632,7 @@ export class MatchService implements OnStart {
 			name: "round_end",
 			gameType: this.currentMinigameId,
 			winnerId,
-			duration: elapsedDuration,
+			duration: elapsed,
 		});
 
 		this.serverEvents.roundSummary.broadcast(summaryText, winnerName);
@@ -706,39 +695,6 @@ export class MatchService implements OnStart {
 		this.serverEvents.matchPhaseChanged.broadcast(newPhase);
 	}
 
-	private computeRoundSummary(
-		result: RoundResult,
-		entries: ScoreboardEntry[],
-		roundDuration: number,
-		hachiRoundOutcome?: HachiRoundOutcome,
-	): string {
-		const elapsed = math.floor(
-			roundDuration - math.max(0, this.matchTimeRemaining),
-		);
-		const totalCatches = entries.reduce((sum, e) => sum + e.catches, 0);
-		const totalRescues = entries.reduce((sum, e) => sum + e.rescues, 0);
-
-		if (this.currentMinigameId === MinigameId.HachiRide) {
-			const topItems = hachiRoundOutcome?.topScore ?? 0;
-			if (topItems > 0) {
-				const winnerName = hachiRoundOutcome?.winnerName ?? "A rider";
-				return `${winnerName} scored ${topItems} points!`;
-			}
-			return "What a ride!";
-		}
-
-		if (result === RoundResult.OniWins) {
-			return `Oni caught everyone in ${elapsed} seconds!`;
-		}
-		if (totalRescues > 0 && this.currentMinigameId === MinigameId.CanKick) {
-			return `The can was kicked ${totalRescues} times!`;
-		}
-		if (totalCatches === 0) {
-			return "Nobody got caught! Incredible hiding!";
-		}
-		return `${totalCatches} players caught in ${elapsed}s!`;
-	}
-
 	private handleActionRequest(player: Player, action: "catch" | "kickCan") {
 		if (this.currentPhase !== MatchPhase.InProgress) return;
 		if (!this.activeMinigame) return;
@@ -797,7 +753,7 @@ export class MatchService implements OnStart {
 		}
 
 		// Reset streak on early leave
-		this.playerDataService.resetStreak(player);
+		this.economyService.resetStreak(player);
 		this.analyticsService.fireForPlayer(player, {
 			name: "player_leave_mid_match",
 			playerId: player.UserId,

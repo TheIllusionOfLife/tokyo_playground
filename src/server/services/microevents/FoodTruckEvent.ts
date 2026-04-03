@@ -10,7 +10,7 @@ import {
 import { GlobalEvents } from "shared/network";
 import { MicroEventId } from "shared/types";
 import { safeHandler } from "../../utils/safeConnect";
-import { PlayerDataService } from "../PlayerDataService";
+import { EconomyService } from "../EconomyService";
 import { IMicroEvent } from "./MicroEventBase";
 
 type ServerEvents = ReturnType<typeof GlobalEvents.createServer>;
@@ -29,7 +29,7 @@ export class FoodTruckEvent implements IMicroEvent {
 
 	constructor(
 		private readonly serverEvents: ServerEvents,
-		private readonly playerDataService: PlayerDataService,
+		private readonly economyService: EconomyService,
 	) {}
 
 	start() {
@@ -66,7 +66,7 @@ export class FoodTruckEvent implements IMicroEvent {
 					const pts = isEarlyBird
 						? FOOD_TRUCK_EARLY_BIRD_POINTS
 						: FOOD_TRUCK_LATE_POINTS;
-					this.playerDataService.addPlayPoints(player, pts);
+					this.economyService.addPlayPoints(player, pts);
 
 					const remaining = math.max(
 						0,

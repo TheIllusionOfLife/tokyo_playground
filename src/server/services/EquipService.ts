@@ -6,6 +6,7 @@ import { GlobalEvents } from "shared/network";
 import { ItemCategory, ItemId } from "shared/types";
 import { CooldownTracker } from "../utils/cooldown";
 import { safeHandler } from "../utils/safeConnect";
+import { InventoryService } from "./InventoryService";
 import { PlayerDataService } from "./PlayerDataService";
 
 const COSMETICS_FOLDER = "Cosmetics";
@@ -214,7 +215,10 @@ export class EquipService implements OnStart {
 	/** Active preview category per player for proper cleanup. */
 	private readonly activePreviewCategories = new Map<number, ItemCategory>();
 
-	constructor(private readonly playerDataService: PlayerDataService) {}
+	constructor(
+		private readonly inventoryService: InventoryService,
+		private readonly playerDataService: PlayerDataService,
+	) {}
 
 	onStart() {
 		print("[EquipService] Started");
@@ -289,29 +293,29 @@ export class EquipService implements OnStart {
 
 		const category = catalogItem.category;
 
-		const ownedItems = this.playerDataService.getOwnedItems(player);
+		const ownedItems = this.inventoryService.getOwnedItems(player);
 		if (!ownedItems.includes(itemId)) {
 			this.serverEvents.equipResult.fire(player, false, category, undefined);
 			return;
 		}
-		const equippedItems = this.playerDataService.getEquippedItems(player);
+		const equippedItems = this.inventoryService.getEquippedItems(player);
 
 		// Toggle: if already equipped, unequip
 		if (equippedItems[category] === itemId) {
-			this.playerDataService.unequipItem(player, category);
+			this.inventoryService.unequipItem(player, category);
 			this.removeCosmetic(player, category);
 			this.serverEvents.equipResult.fire(player, true, category, undefined);
 		} else {
 			// Equip new item (replaces previous in same category)
 			this.removeCosmetic(player, category);
-			this.playerDataService.equipItem(player, category, itemId);
+			this.inventoryService.equipItem(player, category, itemId);
 			this.applyCosmetic(player, category, itemId);
 			this.serverEvents.equipResult.fire(player, true, category, itemId);
 		}
 	}
 
 	private applyCosmetics(player: Player) {
-		const equippedItems = this.playerDataService.getEquippedItems(player);
+		const equippedItems = this.inventoryService.getEquippedItems(player);
 		for (const [category, itemId] of pairs(equippedItems)) {
 			if (itemId !== undefined) {
 				this.applyCosmetic(player, category as ItemCategory, itemId as ItemId);
@@ -481,7 +485,7 @@ export class EquipService implements OnStart {
 	/** Remove preview cosmetic and restore the player's real equipped item. */
 	private restoreAfterPreview(player: Player, category: ItemCategory) {
 		this.removeCosmetic(player, category);
-		const equippedItems = this.playerDataService.getEquippedItems(player);
+		const equippedItems = this.inventoryService.getEquippedItems(player);
 		const realItem = equippedItems[category];
 		if (realItem !== undefined) {
 			this.applyCosmetic(player, category, realItem);

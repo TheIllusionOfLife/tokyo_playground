@@ -9,6 +9,7 @@ import { GlobalEvents } from "shared/network";
 import { GameState, MicroEventId } from "shared/types";
 import { AnalyticsService } from "./AnalyticsService";
 import { DayNightService } from "./DayNightService";
+import { EconomyService } from "./EconomyService";
 import { GameStateService } from "./GameStateService";
 import { BonOdoriEvent } from "./microevents/BonOdoriEvent";
 import { FireworksEvent } from "./microevents/FireworksEvent";
@@ -37,6 +38,7 @@ export class MicroEventService implements OnStart {
 	constructor(
 		private readonly gameStateService: GameStateService,
 		private readonly dayNightService: DayNightService,
+		private readonly economyService: EconomyService,
 		private readonly playerDataService: PlayerDataService,
 		private readonly analyticsService: AnalyticsService,
 	) {}
@@ -136,16 +138,17 @@ export class MicroEventService implements OnStart {
 	private createEvent(eventId: MicroEventId): IMicroEvent | undefined {
 		switch (eventId) {
 			case MicroEventId.BonOdori:
-				return new BonOdoriEvent(this.serverEvents, this.playerDataService);
+				return new BonOdoriEvent(this.serverEvents, this.economyService);
 			case MicroEventId.FoodTruck:
-				return new FoodTruckEvent(this.serverEvents, this.playerDataService);
+				return new FoodTruckEvent(this.serverEvents, this.economyService);
 			case MicroEventId.Fireworks:
-				return new FireworksEvent(this.playerDataService);
+				return new FireworksEvent(this.economyService, this.playerDataService);
 			case MicroEventId.StreetArt:
-				return new StreetArtEvent(this.serverEvents, this.playerDataService);
+				return new StreetArtEvent(this.serverEvents, this.economyService);
 			case MicroEventId.ObstacleCourse:
 				return new ObstacleCourseEvent(
 					this.serverEvents,
+					this.economyService,
 					this.playerDataService,
 				);
 			case MicroEventId.GoldenHour:
