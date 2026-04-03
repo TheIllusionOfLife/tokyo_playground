@@ -97,6 +97,11 @@ import { getVehicleTemplate } from "../../utils/vehicleTemplate";
 import { InventoryService } from "../InventoryService";
 import { MissionService } from "../MissionService";
 import { PlayerDataService } from "../PlayerDataService";
+import {
+	checkSpeedViolations,
+	resetAnticheatBaseline,
+} from "./hachi/anticheat";
+import { HachiAnticheatContext } from "./hachi/types";
 import { IMinigame } from "./MinigameBase";
 
 type ServerEvents = ReturnType<typeof GlobalEvents.createServer>;
@@ -163,6 +168,20 @@ export class HachiRideMinigame implements IMinigame {
 		private readonly playerDataService: PlayerDataService,
 	) {
 		HachiRideMinigame.activeInstance = this;
+	}
+
+	private buildAnticheatContext(): HachiAnticheatContext {
+		return {
+			playerStates: this.playerStates,
+			playerObjects: this.playerObjects,
+			lastPositions: this.lastPositions,
+			lastPositionTime: this.lastPositionTime,
+			strikes: this.strikes,
+			lastStrikeTime: this.lastStrikeTime,
+			respawnGrace: this.respawnGrace,
+			wallRunStates: this.wallRunStates,
+			hachiSlideActive: this.hachiSlideActive,
+		};
 	}
 
 	prepare(players: Player[], matchJanitor: Janitor) {
@@ -335,7 +354,11 @@ export class HachiRideMinigame implements IMinigame {
 					player.Character.PivotTo(
 						new CFrame(spawnPart.Position.add(new Vector3(0, 3, 0))),
 					);
-					this.resetAnticheatBaseline(player.UserId, spawnPart.Position);
+					resetAnticheatBaseline(
+						this.buildAnticheatContext(),
+						player.UserId,
+						spawnPart.Position,
+					);
 				}
 				// Clear stale Hachi state, ensure normal human speed
 				forceUnmount(player);
@@ -412,7 +435,11 @@ export class HachiRideMinigame implements IMinigame {
 				player.Character.PivotTo(
 					new CFrame(spawnPart.Position.add(new Vector3(0, 3, 0))),
 				);
-				this.resetAnticheatBaseline(player.UserId, spawnPart.Position);
+				resetAnticheatBaseline(
+					this.buildAnticheatContext(),
+					player.UserId,
+					spawnPart.Position,
+				);
 			}
 		}
 
@@ -477,7 +504,7 @@ export class HachiRideMinigame implements IMinigame {
 		this.resetLandedJumps();
 		this.detectWallRun(dt);
 		this.tickHachiAnimation(dt);
-		this.checkSpeedViolations(dt);
+		this.lastPositionTime = checkSpeedViolations(this.buildAnticheatContext());
 		this.updateFinalSprintState();
 		if (this.raceUpdateElapsed >= 1) {
 			this.raceUpdateElapsed = 0;
@@ -1227,12 +1254,6 @@ export class HachiRideMinigame implements IMinigame {
 		}
 	}
 
-	private resetAnticheatBaseline(userId: number, position: Vector3) {
-		this.lastPositions.set(userId, position);
-		this.strikes.set(userId, 0);
-		this.lastStrikeTime.delete(userId);
-	}
-
 	private handleDoubleJumpEvent(player: Player) {
 		const state = this.playerStates.get(player.UserId);
 		if (!state) return;
@@ -1245,113 +1266,6 @@ export class HachiRideMinigame implements IMinigame {
 		const used = this.airJumpsUsed.get(player.UserId) ?? 0;
 		if (used >= maxJumps) return;
 		this.airJumpsUsed.set(player.UserId, used + 1);
-	}
-
-	private checkSpeedViolations(_dt: number) {
-		const now = os.clock();
-		if (now - this.lastPositionTime < HACHI_ANTICHEAT_CHECK_INTERVAL) return;
-		const elapsed = now - this.lastPositionTime;
-		this.lastPositionTime = now;
-
-		const maxSpeed =
-			math.max(
-				HACHI_WALK_SPEEDS[HACHI_WALK_SPEEDS.size() - 1],
-				HACHI_JUMP_VELOCITY,
-			) * HACHI_MAX_SPEED_TOLERANCE;
-		const maxDist = maxSpeed * elapsed + HACHI_ANTICHEAT_GRACE_STUDS;
-
-		for (const [userId] of this.playerStates) {
-			// Skip players currently in a slide impulse (speed far exceeds walk threshold)
-			// but refresh their baseline so there's no stale delta when exemption ends
-			if (this.hachiSlideActive.has(userId)) {
-				const p = this.playerObjects.get(userId);
-				const h = p?.Character?.FindFirstChild("HumanoidRootPart") as
-					| BasePart
-					| undefined;
-				if (h) this.lastPositions.set(userId, h.Position);
-				continue;
-			}
-
-			const player = this.playerObjects.get(userId);
-			if (!player?.Character) continue;
-			const hrp = player.Character.FindFirstChild("HumanoidRootPart") as
-				| BasePart
-				| undefined;
-			if (!hrp) continue;
-
-			const pos = hrp.Position;
-			const lastPos = this.lastPositions.get(userId);
-			this.lastPositions.set(userId, pos);
-
-			if (!lastPos) continue;
-
-			const dist = pos.sub(lastPos).Magnitude;
-
-			// Teleport detection: blatant displacement far beyond any legitimate movement.
-			// Exempt: respawn grace, wall-run active, slide active (already handled above).
-			// Server snapback already resets lastPositions so it won't re-trigger.
-			if (dist > HACHI_ANTICHEAT_TELEPORT_THRESHOLD) {
-				const respawnTime = this.respawnGrace.get(userId) ?? 0;
-				const wallState = this.wallRunStates.get(userId);
-				if (
-					now - respawnTime < HACHI_ANTICHEAT_RESPAWN_GRACE ||
-					wallState?.running
-				) {
-					// Exempt: update baseline without penalizing
-					continue;
-				}
-				// Blatant teleport: 2 strikes
-				const currentStrikes = (this.strikes.get(userId) ?? 0) + 2;
-				this.strikes.set(userId, currentStrikes);
-				this.lastStrikeTime.set(userId, now);
-				if (currentStrikes >= HACHI_ANTICHEAT_STRIKE_LIMIT) {
-					warn(
-						`[HachiRide] Teleport snapback for ${player.Name}: ${math.floor(dist)} studs (strike ${currentStrikes})`,
-					);
-					player.Character?.PivotTo(new CFrame(lastPos));
-					if (hrp) hrp.AssemblyLinearVelocity = Vector3.zero;
-					this.lastPositions.set(userId, lastPos);
-				} else {
-					warn(
-						`[HachiRide] Teleport warning for ${player.Name}: ${math.floor(dist)} studs (strike ${currentStrikes})`,
-					);
-					// Reset baseline to pre-teleport position so exploiter can't walk free
-					this.lastPositions.set(userId, lastPos);
-				}
-				continue;
-			}
-
-			if (dist <= maxDist) {
-				// Clean movement: decay strikes over time
-				const lastStrike = this.lastStrikeTime.get(userId) ?? 0;
-				if (
-					now - lastStrike > HACHI_ANTICHEAT_STRIKE_DECAY &&
-					(this.strikes.get(userId) ?? 0) > 0
-				) {
-					this.strikes.set(userId, 0);
-				}
-				continue;
-			}
-
-			// Speed violation (1 strike)
-			const currentStrikes = (this.strikes.get(userId) ?? 0) + 1;
-			this.strikes.set(userId, currentStrikes);
-			this.lastStrikeTime.set(userId, now);
-
-			if (currentStrikes < HACHI_ANTICHEAT_STRIKE_LIMIT) {
-				warn(
-					`[HachiRide] Speed warning for ${player.Name}: ${math.floor(dist)} studs in ${string.format("%.1f", elapsed)}s (strike ${currentStrikes})`,
-				);
-			} else {
-				// Teleport back to last valid position
-				warn(
-					`[HachiRide] Snapback for ${player.Name}: ${math.floor(dist)} studs in ${string.format("%.1f", elapsed)}s (strike ${currentStrikes})`,
-				);
-				player.Character?.PivotTo(new CFrame(lastPos));
-				if (hrp) hrp.AssemblyLinearVelocity = Vector3.zero;
-				this.lastPositions.set(userId, lastPos);
-			}
-		}
 	}
 
 	private stopWallRun(userId: number, player: Player) {
