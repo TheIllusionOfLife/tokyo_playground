@@ -30,6 +30,7 @@ import {
 	type HachiRoundOutcome,
 } from "shared/utils/hachiOutcome";
 import { VALID_TRANSITIONS } from "shared/utils/matchPhase";
+import { CooldownTracker } from "../utils/cooldown";
 import { unequipHachiCostume } from "../utils/hachiCostume";
 import { safeHandler } from "../utils/safeConnect";
 import { AmbientCityService } from "./AmbientCityService";
@@ -55,7 +56,7 @@ export class MatchService implements OnStart {
 	private activeMinigame?: IMinigame;
 	private matchJanitor?: Janitor;
 	private matchPlayers = new Set<Player>();
-	private playerCooldowns = new Map<Player, number>();
+	private playerCooldowns = new CooldownTracker<Player>();
 	private lastActivity = new Map<number, number>();
 	private minigameIndex = -1;
 	private nextMinigameId: MinigameId = MinigameId.CanKick;
@@ -744,10 +745,7 @@ export class MatchService implements OnStart {
 		if (!this.matchPlayers.has(player)) return;
 
 		// Per-player cooldown
-		const now = os.clock();
-		const lastAction = this.playerCooldowns.get(player) ?? 0;
-		if (now - lastAction < ACTION_COOLDOWN) return;
-		this.playerCooldowns.set(player, now);
+		if (!this.playerCooldowns.check(player, ACTION_COOLDOWN)) return;
 
 		if (action === "catch") {
 			this.activeMinigame.handleCatchRequest(player);
@@ -779,7 +777,7 @@ export class MatchService implements OnStart {
 	private handlePlayerLeaveMidMatch(player: Player) {
 		if (!this.matchPlayers.has(player)) return;
 		this.matchPlayers.delete(player);
-		this.playerCooldowns.delete(player);
+		this.playerCooldowns.reset(player);
 
 		if (!this.activeMinigame) return;
 

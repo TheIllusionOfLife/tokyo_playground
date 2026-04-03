@@ -81,6 +81,7 @@ import {
 import { buildHachiRaceSnapshot } from "shared/utils/hachiRace";
 import { animateItemCollect } from "../../utils/animateItemCollect";
 import { animateVehicle, HachiAnimState } from "../../utils/animateVehicle";
+import { CooldownTracker } from "../../utils/cooldown";
 import {
 	equipHachiCostume,
 	forceUnmount,
@@ -123,8 +124,8 @@ export class HachiRideMinigame implements IMinigame {
 	private keyItems: BasePart[] = [];
 	private spawnParts: BasePart[] = [];
 	private wallRunStates = new Map<number, WallRunState>();
-	private jumpCooldowns = new Map<number, number>();
-	private ejectCooldowns = new Map<number, number>();
+	private jumpCooldowns = new CooldownTracker();
+	private ejectCooldowns = new CooldownTracker();
 	private airJumpsUsed = new Map<number, number>();
 	private jumpPhase = new Map<number, number>();
 	private jumpTime = new Map<number, number>();
@@ -133,7 +134,7 @@ export class HachiRideMinigame implements IMinigame {
 	private strikes = new Map<number, number>();
 	private lastStrikeTime = new Map<number, number>();
 	private hachiSlideActive = new Set<number>();
-	private slideCooldowns = new Map<number, number>();
+	private slideCooldowns = new CooldownTracker();
 	private roundStarted = false;
 	private respawnGrace = new Map<number, number>();
 	private roundElapsed = 0;
@@ -378,13 +379,10 @@ export class HachiRideMinigame implements IMinigame {
 					if (!this.playerStates.has(player.UserId)) return;
 					if (!isPlayerMounted(player)) return;
 
-					const now = os.clock();
 					if (
-						now - (this.slideCooldowns.get(player.UserId) ?? 0) <
-						SCRAMBLE_SLIDE_COOLDOWN
+						!this.slideCooldowns.check(player.UserId, SCRAMBLE_SLIDE_COOLDOWN)
 					)
 						return;
-					this.slideCooldowns.set(player.UserId, now);
 					this.hachiSlideActive.add(player.UserId);
 					task.delay(HACHI_SLIDE_DURATION, () => {
 						this.hachiSlideActive.delete(player.UserId);
@@ -616,8 +614,8 @@ export class HachiRideMinigame implements IMinigame {
 		this.playerObjects.delete(userId);
 		this.hachiAnimStates.delete(userId);
 		this.wallRunStates.delete(userId);
-		this.jumpCooldowns.delete(userId);
-		this.ejectCooldowns.delete(userId);
+		this.jumpCooldowns.reset(userId);
+		this.ejectCooldowns.reset(userId);
 		this.airJumpsUsed.delete(userId);
 		this.jumpPhase.delete(userId);
 		this.jumpTime.delete(userId);
@@ -625,7 +623,7 @@ export class HachiRideMinigame implements IMinigame {
 		this.strikes.delete(userId);
 		this.lastStrikeTime.delete(userId);
 		this.hachiSlideActive.delete(userId);
-		this.slideCooldowns.delete(userId);
+		this.slideCooldowns.reset(userId);
 		this.respawnGrace.delete(userId);
 		this.hachiVehicleDefs.delete(userId);
 	}
@@ -633,20 +631,15 @@ export class HachiRideMinigame implements IMinigame {
 	private handleJumpRequest(player: Player) {
 		if (!isPlayerMounted(player)) return;
 
-		const now = os.clock();
-		if (
-			now - (this.jumpCooldowns.get(player.UserId) ?? 0) <
-			HACHI_JUMP_COOLDOWN
-		)
-			return;
+		if (!this.jumpCooldowns.check(player.UserId, HACHI_JUMP_COOLDOWN)) return;
 
 		// Jump phase: 0 = grounded/ready, 1 = jumped once (double available), 2 = fully used
 		const phase = this.jumpPhase.get(player.UserId) ?? 0;
+		const now = os.clock();
 
 		if (phase === 0) {
 			// First jump: impulse applied client-side (native Humanoid jump).
 			// Server tracks phase for double-jump gating.
-			this.jumpCooldowns.set(player.UserId, now);
 			const state = this.playerStates.get(player.UserId);
 			this.jumpPhase.set(
 				player.UserId,
@@ -663,7 +656,6 @@ export class HachiRideMinigame implements IMinigame {
 				];
 			const used = this.airJumpsUsed.get(player.UserId) ?? 0;
 			if (used >= maxJumps) return;
-			this.jumpCooldowns.set(player.UserId, now);
 			this.jumpPhase.set(player.UserId, used + 1 >= maxJumps ? 2 : 1);
 		}
 		// phase 2: reject
@@ -696,13 +688,7 @@ export class HachiRideMinigame implements IMinigame {
 		if (this.roundStarted) return;
 		if (!isPlayerMounted(player)) return;
 
-		const now = os.clock();
-		if (
-			now - (this.ejectCooldowns.get(player.UserId) ?? 0) <
-			HACHI_EJECT_COOLDOWN
-		)
-			return;
-		this.ejectCooldowns.set(player.UserId, now);
+		if (!this.ejectCooldowns.check(player.UserId, HACHI_EJECT_COOLDOWN)) return;
 
 		unequipHachiCostume(player);
 	}

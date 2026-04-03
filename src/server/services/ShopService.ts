@@ -7,14 +7,15 @@ import {
 } from "shared/constants";
 import { GlobalEvents } from "shared/network";
 import { ItemId, ShopItemData, VehicleId, VehicleShopData } from "shared/types";
+import { CooldownTracker } from "../utils/cooldown";
 import { safeHandler } from "../utils/safeConnect";
 import { PlayerDataService } from "./PlayerDataService";
 
 @Service()
 export class ShopService implements OnStart {
 	private readonly serverEvents = GlobalEvents.createServer({});
-	private readonly catalogCooldowns = new Map<number, number>();
-	private readonly vehicleCatalogCooldowns = new Map<number, number>();
+	private readonly catalogCooldowns = new CooldownTracker();
+	private readonly vehicleCatalogCooldowns = new CooldownTracker();
 
 	constructor(private readonly playerDataService: PlayerDataService) {}
 
@@ -40,13 +41,8 @@ export class ShopService implements OnStart {
 
 		this.serverEvents.requestShopCatalog.connect(
 			safeHandler("ShopService.requestShopCatalog", (player) => {
-				const now = os.clock();
-				if (
-					now - (this.catalogCooldowns.get(player.UserId) ?? 0) <
-					SHOP_CATALOG_COOLDOWN
-				)
+				if (!this.catalogCooldowns.check(player.UserId, SHOP_CATALOG_COOLDOWN))
 					return;
-				this.catalogCooldowns.set(player.UserId, now);
 				this.handleRequestCatalog(player);
 			}),
 		);
@@ -60,13 +56,13 @@ export class ShopService implements OnStart {
 		// Vehicle catalog/purchase/equip
 		this.serverEvents.requestVehicleCatalog.connect(
 			safeHandler("ShopService.requestVehicleCatalog", (player) => {
-				const now = os.clock();
 				if (
-					now - (this.vehicleCatalogCooldowns.get(player.UserId) ?? 0) <
-					SHOP_CATALOG_COOLDOWN
+					!this.vehicleCatalogCooldowns.check(
+						player.UserId,
+						SHOP_CATALOG_COOLDOWN,
+					)
 				)
 					return;
-				this.vehicleCatalogCooldowns.set(player.UserId, now);
 				this.handleRequestVehicleCatalog(player);
 			}),
 		);
@@ -84,8 +80,8 @@ export class ShopService implements OnStart {
 		);
 
 		Players.PlayerRemoving.Connect((player) => {
-			this.catalogCooldowns.delete(player.UserId);
-			this.vehicleCatalogCooldowns.delete(player.UserId);
+			this.catalogCooldowns.reset(player.UserId);
+			this.vehicleCatalogCooldowns.reset(player.UserId);
 		});
 	}
 
