@@ -14,7 +14,6 @@ import { getHachiRoundOutcome } from "../src/shared/utils/hachiOutcome";
 import { buildHachiRaceSnapshot } from "../src/shared/utils/hachiRace";
 import { formatQueueStatusDetail } from "../src/shared/utils/queueStatus";
 
-
 const TEST_HACHI_THRESHOLDS = [0, 10, 25, 40, 60];
 
 describe("getFeaturedUnlock", () => {
@@ -127,7 +126,6 @@ describe("formatQueueStatusDetail", () => {
 		);
 	});
 });
-
 
 describe("isInsideJailRattleZone", () => {
 	test("accepts players inside the expanded jail bounds", () => {

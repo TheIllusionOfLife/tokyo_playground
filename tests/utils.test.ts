@@ -131,9 +131,7 @@ describe("HACHI_EVOLUTION_THRESHOLDS", () => {
 	});
 
 	test("max air jumps array has same length as thresholds", () => {
-		expect(HACHI_MAX_AIR_JUMPS.length).toBe(
-			HACHI_EVOLUTION_THRESHOLDS.length,
-		);
+		expect(HACHI_MAX_AIR_JUMPS.length).toBe(HACHI_EVOLUTION_THRESHOLDS.length);
 	});
 
 	test("air jumps are non-decreasing with evolution level", () => {
