@@ -7,6 +7,7 @@ import {
 	LeaderboardTab,
 	MatchPhase,
 	MicroEventData,
+	MicroEventProgressData,
 	MinigameId,
 	MissionId,
 	MissionProgressData,
@@ -117,7 +118,7 @@ interface ServerToClientEvents {
 		data: MicroEventData,
 	): void;
 	microEventEnded(eventId: string): void;
-	microEventProgress(eventId: string, data: unknown): void;
+	microEventProgress(eventId: string, data: MicroEventProgressData): void;
 	bonOdoriNote(direction: number, beatTime: number): void;
 	foodTruckFound(playerName: string, slotsRemaining: number): void;
 

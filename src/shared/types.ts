@@ -323,6 +323,12 @@ export interface MicroEventData {
 	extraData?: unknown;
 }
 
+export interface StreetArtProgressData {
+	layer: number;
+}
+
+export type MicroEventProgressData = StreetArtProgressData;
+
 export interface NpcInteractionData {
 	npcId: string;
 	interactionType: string;
