@@ -15,7 +15,7 @@ The codebase is organized into four bounded contexts:
 
 ## Service Dependency Diagram
 
-```
+```text
 PlayerDataService (ProfileRepository)
     |
     +-- EconomyService (points, coins, streaks, game results)
@@ -39,7 +39,7 @@ PlayerDataService (ProfileRepository)
 
 ## Data Flow
 
-```
+```text
 Client Input
   --> ClientToServer network event
     --> Server @Service() handler (with safeHandler wrapper)
@@ -55,7 +55,7 @@ Client Input
 
 All minigames implement `IMinigame` from `MinigameBase.ts`:
 
-```
+```text
 WaitingForPlayers --> Countdown --> Preparing --> InProgress --> RoundOver --> Rewarding --> WaitingForPlayers
                           |                          |
                           +-- abort (players left) --+
@@ -65,7 +65,7 @@ MatchService orchestrates the loop. Minigames implement: `prepare()`, `assignRol
 
 ## File Structure
 
-```
+```text
 src/
   server/
     services/           -- @Service() classes (Flamework DI)

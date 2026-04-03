@@ -1,11 +1,12 @@
 import { describe, expect, test } from "bun:test";
-import { MinigameId, PlayerRole, RoundResult } from "../src/shared/types";
 import {
 	computeRoundSummary,
 	didPlayerWin,
 	isHiderEliminated,
 	resolveWinnerName,
+	sortScoreboard,
 } from "../src/server/utils/roundResolution";
+import { MinigameId, PlayerRole, RoundResult } from "../src/shared/types";
 
 // --- didPlayerWin ---
 
@@ -134,22 +135,53 @@ describe("isHiderEliminated", () => {
 // --- resolveWinnerName ---
 
 describe("resolveWinnerName", () => {
+	// Entries must be pre-sorted by sortScoreboard (descending points).
+	// We sort explicitly here to document the contract.
 	const entries = [
-		{ playerName: "Alice", role: PlayerRole.Oni, catches: 3, rescues: 0, points: 100 },
-		{ playerName: "Bob", role: PlayerRole.Hider, catches: 0, rescues: 1, points: 80 },
-		{ playerName: "Charlie", role: PlayerRole.Hider, catches: 0, rescues: 0, points: 60 },
+		{
+			playerName: "Alice",
+			role: PlayerRole.Oni,
+			catches: 3,
+			rescues: 0,
+			points: 100,
+		},
+		{
+			playerName: "Bob",
+			role: PlayerRole.Hider,
+			catches: 0,
+			rescues: 1,
+			points: 80,
+		},
+		{
+			playerName: "Charlie",
+			role: PlayerRole.Hider,
+			catches: 0,
+			rescues: 0,
+			points: 60,
+		},
 	];
+	sortScoreboard(entries);
 
 	test("returns oni name on OniWins", () => {
 		expect(
-			resolveWinnerName(MinigameId.CanKick, RoundResult.OniWins, entries, new Set()),
+			resolveWinnerName(
+				MinigameId.CanKick,
+				RoundResult.OniWins,
+				entries,
+				new Set(),
+			),
 		).toBe("Alice");
 	});
 
 	test("returns top surviving hider on HidersWin", () => {
 		const eliminated = new Set(["Bob"]);
 		expect(
-			resolveWinnerName(MinigameId.CanKick, RoundResult.HidersWin, entries, eliminated),
+			resolveWinnerName(
+				MinigameId.CanKick,
+				RoundResult.HidersWin,
+				entries,
+				eliminated,
+			),
 		).toBe("Charlie");
 	});
 
@@ -168,7 +200,12 @@ describe("resolveWinnerName", () => {
 	test("returns empty string when no winner found", () => {
 		const allEliminated = new Set(["Bob", "Charlie"]);
 		expect(
-			resolveWinnerName(MinigameId.CanKick, RoundResult.HidersWin, entries, allEliminated),
+			resolveWinnerName(
+				MinigameId.CanKick,
+				RoundResult.HidersWin,
+				entries,
+				allEliminated,
+			),
 		).toBe("");
 	});
 });
@@ -180,7 +217,15 @@ describe("computeRoundSummary", () => {
 		const result = computeRoundSummary(
 			MinigameId.CanKick,
 			RoundResult.OniWins,
-			[{ playerName: "A", role: PlayerRole.Oni, catches: 3, rescues: 0, points: 100 }],
+			[
+				{
+					playerName: "A",
+					role: PlayerRole.Oni,
+					catches: 3,
+					rescues: 0,
+					points: 100,
+				},
+			],
 			45,
 		);
 		expect(result).toBe("Oni caught everyone in 45 seconds!");
@@ -191,7 +236,13 @@ describe("computeRoundSummary", () => {
 			MinigameId.CanKick,
 			RoundResult.HidersWin,
 			[
-				{ playerName: "A", role: PlayerRole.Hider, catches: 0, rescues: 3, points: 50 },
+				{
+					playerName: "A",
+					role: PlayerRole.Hider,
+					catches: 0,
+					rescues: 3,
+					points: 50,
+				},
 			],
 			60,
 		);
@@ -203,7 +254,13 @@ describe("computeRoundSummary", () => {
 			MinigameId.ShibuyaScramble,
 			RoundResult.TimerExpired,
 			[
-				{ playerName: "A", role: PlayerRole.Hider, catches: 0, rescues: 0, points: 25 },
+				{
+					playerName: "A",
+					role: PlayerRole.Hider,
+					catches: 0,
+					rescues: 0,
+					points: 25,
+				},
 			],
 			120,
 		);
@@ -237,8 +294,20 @@ describe("computeRoundSummary", () => {
 			MinigameId.ShibuyaScramble,
 			RoundResult.TimerExpired,
 			[
-				{ playerName: "A", role: PlayerRole.Oni, catches: 2, rescues: 0, points: 80 },
-				{ playerName: "B", role: PlayerRole.Hider, catches: 0, rescues: 0, points: 25 },
+				{
+					playerName: "A",
+					role: PlayerRole.Oni,
+					catches: 2,
+					rescues: 0,
+					points: 80,
+				},
+				{
+					playerName: "B",
+					role: PlayerRole.Hider,
+					catches: 0,
+					rescues: 0,
+					points: 25,
+				},
 			],
 			90,
 		);

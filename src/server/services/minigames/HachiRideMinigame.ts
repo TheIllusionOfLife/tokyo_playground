@@ -869,9 +869,10 @@ export class HachiRideMinigame implements IMinigame {
 
 		// Spawn sky dragon at 60 seconds remaining
 		if (!this.skyDragonState.spawned && timeRemaining <= 60) {
-			this.skyDragonState.spawned = true;
-			spawnSkyDragon(this.skyDragonState);
-			this.serverEvents.hintTextChanged.broadcast("hint_sky_dragon");
+			if (spawnSkyDragon(this.skyDragonState)) {
+				this.skyDragonState.spawned = true;
+				this.serverEvents.hintTextChanged.broadcast("hint_sky_dragon");
+			}
 		}
 
 		if (

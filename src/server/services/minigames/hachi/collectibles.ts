@@ -170,10 +170,11 @@ export function generateSpawnPositions(count: number): Vector3[] {
 		positions.push(new Vector3(x, y, z));
 	}
 
+	const remaining = cityCount + centerCount - positions.size();
 	attempts = 0;
 	while (
 		positions.size() < cityCount + centerCount &&
-		attempts < centerCount * 5
+		attempts < remaining * 5
 	) {
 		attempts++;
 		const angle = math.random() * math.pi * 2;

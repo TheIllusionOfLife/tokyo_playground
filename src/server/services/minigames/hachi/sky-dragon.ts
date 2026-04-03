@@ -41,14 +41,14 @@ export function createSkyDragonState(): SkyDragonState {
 	};
 }
 
-/** Spawn the sky dragon model and its collectible. */
-export function spawnSkyDragon(state: SkyDragonState) {
+/** Spawn the sky dragon model and its collectible. Returns true on success. */
+export function spawnSkyDragon(state: SkyDragonState): boolean {
 	const template = ServerStorage.FindFirstChild("WhiteDragonTemplate") as
 		| Model
 		| undefined;
 	if (!template) {
 		warn("[HachiRide] WhiteDragonTemplate not found in ServerStorage");
-		return;
+		return false;
 	}
 
 	const dragon = template.Clone();
@@ -154,6 +154,7 @@ export function spawnSkyDragon(state: SkyDragonState) {
 	print(
 		`[HachiRide] Sky Dragon spawned. Route length: ${math.floor(state.routeLength)} studs`,
 	);
+	return true;
 }
 
 function createDragonCollectible(state: SkyDragonState) {
