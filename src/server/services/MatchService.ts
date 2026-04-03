@@ -29,6 +29,7 @@ import {
 	getHachiRoundOutcome,
 	type HachiRoundOutcome,
 } from "shared/utils/hachiOutcome";
+import { VALID_TRANSITIONS } from "shared/utils/matchPhase";
 import { unequipHachiCostume } from "../utils/hachiCostume";
 import { safeHandler } from "../utils/safeConnect";
 import { AmbientCityService } from "./AmbientCityService";
@@ -46,15 +47,6 @@ import { IMinigame } from "./minigames/MinigameBase";
 import { ShibuyaScrambleMinigame } from "./minigames/ShibuyaScrambleMinigame";
 import { PlayerDataService } from "./PlayerDataService";
 import { RewardService } from "./RewardService";
-
-const VALID_TRANSITIONS = new Map<MatchPhase, MatchPhase[]>([
-	[MatchPhase.WaitingForPlayers, [MatchPhase.Countdown]],
-	[MatchPhase.Countdown, [MatchPhase.Preparing, MatchPhase.WaitingForPlayers]],
-	[MatchPhase.Preparing, [MatchPhase.InProgress]],
-	[MatchPhase.InProgress, [MatchPhase.RoundOver, MatchPhase.WaitingForPlayers]],
-	[MatchPhase.RoundOver, [MatchPhase.Rewarding]],
-	[MatchPhase.Rewarding, [MatchPhase.WaitingForPlayers]],
-]);
 
 @Service()
 export class MatchService implements OnStart {
