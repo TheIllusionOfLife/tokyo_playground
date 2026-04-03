@@ -158,9 +158,7 @@ export class HachiAbilityService implements OnStart {
 	private setupHachiSlideHandler() {
 		this.serverEvents.requestHachiSlide.connect(
 			safeHandler("HachiAbilityService.requestHachiSlide", (player) => {
-				if (!this.slideCooldowns.check(player.UserId, SCRAMBLE_SLIDE_COOLDOWN))
-					return;
-
+				if (this.matchActive) return;
 				if (!isPlayerMounted(player)) return;
 				const character = player.Character;
 				if (!character) return;
@@ -187,6 +185,10 @@ export class HachiAbilityService implements OnStart {
 					}
 				}
 				if (!nearestRamp) return;
+
+				// Cooldown after validation so failed attempts don't lock out the player
+				if (!this.slideCooldowns.check(player.UserId, SCRAMBLE_SLIDE_COOLDOWN))
+					return;
 
 				const usePlayerDir = nearestRamp.GetAttribute("UsePlayerDirection");
 				let serverDir: Vector3;
@@ -217,7 +219,7 @@ export class HachiAbilityService implements OnStart {
 				hrp.AssemblyLinearVelocity = serverDir.mul(speed);
 				task.delay(HACHI_SLIDE_DURATION, () => {
 					this.hachiSlideActive.delete(player.UserId);
-					if (!humanoid.Parent) return;
+					if (!humanoid.Parent || !player.Parent) return;
 					humanoid.PlatformStand = false;
 					if (isPlayerMounted(player)) {
 						updateHachiWalkSpeed(player, HACHI_LOBBY_MIN_LEVEL);
@@ -280,7 +282,7 @@ export class HachiAbilityService implements OnStart {
 					let checks = 0;
 					const landConn = RunService.Heartbeat.Connect(() => {
 						checks++;
-						if (checks > 300) {
+						if (checks > 300 || !player.Parent) {
 							landConn.Disconnect();
 							this.lobbyAirJumpsUsed.delete(player.UserId);
 							return;
@@ -373,7 +375,7 @@ export class HachiAbilityService implements OnStart {
 
 					task.delay(HACHI_WALL_RUN_MAX_DUR, () => {
 						this.hachiSlideActive.delete(player.UserId);
-						if (!humanoid.Parent) return;
+						if (!humanoid.Parent || !player.Parent) return;
 						humanoid.PlatformStand = false;
 						humanoid.AutoRotate = true;
 						if (isPlayerMounted(player)) {

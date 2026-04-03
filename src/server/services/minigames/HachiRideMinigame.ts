@@ -633,23 +633,12 @@ export class HachiRideMinigame implements IMinigame {
 	private handleJumpRequest(player: Player) {
 		if (!isPlayerMounted(player)) return;
 
-		if (!this.jumpCooldowns.check(player.UserId, HACHI_JUMP_COOLDOWN)) return;
-
 		// Jump phase: 0 = grounded/ready, 1 = jumped once (double available), 2 = fully used
 		const phase = this.jumpPhase.get(player.UserId) ?? 0;
-		const now = os.clock();
+		if (phase >= 2) return;
 
-		if (phase === 0) {
-			// First jump: impulse applied client-side (native Humanoid jump).
-			// Server tracks phase for double-jump gating.
-			const state = this.playerStates.get(player.UserId);
-			this.jumpPhase.set(
-				player.UserId,
-				state && state.evolutionLevel >= 1 ? 1 : 2,
-			);
-			this.jumpTime.set(player.UserId, now);
-		} else if (phase === 1) {
-			// Air jump (midair, evolution >= 1). Check multi-jump allowance.
+		// Phase 1: check multi-jump allowance before consuming cooldown
+		if (phase === 1) {
 			const state = this.playerStates.get(player.UserId);
 			if (!state) return;
 			const maxJumps =
@@ -658,9 +647,28 @@ export class HachiRideMinigame implements IMinigame {
 				];
 			const used = this.airJumpsUsed.get(player.UserId) ?? 0;
 			if (used >= maxJumps) return;
+		}
+
+		if (!this.jumpCooldowns.check(player.UserId, HACHI_JUMP_COOLDOWN)) return;
+
+		const now = os.clock();
+		if (phase === 0) {
+			const state = this.playerStates.get(player.UserId);
+			this.jumpPhase.set(
+				player.UserId,
+				state && state.evolutionLevel >= 1 ? 1 : 2,
+			);
+			this.jumpTime.set(player.UserId, now);
+		} else if (phase === 1) {
+			const state = this.playerStates.get(player.UserId);
+			if (!state) return;
+			const maxJumps =
+				HACHI_MAX_AIR_JUMPS[
+					math.min(state.evolutionLevel, HACHI_MAX_AIR_JUMPS.size() - 1)
+				];
+			const used = this.airJumpsUsed.get(player.UserId) ?? 0;
 			this.jumpPhase.set(player.UserId, used + 1 >= maxJumps ? 2 : 1);
 		}
-		// phase 2: reject
 	}
 
 	/** Reset jump phase when player has landed (Y velocity settled after jump). */
@@ -1305,6 +1313,8 @@ export class HachiRideMinigame implements IMinigame {
 					warn(
 						`[HachiRide] Teleport warning for ${player.Name}: ${math.floor(dist)} studs (strike ${currentStrikes})`,
 					);
+					// Reset baseline to pre-teleport position so exploiter can't walk free
+					this.lastPositions.set(userId, lastPos);
 				}
 				continue;
 			}

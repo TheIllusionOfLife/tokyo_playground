@@ -78,6 +78,10 @@ export class LobbyService implements OnStart {
 			});
 		});
 
+		Players.PlayerRemoving.Connect((player) => {
+			this.startRequestCooldowns.reset(player.UserId);
+		});
+
 		this.setupPortals();
 		this.setupHachiRidePortal();
 		this.setupMinigameStartRequest();

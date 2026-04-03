@@ -8,7 +8,8 @@ export class CooldownTracker<K = number> {
 	/** Returns true if the action is allowed (cooldown expired). Updates timestamp on success. */
 	check(key: K, duration: number): boolean {
 		const now = os.clock();
-		if (now - (this.map.get(key) ?? 0) < duration) return false;
+		const last = this.map.get(key);
+		if (last !== undefined && now - last < duration) return false;
 		this.map.set(key, now);
 		return true;
 	}

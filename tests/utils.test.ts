@@ -97,8 +97,11 @@ describe("getCurrentDay", () => {
 	});
 
 	test("value matches floor(now / 86400)", () => {
-		const expected = Math.floor(Date.now() / 1000 / 86400);
-		expect(getCurrentDay()).toBe(expected);
+		const before = Math.floor(Date.now() / 1000 / 86400);
+		const day = getCurrentDay();
+		const after = Math.floor(Date.now() / 1000 / 86400);
+		// Allow midnight rollover between reads
+		expect(day >= before && day <= after).toBe(true);
 	});
 });
 
