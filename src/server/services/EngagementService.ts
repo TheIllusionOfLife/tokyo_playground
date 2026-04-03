@@ -3,6 +3,7 @@ import { Players } from "@rbxts/services";
 import { FRIEND_REFERRAL_BONUS, SPIN_REWARDS } from "shared/constants";
 import { GlobalEvents } from "shared/network";
 import { getCurrentDay } from "shared/utils/dayKey";
+import { safeHandler } from "../utils/safeConnect";
 import { PlayerDataService } from "./PlayerDataService";
 
 /**
@@ -19,9 +20,11 @@ export class EngagementService implements OnStart {
 		print("[EngagementService] Started");
 
 		// Lucky spin request
-		this.serverEvents.requestSpin.connect((player) => {
-			this.handleSpin(player);
-		});
+		this.serverEvents.requestSpin.connect(
+			safeHandler("EngagementService.requestSpin", (player) => {
+				this.handleSpin(player);
+			}),
+		);
 
 		// Spin status: sync after profile is loaded (not PlayerAdded)
 		this.playerDataService.registerOnProfileLoaded((player) => {

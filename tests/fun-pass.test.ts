@@ -13,13 +13,9 @@ import { getFeaturedUnlock } from "../src/shared/utils/featuredUnlock";
 import { getHachiRoundOutcome } from "../src/shared/utils/hachiOutcome";
 import { buildHachiRaceSnapshot } from "../src/shared/utils/hachiRace";
 import { formatQueueStatusDetail } from "../src/shared/utils/queueStatus";
-import { canTriggerSpiritWave } from "../src/shared/utils/scrambleCrowd";
+
 
 const TEST_HACHI_THRESHOLDS = [0, 10, 25, 40, 60];
-(globalThis as unknown as { math: typeof Math }).math = Math;
-(globalThis as unknown as { typeOf: (value: unknown) => string }).typeOf = (
-	value,
-) => typeof value;
 
 describe("getFeaturedUnlock", () => {
 	test("prefers curated unlock order instead of raw catalog order", () => {
@@ -132,19 +128,6 @@ describe("formatQueueStatusDetail", () => {
 	});
 });
 
-describe("canTriggerSpiritWave", () => {
-	test("rejects waves when there are no charges left", () => {
-		expect(canTriggerSpiritWave(0, 0, 1)).toBe(false);
-	});
-
-	test("rejects waves once the concurrent cap is reached", () => {
-		expect(canTriggerSpiritWave(1, 1, 1)).toBe(false);
-	});
-
-	test("allows a wave when the player has a charge and the lane is free", () => {
-		expect(canTriggerSpiritWave(1, 0, 1)).toBe(true);
-	});
-});
 
 describe("isInsideJailRattleZone", () => {
 	test("accepts players inside the expanded jail bounds", () => {

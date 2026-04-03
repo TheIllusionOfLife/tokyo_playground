@@ -146,8 +146,8 @@ export class MatchService implements OnStart {
 			this.lastActivity.set(player.UserId, os.clock());
 		}
 
-		// Guarantee cleanup if Studio/server is force-quit mid-match
-		game.BindToClose(() => {
+		// Register cleanup before profile release to guarantee data writes complete
+		this.playerDataService.registerPreShutdown(() => {
 			this.forceCleanup();
 		});
 
@@ -245,13 +245,21 @@ export class MatchService implements OnStart {
 		}
 
 		this.matchJanitor = new Janitor();
-		this.matchPlayers = new Set(
-			Players.GetPlayers().filter((p) => !this.isPlayerAfk(p)),
-		);
+		const config = MINIGAME_CONFIGS[minigameId];
+		const eligible = Players.GetPlayers().filter((p) => !this.isPlayerAfk(p));
+
+		// Cap to maxPlayers — excess players remain in lobby
+		if (eligible.size() > config.maxPlayers) {
+			eligible.sort(() => math.random() > 0.5);
+			while (eligible.size() > config.maxPlayers) {
+				eligible.pop();
+			}
+		}
+		this.matchPlayers = new Set(eligible);
 
 		// Notify AFK players and fire analytics
 		for (const player of Players.GetPlayers()) {
-			if (!this.matchPlayers.has(player)) {
+			if (!this.matchPlayers.has(player) && this.isPlayerAfk(player)) {
 				this.serverEvents.afkRemoved.fire(player);
 				this.analyticsService.fireForPlayer(player, {
 					name: "afk_removed",
@@ -263,7 +271,6 @@ export class MatchService implements OnStart {
 			}
 		}
 
-		const config = MINIGAME_CONFIGS[minigameId];
 		if (this.matchPlayers.size() < config.minPlayers) {
 			print("[MatchService] Below minimum after AFK filter — cancelling");
 			this.forceCleanup();

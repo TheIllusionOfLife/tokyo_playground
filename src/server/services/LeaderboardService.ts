@@ -2,6 +2,7 @@ import { OnStart, Service } from "@flamework/core";
 import { DataStoreService, Players } from "@rbxts/services";
 import { GlobalEvents } from "shared/network";
 import { LeaderboardTab } from "shared/types";
+import { safeHandler } from "../utils/safeConnect";
 import { PlayerDataService } from "./PlayerDataService";
 
 const ALL_TIME_KEY = "AllTimePoints";
@@ -33,9 +34,11 @@ export class LeaderboardService implements OnStart {
 		this.refreshWeeklyStore();
 
 		// Handle leaderboard request
-		this.serverEvents.requestLeaderboard.connect((player, tab) => {
-			this.sendLeaderboard(player, tab ?? "allTime");
-		});
+		this.serverEvents.requestLeaderboard.connect(
+			safeHandler("LeaderboardService.requestLeaderboard", (player, tab) => {
+				this.sendLeaderboard(player, tab ?? "allTime");
+			}),
+		);
 
 		// Periodically update all-time leaderboard entries for all online players
 		task.spawn(() => {

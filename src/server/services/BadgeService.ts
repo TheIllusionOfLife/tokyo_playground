@@ -2,10 +2,7 @@ import { OnStart, Service } from "@flamework/core";
 import { BadgeService as RobloxBadgeService } from "@rbxts/services";
 import { PlayerDataService } from "./PlayerDataService";
 
-/**
- * Badge IDs must be created in Roblox Creator Dashboard.
- * Replace these placeholder IDs with actual badge IDs after creation.
- */
+/** Badge IDs from Roblox Creator Dashboard. All configured. */
 const BADGE_IDS = {
 	FirstWin: 1067084317807175,
 	TenWins: 3922930450136065,
@@ -17,11 +14,11 @@ const BADGE_IDS = {
 	RescueHero: 2706932475232291,
 	OniLegend: 2038892853532927,
 	SpeedDemon: 1583151801233741,
-	WallRunner: 0,
-	ShibuyaRegular: 0,
-	MissionComplete: 0,
-	Shopaholic: 0,
-	VehicleCollector: 0,
+	WallRunner: 1217748073047988,
+	ShibuyaRegular: 1386600938887620,
+	MissionComplete: 3147216071424221,
+	Shopaholic: 1854300882321981,
+	VehicleCollector: 1507186338701636,
 };
 
 @Service()
@@ -31,7 +28,7 @@ export class BadgeService implements OnStart {
 	constructor(private readonly playerDataService: PlayerDataService) {}
 
 	onStart() {
-		print("[BadgeService] Started (badge IDs need configuration)");
+		print("[BadgeService] Started");
 	}
 
 	/** Try to award a badge. No-op if badge ID is 0 (unconfigured). */

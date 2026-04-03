@@ -9,6 +9,7 @@ import {
 } from "shared/living-shibuya-constants";
 import { GlobalEvents } from "shared/network";
 import { MicroEventId } from "shared/types";
+import { safeHandler } from "../../utils/safeConnect";
 import { PlayerDataService } from "../PlayerDataService";
 import { IMicroEvent } from "./MicroEventBase";
 
@@ -42,36 +43,38 @@ export class FoodTruckEvent implements IMicroEvent {
 
 		// Fix #1: track connection. Fix #2: add proximity check.
 		this.connections.push(
-			this.serverEvents.interactFoodTruck.connect((player) => {
-				if (this.finished) return;
-				if (this.visited.has(player.UserId)) return;
+			this.serverEvents.interactFoodTruck.connect(
+				safeHandler("FoodTruckEvent.interactFoodTruck", (player) => {
+					if (this.finished) return;
+					if (this.visited.has(player.UserId)) return;
 
-				// Fix #2: server-side proximity validation
-				const character = player.Character;
-				if (!character) return;
-				const hrp = character.FindFirstChild("HumanoidRootPart") as
-					| BasePart
-					| undefined;
-				if (!hrp) return;
-				const delta = hrp.Position.sub(this.truckPos);
-				if (delta.Dot(delta) > this.interactionRadiusSq) return;
+					// Fix #2: server-side proximity validation
+					const character = player.Character;
+					if (!character) return;
+					const hrp = character.FindFirstChild("HumanoidRootPart") as
+						| BasePart
+						| undefined;
+					if (!hrp) return;
+					const delta = hrp.Position.sub(this.truckPos);
+					if (delta.Dot(delta) > this.interactionRadiusSq) return;
 
-				this.visited.add(player.UserId);
+					this.visited.add(player.UserId);
 
-				const isEarlyBird = this.earlyBirdCount < FOOD_TRUCK_EARLY_BIRD_SLOTS;
-				if (isEarlyBird) this.earlyBirdCount++;
+					const isEarlyBird = this.earlyBirdCount < FOOD_TRUCK_EARLY_BIRD_SLOTS;
+					if (isEarlyBird) this.earlyBirdCount++;
 
-				const pts = isEarlyBird
-					? FOOD_TRUCK_EARLY_BIRD_POINTS
-					: FOOD_TRUCK_LATE_POINTS;
-				this.playerDataService.addPlayPoints(player, pts);
+					const pts = isEarlyBird
+						? FOOD_TRUCK_EARLY_BIRD_POINTS
+						: FOOD_TRUCK_LATE_POINTS;
+					this.playerDataService.addPlayPoints(player, pts);
 
-				const remaining = math.max(
-					0,
-					FOOD_TRUCK_EARLY_BIRD_SLOTS - this.earlyBirdCount,
-				);
-				this.serverEvents.foodTruckFound.broadcast(player.Name, remaining);
-			}),
+					const remaining = math.max(
+						0,
+						FOOD_TRUCK_EARLY_BIRD_SLOTS - this.earlyBirdCount,
+					);
+					this.serverEvents.foodTruckFound.broadcast(player.Name, remaining);
+				}),
+			),
 		);
 	}
 

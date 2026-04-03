@@ -1,6 +1,6 @@
 import { OnStart, Service } from "@flamework/core";
 import { Players, ServerStorage } from "@rbxts/services";
-import { SHOP_CATALOG, STAMP_REWARD_CATALOG } from "shared/constants";
+import { findCatalogItem } from "shared/constants";
 
 import { GlobalEvents } from "shared/network";
 import { ItemCategory, ItemId } from "shared/types";
@@ -295,9 +295,7 @@ export class EquipService implements OnStart {
 	}
 
 	private handleEquipRequest(player: Player, itemId: ItemId) {
-		const catalogItem =
-			SHOP_CATALOG.find((item) => item.id === itemId) ??
-			STAMP_REWARD_CATALOG.find((item) => item.id === itemId);
+		const catalogItem = findCatalogItem(itemId);
 		if (!catalogItem) return;
 
 		const category = catalogItem.category;
@@ -456,9 +454,7 @@ export class EquipService implements OnStart {
 	// ── Preview methods ─────────────────────────────────────────────────────
 
 	private handlePreviewRequest(player: Player, itemId: ItemId) {
-		const catalogItem =
-			SHOP_CATALOG.find((item) => item.id === itemId) ??
-			STAMP_REWARD_CATALOG.find((item) => item.id === itemId);
+		const catalogItem = findCatalogItem(itemId);
 		if (!catalogItem) return;
 
 		// Cancel any existing preview first (restores previous category)
