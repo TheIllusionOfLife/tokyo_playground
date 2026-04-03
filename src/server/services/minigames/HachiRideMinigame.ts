@@ -12,8 +12,10 @@ import {
 	DEFAULT_WALK_SPEED,
 	HACHI_ANTICHEAT_CHECK_INTERVAL,
 	HACHI_ANTICHEAT_GRACE_STUDS,
+	HACHI_ANTICHEAT_RESPAWN_GRACE,
 	HACHI_ANTICHEAT_STRIKE_DECAY,
 	HACHI_ANTICHEAT_STRIKE_LIMIT,
+	HACHI_ANTICHEAT_TELEPORT_THRESHOLD,
 	HACHI_BIG_SCALE,
 	HACHI_BLDG_MAX_X,
 	HACHI_BLDG_MAX_Z,
@@ -1274,6 +1276,39 @@ export class HachiRideMinigame implements IMinigame {
 			if (!lastPos) continue;
 
 			const dist = pos.sub(lastPos).Magnitude;
+
+			// Teleport detection: blatant displacement far beyond any legitimate movement.
+			// Exempt: respawn grace, wall-run active, slide active (already handled above).
+			// Server snapback already resets lastPositions so it won't re-trigger.
+			if (dist > HACHI_ANTICHEAT_TELEPORT_THRESHOLD) {
+				const respawnTime = this.respawnGrace.get(userId) ?? 0;
+				const wallState = this.wallRunStates.get(userId);
+				if (
+					now - respawnTime < HACHI_ANTICHEAT_RESPAWN_GRACE ||
+					wallState?.running
+				) {
+					// Exempt: update baseline without penalizing
+					continue;
+				}
+				// Blatant teleport: 2 strikes
+				const currentStrikes = (this.strikes.get(userId) ?? 0) + 2;
+				this.strikes.set(userId, currentStrikes);
+				this.lastStrikeTime.set(userId, now);
+				if (currentStrikes >= HACHI_ANTICHEAT_STRIKE_LIMIT) {
+					warn(
+						`[HachiRide] Teleport snapback for ${player.Name}: ${math.floor(dist)} studs (strike ${currentStrikes})`,
+					);
+					player.Character?.PivotTo(new CFrame(lastPos));
+					if (hrp) hrp.AssemblyLinearVelocity = Vector3.zero;
+					this.lastPositions.set(userId, lastPos);
+				} else {
+					warn(
+						`[HachiRide] Teleport warning for ${player.Name}: ${math.floor(dist)} studs (strike ${currentStrikes})`,
+					);
+				}
+				continue;
+			}
+
 			if (dist <= maxDist) {
 				// Clean movement: decay strikes over time
 				const lastStrike = this.lastStrikeTime.get(userId) ?? 0;
@@ -1286,7 +1321,7 @@ export class HachiRideMinigame implements IMinigame {
 				continue;
 			}
 
-			// Speed violation
+			// Speed violation (1 strike)
 			const currentStrikes = (this.strikes.get(userId) ?? 0) + 1;
 			this.strikes.set(userId, currentStrikes);
 			this.lastStrikeTime.set(userId, now);
