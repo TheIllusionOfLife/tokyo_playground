@@ -1,5 +1,5 @@
 import { OnStart, Service } from "@flamework/core";
-import { RunService } from "@rbxts/services";
+import { Players, RunService } from "@rbxts/services";
 import {
 	EVENT_HISTORY_NO_REPEAT,
 	MICRO_EVENT_MAX_INTERVAL,
@@ -7,6 +7,7 @@ import {
 } from "shared/living-shibuya-constants";
 import { GlobalEvents } from "shared/network";
 import { GameState, MicroEventId } from "shared/types";
+import { AnalyticsService } from "./AnalyticsService";
 import { DayNightService } from "./DayNightService";
 import { GameStateService } from "./GameStateService";
 import { BonOdoriEvent } from "./microevents/BonOdoriEvent";
@@ -31,11 +32,13 @@ export class MicroEventService implements OnStart {
 	private nextEventDelay = 0;
 	private eventHistory: MicroEventId[] = [];
 	private inLobby = true;
+	private eventStartTime = 0;
 
 	constructor(
 		private readonly gameStateService: GameStateService,
 		private readonly dayNightService: DayNightService,
 		private readonly playerDataService: PlayerDataService,
+		private readonly analyticsService: AnalyticsService,
 	) {}
 
 	onStart() {
@@ -48,6 +51,7 @@ export class MicroEventService implements OnStart {
 			if (newState === GameState.Playing) {
 				this.inLobby = false;
 				if (this.currentEvent) {
+					this.fireEventAnalytics(this.currentEvent.id, false);
 					this.currentEvent.cleanup();
 					this.serverEvents.microEventEnded.broadcast(this.currentEvent.id);
 					this.currentEvent = undefined;
@@ -69,6 +73,7 @@ export class MicroEventService implements OnStart {
 		if (this.currentEvent) {
 			this.currentEvent.tick(dt);
 			if (this.currentEvent.isFinished()) {
+				this.fireEventAnalytics(this.currentEvent.id, true);
 				this.currentEvent.cleanup();
 				this.serverEvents.microEventEnded.broadcast(this.currentEvent.id);
 				print(`[MicroEventService] Event ended: ${this.currentEvent.id}`);
@@ -94,6 +99,7 @@ export class MicroEventService implements OnStart {
 		if (!evt) return;
 
 		this.currentEvent = evt;
+		this.eventStartTime = os.clock();
 		this.eventHistory.push(eventId);
 		if (this.eventHistory.size() > EVENT_HISTORY_NO_REPEAT * 2) {
 			this.eventHistory = this.eventHistory.filter(
@@ -147,6 +153,20 @@ export class MicroEventService implements OnStart {
 			default:
 				return undefined;
 		}
+	}
+
+	private fireEventAnalytics(
+		eventId: MicroEventId,
+		completedNormally: boolean,
+	) {
+		const durationSeconds = os.clock() - this.eventStartTime;
+		this.analyticsService.fire({
+			name: "micro_event_completed",
+			eventId,
+			participantCount: Players.GetPlayers().size(),
+			durationSeconds: math.floor(durationSeconds),
+			completedNormally,
+		});
 	}
 
 	private randomInterval(): number {
