@@ -2,6 +2,7 @@ import { OnStart, Service } from "@flamework/core";
 import { CollectionService, Players } from "@rbxts/services";
 import { POI_DISCOVERY_POINTS, ZONE_TAG } from "shared/constants";
 import { GlobalEvents } from "shared/network";
+import { CooldownTracker } from "../utils/cooldown";
 import { safeHandler } from "../utils/safeConnect";
 import { PlayerDataService } from "./PlayerDataService";
 
@@ -14,7 +15,7 @@ import { PlayerDataService } from "./PlayerDataService";
 export class PoiDiscoveryService implements OnStart {
 	private readonly serverEvents = GlobalEvents.createServer({});
 	private validZoneNames = new Set<string>();
-	private readonly discoveryCooldowns = new Map<number, number>();
+	private readonly discoveryCooldowns = new CooldownTracker();
 
 	constructor(private readonly playerDataService: PlayerDataService) {}
 
@@ -59,7 +60,7 @@ export class PoiDiscoveryService implements OnStart {
 
 		// Clean up cooldown entries on leave to prevent memory leak
 		Players.PlayerRemoving.Connect((player) => {
-			this.discoveryCooldowns.delete(player.UserId);
+			this.discoveryCooldowns.reset(player.UserId);
 		});
 	}
 
@@ -67,10 +68,7 @@ export class PoiDiscoveryService implements OnStart {
 		if (!this.validZoneNames.has(zoneName)) return;
 
 		// Rate limit: 1 discovery request per 2 seconds per player
-		const now = os.clock();
-		const last = this.discoveryCooldowns.get(player.UserId) ?? 0;
-		if (now - last < 2) return;
-		this.discoveryCooldowns.set(player.UserId, now);
+		if (!this.discoveryCooldowns.check(player.UserId, 2)) return;
 
 		// Guard: profile must be loaded
 		const data = this.playerDataService.getPlayerData(player);

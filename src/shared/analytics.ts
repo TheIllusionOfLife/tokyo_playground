@@ -49,4 +49,11 @@ export type AnalyticsEvent =
 			name: "afk_removed";
 			playerId: number;
 			idleSeconds: number;
+	  }
+	| {
+			name: "micro_event_completed";
+			eventId: string;
+			participantCount: number;
+			durationSeconds: number;
+			completedNormally: boolean;
 	  };

@@ -21,6 +21,7 @@ import {
 	ShibuyaScramblePlayerState,
 	VehicleId,
 } from "shared/types";
+import { CooldownTracker } from "../../utils/cooldown";
 import {
 	equipHachiCostume,
 	forceUnmount,
@@ -48,7 +49,7 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 	private playerObjects = new Map<number, Player>();
 	private oniCounting = false;
 	private countdownThread?: thread;
-	private slideCooldowns = new Map<number, number>();
+	private slideCooldowns = new CooldownTracker();
 	private lastHintText = "";
 	private lastAutoCatchTime = 0;
 	private oniUserId?: number;
@@ -350,7 +351,7 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 	removePlayer(userId: number) {
 		this.playerStates.delete(userId);
 		this.playerObjects.delete(userId);
-		this.slideCooldowns.delete(userId);
+		this.slideCooldowns.reset(userId);
 	}
 
 	stopCountdown() {
@@ -417,13 +418,8 @@ export class ShibuyaScrambleMinigame implements IMinigame {
 		const state = this.playerStates.get(player.UserId);
 		if (!state || state.isTagged || this.oniCounting) return;
 
-		const now = os.clock();
-		if (
-			now - (this.slideCooldowns.get(player.UserId) ?? 0) <
-			SCRAMBLE_SLIDE_COOLDOWN
-		)
+		if (!this.slideCooldowns.check(player.UserId, SCRAMBLE_SLIDE_COOLDOWN))
 			return;
-		this.slideCooldowns.set(player.UserId, now);
 
 		const dir = ramp.CFrame.LookVector.add(
 			new Vector3(0, SLIDE_DIR_Y_OFFSET, 0),

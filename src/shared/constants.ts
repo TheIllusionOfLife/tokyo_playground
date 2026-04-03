@@ -578,6 +578,8 @@ export const HACHI_ANTICHEAT_GRACE_STUDS = 10; // extra tolerance per check inte
 export const HACHI_ANTICHEAT_STRIKE_LIMIT = 3; // strikes before snapback
 export const HACHI_ANTICHEAT_CHECK_INTERVAL = 1; // seconds between position checks
 export const HACHI_ANTICHEAT_STRIKE_DECAY = 30; // seconds clean before strikes reset
+export const HACHI_ANTICHEAT_TELEPORT_THRESHOLD = 300; // studs: instant displacement above this = 2 strikes
+export const HACHI_ANTICHEAT_RESPAWN_GRACE = 2; // seconds after respawn to exempt anti-cheat
 
 // Audio — verified IDs that load successfully in Studio
 export const BGM_TRACK_ID = "rbxassetid://7024340270"; // Tokyo Machine "Moshi" (215s chiptune)

@@ -4,6 +4,7 @@ import { findCatalogItem } from "shared/constants";
 
 import { GlobalEvents } from "shared/network";
 import { ItemCategory, ItemId } from "shared/types";
+import { CooldownTracker } from "../utils/cooldown";
 import { safeHandler } from "../utils/safeConnect";
 import { PlayerDataService } from "./PlayerDataService";
 
@@ -206,8 +207,8 @@ const PREVIEW_DURATION = 10; // seconds
 export class EquipService implements OnStart {
 	private readonly serverEvents = GlobalEvents.createServer({});
 	private readonly charAddedConns = new Map<number, RBXScriptConnection>();
-	private readonly equipCooldowns = new Map<number, number>();
-	private readonly previewCooldowns = new Map<number, number>();
+	private readonly equipCooldowns = new CooldownTracker();
+	private readonly previewCooldowns = new CooldownTracker();
 	/** Monotonic token per player to prevent stale preview cleanup. */
 	private readonly previewVersions = new Map<number, number>();
 	/** Active preview category per player for proper cleanup. */
@@ -220,13 +221,7 @@ export class EquipService implements OnStart {
 
 		this.serverEvents.requestEquip.connect(
 			safeHandler("EquipService.requestEquip", (player, itemId) => {
-				const now = os.clock();
-				if (
-					now - (this.equipCooldowns.get(player.UserId) ?? 0) <
-					EQUIP_COOLDOWN
-				)
-					return;
-				this.equipCooldowns.set(player.UserId, now);
+				if (!this.equipCooldowns.check(player.UserId, EQUIP_COOLDOWN)) return;
 				// Cancel any active preview on equip
 				this.cancelPreview(player);
 				this.handleEquipRequest(player, itemId);
@@ -235,13 +230,7 @@ export class EquipService implements OnStart {
 
 		this.serverEvents.requestPreview.connect(
 			safeHandler("EquipService.requestPreview", (player, itemId) => {
-				const now = os.clock();
-				if (
-					now - (this.previewCooldowns.get(player.UserId) ?? 0) <
-					EQUIP_COOLDOWN
-				)
-					return;
-				this.previewCooldowns.set(player.UserId, now);
+				if (!this.previewCooldowns.check(player.UserId, EQUIP_COOLDOWN)) return;
 				this.handlePreviewRequest(player, itemId);
 			}),
 		);
@@ -265,8 +254,8 @@ export class EquipService implements OnStart {
 				conn.Disconnect();
 				this.charAddedConns.delete(player.UserId);
 			}
-			this.equipCooldowns.delete(player.UserId);
-			this.previewCooldowns.delete(player.UserId);
+			this.equipCooldowns.reset(player.UserId);
+			this.previewCooldowns.reset(player.UserId);
 			this.previewVersions.delete(player.UserId);
 			this.activePreviewCategories.delete(player.UserId);
 		});
