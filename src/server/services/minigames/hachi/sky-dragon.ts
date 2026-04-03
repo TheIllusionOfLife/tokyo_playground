@@ -58,7 +58,7 @@ export function spawnSkyDragon(state: SkyDragonState): boolean {
 	for (const desc of dragon.GetDescendants()) {
 		if (desc.IsA("BasePart")) {
 			desc.Anchored = true;
-			desc.CanCollide = true;
+			desc.CanCollide = false;
 			desc.CanTouch = false;
 			desc.CanQuery = false;
 			desc.CastShadow = false;
