@@ -9,6 +9,8 @@ import { GlobalEvents } from "shared/network";
 import { ItemId, ShopItemData, VehicleId, VehicleShopData } from "shared/types";
 import { CooldownTracker } from "../utils/cooldown";
 import { safeHandler } from "../utils/safeConnect";
+import { EconomyService } from "./EconomyService";
+import { InventoryService } from "./InventoryService";
 import { PlayerDataService } from "./PlayerDataService";
 
 @Service()
@@ -17,7 +19,11 @@ export class ShopService implements OnStart {
 	private readonly catalogCooldowns = new CooldownTracker();
 	private readonly vehicleCatalogCooldowns = new CooldownTracker();
 
-	constructor(private readonly playerDataService: PlayerDataService) {}
+	constructor(
+		private readonly economyService: EconomyService,
+		private readonly inventoryService: InventoryService,
+		private readonly playerDataService: PlayerDataService,
+	) {}
 
 	onStart() {
 		print("[ShopService] Started");
@@ -29,7 +35,7 @@ export class ShopService implements OnStart {
 			// Push play points on initial load so UI shows correct values
 			const data = this.playerDataService.getPlayerData(player);
 			if (data) {
-				const level = this.playerDataService.getPlaygroundLevel(player);
+				const level = this.economyService.getPlaygroundLevel(player);
 				this.serverEvents.playPointsUpdate.fire(
 					player,
 					data.totalPlayPoints,
@@ -109,7 +115,7 @@ export class ShopService implements OnStart {
 			return;
 		}
 
-		const level = this.playerDataService.getPlaygroundLevel(player);
+		const level = this.economyService.getPlaygroundLevel(player);
 		if (level < catalogItem.levelRequired) {
 			this.serverEvents.purchaseResult.fire(
 				player,
@@ -121,7 +127,7 @@ export class ShopService implements OnStart {
 			return;
 		}
 
-		const ownedItems = this.playerDataService.getOwnedItems(player);
+		const ownedItems = this.inventoryService.getOwnedItems(player);
 		if (ownedItems.includes(itemId)) {
 			this.serverEvents.purchaseResult.fire(
 				player,
@@ -133,7 +139,7 @@ export class ShopService implements OnStart {
 			return;
 		}
 
-		const spent = this.playerDataService.spendShopBalance(
+		const spent = this.economyService.spendShopBalance(
 			player,
 			catalogItem.price,
 		);
@@ -148,14 +154,14 @@ export class ShopService implements OnStart {
 			return;
 		}
 
-		this.playerDataService.addOwnedItem(player, itemId);
-		const newBalance = this.playerDataService.getShopBalance(player);
+		this.inventoryService.addOwnedItem(player, itemId);
+		const newBalance = this.economyService.getShopBalance(player);
 		this.serverEvents.purchaseResult.fire(player, true, itemId, newBalance, "");
 	}
 
 	private buildCatalogForPlayer(player: Player): ShopItemData[] {
-		const ownedItems = this.playerDataService.getOwnedItems(player);
-		const equippedItems = this.playerDataService.getEquippedItems(player);
+		const ownedItems = this.inventoryService.getOwnedItems(player);
+		const equippedItems = this.inventoryService.getEquippedItems(player);
 		const equippedSet = new Set<ItemId>();
 		for (const [, itemId] of pairs(equippedItems)) {
 			if (itemId !== undefined) equippedSet.add(itemId as ItemId);
@@ -181,8 +187,8 @@ export class ShopService implements OnStart {
 	private handleRequestVehicleCatalog(player: Player) {
 		const data = this.playerDataService.getPlayerData(player);
 		if (!data) return;
-		const ownedVehicles = this.playerDataService.getOwnedVehicles(player);
-		const equippedVehicle = this.playerDataService.getEquippedVehicle(player);
+		const ownedVehicles = this.inventoryService.getOwnedVehicles(player);
+		const equippedVehicle = this.inventoryService.getEquippedVehicle(player);
 		const vehicles: VehicleShopData[] = VEHICLE_CATALOG.map((v) => ({
 			id: v.id,
 			name: v.name,
@@ -210,7 +216,7 @@ export class ShopService implements OnStart {
 			return;
 		}
 
-		const level = this.playerDataService.getPlaygroundLevel(player);
+		const level = this.economyService.getPlaygroundLevel(player);
 		if (level < catalogItem.levelRequired) {
 			this.serverEvents.vehiclePurchaseResult.fire(
 				player,
@@ -222,7 +228,7 @@ export class ShopService implements OnStart {
 			return;
 		}
 
-		const ownedVehicles = this.playerDataService.getOwnedVehicles(player);
+		const ownedVehicles = this.inventoryService.getOwnedVehicles(player);
 		if (ownedVehicles.includes(vehicleId)) {
 			this.serverEvents.vehiclePurchaseResult.fire(
 				player,
@@ -234,7 +240,7 @@ export class ShopService implements OnStart {
 			return;
 		}
 
-		const spent = this.playerDataService.spendShopBalance(
+		const spent = this.economyService.spendShopBalance(
 			player,
 			catalogItem.price,
 		);
@@ -249,8 +255,8 @@ export class ShopService implements OnStart {
 			return;
 		}
 
-		this.playerDataService.addOwnedVehicle(player, vehicleId);
-		const newBalance = this.playerDataService.getShopBalance(player);
+		this.inventoryService.addOwnedVehicle(player, vehicleId);
+		const newBalance = this.economyService.getShopBalance(player);
 		this.serverEvents.vehiclePurchaseResult.fire(
 			player,
 			true,
@@ -261,12 +267,12 @@ export class ShopService implements OnStart {
 	}
 
 	private handleVehicleEquip(player: Player, vehicleId: VehicleId) {
-		const ownedVehicles = this.playerDataService.getOwnedVehicles(player);
+		const ownedVehicles = this.inventoryService.getOwnedVehicles(player);
 		if (!ownedVehicles.includes(vehicleId)) {
 			this.serverEvents.vehicleEquipResult.fire(player, false, vehicleId);
 			return;
 		}
-		this.playerDataService.setEquippedVehicle(player, vehicleId);
+		this.inventoryService.setEquippedVehicle(player, vehicleId);
 		this.serverEvents.vehicleEquipResult.fire(player, true, vehicleId);
 	}
 }

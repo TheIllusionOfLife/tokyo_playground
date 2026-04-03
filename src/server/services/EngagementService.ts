@@ -4,6 +4,7 @@ import { FRIEND_REFERRAL_BONUS, SPIN_REWARDS } from "shared/constants";
 import { GlobalEvents } from "shared/network";
 import { getCurrentDay } from "shared/utils/dayKey";
 import { safeHandler } from "../utils/safeConnect";
+import { EconomyService } from "./EconomyService";
 import { PlayerDataService } from "./PlayerDataService";
 
 /**
@@ -14,7 +15,10 @@ export class EngagementService implements OnStart {
 	private readonly serverEvents = GlobalEvents.createServer({});
 	private readonly referralGranted = new Set<string>(); // "userId1:userId2" pairs
 
-	constructor(private readonly playerDataService: PlayerDataService) {}
+	constructor(
+		private readonly economyService: EconomyService,
+		private readonly playerDataService: PlayerDataService,
+	) {}
 
 	onStart() {
 		print("[EngagementService] Started");
@@ -61,9 +65,9 @@ export class EngagementService implements OnStart {
 		const reward = SPIN_REWARDS[segmentIndex];
 
 		data.lastSpinDay = today;
-		this.playerDataService.addPlayPoints(player, reward);
+		this.economyService.addPlayPoints(player, reward);
 
-		const level = this.playerDataService.getPlaygroundLevel(player);
+		const level = this.economyService.getPlaygroundLevel(player);
 		this.serverEvents.playPointsUpdate.fire(
 			player,
 			data.totalPlayPoints,
@@ -122,18 +126,18 @@ export class EngagementService implements OnStart {
 
 			this.referralGranted.add(pairKey);
 
-			this.playerDataService.addPlayPoints(player, FRIEND_REFERRAL_BONUS);
-			this.playerDataService.addPlayPoints(otherPlayer, FRIEND_REFERRAL_BONUS);
+			this.economyService.addPlayPoints(player, FRIEND_REFERRAL_BONUS);
+			this.economyService.addPlayPoints(otherPlayer, FRIEND_REFERRAL_BONUS);
 
 			// pData/oData are mutated in place by addPlayPoints
-			const pLevel = this.playerDataService.getPlaygroundLevel(player);
+			const pLevel = this.economyService.getPlaygroundLevel(player);
 			this.serverEvents.playPointsUpdate.fire(
 				player,
 				pData.totalPlayPoints,
 				pLevel,
 				pData.shopBalance,
 			);
-			const oLevel = this.playerDataService.getPlaygroundLevel(otherPlayer);
+			const oLevel = this.economyService.getPlaygroundLevel(otherPlayer);
 			this.serverEvents.playPointsUpdate.fire(
 				otherPlayer,
 				oData.totalPlayPoints,

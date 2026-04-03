@@ -36,7 +36,7 @@ import {
 } from "../utils/hachiCostume";
 import { safeHandler } from "../utils/safeConnect";
 import { getVehicleTemplate } from "../utils/vehicleTemplate";
-import { PlayerDataService } from "./PlayerDataService";
+import { InventoryService } from "./InventoryService";
 
 /**
  * Hachi vehicle ability handlers (jump, slide, wall-run, eject, toggle, animation).
@@ -60,7 +60,7 @@ export class HachiAbilityService implements OnStart {
 	private matchActive = false;
 	private matchOniUserIds = new Set<number>();
 
-	constructor(private readonly playerDataService: PlayerDataService) {}
+	constructor(private readonly inventoryService: InventoryService) {}
 
 	/** Called by LobbyService when match state changes. */
 	setMatchActive(active: boolean) {
@@ -125,7 +125,7 @@ export class HachiAbilityService implements OnStart {
 
 				if (equip) {
 					if (isPlayerMounted(player)) return;
-					const vehicleId = this.playerDataService.getEquippedVehicle(player);
+					const vehicleId = this.inventoryService.getEquippedVehicle(player);
 					const template = getVehicleTemplate(vehicleId);
 					if (!template) return;
 					const clone = template.Clone();

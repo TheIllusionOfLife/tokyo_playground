@@ -2,6 +2,7 @@ import { OnStart, Service } from "@flamework/core";
 import { Players, RunService } from "@rbxts/services";
 import { GlobalEvents } from "shared/network";
 import { MinigameId } from "shared/types";
+import { EconomyService } from "./EconomyService";
 import { HachiRideMinigame } from "./minigames/HachiRideMinigame";
 import { PlayerDataService } from "./PlayerDataService";
 
@@ -13,7 +14,10 @@ import { PlayerDataService } from "./PlayerDataService";
 export class AdminService implements OnStart {
 	private readonly serverEvents = GlobalEvents.createServer({});
 
-	constructor(private readonly playerDataService: PlayerDataService) {}
+	constructor(
+		private readonly economyService: EconomyService,
+		private readonly playerDataService: PlayerDataService,
+	) {}
 
 	onStart() {
 		if (!RunService.IsStudio()) return;
@@ -39,10 +43,10 @@ export class AdminService implements OnStart {
 		} else if (cmd === "/items" && value !== undefined) {
 			this.giveItems(player, value);
 		} else if (cmd === "/points" && value !== undefined) {
-			this.playerDataService.addPlayPoints(player, value);
+			this.economyService.addPlayPoints(player, value);
 			const data = this.playerDataService.getPlayerData(player);
 			if (data) {
-				const lv = this.playerDataService.getPlaygroundLevel(player);
+				const lv = this.economyService.getPlaygroundLevel(player);
 				this.serverEvents.playPointsUpdate.fire(
 					player,
 					data.totalPlayPoints,
@@ -65,7 +69,7 @@ export class AdminService implements OnStart {
 			const data = this.playerDataService.getPlayerData(player);
 			if (data) {
 				data.shopBalance = value;
-				const lv = this.playerDataService.getPlaygroundLevel(player);
+				const lv = this.economyService.getPlaygroundLevel(player);
 				this.serverEvents.playPointsUpdate.fire(
 					player,
 					data.totalPlayPoints,

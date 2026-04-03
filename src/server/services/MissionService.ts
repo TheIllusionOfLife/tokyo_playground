@@ -16,6 +16,7 @@ import {
 } from "shared/types";
 import { getCurrentDay } from "shared/utils/dayKey";
 import { safeHandler } from "../utils/safeConnect";
+import { EconomyService } from "./EconomyService";
 import { PlayerDataService } from "./PlayerDataService";
 
 @Service()
@@ -25,7 +26,10 @@ export class MissionService implements OnStart {
 	private readonly gamesPlayedToday = new Map<number, Set<MinigameId>>();
 	private readonly playAllGamesCredited = new Set<number>(); // players already credited this session
 
-	constructor(private readonly playerDataService: PlayerDataService) {}
+	constructor(
+		private readonly economyService: EconomyService,
+		private readonly playerDataService: PlayerDataService,
+	) {}
 
 	onStart() {
 		print("[MissionService] Started");
@@ -186,7 +190,7 @@ export class MissionService implements OnStart {
 		// WinTwoInARow: streakCount is already updated before this call
 		// Use >= 2 (not === 2) so mission works regardless of when it's assigned mid-streak
 		if (won) {
-			const streakCount = this.playerDataService.getStreakCount(player);
+			const streakCount = this.economyService.getStreakCount(player);
 			if (streakCount >= 2) {
 				this.incrementAndNotify(player, MissionId.WinTwoInARow, 1);
 			}
@@ -216,11 +220,11 @@ export class MissionService implements OnStart {
 		if (!collected) return;
 
 		const def = MISSION_DEFS[id];
-		this.playerDataService.addPlayPoints(player, def.pointsReward);
+		this.economyService.addPlayPoints(player, def.pointsReward);
 
 		const data = this.playerDataService.getPlayerData(player);
 		if (data) {
-			const level = this.playerDataService.getPlaygroundLevel(player);
+			const level = this.economyService.getPlaygroundLevel(player);
 			this.serverEvents.playPointsUpdate.fire(
 				player,
 				data.totalPlayPoints,

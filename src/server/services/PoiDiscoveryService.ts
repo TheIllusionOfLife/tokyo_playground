@@ -4,6 +4,7 @@ import { POI_DISCOVERY_POINTS, ZONE_TAG } from "shared/constants";
 import { GlobalEvents } from "shared/network";
 import { CooldownTracker } from "../utils/cooldown";
 import { safeHandler } from "../utils/safeConnect";
+import { EconomyService } from "./EconomyService";
 import { PlayerDataService } from "./PlayerDataService";
 
 /**
@@ -17,7 +18,10 @@ export class PoiDiscoveryService implements OnStart {
 	private validZoneNames = new Set<string>();
 	private readonly discoveryCooldowns = new CooldownTracker();
 
-	constructor(private readonly playerDataService: PlayerDataService) {}
+	constructor(
+		private readonly economyService: EconomyService,
+		private readonly playerDataService: PlayerDataService,
+	) {}
 
 	onStart() {
 		print("[PoiDiscoveryService] Started");
@@ -90,7 +94,7 @@ export class PoiDiscoveryService implements OnStart {
 		if (data.poiClaimedRewards.includes(zoneName)) return;
 
 		this.playerDataService.addPoiClaimedReward(player, zoneName);
-		this.playerDataService.addPlayPoints(player, POI_DISCOVERY_POINTS);
+		this.economyService.addPlayPoints(player, POI_DISCOVERY_POINTS);
 
 		this.serverEvents.poiRewardClaimed.fire(
 			player,
@@ -99,7 +103,7 @@ export class PoiDiscoveryService implements OnStart {
 		);
 
 		// Send updated balance
-		const level = this.playerDataService.getPlaygroundLevel(player);
+		const level = this.economyService.getPlaygroundLevel(player);
 		this.serverEvents.playPointsUpdate.fire(
 			player,
 			data.totalPlayPoints,

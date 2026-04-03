@@ -7,6 +7,7 @@ import {
 	FIREWORKS_VIEWPOINT_REWARD,
 } from "shared/living-shibuya-constants";
 import { MicroEventId } from "shared/types";
+import { EconomyService } from "../EconomyService";
 import { PlayerDataService } from "../PlayerDataService";
 import { IMicroEvent } from "./MicroEventBase";
 
@@ -22,7 +23,10 @@ export class FireworksEvent implements IMicroEvent {
 	private rewarded = new Set<number>();
 	private proxCheckAccum = 0;
 
-	constructor(private readonly playerDataService: PlayerDataService) {}
+	constructor(
+		private readonly economyService: EconomyService,
+		private readonly playerDataService: PlayerDataService,
+	) {}
 
 	start() {
 		this.viewpoints = CollectionService.GetTagged(
@@ -64,20 +68,14 @@ export class FireworksEvent implements IMicroEvent {
 
 			if (atViewpoint) {
 				this.rewarded.add(player.UserId);
-				this.playerDataService.addPlayPoints(
-					player,
-					FIREWORKS_VIEWPOINT_REWARD,
-				);
+				this.economyService.addPlayPoints(player, FIREWORKS_VIEWPOINT_REWARD);
 				this.grantBadge(player);
 			} else {
 				for (const vp of this.viewpoints) {
 					const delta = hrp.Position.sub(vp.Position);
 					if (delta.Dot(delta) < groundProxSq) {
 						this.rewarded.add(player.UserId);
-						this.playerDataService.addPlayPoints(
-							player,
-							FIREWORKS_GROUND_REWARD,
-						);
+						this.economyService.addPlayPoints(player, FIREWORKS_GROUND_REWARD);
 						this.grantBadge(player);
 						break;
 					}

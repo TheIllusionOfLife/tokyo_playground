@@ -37,7 +37,9 @@ import { AmbientCityService } from "./AmbientCityService";
 import { AnalyticsService } from "./AnalyticsService";
 import { BadgeService } from "./BadgeService";
 import { BoundaryService } from "./BoundaryService";
+import { EconomyService } from "./EconomyService";
 import { GameStateService } from "./GameStateService";
+import { InventoryService } from "./InventoryService";
 import { LeaderboardService } from "./LeaderboardService";
 import { LobbyService } from "./LobbyService";
 import { MinigameService } from "./MinigameService";
@@ -69,6 +71,8 @@ export class MatchService implements OnStart {
 		private readonly gameStateService: GameStateService,
 		private readonly minigameService: MinigameService,
 		private readonly playerDataService: PlayerDataService,
+		private readonly economyService: EconomyService,
+		private readonly inventoryService: InventoryService,
 		private readonly rewardService: RewardService,
 		private readonly missionService: MissionService,
 		private readonly lobbyService: LobbyService,
@@ -97,6 +101,7 @@ export class MatchService implements OnStart {
 				new HachiRideMinigame(
 					events,
 					this.missionService,
+					this.inventoryService,
 					this.playerDataService,
 				),
 		);
@@ -481,7 +486,7 @@ export class MatchService implements OnStart {
 
 			// Apply streak multiplier to each breakdown field (skip for Hachi Ride)
 			if (state.minigameId !== MinigameId.HachiRide) {
-				const streakCount = this.playerDataService.getStreakCount(player);
+				const streakCount = this.economyService.getStreakCount(player);
 				const streakIndex = math.min(
 					streakCount,
 					STREAK_MULTIPLIERS.size() - 1,
@@ -508,12 +513,12 @@ export class MatchService implements OnStart {
 				}
 			}
 
-			this.playerDataService.recordGameResult(player, breakdown, won);
+			this.economyService.recordGameResult(player, breakdown, won);
 			playerBreakdowns.set(player, breakdown);
 
 			const data = this.playerDataService.getPlayerData(player);
 			if (data) {
-				const level = this.playerDataService.getPlaygroundLevel(player);
+				const level = this.economyService.getPlaygroundLevel(player);
 				this.serverEvents.playPointsUpdate.fire(
 					player,
 					data.totalPlayPoints,
@@ -797,7 +802,7 @@ export class MatchService implements OnStart {
 		}
 
 		// Reset streak on early leave
-		this.playerDataService.resetStreak(player);
+		this.economyService.resetStreak(player);
 		this.analyticsService.fireForPlayer(player, {
 			name: "player_leave_mid_match",
 			playerId: player.UserId,

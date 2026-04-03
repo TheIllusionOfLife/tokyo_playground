@@ -94,6 +94,7 @@ import {
 } from "../../utils/hachiCostume";
 import { safeHandler } from "../../utils/safeConnect";
 import { getVehicleTemplate } from "../../utils/vehicleTemplate";
+import { InventoryService } from "../InventoryService";
 import { MissionService } from "../MissionService";
 import { PlayerDataService } from "../PlayerDataService";
 import { IMinigame } from "./MinigameBase";
@@ -158,6 +159,7 @@ export class HachiRideMinigame implements IMinigame {
 	constructor(
 		private readonly serverEvents: ServerEvents,
 		private readonly missionService: MissionService,
+		private readonly inventoryService: InventoryService,
 		private readonly playerDataService: PlayerDataService,
 	) {
 		HachiRideMinigame.activeInstance = this;
@@ -277,7 +279,7 @@ export class HachiRideMinigame implements IMinigame {
 		// Clone vehicle template for each player (uses their equipped vehicle)
 		for (let i = 0; i < players.size(); i++) {
 			const player = players[i];
-			const vehicleId = this.playerDataService.getEquippedVehicle(player);
+			const vehicleId = this.inventoryService.getEquippedVehicle(player);
 			const template = getVehicleTemplate(vehicleId);
 			if (!template) {
 				warn(

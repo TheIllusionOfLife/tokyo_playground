@@ -8,6 +8,7 @@ import {
 import { GlobalEvents } from "shared/network";
 import { MicroEventId } from "shared/types";
 import { safeHandler } from "../../utils/safeConnect";
+import { EconomyService } from "../EconomyService";
 import { PlayerDataService } from "../PlayerDataService";
 import { IMicroEvent } from "./MicroEventBase";
 
@@ -32,6 +33,7 @@ export class ObstacleCourseEvent implements IMicroEvent {
 
 	constructor(
 		private readonly serverEvents: ServerEvents,
+		private readonly economyService: EconomyService,
 		private readonly playerDataService: PlayerDataService,
 	) {}
 
@@ -102,7 +104,7 @@ export class ObstacleCourseEvent implements IMicroEvent {
 					const pts = isFirstCompletion
 						? OBSTACLE_COURSE_COMPLETION_POINTS
 						: OBSTACLE_COURSE_REPEAT_POINTS;
-					this.playerDataService.addPlayPoints(player, pts);
+					this.economyService.addPlayPoints(player, pts);
 
 					if (isFirstCompletion && !data.badges.includes("ParkourPup")) {
 						data.badges.push("ParkourPup");
