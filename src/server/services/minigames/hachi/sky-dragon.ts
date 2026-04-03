@@ -234,16 +234,6 @@ export function tickSkyDragon(
 
 	if (ds.progress >= 1) {
 		ds.progress -= 1;
-		ds.collected = false;
-		if (ds.collectible) {
-			ds.collectible.Transparency = 0;
-			const glow = ds.collectible.FindFirstChild("TreasureGlow") as
-				| ParticleEmitter
-				| undefined;
-			if (glow) glow.Enabled = true;
-			const treasureLight = ds.collectible.FindFirstChildWhichIsA("PointLight");
-			if (treasureLight) treasureLight.Enabled = true;
-		}
 	}
 
 	const pos = SKY_DRAGON_ROUTE_START.Lerp(SKY_DRAGON_ROUTE_END, ds.progress);
