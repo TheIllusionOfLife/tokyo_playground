@@ -146,8 +146,8 @@ export class MatchService implements OnStart {
 			this.lastActivity.set(player.UserId, os.clock());
 		}
 
-		// Guarantee cleanup if Studio/server is force-quit mid-match
-		game.BindToClose(() => {
+		// Register cleanup before profile release to guarantee data writes complete
+		this.playerDataService.registerPreShutdown(() => {
 			this.forceCleanup();
 		});
 
@@ -245,13 +245,28 @@ export class MatchService implements OnStart {
 		}
 
 		this.matchJanitor = new Janitor();
-		this.matchPlayers = new Set(
-			Players.GetPlayers().filter((p) => !this.isPlayerAfk(p)),
-		);
+		const config = MINIGAME_CONFIGS[minigameId];
+		const eligible = Players.GetPlayers().filter((p) => !this.isPlayerAfk(p));
+
+		// Cap to maxPlayers — Fisher-Yates shuffle, then take first maxPlayers
+		let selected = eligible;
+		if (eligible.size() > config.maxPlayers) {
+			for (let i = eligible.size() - 1; i > 0; i--) {
+				const j = math.random(0, i);
+				const tmp = eligible[i];
+				eligible[i] = eligible[j];
+				eligible[j] = tmp;
+			}
+			selected = [];
+			for (let i = 0; i < config.maxPlayers; i++) {
+				selected.push(eligible[i]);
+			}
+		}
+		this.matchPlayers = new Set(selected);
 
 		// Notify AFK players and fire analytics
 		for (const player of Players.GetPlayers()) {
-			if (!this.matchPlayers.has(player)) {
+			if (!this.matchPlayers.has(player) && this.isPlayerAfk(player)) {
 				this.serverEvents.afkRemoved.fire(player);
 				this.analyticsService.fireForPlayer(player, {
 					name: "afk_removed",
@@ -263,7 +278,6 @@ export class MatchService implements OnStart {
 			}
 		}
 
-		const config = MINIGAME_CONFIGS[minigameId];
 		if (this.matchPlayers.size() < config.minPlayers) {
 			print("[MatchService] Below minimum after AFK filter — cancelling");
 			this.forceCleanup();
@@ -318,22 +332,22 @@ export class MatchService implements OnStart {
 			}
 		}
 
-		// Route AFK-excluded players to spectator so they get proper UI state
+		// Route all non-match players (AFK + cap-excluded) to spectator
+		// so their HUD shows correct state if they return during the match
 		for (const player of Players.GetPlayers()) {
-			if (!this.matchPlayers.has(player)) {
-				this.serverEvents.roleAssigned.fire(
-					player,
-					PlayerRole.Spectator,
-					minigameId,
-				);
-				this.serverEvents.matchSnapshot.fire(
-					player,
-					this.currentPhase,
-					0,
-					PlayerRole.Spectator,
-					minigameId,
-				);
-			}
+			if (this.matchPlayers.has(player)) continue;
+			this.serverEvents.roleAssigned.fire(
+				player,
+				PlayerRole.Spectator,
+				minigameId,
+			);
+			this.serverEvents.matchSnapshot.fire(
+				player,
+				this.currentPhase,
+				0,
+				PlayerRole.Spectator,
+				minigameId,
+			);
 		}
 
 		// Dramatic Oni reveal — runs during Preparing phase (no round time lost)

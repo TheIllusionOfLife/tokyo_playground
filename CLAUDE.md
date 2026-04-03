@@ -18,11 +18,16 @@ Roblox party mini-game platform set in Tokyo (Shibuya). roblox-ts + Flamework + 
 - Flamework `@Service()` for server, `@Controller()` for client
 - Networking: `Networking.createEvent<ClientToServer, ServerToClient>()`
 - Data: ProfileService (`@rbxts/profileservice`)
-- Linting: Biome (not ESLint). `useImportType` is OFF (Flamework needs runtime imports)
+- Linting: Biome (not ESLint). `useImportType` is OFF (Flamework needs runtime imports). `noUnusedImports` is also OFF because Flamework decorators make imports appear unused to the linter even though they are required at runtime for DI registration.
 - TypeScript pinned to 5.5.3 (must match Flamework)
 - Localization: `src/shared/localization/` with `t(key)` function. EN/JA tables. Client detects locale via `Players.LocalPlayer.LocaleId`. Add new strings to `keys.ts`, `en.ts`, `ja.ts`.
 - Analytics: `AnalyticsService` fires events via Roblox `AnalyticsService.FireCustomEvent`. Schema in `shared/analytics.ts`.
 - Game public info (descriptions, tags): `GAME_INFO.md`
+
+## Design Decisions
+- **No onboarding tutorial.** The game targets kids (9-15). Gameplay is designed to be self-explanatory through loading screen tips, round intro overlays, and hint text. Do not propose adding a tutorial.
+- **NPCs are ambient/interactive, not conversational.** NPCs (RamenChef, StreetMusician, CatColony, etc.) have proximity interactions and reward points, but they do not have dialogue or speech. Do not propose NPC dialogue or NPC localization.
+- **All 15 badges are configured** in `BadgeService.ts` with real Creator Dashboard IDs. No placeholders remain.
 
 ## MCP / Studio Gotchas
 - `execute_luau` runs **client-side** (`IsServer=false, IsClient=true`). Use `return` (not `print`) to get output — the tool returns the last expression, not stdout.

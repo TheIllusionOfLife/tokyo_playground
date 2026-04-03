@@ -10,6 +10,7 @@ import {
 } from "shared/living-shibuya-constants";
 import { GlobalEvents } from "shared/network";
 import { MicroEventId } from "shared/types";
+import { safeHandler } from "../../utils/safeConnect";
 import { PlayerDataService } from "../PlayerDataService";
 import { IMicroEvent } from "./MicroEventBase";
 
@@ -51,47 +52,50 @@ export class BonOdoriEvent implements IMicroEvent {
 
 		this.connections.push(
 			this.serverEvents.bonOdoriHit.connect(
-				(player, direction, _clientAccuracy) => {
-					if (this.finished) return;
+				safeHandler(
+					"BonOdoriEvent.bonOdoriHit",
+					(player, direction, _clientAccuracy) => {
+						if (this.finished) return;
 
-					// Validate direction matches the active note
-					if (direction !== this.activeNoteDirection) return;
+						// Validate direction matches the active note
+						if (direction !== this.activeNoteDirection) return;
 
-					// Server-side proximity check
-					const character = player.Character;
-					if (!character) return;
-					const hrp = character.FindFirstChild("HumanoidRootPart") as
-						| BasePart
-						| undefined;
-					if (!hrp) return;
-					const delta = hrp.Position.sub(this.centerPos);
-					if (delta.Dot(delta) > this.radiusSq) return;
+						// Server-side proximity check
+						const character = player.Character;
+						if (!character) return;
+						const hrp = character.FindFirstChild("HumanoidRootPart") as
+							| BasePart
+							| undefined;
+						if (!hrp) return;
+						const delta = hrp.Position.sub(this.centerPos);
+						if (delta.Dot(delta) > this.radiusSq) return;
 
-					// Dedup: one hit per player per beat
-					const lastBeat = this.lastHitBeat.get(player.UserId) ?? -1;
-					if (lastBeat >= this.beatCount) return;
-					this.lastHitBeat.set(player.UserId, this.beatCount);
+						// Dedup: one hit per player per beat
+						const lastBeat = this.lastHitBeat.get(player.UserId) ?? -1;
+						if (lastBeat >= this.beatCount) return;
+						this.lastHitBeat.set(player.UserId, this.beatCount);
 
-					this.participated.add(player.UserId);
+						this.participated.add(player.UserId);
 
-					// Server-side accuracy: min distance to nearest beat edge
-					// beatTimer is in [0, beatInterval). Closest beat is either
-					// the one that just fired (distance = beatTimer) or the
-					// upcoming one (distance = beatInterval - beatTimer).
-					const accuracy = math.min(
-						this.beatTimer,
-						this.beatInterval - this.beatTimer,
-					);
+						// Server-side accuracy: min distance to nearest beat edge
+						// beatTimer is in [0, beatInterval). Closest beat is either
+						// the one that just fired (distance = beatTimer) or the
+						// upcoming one (distance = beatInterval - beatTimer).
+						const accuracy = math.min(
+							this.beatTimer,
+							this.beatInterval - this.beatTimer,
+						);
 
-					const score = this.playerScores.get(player.UserId) ?? 0;
-					let points = 0;
-					if (accuracy <= BON_ODORI_PERFECT_WINDOW) points = 3;
-					else if (accuracy <= BON_ODORI_GOOD_WINDOW) points = 1;
-					this.playerScores.set(
-						player.UserId,
-						math.min(score + points, BON_ODORI_MAX_POINTS),
-					);
-				},
+						const score = this.playerScores.get(player.UserId) ?? 0;
+						let points = 0;
+						if (accuracy <= BON_ODORI_PERFECT_WINDOW) points = 3;
+						else if (accuracy <= BON_ODORI_GOOD_WINDOW) points = 1;
+						this.playerScores.set(
+							player.UserId,
+							math.min(score + points, BON_ODORI_MAX_POINTS),
+						);
+					},
+				),
 			),
 		);
 	}

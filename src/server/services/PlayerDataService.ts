@@ -54,6 +54,7 @@ export class PlayerDataService implements OnStart {
 	private profiles = new Map<Player, Profile<PlayerData>>();
 	private expectedReleases = new Set<Player>();
 	private profileLoadedCallbacks: Array<(player: Player) => void> = [];
+	private preShutdownCallbacks: Array<() => void> = [];
 	private readonly serverEvents = GlobalEvents.createServer({});
 
 	constructor(private readonly analyticsService: AnalyticsService) {}
@@ -69,6 +70,14 @@ export class PlayerDataService implements OnStart {
 		}
 
 		game.BindToClose(() => {
+			// Run pre-shutdown callbacks first (e.g. MatchService.forceCleanup)
+			// so final data writes complete before profiles are released.
+			for (const cb of this.preShutdownCallbacks) {
+				const [ok, err] = pcall(() => cb());
+				if (!ok) {
+					warn(`[PlayerDataService] preShutdown callback failed: ${err}`);
+				}
+			}
 			for (const [player, profile] of this.profiles) {
 				this.expectedReleases.add(player);
 				profile.Release();
@@ -79,6 +88,12 @@ export class PlayerDataService implements OnStart {
 	// Called by MissionService in onStart() to guarantee profile-ready ordering
 	registerOnProfileLoaded(callback: (player: Player) => void) {
 		this.profileLoadedCallbacks.push(callback);
+	}
+
+	/** Register a callback that runs before profiles are released on shutdown.
+	 *  Used by MatchService to ensure forceCleanup() writes complete first. */
+	registerPreShutdown(callback: () => void) {
+		this.preShutdownCallbacks.push(callback);
 	}
 
 	private onPlayerAdded(player: Player) {

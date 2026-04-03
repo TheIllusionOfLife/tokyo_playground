@@ -399,6 +399,14 @@ export const STAMP_REWARD_CATALOG: Omit<ShopItemData, "owned" | "equipped">[] =
 		},
 	];
 
+/** Look up an item across all catalogs by ID. */
+export function findCatalogItem(itemId: ItemId) {
+	return (
+		SHOP_CATALOG.find((item) => item.id === itemId) ??
+		STAMP_REWARD_CATALOG.find((item) => item.id === itemId)
+	);
+}
+
 // Shop
 export const SHOP_CATALOG_COOLDOWN = 2; // seconds between catalog requests
 

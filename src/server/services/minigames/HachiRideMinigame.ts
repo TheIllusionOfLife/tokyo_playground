@@ -89,6 +89,7 @@ import {
 	unequipHachiCostume,
 	updateHachiWalkSpeed,
 } from "../../utils/hachiCostume";
+import { safeHandler } from "../../utils/safeConnect";
 import { getVehicleTemplate } from "../../utils/vehicleTemplate";
 import { MissionService } from "../MissionService";
 import { PlayerDataService } from "../PlayerDataService";
@@ -346,42 +347,50 @@ export class HachiRideMinigame implements IMinigame {
 
 		// Hachi jump and eject requests from client
 		matchJanitor.Add(
-			this.serverEvents.hachiJump.connect((player) => {
-				if (!this.roundStarted) return;
-				this.handleJumpRequest(player);
-			}),
+			this.serverEvents.hachiJump.connect(
+				safeHandler("HachiRide.hachiJump", (player) => {
+					if (!this.roundStarted) return;
+					this.handleJumpRequest(player);
+				}),
+			),
 		);
 		matchJanitor.Add(
-			this.serverEvents.hachiEject.connect((player) => {
-				this.handleEjectRequest(player);
-			}),
+			this.serverEvents.hachiEject.connect(
+				safeHandler("HachiRide.hachiEject", (player) => {
+					this.handleEjectRequest(player);
+				}),
+			),
 		);
 		matchJanitor.Add(
-			this.serverEvents.hachiDoubleJump.connect((player) => {
-				if (!this.roundStarted) return;
-				this.handleDoubleJumpEvent(player);
-			}),
+			this.serverEvents.hachiDoubleJump.connect(
+				safeHandler("HachiRide.hachiDoubleJump", (player) => {
+					if (!this.roundStarted) return;
+					this.handleDoubleJumpEvent(player);
+				}),
+			),
 		);
 
 		// Track slide state for anti-cheat exemption (rate-limited to prevent bypass)
 		matchJanitor.Add(
-			this.serverEvents.requestHachiSlide.connect((player) => {
-				if (!this.roundStarted) return;
-				if (!this.playerStates.has(player.UserId)) return;
-				if (!isPlayerMounted(player)) return;
+			this.serverEvents.requestHachiSlide.connect(
+				safeHandler("HachiRide.requestHachiSlide", (player) => {
+					if (!this.roundStarted) return;
+					if (!this.playerStates.has(player.UserId)) return;
+					if (!isPlayerMounted(player)) return;
 
-				const now = os.clock();
-				if (
-					now - (this.slideCooldowns.get(player.UserId) ?? 0) <
-					SCRAMBLE_SLIDE_COOLDOWN
-				)
-					return;
-				this.slideCooldowns.set(player.UserId, now);
-				this.hachiSlideActive.add(player.UserId);
-				task.delay(HACHI_SLIDE_DURATION, () => {
-					this.hachiSlideActive.delete(player.UserId);
-				});
-			}),
+					const now = os.clock();
+					if (
+						now - (this.slideCooldowns.get(player.UserId) ?? 0) <
+						SCRAMBLE_SLIDE_COOLDOWN
+					)
+						return;
+					this.slideCooldowns.set(player.UserId, now);
+					this.hachiSlideActive.add(player.UserId);
+					task.delay(HACHI_SLIDE_DURATION, () => {
+						this.hachiSlideActive.delete(player.UserId);
+					});
+				}),
+			),
 		);
 	}
 

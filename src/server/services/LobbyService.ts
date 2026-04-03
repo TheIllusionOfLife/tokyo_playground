@@ -47,6 +47,7 @@ import {
 	unequipHachiCostume,
 	updateHachiWalkSpeed,
 } from "../utils/hachiCostume";
+import { safeHandler } from "../utils/safeConnect";
 import { getVehicleTemplate } from "../utils/vehicleTemplate";
 
 import { PlayerDataService } from "./PlayerDataService";
@@ -189,16 +190,18 @@ export class LobbyService implements OnStart {
 			MinigameId.ShibuyaScramble,
 			MinigameId.HachiRide,
 		]);
-		this.serverEvents.requestMinigameStart.connect((player, minigameId) => {
-			if (this.matchActive) return;
-			if (!this.onStartRequested) return;
-			if (!validIds.has(minigameId as string)) return;
-			const now = os.clock();
-			const last = this.startRequestCooldowns.get(player.UserId) ?? 0;
-			if (now - last < 3) return;
-			this.startRequestCooldowns.set(player.UserId, now);
-			this.onStartRequested(minigameId);
-		});
+		this.serverEvents.requestMinigameStart.connect(
+			safeHandler("LobbyService.requestMinigameStart", (player, minigameId) => {
+				if (this.matchActive) return;
+				if (!this.onStartRequested) return;
+				if (!validIds.has(minigameId as string)) return;
+				const now = os.clock();
+				const last = this.startRequestCooldowns.get(player.UserId) ?? 0;
+				if (now - last < 3) return;
+				this.startRequestCooldowns.set(player.UserId, now);
+				this.onStartRequested(minigameId);
+			}),
+		);
 	}
 
 	/** Scale lobby Hachi models as visual props (no VehicleSeat setup needed). */
@@ -211,41 +214,44 @@ export class LobbyService implements OnStart {
 
 	/** HUD toggle: client requests costume equip/unequip. */
 	private setupHachiToggle() {
-		this.serverEvents.hachiToggleCostume.connect((player, equip) => {
-			// During matches, only Oni can toggle mount/dismount
-			if (this.matchActive && !this.matchOniUserIds.has(player.UserId)) return;
+		this.serverEvents.hachiToggleCostume.connect(
+			safeHandler("LobbyService.hachiToggleCostume", (player, equip) => {
+				// During matches, only Oni can toggle mount/dismount
+				if (this.matchActive && !this.matchOniUserIds.has(player.UserId))
+					return;
 
-			if (equip) {
-				if (isPlayerMounted(player)) return; // already mounted
-				const vehicleId = this.playerDataService.getEquippedVehicle(player);
-				const template = getVehicleTemplate(vehicleId);
-				if (!template) return;
-				const clone = template.Clone();
-				// During matches, Oni remounts via minigame service.
-				// In lobby, all vehicles use the baseline level (double jump).
-				const evoLevel = this.matchActive ? 0 : HACHI_LOBBY_MIN_LEVEL;
-				const vDef = VEHICLE_CATALOG.find((v) => v.id === vehicleId);
-				if (
-					!equipHachiCostume(
-						player,
-						clone,
-						evoLevel,
-						!this.matchActive,
-						vDef?.weldYawOffset ?? 0,
-						vDef?.scaleOverride,
-						vDef?.seatHeightOffset ?? 0,
-						vDef?.standingMount ?? false,
-						vDef?.hipHeightOffset ?? 0,
-					)
-				) {
-					clone.Destroy();
+				if (equip) {
+					if (isPlayerMounted(player)) return; // already mounted
+					const vehicleId = this.playerDataService.getEquippedVehicle(player);
+					const template = getVehicleTemplate(vehicleId);
+					if (!template) return;
+					const clone = template.Clone();
+					// During matches, Oni remounts via minigame service.
+					// In lobby, all vehicles use the baseline level (double jump).
+					const evoLevel = this.matchActive ? 0 : HACHI_LOBBY_MIN_LEVEL;
+					const vDef = VEHICLE_CATALOG.find((v) => v.id === vehicleId);
+					if (
+						!equipHachiCostume(
+							player,
+							clone,
+							evoLevel,
+							!this.matchActive,
+							vDef?.weldYawOffset ?? 0,
+							vDef?.scaleOverride,
+							vDef?.seatHeightOffset ?? 0,
+							vDef?.standingMount ?? false,
+							vDef?.hipHeightOffset ?? 0,
+						)
+					) {
+						clone.Destroy();
+					} else {
+						if (vDef) this.mountedVehicleDefs.set(clone, vDef);
+					}
 				} else {
-					if (vDef) this.mountedVehicleDefs.set(clone, vDef);
+					unequipHachiCostume(player);
 				}
-			} else {
-				unequipHachiCostume(player);
-			}
-		});
+			}),
+		);
 	}
 
 	private setupPortals() {
@@ -285,83 +291,85 @@ export class LobbyService implements OnStart {
 	}
 
 	private setupHachiSlideHandler() {
-		this.serverEvents.requestHachiSlide.connect((player) => {
-			const now = os.clock();
-			if (
-				now - (this.slideCooldowns.get(player.UserId) ?? 0) <
-				SCRAMBLE_SLIDE_COOLDOWN
-			)
-				return;
+		this.serverEvents.requestHachiSlide.connect(
+			safeHandler("LobbyService.requestHachiSlide", (player) => {
+				const now = os.clock();
+				if (
+					now - (this.slideCooldowns.get(player.UserId) ?? 0) <
+					SCRAMBLE_SLIDE_COOLDOWN
+				)
+					return;
 
-			// Verify player is mounted on Hachi
-			if (!isPlayerMounted(player)) return;
-			const character = player.Character;
-			if (!character) return;
-			const hrp = character.FindFirstChild("HumanoidRootPart") as
-				| BasePart
-				| undefined;
-			if (!hrp) return;
+				// Verify player is mounted on Hachi
+				if (!isPlayerMounted(player)) return;
+				const character = player.Character;
+				if (!character) return;
+				const hrp = character.FindFirstChild("HumanoidRootPart") as
+					| BasePart
+					| undefined;
+				if (!hrp) return;
 
-			// Verify within range of a slide ramp (OBB closest-point)
-			let nearestRamp: BasePart | undefined;
-			let nearestDist = HACHI_SLIDE_RAMP_PROXIMITY;
-			for (const ramp of this.slideRamps) {
-				const localPos = ramp.CFrame.PointToObjectSpace(hrp.Position);
-				const half = ramp.Size.mul(0.5);
-				const clamped = new Vector3(
-					math.clamp(localPos.X, -half.X, half.X),
-					math.clamp(localPos.Y, -half.Y, half.Y),
-					math.clamp(localPos.Z, -half.Z, half.Z),
-				);
-				const closestWorld = ramp.CFrame.PointToWorldSpace(clamped);
-				const dist = hrp.Position.sub(closestWorld).Magnitude;
-				if (dist < nearestDist) {
-					nearestDist = dist;
-					nearestRamp = ramp;
+				// Verify within range of a slide ramp (OBB closest-point)
+				let nearestRamp: BasePart | undefined;
+				let nearestDist = HACHI_SLIDE_RAMP_PROXIMITY;
+				for (const ramp of this.slideRamps) {
+					const localPos = ramp.CFrame.PointToObjectSpace(hrp.Position);
+					const half = ramp.Size.mul(0.5);
+					const clamped = new Vector3(
+						math.clamp(localPos.X, -half.X, half.X),
+						math.clamp(localPos.Y, -half.Y, half.Y),
+						math.clamp(localPos.Z, -half.Z, half.Z),
+					);
+					const closestWorld = ramp.CFrame.PointToWorldSpace(clamped);
+					const dist = hrp.Position.sub(closestWorld).Magnitude;
+					if (dist < nearestDist) {
+						nearestDist = dist;
+						nearestRamp = ramp;
+					}
 				}
-			}
-			if (!nearestRamp) return;
+				if (!nearestRamp) return;
 
-			this.slideCooldowns.set(player.UserId, now);
-			const usePlayerDir = nearestRamp.GetAttribute("UsePlayerDirection");
-			let serverDir: Vector3;
-			if (typeIs(usePlayerDir, "boolean") && usePlayerDir) {
-				const vel = hrp.AssemblyLinearVelocity;
-				const horizontal = new Vector3(vel.X, 0, vel.Z);
-				serverDir =
-					horizontal.Magnitude > 1
-						? horizontal.Unit
-						: nearestRamp.CFrame.LookVector.Unit;
-			} else {
-				serverDir = nearestRamp.CFrame.LookVector.add(
-					new Vector3(0, SLIDE_DIR_Y_OFFSET, 0),
-				).Unit;
-			}
-			const rawSpeed = nearestRamp.GetAttribute("SlideSpeed");
-			const speed =
-				typeIs(rawSpeed, "number") && rawSpeed > 0
-					? rawSpeed
-					: SCRAMBLE_SLIDE_SPEED;
-
-			// Disable walk during slide impulse, apply velocity with PlatformStand guard
-			const humanoid = character.FindFirstChildOfClass("Humanoid");
-			if (!humanoid) return;
-			if (this.hachiSlideActive.has(player.UserId)) return;
-			this.hachiSlideActive.add(player.UserId);
-			humanoid.WalkSpeed = 0;
-			humanoid.PlatformStand = true;
-			hrp.AssemblyLinearVelocity = serverDir.mul(speed);
-			task.delay(HACHI_SLIDE_DURATION, () => {
-				this.hachiSlideActive.delete(player.UserId);
-				if (!humanoid.Parent) return;
-				humanoid.PlatformStand = false;
-				if (isPlayerMounted(player)) {
-					updateHachiWalkSpeed(player, HACHI_LOBBY_MIN_LEVEL);
+				this.slideCooldowns.set(player.UserId, now);
+				const usePlayerDir = nearestRamp.GetAttribute("UsePlayerDirection");
+				let serverDir: Vector3;
+				if (typeIs(usePlayerDir, "boolean") && usePlayerDir) {
+					const vel = hrp.AssemblyLinearVelocity;
+					const horizontal = new Vector3(vel.X, 0, vel.Z);
+					serverDir =
+						horizontal.Magnitude > 1
+							? horizontal.Unit
+							: nearestRamp.CFrame.LookVector.Unit;
 				} else {
-					humanoid.WalkSpeed = DEFAULT_WALK_SPEED;
+					serverDir = nearestRamp.CFrame.LookVector.add(
+						new Vector3(0, SLIDE_DIR_Y_OFFSET, 0),
+					).Unit;
 				}
-			});
-		});
+				const rawSpeed = nearestRamp.GetAttribute("SlideSpeed");
+				const speed =
+					typeIs(rawSpeed, "number") && rawSpeed > 0
+						? rawSpeed
+						: SCRAMBLE_SLIDE_SPEED;
+
+				// Disable walk during slide impulse, apply velocity with PlatformStand guard
+				const humanoid = character.FindFirstChildOfClass("Humanoid");
+				if (!humanoid) return;
+				if (this.hachiSlideActive.has(player.UserId)) return;
+				this.hachiSlideActive.add(player.UserId);
+				humanoid.WalkSpeed = 0;
+				humanoid.PlatformStand = true;
+				hrp.AssemblyLinearVelocity = serverDir.mul(speed);
+				task.delay(HACHI_SLIDE_DURATION, () => {
+					this.hachiSlideActive.delete(player.UserId);
+					if (!humanoid.Parent) return;
+					humanoid.PlatformStand = false;
+					if (isPlayerMounted(player)) {
+						updateHachiWalkSpeed(player, HACHI_LOBBY_MIN_LEVEL);
+					} else {
+						humanoid.WalkSpeed = DEFAULT_WALK_SPEED;
+					}
+				});
+			}),
+		);
 	}
 
 	/** Animate vehicle costume models on mounted players. */
@@ -403,152 +411,160 @@ export class LobbyService implements OnStart {
 	}
 
 	private setupLobbyHachiJump() {
-		this.serverEvents.hachiJump.connect((player) => {
-			if (this.matchActive) return;
-			if (!isPlayerMounted(player)) return;
+		this.serverEvents.hachiJump.connect(
+			safeHandler("LobbyService.hachiJump", (player) => {
+				if (this.matchActive) return;
+				if (!isPlayerMounted(player)) return;
 
-			const now = os.clock();
-			if (
-				now - (this.hachiJumpCooldowns.get(player.UserId) ?? 0) <
-				HACHI_JUMP_COOLDOWN
-			)
-				return;
+				const now = os.clock();
+				if (
+					now - (this.hachiJumpCooldowns.get(player.UserId) ?? 0) <
+					HACHI_JUMP_COOLDOWN
+				)
+					return;
 
-			this.hachiJumpCooldowns.set(player.UserId, now);
-			// Jump impulse is applied client-side (native Humanoid jump).
-			// Server tracks air jump count, reset on land.
-			this.lobbyAirJumpsUsed.set(player.UserId, 0);
+				this.hachiJumpCooldowns.set(player.UserId, now);
+				// Jump impulse is applied client-side (native Humanoid jump).
+				// Server tracks air jump count, reset on land.
+				this.lobbyAirJumpsUsed.set(player.UserId, 0);
 
-			// Reset air jumps when landed (FloorMaterial check, not Y-velocity)
-			task.delay(0.3, () => {
-				const humanoid = player.Character?.FindFirstChildOfClass("Humanoid");
-				if (!humanoid) return;
-				let checks = 0;
-				const landConn = RunService.Heartbeat.Connect(() => {
-					checks++;
-					if (checks > 300) {
-						landConn.Disconnect();
-						this.lobbyAirJumpsUsed.delete(player.UserId);
-						return;
-					}
-					if (humanoid.FloorMaterial !== Enum.Material.Air) {
-						landConn.Disconnect();
-						this.lobbyAirJumpsUsed.delete(player.UserId);
-					}
+				// Reset air jumps when landed (FloorMaterial check, not Y-velocity)
+				task.delay(0.3, () => {
+					const humanoid = player.Character?.FindFirstChildOfClass("Humanoid");
+					if (!humanoid) return;
+					let checks = 0;
+					const landConn = RunService.Heartbeat.Connect(() => {
+						checks++;
+						if (checks > 300) {
+							landConn.Disconnect();
+							this.lobbyAirJumpsUsed.delete(player.UserId);
+							return;
+						}
+						if (humanoid.FloorMaterial !== Enum.Material.Air) {
+							landConn.Disconnect();
+							this.lobbyAirJumpsUsed.delete(player.UserId);
+						}
+					});
 				});
-			});
-		});
+			}),
+		);
 	}
 
 	private setupLobbyDoubleJump() {
-		this.serverEvents.hachiLobbyDoubleJump.connect((player) => {
-			if (this.matchActive) return;
+		this.serverEvents.hachiLobbyDoubleJump.connect(
+			safeHandler("LobbyService.hachiLobbyDoubleJump", (player) => {
+				if (this.matchActive) return;
 
-			if (HACHI_LOBBY_MIN_LEVEL < 1) return;
+				if (HACHI_LOBBY_MIN_LEVEL < 1) return;
 
-			// Lobby caps at 1 air jump (double); multi-jump is minigame-only
-			const used = this.lobbyAirJumpsUsed.get(player.UserId) ?? 0;
-			if (used >= 1) return;
+				// Lobby caps at 1 air jump (double); multi-jump is minigame-only
+				const used = this.lobbyAirJumpsUsed.get(player.UserId) ?? 0;
+				if (used >= 1) return;
 
-			if (!isPlayerMounted(player)) return;
-			const hrp = player.Character?.FindFirstChild("HumanoidRootPart") as
-				| BasePart
-				| undefined;
-			if (!hrp) return;
+				if (!isPlayerMounted(player)) return;
+				const hrp = player.Character?.FindFirstChild("HumanoidRootPart") as
+					| BasePart
+					| undefined;
+				if (!hrp) return;
 
-			// Must be airborne
-			if (math.abs(hrp.AssemblyLinearVelocity.Y) < 5) return;
+				// Must be airborne
+				if (math.abs(hrp.AssemblyLinearVelocity.Y) < 5) return;
 
-			this.lobbyAirJumpsUsed.set(player.UserId, used + 1);
-			// Impulse applied client-side for instant feel.
-			this.serverEvents.hachiDoubleJumpGranted.fire(player);
-		});
+				this.lobbyAirJumpsUsed.set(player.UserId, used + 1);
+				// Impulse applied client-side for instant feel.
+				this.serverEvents.hachiDoubleJumpGranted.fire(player);
+			}),
+		);
 	}
 
 	private setupLobbyWallRun() {
-		this.serverEvents.hachiLobbyWallRun.connect((player, wallNormal) => {
-			if (this.matchActive) return;
+		this.serverEvents.hachiLobbyWallRun.connect(
+			safeHandler("LobbyService.hachiLobbyWallRun", (player, wallNormal) => {
+				if (this.matchActive) return;
 
-			// Wall-run requires evolution level >= 2, only available during Hachi Ride
-			if (HACHI_LOBBY_MIN_LEVEL < 2) return;
+				// Wall-run requires evolution level >= 2, only available during Hachi Ride
+				if (HACHI_LOBBY_MIN_LEVEL < 2) return;
 
-			if (!isPlayerMounted(player)) return;
-			const character = player.Character;
-			if (!character) return;
-			const hrp = character.FindFirstChild("HumanoidRootPart") as
-				| BasePart
-				| undefined;
-			const humanoid = character.FindFirstChildOfClass("Humanoid");
-			if (!hrp || !humanoid) return;
+				if (!isPlayerMounted(player)) return;
+				const character = player.Character;
+				if (!character) return;
+				const hrp = character.FindFirstChild("HumanoidRootPart") as
+					| BasePart
+					| undefined;
+				const humanoid = character.FindFirstChildOfClass("Humanoid");
+				if (!hrp || !humanoid) return;
 
-			const mag = wallNormal.Magnitude;
-			if (mag < 0.5 || mag > 1.5) return;
-			const hintDir = wallNormal.Unit;
+				const mag = wallNormal.Magnitude;
+				if (mag < 0.5 || mag > 1.5) return;
+				const hintDir = wallNormal.Unit;
 
-			// Server raycast
-			const hachiModel = getPlayerHachi(player);
-			const rayParams = new RaycastParams();
-			rayParams.FilterType = Enum.RaycastFilterType.Exclude;
-			const excludeList: Instance[] = [character];
-			if (hachiModel) excludeList.push(hachiModel);
-			rayParams.FilterDescendantsInstances = excludeList;
-			const rayDir = hintDir.mul(-HACHI_WALL_RUN_RAYCAST);
-			const rayResult = Workspace.Raycast(hrp.Position, rayDir, rayParams);
-			if (!rayResult) return;
+				// Server raycast
+				const hachiModel = getPlayerHachi(player);
+				const rayParams = new RaycastParams();
+				rayParams.FilterType = Enum.RaycastFilterType.Exclude;
+				const excludeList: Instance[] = [character];
+				if (hachiModel) excludeList.push(hachiModel);
+				rayParams.FilterDescendantsInstances = excludeList;
+				const rayDir = hintDir.mul(-HACHI_WALL_RUN_RAYCAST);
+				const rayResult = Workspace.Raycast(hrp.Position, rayDir, rayParams);
+				if (!rayResult) return;
 
-			const serverNormal = rayResult.Normal;
-			const crossResult = serverNormal.Cross(new Vector3(0, 1, 0));
-			if (crossResult.Magnitude < 0.1) return;
-			let lateralDir = crossResult.Unit;
+				const serverNormal = rayResult.Normal;
+				const crossResult = serverNormal.Cross(new Vector3(0, 1, 0));
+				if (crossResult.Magnitude < 0.1) return;
+				let lateralDir = crossResult.Unit;
 
-			// Flip direction if it opposes the player's horizontal velocity
-			const vel = hrp.AssemblyLinearVelocity;
-			const horizontal = new Vector3(vel.X, 0, vel.Z);
-			if (horizontal.Magnitude > 1 && lateralDir.Dot(horizontal.Unit) < 0) {
-				lateralDir = lateralDir.mul(-1);
-			}
-
-			// Guard against concurrent wall-runs
-			if (this.hachiSlideActive.has(player.UserId)) return;
-			this.hachiSlideActive.add(player.UserId);
-
-			// Lock movement during wall run with PlatformStand guard
-			humanoid.WalkSpeed = 0;
-			humanoid.AutoRotate = false;
-			humanoid.PlatformStand = true;
-			hrp.AssemblyLinearVelocity = lateralDir.mul(HACHI_WALL_RUN_SPEED);
-			this.serverEvents.hachiWallRunStart.fire(player, serverNormal);
-
-			task.delay(HACHI_WALL_RUN_MAX_DUR, () => {
-				this.hachiSlideActive.delete(player.UserId);
-				if (!humanoid.Parent) return;
-				humanoid.PlatformStand = false;
-				humanoid.AutoRotate = true;
-				if (isPlayerMounted(player)) {
-					updateHachiWalkSpeed(player, HACHI_LOBBY_MIN_LEVEL);
-				} else {
-					humanoid.WalkSpeed = DEFAULT_WALK_SPEED;
+				// Flip direction if it opposes the player's horizontal velocity
+				const vel = hrp.AssemblyLinearVelocity;
+				const horizontal = new Vector3(vel.X, 0, vel.Z);
+				if (horizontal.Magnitude > 1 && lateralDir.Dot(horizontal.Unit) < 0) {
+					lateralDir = lateralDir.mul(-1);
 				}
-				this.serverEvents.hachiWallRunStop.fire(player);
-			});
-		});
+
+				// Guard against concurrent wall-runs
+				if (this.hachiSlideActive.has(player.UserId)) return;
+				this.hachiSlideActive.add(player.UserId);
+
+				// Lock movement during wall run with PlatformStand guard
+				humanoid.WalkSpeed = 0;
+				humanoid.AutoRotate = false;
+				humanoid.PlatformStand = true;
+				hrp.AssemblyLinearVelocity = lateralDir.mul(HACHI_WALL_RUN_SPEED);
+				this.serverEvents.hachiWallRunStart.fire(player, serverNormal);
+
+				task.delay(HACHI_WALL_RUN_MAX_DUR, () => {
+					this.hachiSlideActive.delete(player.UserId);
+					if (!humanoid.Parent) return;
+					humanoid.PlatformStand = false;
+					humanoid.AutoRotate = true;
+					if (isPlayerMounted(player)) {
+						updateHachiWalkSpeed(player, HACHI_LOBBY_MIN_LEVEL);
+					} else {
+						humanoid.WalkSpeed = DEFAULT_WALK_SPEED;
+					}
+					this.serverEvents.hachiWallRunStop.fire(player);
+				});
+			}),
+		);
 	}
 
 	private setupLobbyHachiEject() {
-		this.serverEvents.hachiEject.connect((player) => {
-			if (this.matchActive) return;
-			if (!isPlayerMounted(player)) return;
+		this.serverEvents.hachiEject.connect(
+			safeHandler("LobbyService.hachiEject", (player) => {
+				if (this.matchActive) return;
+				if (!isPlayerMounted(player)) return;
 
-			const now = os.clock();
-			if (
-				now - (this.hachiEjectCooldowns.get(player.UserId) ?? 0) <
-				HACHI_EJECT_COOLDOWN
-			)
-				return;
-			this.hachiEjectCooldowns.set(player.UserId, now);
+				const now = os.clock();
+				if (
+					now - (this.hachiEjectCooldowns.get(player.UserId) ?? 0) <
+					HACHI_EJECT_COOLDOWN
+				)
+					return;
+				this.hachiEjectCooldowns.set(player.UserId, now);
 
-			unequipHachiCostume(player);
-		});
+				unequipHachiCostume(player);
+			}),
+		);
 	}
 
 	teleportToLobby(player: Player) {

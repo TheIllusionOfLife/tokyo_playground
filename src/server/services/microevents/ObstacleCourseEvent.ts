@@ -7,6 +7,7 @@ import {
 } from "shared/living-shibuya-constants";
 import { GlobalEvents } from "shared/network";
 import { MicroEventId } from "shared/types";
+import { safeHandler } from "../../utils/safeConnect";
 import { PlayerDataService } from "../PlayerDataService";
 import { IMicroEvent } from "./MicroEventBase";
 
@@ -38,75 +39,81 @@ export class ObstacleCourseEvent implements IMicroEvent {
 		// Fix #1: track connections for cleanup
 		this.connections.push(
 			this.serverEvents.obstacleCourseCheckpoint.connect(
-				(player, checkpointIndex) => {
-					if (this.finished) return;
+				safeHandler(
+					"ObstacleCourseEvent.checkpoint",
+					(player, checkpointIndex) => {
+						if (this.finished) return;
 
-					const userId = player.UserId;
-					const now = os.clock();
+						const userId = player.UserId;
+						const now = os.clock();
 
-					if (checkpointIndex === 0) {
-						this.playerStates.set(userId, {
-							startTime: now,
-							lastCheckpoint: 0,
-							lastCheckpointTime: now,
-						});
-						return;
-					}
+						if (checkpointIndex === 0) {
+							this.playerStates.set(userId, {
+								startTime: now,
+								lastCheckpoint: 0,
+								lastCheckpointTime: now,
+							});
+							return;
+						}
 
-					const state = this.playerStates.get(userId);
-					if (!state) return;
+						const state = this.playerStates.get(userId);
+						if (!state) return;
 
-					// Validate sequence (no skipping)
-					if (checkpointIndex !== state.lastCheckpoint + 1) return;
+						// Validate sequence (no skipping)
+						if (checkpointIndex !== state.lastCheckpoint + 1) return;
 
-					// Fix #4: minimum time between checkpoints rejects instant-fire
-					if (now - state.lastCheckpointTime < MIN_CHECKPOINT_INTERVAL) return;
+						// Fix #4: minimum time between checkpoints rejects instant-fire
+						if (now - state.lastCheckpointTime < MIN_CHECKPOINT_INTERVAL)
+							return;
 
-					state.lastCheckpoint = checkpointIndex;
-					state.lastCheckpointTime = now;
-				},
+						state.lastCheckpoint = checkpointIndex;
+						state.lastCheckpointTime = now;
+					},
+				),
 			),
 		);
 
 		this.connections.push(
-			this.serverEvents.obstacleCourseFinish.connect((player) => {
-				if (this.finished) return;
+			this.serverEvents.obstacleCourseFinish.connect(
+				safeHandler("ObstacleCourseEvent.finish", (player) => {
+					if (this.finished) return;
 
-				const userId = player.UserId;
-				const state = this.playerStates.get(userId);
-				if (!state) return;
+					const userId = player.UserId;
+					const state = this.playerStates.get(userId);
+					if (!state) return;
 
-				if (state.lastCheckpoint < OBSTACLE_COURSE_CHECKPOINTS - 1) return;
+					if (state.lastCheckpoint < OBSTACLE_COURSE_CHECKPOINTS - 1) return;
 
-				const elapsed = os.clock() - state.startTime;
+					const elapsed = os.clock() - state.startTime;
 
-				// Fix #4: reject impossibly fast completions
-				const minPossibleTime =
-					OBSTACLE_COURSE_CHECKPOINTS * MIN_CHECKPOINT_INTERVAL;
-				if (elapsed < minPossibleTime) return;
+					// Fix #4: reject impossibly fast completions
+					const minPossibleTime =
+						OBSTACLE_COURSE_CHECKPOINTS * MIN_CHECKPOINT_INTERVAL;
+					if (elapsed < minPossibleTime) return;
 
-				const data = this.playerDataService.getPlayerData(player);
-				if (!data) return;
+					const data = this.playerDataService.getPlayerData(player);
+					if (!data) return;
 
-				const isFirstCompletion = data.obstacleBestTime === 0;
-				if (data.obstacleBestTime === 0 || elapsed < data.obstacleBestTime) {
-					data.obstacleBestTime = elapsed;
-				}
+					const isFirstCompletion = data.obstacleBestTime === 0;
+					if (data.obstacleBestTime === 0 || elapsed < data.obstacleBestTime) {
+						data.obstacleBestTime = elapsed;
+					}
 
-				const pts = isFirstCompletion
-					? OBSTACLE_COURSE_COMPLETION_POINTS
-					: OBSTACLE_COURSE_REPEAT_POINTS;
-				this.playerDataService.addPlayPoints(player, pts);
+					const pts = isFirstCompletion
+						? OBSTACLE_COURSE_COMPLETION_POINTS
+						: OBSTACLE_COURSE_REPEAT_POINTS;
+					this.playerDataService.addPlayPoints(player, pts);
 
-				if (isFirstCompletion && !data.badges.includes("ParkourPup")) {
-					data.badges.push("ParkourPup");
-				}
+					if (isFirstCompletion && !data.badges.includes("ParkourPup")) {
+						data.badges.push("ParkourPup");
+					}
 
-				this.playerStates.delete(userId);
-				print(
-					`[ObstacleCourseEvent] ${player.Name} finished in ${string.format("%.1f", elapsed)}s`,
-				);
-			}),
+					this.playerStates.delete(userId);
+					print(
+						`[ObstacleCourseEvent] ${player.Name} finished in ${string.format("%.1f", elapsed)}s`,
+					);
+				}),
+			),
 		);
 	}
 

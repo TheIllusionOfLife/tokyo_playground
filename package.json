@@ -9,7 +9,8 @@
     "serve": "rojo serve",
     "lint": "biome check src/",
     "lint:fix": "biome check --write src/",
-    "format": "biome format --write src/"
+    "format": "biome format --write src/",
+    "test": "bun test"
   },
   "repository": {
     "type": "git",

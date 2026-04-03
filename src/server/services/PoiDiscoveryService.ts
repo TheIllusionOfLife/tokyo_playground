@@ -2,6 +2,7 @@ import { OnStart, Service } from "@flamework/core";
 import { CollectionService, Players } from "@rbxts/services";
 import { POI_DISCOVERY_POINTS, ZONE_TAG } from "shared/constants";
 import { GlobalEvents } from "shared/network";
+import { safeHandler } from "../utils/safeConnect";
 import { PlayerDataService } from "./PlayerDataService";
 
 /**
@@ -13,6 +14,7 @@ import { PlayerDataService } from "./PlayerDataService";
 export class PoiDiscoveryService implements OnStart {
 	private readonly serverEvents = GlobalEvents.createServer({});
 	private validZoneNames = new Set<string>();
+	private readonly discoveryCooldowns = new Map<number, number>();
 
 	constructor(private readonly playerDataService: PlayerDataService) {}
 
@@ -37,23 +39,38 @@ export class PoiDiscoveryService implements OnStart {
 		);
 
 		// Handle discovery request from client
-		this.serverEvents.poiDiscovered.connect((player, zoneName) => {
-			this.handleDiscovery(player, zoneName);
-		});
+		this.serverEvents.poiDiscovered.connect(
+			safeHandler("PoiDiscoveryService.poiDiscovered", (player, zoneName) => {
+				this.handleDiscovery(player, zoneName);
+			}),
+		);
 
 		// Handle reward claim
-		this.serverEvents.claimPoiReward.connect((player, zoneName) => {
-			this.handleClaim(player, zoneName);
-		});
+		this.serverEvents.claimPoiReward.connect(
+			safeHandler("PoiDiscoveryService.claimPoiReward", (player, zoneName) => {
+				this.handleClaim(player, zoneName);
+			}),
+		);
 
 		// Sync PoI data after profile loads (not on PlayerAdded, which races profile loading)
 		this.playerDataService.registerOnProfileLoaded((player) => {
 			this.syncToClient(player);
 		});
+
+		// Clean up cooldown entries on leave to prevent memory leak
+		Players.PlayerRemoving.Connect((player) => {
+			this.discoveryCooldowns.delete(player.UserId);
+		});
 	}
 
 	private handleDiscovery(player: Player, zoneName: string) {
 		if (!this.validZoneNames.has(zoneName)) return;
+
+		// Rate limit: 1 discovery request per 2 seconds per player
+		const now = os.clock();
+		const last = this.discoveryCooldowns.get(player.UserId) ?? 0;
+		if (now - last < 2) return;
+		this.discoveryCooldowns.set(player.UserId, now);
 
 		// Guard: profile must be loaded
 		const data = this.playerDataService.getPlayerData(player);

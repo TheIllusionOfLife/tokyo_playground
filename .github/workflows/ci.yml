@@ -24,3 +24,6 @@ jobs:
 
       - name: Compile
         run: npx rbxtsc
+
+      - name: Test
+        run: bun test
