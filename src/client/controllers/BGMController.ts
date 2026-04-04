@@ -105,6 +105,20 @@ export class BGMController implements OnStart {
 
 		// Wait for loading screen in a separate thread so onStart returns
 		// immediately and other controllers (HudController) can proceed.
+		let audioStarted = false;
+
+		// Safety fallback: if loading screen errors after creating the
+		// BoolValue but before setting it true, start audio after 25s.
+		// task.delay runs in its own coroutine so it can wake even if the
+		// main wait thread is stuck on .Wait().
+		task.delay(25, () => {
+			if (!audioStarted) {
+				warn("[BGMController] Loading timeout — starting audio as fallback");
+				audioStarted = true;
+				this.startAudio();
+			}
+		});
+
 		task.spawn(() => {
 			// WaitForChild has a 20s timeout: if the loading screen script never
 			// created the BoolValue (e.g. Studio play without ReplicatedFirst),
@@ -112,20 +126,14 @@ export class BGMController implements OnStart {
 			const loadingDone = ReplicatedStorage.WaitForChild("LoadingDone", 20) as
 				| BoolValue
 				| undefined;
-			if (loadingDone) {
-				// Safety timeout: if loading screen errors after creating the
-				// BoolValue but before setting it true, don't suppress BGM forever.
-				let timedOut = false;
-				const timeout = task.delay(25, () => {
-					timedOut = true;
-				});
-				while (!loadingDone.Value && !timedOut) {
-					loadingDone.GetPropertyChangedSignal("Value").Wait();
-				}
-				task.cancel(timeout);
+			if (loadingDone && !loadingDone.Value) {
+				loadingDone.GetPropertyChangedSignal("Value").Wait();
 			}
 
-			this.startAudio();
+			if (!audioStarted) {
+				audioStarted = true;
+				this.startAudio();
+			}
 		});
 	}
 
