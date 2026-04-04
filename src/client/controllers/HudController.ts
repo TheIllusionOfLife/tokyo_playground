@@ -34,15 +34,19 @@ export class HudController implements OnStart {
 		print("[HudController] Client initialized");
 		this.wireNetworkEvents();
 
-		// Delay React UI mount until loading screen finishes so React's
-		// ScreenGui tree doesn't render on top of the ReplicatedFirst loading screen.
+		// Mount React BEFORE the loading wait. react-roblox's createRoot calls
+		// clearContainer on first render, which destroys ALL existing PlayerGui
+		// children. Mounting early ensures the engine's TouchGui (mobile thumbstick
+		// + jump button) hasn't been created yet, so it survives. The loading
+		// screen (DisplayOrder=100) stays on top of React ScreenGuis (0-5).
+		this.mountReactUi();
+
 		const loadingDone = ReplicatedStorage.FindFirstChild("LoadingDone") as
 			| BoolValue
 			| undefined;
 		if (loadingDone && !loadingDone.Value) {
 			loadingDone.GetPropertyChangedSignal("Value").Wait();
 		}
-		this.mountReactUi();
 		clientEvents.playerReady.fire();
 		clientEvents.reportPlatform.fire(this.detectPlatform());
 		clientEvents.requestShopCatalog.fire();
