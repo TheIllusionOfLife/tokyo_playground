@@ -324,8 +324,8 @@ export function MissionPanel() {
 					{/* Tab bar */}
 					<frame
 						key="TabBar"
-						Size={new UDim2(0.85, 0, 0, 28)}
-						Position={new UDim2(0.075, 0, 0, 10)}
+						Size={new UDim2(0.75, -20, 0, 28)}
+						Position={new UDim2(0, 12, 0, 10)}
 						BackgroundTransparency={1}
 						BorderSizePixel={0}
 						ZIndex={19}

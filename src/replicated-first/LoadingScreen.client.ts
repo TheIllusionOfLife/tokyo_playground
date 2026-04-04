@@ -237,7 +237,9 @@ const tipRotateConn = task.spawn(() => {
 });
 
 // ── Loading Flow ────────────────────────────────────────────────────
-print("[LoadingScreen] UI built, starting load flow");
+print(
+	`[LoadingScreen] UI built. ScreenGui parent: ${screenGui.Parent?.Name}, DisplayOrder: ${screenGui.DisplayOrder}, bg transparency: ${bg.BackgroundTransparency}`,
+);
 
 const startTime = os.clock();
 

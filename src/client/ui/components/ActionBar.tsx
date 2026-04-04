@@ -1,5 +1,6 @@
 import React from "@rbxts/react";
 import { useSelector } from "@rbxts/react-reflex";
+import { GuiService } from "@rbxts/services";
 import {
 	ALL_POI_ZONES,
 	ICON_MISSIONS,
@@ -151,32 +152,44 @@ export function ActionBar() {
 	);
 	const hasClaimable = hasClaimableMission || hasClaimablePoi;
 
+	// Match right-edge offset with HachiToggleButton (in safe-area ScreenGui at -10px).
+	// ScreenInsets.None ignores safe area, so add the inset manually.
+	const [inset] = GuiService.GetGuiInset();
+	const rightPad = 10 + inset.X;
+
 	return (
-		<frame
-			key="ActionBarContainer"
-			AutomaticSize={Enum.AutomaticSize.X}
-			Size={new UDim2(0, 0, 0, 58)}
-			Position={new UDim2(1, -10, 0, 10)}
-			AnchorPoint={new Vector2(1, 0)}
-			BackgroundTransparency={1}
-			BorderSizePixel={0}
-			ZIndex={10}
+		<screengui
+			key="ActionBarGui"
+			ResetOnSpawn={false}
+			ScreenInsets={Enum.ScreenInsets.None}
+			DisplayOrder={4}
+			ZIndexBehavior={Enum.ZIndexBehavior.Sibling}
 		>
-			<uilistlayout
-				FillDirection={Enum.FillDirection.Horizontal}
-				HorizontalAlignment={Enum.HorizontalAlignment.Right}
-				VerticalAlignment={Enum.VerticalAlignment.Center}
-				Padding={new UDim(0, 6)}
-				SortOrder={Enum.SortOrder.LayoutOrder}
-			/>
-			{ACTION_ITEMS.map((item) => (
-				<ActionBarButton
-					key={item.id}
-					item={item}
-					isActive={activeOverlay === item.id}
-					showNotifDot={item.id === "missions" && hasClaimable}
+			<frame
+				key="ActionBarContainer"
+				AutomaticSize={Enum.AutomaticSize.X}
+				Size={new UDim2(0, 0, 0, 58)}
+				Position={new UDim2(1, -rightPad, 0, 10)}
+				AnchorPoint={new Vector2(1, 0)}
+				BackgroundTransparency={1}
+				BorderSizePixel={0}
+			>
+				<uilistlayout
+					FillDirection={Enum.FillDirection.Horizontal}
+					HorizontalAlignment={Enum.HorizontalAlignment.Right}
+					VerticalAlignment={Enum.VerticalAlignment.Center}
+					Padding={new UDim(0, 6)}
+					SortOrder={Enum.SortOrder.LayoutOrder}
 				/>
-			))}
-		</frame>
+				{ACTION_ITEMS.map((item) => (
+					<ActionBarButton
+						key={item.id}
+						item={item}
+						isActive={activeOverlay === item.id}
+						showNotifDot={item.id === "missions" && hasClaimable}
+					/>
+				))}
+			</frame>
+		</screengui>
 	);
 }

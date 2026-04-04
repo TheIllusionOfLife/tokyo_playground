@@ -34,6 +34,7 @@ export function GameHud() {
 		<>
 			{/* Topbar zone elements (own ScreenGui with ScreenInsets.None) */}
 			<TopBarTimer />
+			<ActionBar />
 			<SpinWheel />
 			<LeaderboardPanel />
 			<screengui
@@ -41,7 +42,6 @@ export function GameHud() {
 				ResetOnSpawn={false}
 				ZIndexBehavior={Enum.ZIndexBehavior.Sibling}
 			>
-				<ActionBar />
 				<PlayPointsDisplay />
 				<TopBar />
 				<RoundIntroOverlay />

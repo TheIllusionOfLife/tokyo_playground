@@ -321,7 +321,7 @@ function VehicleCard({
 	return (
 		<frame
 			key={vehicle.id}
-			Size={new UDim2(0, 140, 0, 100)}
+			Size={new UDim2(0, 140, 0, 84)}
 			BackgroundColor3={Color3.fromRGB(35, 35, 50)}
 			BackgroundTransparency={0.2}
 			BorderSizePixel={0}
@@ -333,9 +333,24 @@ function VehicleCard({
 				Thickness={1}
 				Transparency={0.3}
 			/>
-			{/* Colored icon area with name overlaid */}
+			{/* Family tag (positioned half outside the card top) */}
+			<textlabel
+				Size={new UDim2(0, 48, 0, 16)}
+				Position={new UDim2(1, -6, 0, -8)}
+				AnchorPoint={new Vector2(1, 0)}
+				BackgroundColor3={info.accentColor}
+				TextColor3={Color3.fromRGB(255, 255, 255)}
+				TextScaled={true}
+				Font={Enum.Font.GothamBold}
+				Text={t(info.familyTag)}
+				ZIndex={2}
+			>
+				<uicorner CornerRadius={new UDim(0, 4)} />
+				<uitextsizeconstraint MaxTextSize={10} />
+			</textlabel>
+			{/* Colored icon area with name */}
 			<frame
-				Size={new UDim2(1, 0, 0, 58)}
+				Size={new UDim2(1, 0, 0, 44)}
 				BackgroundColor3={info.accentColor}
 				BackgroundTransparency={0.3}
 				BorderSizePixel={0}
@@ -344,8 +359,9 @@ function VehicleCard({
 				{VEHICLE_ICON_IDS[vehicle.id] !== undefined &&
 				VEHICLE_ICON_IDS[vehicle.id] !== "rbxassetid://0" ? (
 					<imagelabel
-						Size={new UDim2(0, 34, 0, 34)}
-						Position={new UDim2(0, 6, 0, 4)}
+						Size={new UDim2(0, 32, 0, 32)}
+						Position={new UDim2(0, 6, 0.5, 0)}
+						AnchorPoint={new Vector2(0, 0.5)}
 						BackgroundTransparency={1}
 						Image={VEHICLE_ICON_IDS[vehicle.id]}
 						ImageColor3={Color3.fromRGB(255, 255, 255)}
@@ -353,8 +369,9 @@ function VehicleCard({
 					/>
 				) : (
 					<textlabel
-						Size={new UDim2(0, 30, 0, 30)}
-						Position={new UDim2(0, 8, 0, 6)}
+						Size={new UDim2(0, 28, 0, 28)}
+						Position={new UDim2(0, 8, 0.5, 0)}
+						AnchorPoint={new Vector2(0, 0.5)}
 						BackgroundTransparency={1}
 						TextScaled={true}
 						Text={info.emoji}
@@ -362,24 +379,10 @@ function VehicleCard({
 						TextColor3={Color3.fromRGB(255, 255, 255)}
 					/>
 				)}
-				{/* Family tag */}
+				{/* Vehicle name (next to icon) */}
 				<textlabel
-					Size={new UDim2(0, 48, 0, 14)}
-					Position={new UDim2(1, -4, 0, 4)}
-					AnchorPoint={new Vector2(1, 0)}
-					BackgroundColor3={Color3.fromRGB(0, 0, 0)}
-					BackgroundTransparency={0.5}
-					TextColor3={Color3.fromRGB(200, 200, 220)}
-					TextScaled={true}
-					Font={Enum.Font.Gotham}
-					Text={t(info.familyTag)}
-				>
-					<uicorner CornerRadius={new UDim(0, 3)} />
-				</textlabel>
-				{/* Vehicle name (next to icon, vertically centered) */}
-				<textlabel
-					Size={new UDim2(1, -48, 0, 20)}
-					Position={new UDim2(0, 44, 0.5, 0)}
+					Size={new UDim2(1, -46, 0, 24)}
+					Position={new UDim2(0, 42, 0.5, 0)}
 					AnchorPoint={new Vector2(0, 0.5)}
 					BackgroundTransparency={1}
 					TextColor3={Color3.fromRGB(255, 255, 255)}
@@ -388,7 +391,7 @@ function VehicleCard({
 					Text={vehicle.name}
 					TextXAlignment={Enum.TextXAlignment.Left}
 				>
-					<uitextsizeconstraint MaxTextSize={13} />
+					<uitextsizeconstraint MaxTextSize={15} />
 				</textlabel>
 			</frame>
 			{/* Action button (shows price for unacquired, EQUIP/UNEQUIP for owned) */}
@@ -558,7 +561,7 @@ export function ShopPanel() {
 							<uigridlayout
 								CellSize={
 									tab === "vehicles"
-										? new UDim2(0, 140, 0, 100)
+										? new UDim2(0, 140, 0, 84)
 										: new UDim2(0, 128, 0, 96)
 								}
 								CellPadding={
