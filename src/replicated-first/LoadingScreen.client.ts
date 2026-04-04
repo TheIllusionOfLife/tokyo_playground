@@ -46,6 +46,7 @@ screenGui.Name = "LoadingScreen";
 screenGui.ResetOnSpawn = false;
 screenGui.DisplayOrder = 100;
 screenGui.IgnoreGuiInset = true;
+screenGui.ClipToDeviceSafeArea = false;
 screenGui.Parent = playerGui;
 
 // Remove default AFTER custom GUI is parented (prevents visible flash)
