@@ -1,6 +1,7 @@
 import { OnStart, Service } from "@flamework/core";
 import { Players } from "@rbxts/services";
 import {
+	HACHI_LOBBY_MIN_LEVEL,
 	SHOP_CATALOG,
 	SHOP_CATALOG_COOLDOWN,
 	VEHICLE_CATALOG,
@@ -8,7 +9,13 @@ import {
 import { GlobalEvents } from "shared/network";
 import { ItemId, ShopItemData, VehicleId, VehicleShopData } from "shared/types";
 import { CooldownTracker } from "../utils/cooldown";
+import {
+	equipHachiCostume,
+	isPlayerMounted,
+	unequipHachiCostume,
+} from "../utils/hachiCostume";
 import { safeHandler } from "../utils/safeConnect";
+import { getVehicleTemplate } from "../utils/vehicleTemplate";
 import { EconomyService } from "./EconomyService";
 import { InventoryService } from "./InventoryService";
 import { PlayerDataService } from "./PlayerDataService";
@@ -274,5 +281,26 @@ export class ShopService implements OnStart {
 		}
 		this.inventoryService.setEquippedVehicle(player, vehicleId);
 		this.serverEvents.vehicleEquipResult.fire(player, true, vehicleId);
+
+		// Live-swap costume if the player is currently riding
+		if (isPlayerMounted(player)) {
+			unequipHachiCostume(player);
+			const template = getVehicleTemplate(vehicleId);
+			if (template) {
+				const clone = template.Clone();
+				const vDef = VEHICLE_CATALOG.find((v) => v.id === vehicleId);
+				equipHachiCostume(
+					player,
+					clone,
+					HACHI_LOBBY_MIN_LEVEL,
+					true,
+					vDef?.weldYawOffset ?? 0,
+					vDef?.scaleOverride,
+					vDef?.seatHeightOffset ?? 0,
+					vDef?.standingMount ?? false,
+					vDef?.hipHeightOffset ?? 0,
+				);
+			}
+		}
 	}
 }
