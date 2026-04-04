@@ -12,6 +12,7 @@ import { GameStoreState } from "shared/store/game-store";
 import { MatchPhase, PlayerRole, ScoreboardEntry } from "shared/types";
 
 const ROLE_COLORS: Record<string, Color3> = {
+	[PlayerRole.None]: Color3.fromRGB(200, 200, 200),
 	[PlayerRole.Oni]: Color3.fromRGB(220, 80, 80),
 	[PlayerRole.Hider]: Color3.fromRGB(80, 150, 220),
 	[PlayerRole.Spectator]: Color3.fromRGB(150, 150, 150),

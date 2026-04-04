@@ -40,6 +40,7 @@ export const L_SHOP_BALANCE = "shop_balance";
 export const L_SHOP_BUY = "shop_buy";
 export const L_SHOP_EQUIP = "shop_equip";
 export const L_SHOP_UNEQUIP = "shop_unequip";
+export const L_SHOP_EQUIPPED = "shop_equipped";
 export const L_SHOP_NEED_PTS = "shop_need_pts";
 
 // Hachi toggle

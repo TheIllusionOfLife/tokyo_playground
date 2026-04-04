@@ -125,7 +125,7 @@ export function TopBarTimer() {
 					TextScaled={true}
 					Font={Enum.Font.GothamBold}
 					Text={formatTime(timeRemaining)}
-					TextXAlignment={Enum.TextXAlignment.Left}
+					TextXAlignment={Enum.TextXAlignment.Center}
 					LayoutOrder={2}
 				>
 					<uitextsizeconstraint MaxTextSize={18} />

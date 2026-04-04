@@ -55,7 +55,7 @@ export class EconomyService {
 	}
 
 	spendShopBalance(player: Player, amount: number): boolean {
-		if (!(amount > 0 && amount < math.huge)) return false;
+		if (!(amount >= 0 && amount < math.huge)) return false;
 		const data = this.playerDataService.getPlayerData(player);
 		if (!data) return false;
 		if (data.shopBalance < amount) return false;

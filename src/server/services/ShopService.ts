@@ -1,6 +1,7 @@
 import { OnStart, Service } from "@flamework/core";
 import { Players } from "@rbxts/services";
 import {
+	HACHI_LOBBY_MIN_LEVEL,
 	SHOP_CATALOG,
 	SHOP_CATALOG_COOLDOWN,
 	VEHICLE_CATALOG,
@@ -8,7 +9,13 @@ import {
 import { GlobalEvents } from "shared/network";
 import { ItemId, ShopItemData, VehicleId, VehicleShopData } from "shared/types";
 import { CooldownTracker } from "../utils/cooldown";
+import {
+	equipHachiCostume,
+	isPlayerMounted,
+	unequipHachiCostume,
+} from "../utils/hachiCostume";
 import { safeHandler } from "../utils/safeConnect";
+import { getVehicleTemplate } from "../utils/vehicleTemplate";
 import { EconomyService } from "./EconomyService";
 import { InventoryService } from "./InventoryService";
 import { PlayerDataService } from "./PlayerDataService";
@@ -274,5 +281,60 @@ export class ShopService implements OnStart {
 		}
 		this.inventoryService.setEquippedVehicle(player, vehicleId);
 		this.serverEvents.vehicleEquipResult.fire(player, true, vehicleId);
+
+		// Live-swap costume if the player is currently riding.
+		// Resolve template BEFORE unequipping to avoid leaving the player
+		// dismounted if the template is missing or equip fails.
+		if (isPlayerMounted(player)) {
+			const newTemplate = getVehicleTemplate(vehicleId);
+			if (!newTemplate) return;
+
+			// Save previous vehicle for rollback
+			const prevVehicleId = this.inventoryService.getEquippedVehicle(player);
+
+			unequipHachiCostume(player);
+			const clone = newTemplate.Clone();
+			const vDef = VEHICLE_CATALOG.find((v) => v.id === vehicleId);
+			const equipped = equipHachiCostume(
+				player,
+				clone,
+				HACHI_LOBBY_MIN_LEVEL,
+				true,
+				vDef?.weldYawOffset ?? 0,
+				vDef?.scaleOverride,
+				vDef?.seatHeightOffset ?? 0,
+				vDef?.standingMount ?? false,
+				vDef?.hipHeightOffset ?? 0,
+			);
+
+			if (!equipped) {
+				clone.Destroy();
+				warn(
+					`[ShopService] equipHachiCostume failed for ${player.Name}, rolling back to ${prevVehicleId}`,
+				);
+				// Rollback: restore previous vehicle
+				const prevTemplate = getVehicleTemplate(prevVehicleId);
+				if (prevTemplate) {
+					const prevClone = prevTemplate.Clone();
+					const prevDef = VEHICLE_CATALOG.find((v) => v.id === prevVehicleId);
+					if (
+						!equipHachiCostume(
+							player,
+							prevClone,
+							HACHI_LOBBY_MIN_LEVEL,
+							true,
+							prevDef?.weldYawOffset ?? 0,
+							prevDef?.scaleOverride,
+							prevDef?.seatHeightOffset ?? 0,
+							prevDef?.standingMount ?? false,
+							prevDef?.hipHeightOffset ?? 0,
+						)
+					) {
+						prevClone.Destroy();
+					}
+				}
+				this.inventoryService.setEquippedVehicle(player, prevVehicleId);
+			}
+		}
 	}
 }

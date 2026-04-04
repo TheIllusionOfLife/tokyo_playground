@@ -8,6 +8,7 @@ import {
 	L_SHOP_BALANCE,
 	L_SHOP_BUY,
 	L_SHOP_EQUIP,
+	L_SHOP_EQUIPPED,
 	L_SHOP_NEED_PTS,
 	L_SHOP_TAB_ACCESSORY,
 	L_SHOP_TRY_ON,
@@ -297,9 +298,9 @@ function VehicleCard({
 	let active: boolean;
 
 	if (vehicle.owned && vehicle.equipped) {
-		buttonText = t(L_SHOP_UNEQUIP);
-		buttonColor = Color3.fromRGB(80, 160, 200);
-		active = true;
+		buttonText = t(L_SHOP_EQUIPPED);
+		buttonColor = Color3.fromRGB(80, 120, 160);
+		active = false;
 	} else if (vehicle.owned) {
 		buttonText = t(L_SHOP_EQUIP);
 		buttonColor = Color3.fromRGB(80, 200, 180);
