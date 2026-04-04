@@ -179,7 +179,7 @@ export function ActionBar() {
 					FillDirection={Enum.FillDirection.Horizontal}
 					HorizontalAlignment={Enum.HorizontalAlignment.Right}
 					VerticalAlignment={Enum.VerticalAlignment.Center}
-					Padding={new UDim(0, 6)}
+					Padding={new UDim(0, 2)}
 					SortOrder={Enum.SortOrder.LayoutOrder}
 				/>
 				{ACTION_ITEMS.map((item) => (

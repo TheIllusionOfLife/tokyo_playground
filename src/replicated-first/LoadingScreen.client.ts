@@ -60,7 +60,7 @@ const isJa = locale.sub(1, 2) === "ja";
 const bg = new Instance("Frame");
 bg.Name = "Background";
 bg.Size = new UDim2(1, 0, 1, 0);
-bg.BackgroundColor3 = Color3.fromRGB(200, 30, 30); // TEMP: bright red for visibility debugging
+bg.BackgroundColor3 = Color3.fromRGB(15, 15, 35);
 bg.BackgroundTransparency = 0;
 bg.BorderSizePixel = 0;
 bg.ZIndex = 10;

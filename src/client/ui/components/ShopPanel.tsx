@@ -329,9 +329,9 @@ function VehicleCard({
 		>
 			<uicorner CornerRadius={new UDim(0, 8)} />
 			<uistroke
-				Color={Color3.fromRGB(60, 60, 80)}
-				Thickness={1}
-				Transparency={0.3}
+				Color={Color3.fromRGB(100, 100, 140)}
+				Thickness={1.5}
+				Transparency={0.1}
 			/>
 			{/* Family tag (inside card, top-right) */}
 			<textlabel

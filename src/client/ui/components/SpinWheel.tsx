@@ -95,7 +95,7 @@ export function SpinWheel() {
 				>
 					<frame
 						key="SpinOverlay"
-						Size={new UDim2(0, 300, 0, 370)}
+						Size={new UDim2(0, 300, 0, 330)}
 						Position={new UDim2(0.5, 0, 0.5, 0)}
 						AnchorPoint={new Vector2(0.5, 0.5)}
 						BackgroundColor3={Color3.fromRGB(16, 12, 30)}
@@ -201,6 +201,18 @@ export function SpinWheel() {
 									</frame>
 								);
 							})}
+							{/* Outer glow ring */}
+							<frame
+								Size={new UDim2(0, 90, 0, 90)}
+								Position={new UDim2(0.5, 0, 0.5, 0)}
+								AnchorPoint={new Vector2(0.5, 0.5)}
+								BackgroundColor3={Color3.fromRGB(255, 200, 50)}
+								BackgroundTransparency={0.7}
+								BorderSizePixel={0}
+								ZIndex={20}
+							>
+								<uicorner CornerRadius={new UDim(1, 0)} />
+							</frame>
 							{/* Center coin */}
 							<frame
 								Size={new UDim2(0, 70, 0, 70)}
@@ -211,12 +223,12 @@ export function SpinWheel() {
 								ZIndex={21}
 							>
 								<uicorner CornerRadius={new UDim(1, 0)} />
-								<uistroke Color={Color3.fromRGB(255, 160, 20)} Thickness={3} />
+								<uistroke Color={Color3.fromRGB(255, 160, 20)} Thickness={4} />
 								<uigradient
 									Color={
 										new ColorSequence(
-											Color3.fromRGB(255, 220, 80),
-											Color3.fromRGB(255, 180, 30),
+											Color3.fromRGB(255, 230, 100),
+											Color3.fromRGB(255, 170, 20),
 										)
 									}
 									Rotation={90}
@@ -227,14 +239,14 @@ export function SpinWheel() {
 									Position={new UDim2(0.5, 0, 0.5, 0)}
 									AnchorPoint={new Vector2(0.5, 0.5)}
 									BackgroundTransparency={1}
-									TextColor3={Color3.fromRGB(50, 30, 10)}
+									TextColor3={Color3.fromRGB(60, 30, 0)}
 									TextScaled={true}
 									Font={Enum.Font.FredokaOne}
 									Text={lastReward > 0 ? `+${lastReward}` : "\u{2B50}"}
 									ZIndex={22}
 									Rotation={0}
 								>
-									<uitextsizeconstraint MaxTextSize={24} />
+									<uitextsizeconstraint MaxTextSize={26} />
 								</textlabel>
 							</frame>
 						</frame>
