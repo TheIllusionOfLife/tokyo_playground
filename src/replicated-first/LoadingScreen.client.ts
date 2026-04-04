@@ -21,7 +21,7 @@ const playerGui = player.WaitForChild("PlayerGui") as PlayerGui;
 
 // Asset IDs (replace with real IDs after uploading PNGs)
 const HACHI_SPRITESHEET_ID = "rbxassetid://111475345325479";
-const GAME_LOGO_ID = "rbxassetid://0"; // TODO: generate and upload logo
+const GAME_LOGO_ID = "rbxassetid://73591348450824";
 
 // Spritesheet config: 8 frames in a 4x2 grid, each 128x128
 const SPRITE_COLS = 4;
@@ -81,7 +81,7 @@ title.TextColor3 = Color3.fromRGB(255, 220, 100);
 title.TextScaled = true;
 title.Font = Enum.Font.FredokaOne;
 title.Text = "Shibuya Open World";
-title.TextTransparency = GAME_LOGO_ID !== "rbxassetid://0" ? 1 : 0;
+title.TextTransparency = 1; // Hidden: logo image is used instead
 title.Parent = bg;
 
 // Subtitle tagline

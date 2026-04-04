@@ -619,7 +619,7 @@ export const ICON_RANKS = "rbxassetid://116304637844107";
 export const ICON_CLOCK = "rbxassetid://138491369732342";
 // Loading screen assets
 export const ICON_HACHI_SPRITESHEET = "rbxassetid://111475345325479";
-export const ICON_GAME_LOGO = "rbxassetid://0"; // TODO: generate and upload logo
+export const ICON_GAME_LOGO = "rbxassetid://73591348450824";
 // Vehicle icons (keyed by VehicleId)
 export const VEHICLE_ICON_IDS: Record<string, string> = {
 	DefaultHachi: "rbxassetid://127934066909590",
