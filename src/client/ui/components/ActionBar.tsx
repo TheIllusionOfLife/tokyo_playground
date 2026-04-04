@@ -170,7 +170,7 @@ export function ActionBar() {
 				key="ActionBarContainer"
 				AutomaticSize={Enum.AutomaticSize.X}
 				Size={new UDim2(0, 0, 0, 50)}
-				Position={new UDim2(1, -rightPad, 0, 10)}
+				Position={new UDim2(1, -rightPad - 20, 0, 10)}
 				AnchorPoint={new Vector2(1, 0)}
 				BackgroundTransparency={1}
 				BorderSizePixel={0}
