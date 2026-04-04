@@ -36,6 +36,7 @@ export const JA: Record<string, string> = {
 	shop_buy: "購入",
 	shop_equip: "装備",
 	shop_unequip: "外す",
+	shop_equipped: "装備中",
 	shop_need_pts: "ポイント不足",
 
 	// Hachi toggle

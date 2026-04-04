@@ -36,6 +36,7 @@ export const EN: Record<string, string> = {
 	shop_buy: "BUY",
 	shop_equip: "EQUIP",
 	shop_unequip: "UNEQUIP",
+	shop_equipped: "Equipped",
 	shop_need_pts: "Need pts",
 
 	// Hachi toggle
