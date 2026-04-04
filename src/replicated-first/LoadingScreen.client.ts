@@ -69,7 +69,7 @@ bg.Parent = screenGui;
 // Game logo
 const logoImage = new Instance("ImageLabel");
 logoImage.Name = "Logo";
-logoImage.Size = new UDim2(0.6, 0, 0.2, 0);
+logoImage.Size = new UDim2(0.8, 0, 0.4, 0);
 logoImage.Position = new UDim2(0.5, 0, 0.4, 0);
 logoImage.AnchorPoint = new Vector2(0.5, 0.5);
 logoImage.BackgroundTransparency = 1;
