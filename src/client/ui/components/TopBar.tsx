@@ -14,31 +14,27 @@ import {
 import { GameStoreState } from "shared/store/game-store";
 import { MatchPhase } from "shared/types";
 
-/** Returns urgency-based colors for the timer display. */
-function getTimerColors(seconds: number): {
-	text: Color3;
-	stroke: Color3;
-	strokeTransparency: number;
-} {
-	if (seconds <= 10) {
-		return {
-			text: Color3.fromRGB(255, 80, 60),
-			stroke: Color3.fromRGB(255, 80, 60),
-			strokeTransparency: 0.3,
-		};
-	}
-	if (seconds <= 30) {
-		return {
-			text: Color3.fromRGB(255, 160, 60),
-			stroke: Color3.fromRGB(255, 160, 60),
-			strokeTransparency: 0.5,
-		};
-	}
-	return {
-		text: Color3.fromRGB(255, 220, 100),
-		stroke: Color3.fromRGB(255, 200, 80),
-		strokeTransparency: 0.5,
-	};
+// Pre-defined timer color palettes (avoids Color3 allocation per render)
+const TIMER_CRITICAL = {
+	text: Color3.fromRGB(255, 80, 60),
+	stroke: Color3.fromRGB(255, 80, 60),
+	strokeTransparency: 0.3,
+};
+const TIMER_WARNING = {
+	text: Color3.fromRGB(255, 160, 60),
+	stroke: Color3.fromRGB(255, 160, 60),
+	strokeTransparency: 0.5,
+};
+const TIMER_NORMAL = {
+	text: Color3.fromRGB(255, 220, 100),
+	stroke: Color3.fromRGB(255, 200, 80),
+	strokeTransparency: 0.5,
+};
+
+function getTimerColors(seconds: number) {
+	if (seconds <= 10) return TIMER_CRITICAL;
+	if (seconds <= 30) return TIMER_WARNING;
+	return TIMER_NORMAL;
 }
 
 const PHASE_LABELS: Record<string, () => string> = {

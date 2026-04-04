@@ -313,9 +313,6 @@ spriteConn.Disconnect();
 dotConn.Disconnect();
 task.cancel(tipRotateConn);
 
-// Signal loading complete (race-condition safe: BoolValue is stateful)
-loadingDone.Value = true;
-
 // Fade out all elements
 const fadeDuration = 0.6;
 const fadeInfo = new TweenInfo(
@@ -324,7 +321,10 @@ const fadeInfo = new TweenInfo(
 	Enum.EasingDirection.Out,
 );
 
-TweenService.Create(bg, fadeInfo, { BackgroundTransparency: 1 }).Play();
+const bgFade = TweenService.Create(bg, fadeInfo, {
+	BackgroundTransparency: 1,
+});
+bgFade.Play();
 
 for (const child of bg.GetChildren()) {
 	if (child.IsA("TextLabel")) {
@@ -347,5 +347,10 @@ for (const child of bg.GetChildren()) {
 	}
 }
 
-task.wait(fadeDuration);
+// Wait for the background fade tween to fully complete (avoids scheduling jitter)
+bgFade.Completed.Wait();
+
+// Signal loading complete AFTER fade-out finishes (so BGM doesn't play under visible screen)
+loadingDone.Value = true;
+
 screenGui.Destroy();

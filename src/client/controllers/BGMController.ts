@@ -42,12 +42,19 @@ export class BGMController implements OnStart {
 		this.ambient.Volume = 0;
 		this.ambient.Parent = SoundService;
 
-		// Wait for loading screen completion (BoolValue is race-condition safe)
+		// Wait for loading screen completion.
+		// WaitForChild has a 20s timeout: if the loading screen script never
+		// created the BoolValue (e.g. Studio play without ReplicatedFirst),
+		// BGM starts anyway as a graceful fallback.
 		const loadingDone = ReplicatedStorage.WaitForChild("LoadingDone", 20) as
 			| BoolValue
 			| undefined;
-		if (loadingDone && !loadingDone.Value) {
-			loadingDone.GetPropertyChangedSignal("Value").Wait();
+		if (loadingDone) {
+			// Use while-loop to avoid check-then-wait race: if Value flips
+			// between the check and the .Wait() call, we'd block forever.
+			while (!loadingDone.Value) {
+				loadingDone.GetPropertyChangedSignal("Value").Wait();
+			}
 		}
 
 		// Fade in BGM and ambient over 2 seconds
