@@ -30,7 +30,7 @@ export function SpinWheel() {
 	const [resultScale, setResultScale] = useState(1);
 	const wheelRef = useRef<Frame>();
 	const centerTextRef = useRef<TextLabel>();
-	const sparkleRefs = useRef<(TextLabel | undefined)[]>([]);
+	const sparkleRefs = useRef<(Frame | undefined)[]>([]);
 	const rotationRef = useRef(0);
 	const scaleDelayRef = useRef<thread>();
 
@@ -95,19 +95,28 @@ export function SpinWheel() {
 				>
 					<frame
 						key="SpinOverlay"
-						Size={new UDim2(0, 280, 0, 300)}
+						Size={new UDim2(0, 300, 0, 370)}
 						Position={new UDim2(0.5, 0, 0.5, 0)}
 						AnchorPoint={new Vector2(0.5, 0.5)}
-						BackgroundColor3={Color3.fromRGB(20, 15, 35)}
-						BackgroundTransparency={0.05}
+						BackgroundColor3={Color3.fromRGB(16, 12, 30)}
+						BackgroundTransparency={0}
 						BorderSizePixel={0}
 						ZIndex={19}
 					>
-						<uicorner CornerRadius={new UDim(0, 16)} />
+						<uicorner CornerRadius={new UDim(0, 18)} />
 						<uistroke
-							Color={Color3.fromRGB(255, 200, 100)}
-							Thickness={2}
-							Transparency={0.3}
+							Color={Color3.fromRGB(255, 190, 80)}
+							Thickness={2.5}
+							Transparency={0.15}
+						/>
+						<uigradient
+							Color={
+								new ColorSequence(
+									Color3.fromRGB(25, 20, 50),
+									Color3.fromRGB(12, 8, 24),
+								)
+							}
+							Rotation={90}
 						/>
 						{/* Close button */}
 						<textbutton
@@ -141,8 +150,8 @@ export function SpinWheel() {
 						{/* Wheel container with rotation */}
 						<frame
 							ref={wheelRef}
-							Size={new UDim2(0, 160, 0, 160)}
-							Position={new UDim2(0.5, 0, 0.5, -15)}
+							Size={new UDim2(0, 180, 0, 180)}
+							Position={new UDim2(0.5, 0, 0.46, 0)}
 							AnchorPoint={new Vector2(0.5, 0.5)}
 							BackgroundTransparency={1}
 							BorderSizePixel={0}
@@ -163,19 +172,24 @@ export function SpinWheel() {
 								return (
 									<frame
 										key={`seg-${i}`}
-										Size={new UDim2(0, 28, 0, 60)}
+										Size={new UDim2(0, 34, 0, 70)}
 										Position={new UDim2(0.5, 0, 0.5, 0)}
 										AnchorPoint={new Vector2(0.5, 1)}
 										BackgroundColor3={dimmed}
-										BackgroundTransparency={0.15}
+										BackgroundTransparency={0.1}
 										BorderSizePixel={0}
 										Rotation={angle}
 										ZIndex={19}
 									>
-										<uicorner CornerRadius={new UDim(0, 4)} />
+										<uicorner CornerRadius={new UDim(0, 6)} />
+										<uistroke
+											Color={Color3.fromRGB(255, 255, 255)}
+											Thickness={1}
+											Transparency={0.7}
+										/>
 										<textlabel
-											Size={new UDim2(1, 0, 0.5, 0)}
-											Position={new UDim2(0, 0, 0, 2)}
+											Size={new UDim2(1, 0, 0.4, 0)}
+											Position={new UDim2(0, 0, 0, 4)}
 											BackgroundTransparency={1}
 											TextColor3={Color3.fromRGB(255, 255, 255)}
 											TextScaled={true}
@@ -183,13 +197,15 @@ export function SpinWheel() {
 											Text={`${reward}`}
 											ZIndex={20}
 											Rotation={0}
-										/>
+										>
+											<uitextsizeconstraint MaxTextSize={14} />
+										</textlabel>
 									</frame>
 								);
 							})}
 							{/* Center circle */}
 							<frame
-								Size={new UDim2(0, 50, 0, 50)}
+								Size={new UDim2(0, 60, 0, 60)}
 								Position={new UDim2(0.5, 0, 0.5, 0)}
 								AnchorPoint={new Vector2(0.5, 0.5)}
 								BackgroundColor3={Color3.fromRGB(255, 200, 50)}
@@ -198,6 +214,15 @@ export function SpinWheel() {
 							>
 								<uicorner CornerRadius={new UDim(1, 0)} />
 								<uistroke Color={Color3.fromRGB(255, 160, 20)} Thickness={3} />
+								<uigradient
+									Color={
+										new ColorSequence(
+											Color3.fromRGB(255, 220, 80),
+											Color3.fromRGB(255, 180, 30),
+										)
+									}
+									Rotation={90}
+								/>
 								<textlabel
 									ref={centerTextRef}
 									Size={new UDim2(resultScale, 0, resultScale, 0)}
@@ -210,33 +235,34 @@ export function SpinWheel() {
 									Text={lastReward > 0 ? `+${lastReward}` : "\u{2B50}"}
 									ZIndex={22}
 									Rotation={0}
-								/>
+								>
+									<uitextsizeconstraint MaxTextSize={20} />
+								</textlabel>
 							</frame>
 						</frame>
-						{/* Sparkle stars (positioned imperatively via refs) */}
+						{/* Glow dots orbiting the wheel */}
 						{SPARKLE_OFFSETS.map((_, i) => (
-							<textlabel
-								key={`sparkle-${i}`}
+							<frame
+								key={`glow-${i}`}
 								ref={(ref) => {
 									sparkleRefs.current[i] = ref;
 								}}
-								Size={new UDim2(0, 12, 0, 12)}
+								Size={new UDim2(0, 6, 0, 6)}
 								Position={new UDim2(0.5, 0, 0.5, 0)}
 								AnchorPoint={new Vector2(0.5, 0.5)}
-								BackgroundTransparency={1}
-								TextColor3={Color3.fromRGB(255, 255, 200)}
-								TextTransparency={alreadySpun ? 0.7 : 0.2}
-								TextScaled={true}
-								Font={Enum.Font.GothamBold}
-								Text={"\u{2728}"}
+								BackgroundColor3={Color3.fromRGB(255, 220, 120)}
+								BackgroundTransparency={alreadySpun ? 0.7 : 0.2}
+								BorderSizePixel={0}
 								ZIndex={20}
-							/>
+							>
+								<uicorner CornerRadius={new UDim(1, 0)} />
+							</frame>
 						))}
 						{/* Spin / Come back tomorrow button */}
 						<textbutton
-							Size={new UDim2(0.65, 0, 0, 40)}
-							Position={new UDim2(0.5, 0, 1, -45)}
-							AnchorPoint={new Vector2(0.5, 0)}
+							Size={new UDim2(0.7, 0, 0, 44)}
+							Position={new UDim2(0.5, 0, 1, -20)}
+							AnchorPoint={new Vector2(0.5, 1)}
 							BackgroundColor3={
 								spinning || alreadySpun
 									? Color3.fromRGB(80, 80, 80)

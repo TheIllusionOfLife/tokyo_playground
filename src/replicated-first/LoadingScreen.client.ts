@@ -19,7 +19,9 @@ const RunService = game.GetService("RunService");
 const player = Players.LocalPlayer;
 const playerGui = player.WaitForChild("PlayerGui") as PlayerGui;
 
-// Asset IDs (replace with real IDs after uploading PNGs)
+print("[LoadingScreen] Script started");
+
+// Asset IDs
 const HACHI_SPRITESHEET_ID = "rbxassetid://111475345325479";
 const GAME_LOGO_ID = "rbxassetid://73591348450824";
 
@@ -233,6 +235,7 @@ const tipRotateConn = task.spawn(() => {
 });
 
 // ── Loading Flow ────────────────────────────────────────────────────
+print("[LoadingScreen] UI built, starting load flow");
 
 const startTime = os.clock();
 
@@ -307,6 +310,7 @@ while (!preloadDone || !streamingDone) {
 }
 
 setProgress(1.0);
+print(`[LoadingScreen] Preload done. Elapsed: ${os.clock() - startTime}s`);
 
 // Ensure minimum display time (so loading screen is actually visible)
 const elapsed = os.clock() - startTime;
@@ -360,5 +364,6 @@ bgFade.Completed.Wait();
 
 // Signal loading complete AFTER fade-out finishes (so BGM doesn't play under visible screen)
 loadingDone.Value = true;
+print(`[LoadingScreen] Complete. Total: ${os.clock() - startTime}s`);
 
 screenGui.Destroy();
