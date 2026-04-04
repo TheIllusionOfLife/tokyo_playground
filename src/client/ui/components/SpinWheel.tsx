@@ -95,7 +95,7 @@ export function SpinWheel() {
 				>
 					<frame
 						key="SpinOverlay"
-						Size={new UDim2(0.55, 0, 0.85, 0)}
+						Size={new UDim2(0, 260, 0.75, 0)}
 						Position={new UDim2(0.5, 0, 0.5, 0)}
 						AnchorPoint={new Vector2(0.5, 0.5)}
 						BackgroundColor3={Color3.fromRGB(16, 12, 30)}
@@ -105,8 +105,8 @@ export function SpinWheel() {
 					>
 						<uicorner CornerRadius={new UDim(0, 18)} />
 						<uisizeconstraint
-							MinSize={new Vector2(240, 260)}
-							MaxSize={new Vector2(320, 380)}
+							MinSize={new Vector2(220, 220)}
+							MaxSize={new Vector2(280, 340)}
 						/>
 						<uistroke
 							Color={Color3.fromRGB(255, 190, 80)}
@@ -151,67 +151,36 @@ export function SpinWheel() {
 							Text={t("spin_title")}
 							ZIndex={19}
 						/>
-						{/* Reward ring: 8 colored circles arranged around center */}
+						{/* Spinning coin container */}
 						<frame
 							ref={wheelRef}
-							Size={new UDim2(0, 190, 0, 190)}
-							Position={new UDim2(0.5, 0, 0.47, 0)}
+							Size={new UDim2(0, 120, 0, 120)}
+							Position={new UDim2(0.5, 0, 0.48, 0)}
 							AnchorPoint={new Vector2(0.5, 0.5)}
 							BackgroundTransparency={1}
 							BorderSizePixel={0}
 							Rotation={0}
 							ZIndex={19}
 						>
-							{SPIN_REWARDS.map((reward, i) => {
-								const angle = ((i / SPIN_REWARDS.size()) * 360 * math.pi) / 180;
-								const radius = 68;
-								const x = math.cos(angle) * radius;
-								const y = math.sin(angle) * radius;
-								const segColor = SEGMENT_COLORS[i % SEGMENT_COLORS.size()];
-								const dimmed = alreadySpun
-									? new Color3(
-											segColor.R * 0.4,
-											segColor.G * 0.4,
-											segColor.B * 0.4,
-										)
-									: segColor;
-								return (
-									<frame
-										key={`reward-${i}`}
-										Size={new UDim2(0, 30, 0, 30)}
-										Position={new UDim2(0.5, x, 0.5, y)}
-										AnchorPoint={new Vector2(0.5, 0.5)}
-										BackgroundColor3={dimmed}
-										BorderSizePixel={0}
-										ZIndex={19}
-									>
-										<uicorner CornerRadius={new UDim(1, 0)} />
-										<uistroke
-											Color={Color3.fromRGB(255, 255, 255)}
-											Thickness={1.5}
-											Transparency={0.5}
-										/>
-										<textlabel
-											Size={new UDim2(1, 0, 1, 0)}
-											BackgroundTransparency={1}
-											TextColor3={Color3.fromRGB(255, 255, 255)}
-											TextScaled={true}
-											Font={Enum.Font.GothamBold}
-											Text={`${reward}`}
-											ZIndex={20}
-										>
-											<uitextsizeconstraint MaxTextSize={14} />
-										</textlabel>
-									</frame>
-								);
-							})}
 							{/* Outer glow ring */}
 							<frame
-								Size={new UDim2(0, 76, 0, 76)}
+								Size={new UDim2(0, 110, 0, 110)}
 								Position={new UDim2(0.5, 0, 0.5, 0)}
 								AnchorPoint={new Vector2(0.5, 0.5)}
 								BackgroundColor3={Color3.fromRGB(255, 200, 50)}
-								BackgroundTransparency={0.7}
+								BackgroundTransparency={0.75}
+								BorderSizePixel={0}
+								ZIndex={19}
+							>
+								<uicorner CornerRadius={new UDim(1, 0)} />
+							</frame>
+							{/* Middle ring */}
+							<frame
+								Size={new UDim2(0, 96, 0, 96)}
+								Position={new UDim2(0.5, 0, 0.5, 0)}
+								AnchorPoint={new Vector2(0.5, 0.5)}
+								BackgroundColor3={Color3.fromRGB(255, 200, 50)}
+								BackgroundTransparency={0.5}
 								BorderSizePixel={0}
 								ZIndex={20}
 							>
@@ -219,7 +188,7 @@ export function SpinWheel() {
 							</frame>
 							{/* Center coin */}
 							<frame
-								Size={new UDim2(0, 58, 0, 58)}
+								Size={new UDim2(0, 80, 0, 80)}
 								Position={new UDim2(0.5, 0, 0.5, 0)}
 								AnchorPoint={new Vector2(0.5, 0.5)}
 								BackgroundColor3={Color3.fromRGB(255, 200, 50)}
@@ -250,7 +219,7 @@ export function SpinWheel() {
 									ZIndex={22}
 									Rotation={0}
 								>
-									<uitextsizeconstraint MaxTextSize={26} />
+									<uitextsizeconstraint MaxTextSize={30} />
 								</textlabel>
 							</frame>
 						</frame>
@@ -274,8 +243,8 @@ export function SpinWheel() {
 						))}
 						{/* Spin / Come back tomorrow button */}
 						<textbutton
-							Size={new UDim2(0.7, 0, 0, 44)}
-							Position={new UDim2(0.5, 0, 1, -20)}
+							Size={new UDim2(0.7, 0, 0, 38)}
+							Position={new UDim2(0.5, 0, 1, -14)}
 							AnchorPoint={new Vector2(0.5, 1)}
 							BackgroundColor3={
 								spinning || alreadySpun
