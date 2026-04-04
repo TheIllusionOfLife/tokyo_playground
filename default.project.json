@@ -1,5 +1,5 @@
 {
-	"name": "tokyo-playground",
+	"name": "shibuya-open-world",
 	"globIgnorePaths": ["**/package.json", "**/tsconfig.json"],
 	"tree": {
 		"$className": "DataModel",

@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- Trophy icon - white silhouette on transparent -->
+  <g fill="white">
+    <!-- Cup body -->
+    <path d="M18 8h28v20a14 14 0 0 1-28 0V8z"/>
+    <!-- Left handle -->
+    <path d="M18 14h-4a6 6 0 0 0 0 12h4" fill="none" stroke="white" stroke-width="3" stroke-linecap="round"/>
+    <!-- Right handle -->
+    <path d="M46 14h4a6 6 0 0 1 0 12h-4" fill="none" stroke="white" stroke-width="3" stroke-linecap="round"/>
+    <!-- Stem -->
+    <rect x="28" y="40" width="8" height="8"/>
+    <!-- Base -->
+    <rect x="20" y="48" width="24" height="6" rx="2"/>
+    <!-- Star decoration -->
+    <polygon points="32,14 34,20 40,20 35,24 37,30 32,26 27,30 29,24 24,20 30,20" fill="#222"/>
+  </g>
+</svg>

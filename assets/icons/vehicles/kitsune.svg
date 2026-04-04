@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- Kitsune (fox) face with tail accent - white silhouette -->
+  <g fill="white">
+    <!-- Left ear (tall, pointed) -->
+    <polygon points="10,8 18,2 22,22"/>
+    <!-- Right ear (tall, pointed) -->
+    <polygon points="54,8 46,2 42,22"/>
+    <!-- Head -->
+    <ellipse cx="32" cy="32" rx="18" ry="18"/>
+    <!-- Pointy snout -->
+    <ellipse cx="32" cy="40" rx="10" ry="10" fill="#eee"/>
+    <!-- Eyes (sly, narrow) -->
+    <ellipse cx="24" cy="28" rx="3.5" ry="2" fill="#222"/>
+    <ellipse cx="40" cy="28" rx="3.5" ry="2" fill="#222"/>
+    <!-- Nose -->
+    <ellipse cx="32" cy="36" rx="3" ry="2" fill="#222"/>
+    <!-- Tail swoosh at bottom-right -->
+    <path d="M48 50 Q56 42 58 52 Q56 58 48 56 Z"/>
+  </g>
+</svg>

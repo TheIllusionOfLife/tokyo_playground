@@ -1,4 +1,4 @@
-# Tokyo Playground 企画設計書
+# Shibuya Open World 企画設計書
 
 ## 0. この設計書の位置づけ
 
@@ -23,7 +23,7 @@
 
 ## 1.1 タイトル
 
-**Tokyo Playground**
+**Shibuya Open World**
 
 ## 1.2 一言コンセプト
 
@@ -46,7 +46,7 @@
 
 ## 1.5 勝ち筋の核
 
-Tokyo Playground は、既存人気ゲームの弱点を同時に解決します。
+Shibuya Open World は、既存人気ゲームの弱点を同時に解決します。
 
 1. **単一ルール系ゲーム**の弱点  
    → 飽きやすい  
@@ -70,7 +70,7 @@ Tokyo Playground は、既存人気ゲームの弱点を同時に解決します
 
 ## 2.1 体験の定義
 
-Tokyo Playground は「東京の遊び場」にログインして、
+Shibuya Open World は「東京の遊び場」にログインして、
 
 - 友達と合流し
 - ランダムに始まる遊びへ参加し
@@ -141,7 +141,7 @@ Tokyo Playground は「東京の遊び場」にログインして、
 - マップ学習で緊張感が薄れる
 - 長時間プレイの理由が弱い
 
-### Tokyo Playground の改善
+### Shibuya Open World の改善
 - 1つのルールに固定しない
 - 都市のエリアごとに遊びが切り替わる
 - 進行・ポイント・エリア解放がある
@@ -157,7 +157,7 @@ Tokyo Playground は「東京の遊び場」にログインして、
 - 1試合の価値は高いが、全体の滞在設計が弱い
 - 世界観の魅力が薄い
 
-### Tokyo Playground の改善
+### Shibuya Open World の改善
 - 連戦前提で設計する
 - ロビーも街の一部として遊べる
 - イベントや日替わりミッションで帰還理由を作る
@@ -173,7 +173,7 @@ Tokyo Playground は「東京の遊び場」にログインして、
 - 抽象空間になりやすい
 - どのゲームも似た見た目になりやすい
 
-### Tokyo Playground の改善
+### Shibuya Open World の改善
 - すべてを「東京の街」の一部として統合する
 - ミニゲーム間が地続きの世界として感じられる
 - 東京を探索すること自体が価値になる
@@ -188,7 +188,7 @@ Tokyo Playground は「東京の遊び場」にログインして、
 - 勝敗・目的・緊張感が弱い
 - 中長期のゲーム性がぼやけやすい
 
-### Tokyo Playground の改善
+### Shibuya Open World の改善
 - 各遊びに明確なルールと勝敗を持たせる
 - 都市空間の魅力を残しつつ、目的と報酬を付与する
 
@@ -624,7 +624,7 @@ Roblox で強いのは、
 
 ## 16.1 なぜ運営が重要か
 
-Tokyo Playground は「完成して終わり」のゲームではありません。  
+Shibuya Open World は「完成して終わり」のゲームではありません。  
 **運営するほど強くなるゲーム**です。
 
 ## 16.2 更新の基本単位
@@ -1012,9 +1012,9 @@ Tokyo Playground は「完成して終わり」のゲームではありません
 ## 26.3 タイトル戦略
 
 候補例
-- Tokyo Playground
-- Tokyo Playground: World Games
-- Tokyo Playground: Can Kick & Tag
+- Shibuya Open World
+- Shibuya Open World: World Games
+- Shibuya Open World: Can Kick & Tag
 
 ## 26.4 初期拡散導線
 
@@ -1108,7 +1108,7 @@ Tokyo Playground は「完成して終わり」のゲームではありません
 
 # 30. 最終結論
 
-Tokyo Playground は、
+Shibuya Open World は、
 
 - **Hide and Seek 系の直感性**
 - **Party Game の持続性**
@@ -1126,7 +1126,7 @@ Tokyo Playground は、
 2. **ロビー都市を歩くだけでも楽しい状態にすること**
 3. **ローンチ後に遊びとイベントを継続追加できる構造にすること**
 
-この3つを守れば、Tokyo Playground は **単発のコンテスト作品ではなく、継続的に育つ Roblox タイトル**になれます。
+この3つを守れば、Shibuya Open World は **単発のコンテスト作品ではなく、継続的に育つ Roblox タイトル**になれます。
 
 ---
 
@@ -1169,5 +1169,5 @@ Tokyo Playground は、
 4. **次の試合もやりたくなるか**
 5. **あとから遊びを増やせるか**
 
-この5つに Yes が多いほど、Tokyo Playground は強くなります。
+この5つに Yes が多いほど、Shibuya Open World は強くなります。
 

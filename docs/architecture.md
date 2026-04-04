@@ -1,6 +1,6 @@
 # Architecture Overview
 
-Tokyo Playground is a Roblox party game built with roblox-ts, Flamework DI, Reflex state management, and React-Roblox UI.
+Shibuya Open World is a Roblox party game built with roblox-ts, Flamework DI, Reflex state management, and React-Roblox UI.
 
 ## Bounded Contexts
 

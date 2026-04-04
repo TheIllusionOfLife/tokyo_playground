@@ -1,5 +1,10 @@
 import { Controller, OnStart } from "@flamework/core";
-import { ContentProvider, SoundService } from "@rbxts/services";
+import {
+	ContentProvider,
+	ReplicatedStorage,
+	SoundService,
+	TweenService,
+} from "@rbxts/services";
 import { clientEvents } from "client/network";
 import {
 	BGM_TRACK_ID,
@@ -22,20 +27,35 @@ export class BGMController implements OnStart {
 	private bonusThisFrame = false;
 
 	onStart() {
+		// Create sounds but start silent (wait for loading screen to finish)
 		this.bgm = new Instance("Sound");
 		this.bgm.SoundId = BGM_TRACK_ID;
 		this.bgm.Looped = true;
-		this.bgm.Volume = 0.05;
+		this.bgm.Volume = 0;
 		this.bgm.Parent = SoundService;
-		this.bgm.Play();
 
 		// Ambient city hum — constant low atmosphere
 		this.ambient = new Instance("Sound");
 		this.ambient.SoundId = SE_AMBIENT_CITY;
 		this.ambient.Looped = true;
-		this.ambient.Volume = 0.03;
+		this.ambient.Volume = 0;
 		this.ambient.Parent = SoundService;
+
+		// Wait for loading screen completion (BoolValue is race-condition safe)
+		const loadingDone = ReplicatedStorage.WaitForChild("LoadingDone", 20) as
+			| BoolValue
+			| undefined;
+		if (loadingDone && !loadingDone.Value) {
+			loadingDone.GetPropertyChangedSignal("Value").Wait();
+		}
+
+		// Fade in BGM and ambient over 2 seconds
+		this.bgm.Play();
+		TweenService.Create(this.bgm, new TweenInfo(2), { Volume: 0.05 }).Play();
 		this.ambient.Play();
+		TweenService.Create(this.ambient, new TweenInfo(2), {
+			Volume: 0.03,
+		}).Play();
 
 		// Pre-populate SE cache and preload assets to avoid first-play silence
 		const seIds = [

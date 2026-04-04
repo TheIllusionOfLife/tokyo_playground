@@ -1,4 +1,4 @@
-# Roblox Creator Documentation Research: Tokyo Playground Improvements
+# Roblox Creator Documentation Research: Shibuya Open World Improvements
 
 Research date: 2026-03-22
 Source: https://create.roblox.com/docs
@@ -710,7 +710,7 @@ MicroProfiler colors: Orange=CPU, Blue=GPU, Red=GPU+Wait>2.5ms.
 
 ---
 
-## Priority Action Items for Tokyo Playground
+## Priority Action Items for Shibuya Open World
 
 ### High Priority (Do Now)
 

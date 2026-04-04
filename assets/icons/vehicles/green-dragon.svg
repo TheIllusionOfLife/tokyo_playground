@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- Green dragon head - white silhouette with scale texture hints -->
+  <g fill="white">
+    <!-- Head -->
+    <ellipse cx="32" cy="32" rx="18" ry="16"/>
+    <!-- Left horn (curved) -->
+    <path d="M14 18 Q6 8 10 2 L20 16"/>
+    <!-- Right horn (curved) -->
+    <path d="M50 18 Q58 8 54 2 L44 16"/>
+    <!-- Snout -->
+    <ellipse cx="32" cy="42" rx="10" ry="8"/>
+    <!-- Nostrils -->
+    <circle cx="28" cy="42" r="2" fill="#222"/>
+    <circle cx="36" cy="42" r="2" fill="#222"/>
+    <!-- Eyes (fierce) -->
+    <path d="M20 28 L28 26 L26 32 Z" fill="#222"/>
+    <path d="M44 28 L36 26 L38 32 Z" fill="#222"/>
+    <!-- Scale texture hints -->
+    <path d="M22 22 Q26 20 30 22" fill="none" stroke="#ccc" stroke-width="1.5"/>
+    <path d="M34 22 Q38 20 42 22" fill="none" stroke="#ccc" stroke-width="1.5"/>
+    <!-- Jaw ridge with teeth hints -->
+    <path d="M22 46 L26 50 L30 46 L34 50 L38 46 L42 50" fill="none" stroke="#ccc" stroke-width="1.5"/>
+    <!-- Larger spines -->
+    <polygon points="24,16 27,6 30,16" fill="#eee"/>
+    <polygon points="34,16 37,6 40,16" fill="#eee"/>
+  </g>
+</svg>

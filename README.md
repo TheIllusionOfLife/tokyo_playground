@@ -1,4 +1,4 @@
-# Tokyo Playground
+# Shibuya Open World
 
 Roblox party mini-game platform set in Tokyo's Shibuya district. Players explore a photogrammetric cityscape built from [Project PLATEAU](https://www.mlit.go.jp/plateau/) open data, queue into mini-games via portals, ride customizable Hachi vehicles, discover points of interest, and earn points to level up and unlock cosmetics.
 

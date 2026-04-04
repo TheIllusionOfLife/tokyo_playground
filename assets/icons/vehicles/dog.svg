@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- Hachi (Akita Inu) face - white silhouette -->
+  <g fill="white">
+    <!-- Left ear -->
+    <polygon points="12,8 20,4 22,20"/>
+    <!-- Right ear -->
+    <polygon points="52,8 44,4 42,20"/>
+    <!-- Head -->
+    <ellipse cx="32" cy="32" rx="20" ry="22"/>
+    <!-- Eyes (dark cutouts) -->
+    <ellipse cx="24" cy="28" rx="3" ry="3.5" fill="#222"/>
+    <ellipse cx="40" cy="28" rx="3" ry="3.5" fill="#222"/>
+    <!-- Nose -->
+    <ellipse cx="32" cy="38" rx="4" ry="3" fill="#222"/>
+    <!-- Mouth -->
+    <path d="M28 41 Q32 45 36 41" fill="none" stroke="#222" stroke-width="2" stroke-linecap="round"/>
+  </g>
+</svg>

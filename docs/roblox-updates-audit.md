@@ -1,6 +1,6 @@
 # Roblox Platform Updates Audit (Dec 2024 - Mar 2026)
 
-Reviewed against Tokyo Playground: Shibuya codebase.
+Reviewed against Shibuya Open World codebase.
 
 ---
 

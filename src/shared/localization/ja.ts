@@ -27,6 +27,9 @@ export const JA: Record<string, string> = {
 	daily_missions: "デイリーミッション",
 	claimed: "受取済み",
 
+	// Ranks
+	ranks: "ランキング",
+
 	// Shop
 	shop: "ショップ",
 	shop_balance: "残高: %d pts",

@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- Shiba Inu face - white silhouette with fox-like features -->
+  <g fill="white">
+    <!-- Left ear (tall triangle) -->
+    <polygon points="14,6 22,2 24,20"/>
+    <!-- Right ear (tall triangle) -->
+    <polygon points="50,6 42,2 40,20"/>
+    <!-- Head -->
+    <ellipse cx="32" cy="34" rx="18" ry="20"/>
+    <!-- Face mask (lighter inner face) -->
+    <ellipse cx="32" cy="38" rx="12" ry="14" fill="#eee"/>
+    <!-- Eyes -->
+    <ellipse cx="25" cy="30" rx="2.5" ry="3" fill="#222"/>
+    <ellipse cx="39" cy="30" rx="2.5" ry="3" fill="#222"/>
+    <!-- Nose -->
+    <ellipse cx="32" cy="38" rx="3.5" ry="2.5" fill="#222"/>
+    <!-- Mouth -->
+    <path d="M29 41 Q32 44 35 41" fill="none" stroke="#222" stroke-width="1.5"/>
+  </g>
+</svg>

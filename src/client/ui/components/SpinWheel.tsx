@@ -84,51 +84,7 @@ export function SpinWheel() {
 
 	return (
 		<>
-			{/* Toggle button in topbar zone */}
-			<screengui
-				key="SpinButtonGui"
-				ResetOnSpawn={false}
-				ScreenInsets={Enum.ScreenInsets.None}
-				DisplayOrder={4}
-				ZIndexBehavior={Enum.ZIndexBehavior.Sibling}
-			>
-				<frame
-					key="SpinButton"
-					Size={new UDim2(0, 100, 0, 30)}
-					Position={new UDim2(1, -120, 0, 20)}
-					AnchorPoint={new Vector2(1, 0)}
-					BackgroundColor3={
-						alreadySpun
-							? Color3.fromRGB(60, 45, 20)
-							: Color3.fromRGB(90, 50, 20)
-					}
-					BackgroundTransparency={0.2}
-					BorderSizePixel={0}
-				>
-					<uicorner CornerRadius={new UDim(0, 15)} />
-					<textbutton
-						Size={new UDim2(1, 0, 1, 0)}
-						BackgroundTransparency={1}
-						TextColor3={
-							alreadySpun
-								? Color3.fromRGB(180, 160, 100)
-								: Color3.fromRGB(255, 220, 100)
-						}
-						TextScaled={true}
-						Font={Enum.Font.GothamBold}
-						Text={`\u{1F3B0} ${t("spin_toggle")}`}
-						Event={{
-							Activated: () =>
-								gameStore.setActiveOverlay(open ? "none" : ("spin" as never)),
-						}}
-					>
-						<uipadding
-							PaddingLeft={new UDim(0, 8)}
-							PaddingRight={new UDim(0, 8)}
-						/>
-					</textbutton>
-				</frame>
-			</screengui>
+			{/* Toggle button removed — now handled by ActionBar */}
 			{/* Spin overlay (separate ScreenGui with default insets) */}
 			{open ? (
 				<screengui

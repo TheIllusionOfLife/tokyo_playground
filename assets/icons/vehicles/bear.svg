@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- Bear face - white silhouette -->
+  <g fill="white">
+    <!-- Left ear (round) -->
+    <circle cx="14" cy="14" r="8"/>
+    <!-- Right ear (round) -->
+    <circle cx="50" cy="14" r="8"/>
+    <!-- Head -->
+    <ellipse cx="32" cy="34" rx="22" ry="22"/>
+    <!-- Inner ears (dark) -->
+    <circle cx="14" cy="14" r="4" fill="#ccc"/>
+    <circle cx="50" cy="14" r="4" fill="#ccc"/>
+    <!-- Eyes -->
+    <ellipse cx="24" cy="30" rx="3" ry="3" fill="#222"/>
+    <ellipse cx="40" cy="30" rx="3" ry="3" fill="#222"/>
+    <!-- Snout area -->
+    <ellipse cx="32" cy="40" rx="8" ry="6" fill="#ddd"/>
+    <!-- Nose -->
+    <ellipse cx="32" cy="38" rx="4" ry="3" fill="#222"/>
+    <!-- Mouth -->
+    <path d="M29 42 Q32 46 35 42" fill="none" stroke="#222" stroke-width="2"/>
+  </g>
+</svg>

@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- Bullet train nose (front view angle) - white silhouette -->
+  <g fill="white">
+    <!-- Main body -->
+    <path d="M12 20 L8 44 H56 L52 20 Q32 8 12 20 Z"/>
+    <!-- Aerodynamic nose stripe -->
+    <path d="M18 24 Q32 14 46 24" fill="none" stroke="#ccc" stroke-width="2"/>
+    <!-- Windshield (dark) -->
+    <path d="M20 26 Q32 18 44 26 L42 34 H22 Z" fill="#222"/>
+    <!-- Blue stripe -->
+    <rect x="8" y="36" width="48" height="3" fill="#ccc"/>
+    <!-- Headlights -->
+    <circle cx="18" cy="40" r="2.5" fill="#ddd"/>
+    <circle cx="46" cy="40" r="2.5" fill="#ddd"/>
+    <!-- Bottom rail -->
+    <rect x="6" y="44" width="52" height="4" rx="2"/>
+    <!-- Wheels (partially visible) -->
+    <circle cx="16" cy="52" r="4"/>
+    <circle cx="48" cy="52" r="4"/>
+  </g>
+</svg>

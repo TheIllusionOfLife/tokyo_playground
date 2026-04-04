@@ -1,6 +1,7 @@
 import React, { useState } from "@rbxts/react";
 import { useSelector } from "@rbxts/react-reflex";
 import { clientEvents } from "client/network";
+import { VEHICLE_ICON_IDS } from "shared/constants";
 import { t } from "shared/localization";
 import {
 	L_SHOP,
@@ -340,16 +341,29 @@ function VehicleCard({
 				BorderSizePixel={0}
 			>
 				<uicorner CornerRadius={new UDim(0, 8)} />
-				<textlabel
-					Size={new UDim2(0, 32, 0, 32)}
-					Position={new UDim2(0, 6, 0.5, 0)}
-					AnchorPoint={new Vector2(0, 0.5)}
-					BackgroundTransparency={1}
-					TextScaled={true}
-					Text={info.emoji}
-					Font={Enum.Font.GothamBold}
-					TextColor3={Color3.fromRGB(255, 255, 255)}
-				/>
+				{VEHICLE_ICON_IDS[vehicle.id] !== undefined &&
+				VEHICLE_ICON_IDS[vehicle.id] !== "rbxassetid://0" ? (
+					<imagelabel
+						Size={new UDim2(0, 36, 0, 36)}
+						Position={new UDim2(0, 4, 0.5, 0)}
+						AnchorPoint={new Vector2(0, 0.5)}
+						BackgroundTransparency={1}
+						Image={VEHICLE_ICON_IDS[vehicle.id]}
+						ImageColor3={Color3.fromRGB(255, 255, 255)}
+						ScaleType={Enum.ScaleType.Fit}
+					/>
+				) : (
+					<textlabel
+						Size={new UDim2(0, 32, 0, 32)}
+						Position={new UDim2(0, 6, 0.5, 0)}
+						AnchorPoint={new Vector2(0, 0.5)}
+						BackgroundTransparency={1}
+						TextScaled={true}
+						Text={info.emoji}
+						Font={Enum.Font.GothamBold}
+						TextColor3={Color3.fromRGB(255, 255, 255)}
+					/>
+				)}
 				{/* Family tag */}
 				<textlabel
 					Size={new UDim2(0, 50, 0, 14)}
@@ -434,61 +448,25 @@ export function ShopPanel() {
 	const matchPhase = useSelector((state: GameStoreState) => state.matchPhase);
 	const [tab, setTab] = useState<ShopTab>("vehicles");
 
-	// Hide during gameplay phases (Countdown through Rewarding)
-	const hideButton =
-		matchPhase === MatchPhase.Countdown ||
-		matchPhase === MatchPhase.Preparing ||
-		matchPhase === MatchPhase.InProgress ||
-		matchPhase === MatchPhase.RoundOver ||
-		matchPhase === MatchPhase.Rewarding;
-
-	const onOpen = () => {
-		gameStore.setActiveOverlay(open ? "none" : "shop");
-		if (!open) {
+	// Request catalog data when shop opens (replaces old onOpen callback)
+	React.useEffect(() => {
+		if (open) {
 			setTab("vehicles");
 			clientEvents.requestShopCatalog.fire();
 			clientEvents.requestVehicleCatalog.fire();
 		}
-	};
+	}, [open]);
 
 	return (
 		<>
-			{/* Toggle button (top-right, above missions) */}
-			{!hideButton && (
-				<frame
-					key="ShopPanel"
-					Size={new UDim2(0, 100, 0, 30)}
-					Position={new UDim2(1, -10, 0, 48)}
-					AnchorPoint={new Vector2(1, 0)}
-					BackgroundColor3={Color3.fromRGB(70, 45, 25)}
-					BackgroundTransparency={0.3}
-					BorderSizePixel={0}
-					ZIndex={10}
-				>
-					<uicorner CornerRadius={new UDim(0, 15)} />
-					<textbutton
-						Size={new UDim2(1, 0, 1, 0)}
-						BackgroundTransparency={1}
-						TextColor3={Color3.fromRGB(255, 210, 100)}
-						TextScaled={true}
-						Font={Enum.Font.GothamBold}
-						Text={t(L_SHOP)}
-						Event={{ Activated: onOpen }}
-					>
-						<uipadding
-							PaddingLeft={new UDim(0, 8)}
-							PaddingRight={new UDim(0, 8)}
-						/>
-					</textbutton>
-				</frame>
-			)}
+			{/* Toggle button removed — now handled by ActionBar */}
 			{/* Full-screen overlay when open */}
 			{open ? (
 				<>
 					{/* Centered shop card */}
 					<frame
 						key="ShopOverlay"
-						Size={new UDim2(0.75, 0, 0.65, 0)}
+						Size={new UDim2(0.75, 0, 0.8, 0)}
 						Position={new UDim2(0.5, 0, 0.5, 0)}
 						AnchorPoint={new Vector2(0.5, 0.5)}
 						BackgroundColor3={Color3.fromRGB(20, 20, 40)}

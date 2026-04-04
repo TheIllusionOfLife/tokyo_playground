@@ -1,4 +1,5 @@
 import React from "@rbxts/react";
+import { ActionBar } from "./components/ActionBar";
 import { ActionButton } from "./components/ActionButton";
 import { BonOdoriRhythmLane } from "./components/BonOdoriRhythmLane";
 import { CountdownOverlay } from "./components/CountdownOverlay";
@@ -33,6 +34,7 @@ export function GameHud() {
 		<>
 			{/* Topbar zone elements (own ScreenGui with ScreenInsets.None) */}
 			<TopBarTimer />
+			<ActionBar />
 			<SpinWheel />
 			<LeaderboardPanel />
 			<screengui

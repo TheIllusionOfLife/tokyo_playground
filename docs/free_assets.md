@@ -1,4 +1,4 @@
-# Free Roblox Assets for Tokyo Playground
+# Free Roblox Assets for Shibuya Open World
 
 ## Street Props & Atmosphere
 - Japanese vending machine (working) — `8613686385`

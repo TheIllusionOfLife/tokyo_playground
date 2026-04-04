@@ -28,6 +28,9 @@ export const L_MISSIONS = "missions";
 export const L_DAILY_MISSIONS = "daily_missions";
 export const L_CLAIMED = "claimed";
 
+// Ranks
+export const L_RANKS = "ranks";
+
 // Shop
 export const L_SHOP = "shop";
 export const L_SHOP_BALANCE = "shop_balance";

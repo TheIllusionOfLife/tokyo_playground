@@ -1,4 +1,4 @@
-# Tokyo Playground: Shibuya
+# Shibuya Open World
 
 Roblox party mini-game platform set in Tokyo (Shibuya). roblox-ts + Flamework + Rojo.
 
