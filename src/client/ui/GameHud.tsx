@@ -40,15 +40,31 @@ class ErrorBoundary extends React.Component<
 	ErrorBoundaryState
 > {
 	state: ErrorBoundaryState = { hasError: false };
+	private mounted = false;
+	private recoveryThread?: thread;
 
 	static getDerivedStateFromError(): ErrorBoundaryState {
 		return { hasError: true };
 	}
 
+	componentDidMount() {
+		this.mounted = true;
+	}
+
+	componentWillUnmount() {
+		this.mounted = false;
+		if (this.recoveryThread) {
+			task.cancel(this.recoveryThread);
+			this.recoveryThread = undefined;
+		}
+	}
+
 	componentDidCatch(err: unknown) {
 		warn(`[GameHud] React error boundary caught: ${tostring(err)}`);
 		// Auto-recover after a brief delay so the UI tree re-mounts
-		task.delay(0.5, () => this.setState({ hasError: false }));
+		this.recoveryThread = task.delay(0.5, () => {
+			if (this.mounted) this.setState({ hasError: false });
+		});
 	}
 
 	render() {

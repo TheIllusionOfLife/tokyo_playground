@@ -284,14 +284,18 @@ export class ShopService implements OnStart {
 
 		// Live-swap costume if the player is currently riding.
 		// Resolve template BEFORE unequipping to avoid leaving the player
-		// dismounted if the template is missing.
+		// dismounted if the template is missing or equip fails.
 		if (isPlayerMounted(player)) {
-			const template = getVehicleTemplate(vehicleId);
-			if (!template) return;
+			const newTemplate = getVehicleTemplate(vehicleId);
+			if (!newTemplate) return;
+
+			// Save previous vehicle for rollback
+			const prevVehicleId = this.inventoryService.getEquippedVehicle(player);
+
 			unequipHachiCostume(player);
-			const clone = template.Clone();
+			const clone = newTemplate.Clone();
 			const vDef = VEHICLE_CATALOG.find((v) => v.id === vehicleId);
-			equipHachiCostume(
+			const equipped = equipHachiCostume(
 				player,
 				clone,
 				HACHI_LOBBY_MIN_LEVEL,
@@ -302,6 +306,35 @@ export class ShopService implements OnStart {
 				vDef?.standingMount ?? false,
 				vDef?.hipHeightOffset ?? 0,
 			);
+
+			if (!equipped) {
+				clone.Destroy();
+				warn(
+					`[ShopService] equipHachiCostume failed for ${player.Name}, rolling back to ${prevVehicleId}`,
+				);
+				// Rollback: restore previous vehicle
+				const prevTemplate = getVehicleTemplate(prevVehicleId);
+				if (prevTemplate) {
+					const prevClone = prevTemplate.Clone();
+					const prevDef = VEHICLE_CATALOG.find((v) => v.id === prevVehicleId);
+					if (
+						!equipHachiCostume(
+							player,
+							prevClone,
+							HACHI_LOBBY_MIN_LEVEL,
+							true,
+							prevDef?.weldYawOffset ?? 0,
+							prevDef?.scaleOverride,
+							prevDef?.seatHeightOffset ?? 0,
+							prevDef?.standingMount ?? false,
+							prevDef?.hipHeightOffset ?? 0,
+						)
+					) {
+						prevClone.Destroy();
+					}
+				}
+				this.inventoryService.setEquippedVehicle(player, prevVehicleId);
+			}
 		}
 	}
 }
