@@ -29,45 +29,75 @@ import { StampDiscoveryPopup } from "./components/StampDiscoveryPopup";
 import { TopBar, TopBarTimer } from "./components/TopBar";
 import { ZonePopup } from "./components/ZonePopup";
 
+// Error boundary: catches render errors to prevent permanent UI death.
+// Without this, a single component crash unmounts the entire React tree.
+interface ErrorBoundaryState {
+	hasError: boolean;
+}
+
+class ErrorBoundary extends React.Component<
+	{ children: React.Element },
+	ErrorBoundaryState
+> {
+	state: ErrorBoundaryState = { hasError: false };
+
+	static getDerivedStateFromError(): ErrorBoundaryState {
+		return { hasError: true };
+	}
+
+	componentDidCatch(err: unknown) {
+		warn(`[GameHud] React error boundary caught: ${tostring(err)}`);
+		// Auto-recover after a brief delay so the UI tree re-mounts
+		task.delay(0.5, () => this.setState({ hasError: false }));
+	}
+
+	render() {
+		if (this.state.hasError) return undefined!;
+		return this.props.children;
+	}
+}
+
 export function GameHud() {
 	return (
-		<>
-			{/* Topbar zone elements (own ScreenGui with ScreenInsets.None) */}
-			<TopBarTimer />
-			<ActionBar />
-			<SpinWheel />
-			<LeaderboardPanel />
-			<screengui
-				key="GameHud"
-				ResetOnSpawn={false}
-				ZIndexBehavior={Enum.ZIndexBehavior.Sibling}
-			>
-				<PlayPointsDisplay />
-				<TopBar />
-				<RoundIntroOverlay />
-				<RoleIndicator />
-				<HachiHud />
-				<HachiToggleButton />
-				<HachiPlayButton />
-				<HintText />
-				<EventFeed />
-				<CountdownOverlay />
-				<RewardPopup />
-				<Scoreboard />
-				<ActionButton />
-				<MissionPanel />
-				<ShopPanel />
-				<SpectatorOverlay />
-				<SkillsPanel />
-				{/* Living Shibuya */}
-				<StampCardPanel />
-				<StampDiscoveryPopup />
-				<OmikujiCard />
-				<MicroEventIndicator />
-				<BonOdoriRhythmLane />
-				<ObstacleCourseTimer />
-				<ZonePopup />
-			</screengui>
-		</>
+		<ErrorBoundary>
+			<>
+				{/* Topbar zone elements (own ScreenGui with ScreenInsets.None) */}
+				<TopBarTimer />
+				<ActionBar />
+				<SpinWheel />
+				<LeaderboardPanel />
+				<screengui
+					key="GameHud"
+					ResetOnSpawn={false}
+					ZIndexBehavior={Enum.ZIndexBehavior.Sibling}
+				>
+					<PlayPointsDisplay />
+					<TopBar />
+					<RoundIntroOverlay />
+					<RoleIndicator />
+					<HachiHud />
+					<HachiToggleButton />
+					<HachiPlayButton />
+					<HintText />
+					<EventFeed />
+					<CountdownOverlay />
+					<RewardPopup />
+					<Scoreboard />
+					<ActionButton />
+					<MissionPanel />
+					<ShopPanel />
+					<SpectatorOverlay />
+					<SkillsPanel />
+					{/* Living Shibuya */}
+					<StampCardPanel />
+					<StampDiscoveryPopup />
+					<OmikujiCard />
+					<MicroEventIndicator />
+					<BonOdoriRhythmLane />
+					<ObstacleCourseTimer />
+					<ZonePopup />
+				</screengui>
+			</>
+		</ErrorBoundary>
 	);
 }
