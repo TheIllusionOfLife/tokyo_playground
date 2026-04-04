@@ -65,7 +65,7 @@ export function SpinWheel() {
 				const sparkle = sparkleRefs.current[i];
 				if (!sparkle) continue;
 				const rad = ((rot * 0.7 + SPARKLE_OFFSETS[i]) * math.pi) / 180;
-				const orbitR = 95;
+				const orbitR = 55;
 				sparkle.Position = new UDim2(
 					0.5,
 					math.cos(rad) * orbitR,
