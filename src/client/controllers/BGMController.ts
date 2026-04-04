@@ -42,34 +42,6 @@ export class BGMController implements OnStart {
 		this.ambient.Volume = 0;
 		this.ambient.Parent = SoundService;
 
-		// Wait for loading screen completion.
-		// WaitForChild has a 20s timeout: if the loading screen script never
-		// created the BoolValue (e.g. Studio play without ReplicatedFirst),
-		// BGM starts anyway as a graceful fallback.
-		const loadingDone = ReplicatedStorage.WaitForChild("LoadingDone", 20) as
-			| BoolValue
-			| undefined;
-		if (loadingDone) {
-			// Use while-loop to avoid check-then-wait race: if Value flips
-			// between the check and the .Wait() call, we'd block forever.
-			while (!loadingDone.Value) {
-				loadingDone.GetPropertyChangedSignal("Value").Wait();
-			}
-		}
-
-		// Fade in BGM and ambient over 2 seconds
-		this.bgm.Play();
-		TweenService.Create(this.bgm, new TweenInfo(2), { Volume: 0.05 }).Play();
-		this.ambient.Play();
-		this.ambientFadeTween = TweenService.Create(
-			this.ambient,
-			new TweenInfo(2),
-			{
-				Volume: 0.03,
-			},
-		);
-		this.ambientFadeTween.Play();
-
 		// Pre-populate SE cache and preload assets to avoid first-play silence
 		const seIds = [
 			SE_ITEM_PICKUP,
@@ -89,7 +61,8 @@ export class BGMController implements OnStart {
 		}
 		task.spawn(() => ContentProvider.PreloadAsync(toPreload));
 
-		// Fade ambient during active matches and stop all SFX on return to lobby
+		// Register event handlers BEFORE the loading wait so mid-match joins
+		// receive matchSnapshot/matchPhaseChanged while BGM is still gated.
 		clientEvents.matchPhaseChanged.connect((phase) => {
 			this.ambientFadeTween?.Cancel();
 			this.ambient.Volume = getAmbientVolumeForPhase(phase);
@@ -127,6 +100,37 @@ export class BGMController implements OnStart {
 			if (timeRemaining <= 30) {
 				this.playSE(SE_TICK, 0.3);
 			}
+		});
+
+		// Wait for loading screen in a separate thread so onStart returns
+		// immediately and other controllers (HudController) can proceed.
+		task.spawn(() => {
+			// WaitForChild has a 20s timeout: if the loading screen script never
+			// created the BoolValue (e.g. Studio play without ReplicatedFirst),
+			// BGM starts anyway as a graceful fallback.
+			const loadingDone = ReplicatedStorage.WaitForChild("LoadingDone", 20) as
+				| BoolValue
+				| undefined;
+			if (loadingDone) {
+				// Use while-loop to avoid check-then-wait race: if Value flips
+				// between the check and the .Wait() call, we'd block forever.
+				while (!loadingDone.Value) {
+					loadingDone.GetPropertyChangedSignal("Value").Wait();
+				}
+			}
+
+			// Fade in BGM and ambient over 2 seconds
+			this.bgm.Play();
+			TweenService.Create(this.bgm, new TweenInfo(2), {
+				Volume: 0.05,
+			}).Play();
+			this.ambient.Play();
+			this.ambientFadeTween = TweenService.Create(
+				this.ambient,
+				new TweenInfo(2),
+				{ Volume: 0.03 },
+			);
+			this.ambientFadeTween.Play();
 		});
 	}
 
