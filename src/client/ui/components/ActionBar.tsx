@@ -1,13 +1,19 @@
 import React from "@rbxts/react";
 import { useSelector } from "@rbxts/react-reflex";
 import {
+	ALL_POI_ZONES,
 	ICON_MISSIONS,
 	ICON_RANKS,
 	ICON_SHOP,
 	ICON_SPIN,
 } from "shared/constants";
 import { t } from "shared/localization";
-import { L_MISSIONS, L_RANKS, L_SHOP } from "shared/localization/keys";
+import {
+	L_MISSIONS,
+	L_RANKS,
+	L_SHOP,
+	L_SPIN_TOGGLE,
+} from "shared/localization/keys";
 import { GameStoreState, gameStore } from "shared/store/game-store";
 import { MatchPhase } from "shared/types";
 
@@ -38,7 +44,7 @@ const ACTION_ITEMS: ActionBarItem[] = [
 	},
 	{
 		id: "spin",
-		labelKey: "spin_toggle",
+		labelKey: L_SPIN_TOGGLE,
 		iconAssetId: ICON_SPIN,
 		iconColor: Color3.fromRGB(255, 200, 100),
 		order: 3,
@@ -79,7 +85,7 @@ function ActionBarButton({
 				Text=""
 				Event={{
 					Activated: () =>
-						gameStore.setActiveOverlay(isActive ? "none" : (item.id as never)),
+						gameStore.setActiveOverlay(isActive ? "none" : item.id),
 				}}
 			/>
 			{/* Icon (top 60%) */}
@@ -128,14 +134,22 @@ export function ActionBar() {
 	const matchPhase = useSelector((s: GameStoreState) => s.matchPhase);
 	const activeOverlay = useSelector((s: GameStoreState) => s.activeOverlay);
 	const missions = useSelector((s: GameStoreState) => s.missions);
+	const discoveredPoi = useSelector((s: GameStoreState) => s.discoveredPoi);
+	const poiClaimedRewards = useSelector(
+		(s: GameStoreState) => s.poiClaimedRewards,
+	);
 
 	// Hide during active gameplay (same logic as individual buttons)
 	if (matchPhase !== MatchPhase.WaitingForPlayers) return undefined!;
 
-	// Check if any missions are claimable (notification dot)
-	const hasClaimable = missions.some(
+	// Check if any missions or POI rewards are claimable (notification dot)
+	const hasClaimableMission = missions.some(
 		(m) => m.progress >= m.target && !m.rewardCollected,
 	);
+	const hasClaimablePoi = ALL_POI_ZONES.some(
+		(z) => discoveredPoi.includes(z) && !poiClaimedRewards.includes(z),
+	);
+	const hasClaimable = hasClaimableMission || hasClaimablePoi;
 
 	return (
 		<screengui
@@ -147,7 +161,8 @@ export function ActionBar() {
 		>
 			<frame
 				key="ActionBarContainer"
-				Size={new UDim2(0, 244, 0, 52)}
+				AutomaticSize={Enum.AutomaticSize.X}
+				Size={new UDim2(0, 0, 0, 52)}
 				Position={new UDim2(1, -10, 0, 14)}
 				AnchorPoint={new Vector2(1, 0)}
 				BackgroundTransparency={1}

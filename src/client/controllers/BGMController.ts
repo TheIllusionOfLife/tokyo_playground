@@ -25,6 +25,7 @@ export class BGMController implements OnStart {
 	private ambient!: Sound;
 	private readonly seCache = new Map<string, Sound>();
 	private bonusThisFrame = false;
+	private ambientFadeTween?: Tween;
 
 	onStart() {
 		// Create sounds but start silent (wait for loading screen to finish)
@@ -53,9 +54,14 @@ export class BGMController implements OnStart {
 		this.bgm.Play();
 		TweenService.Create(this.bgm, new TweenInfo(2), { Volume: 0.05 }).Play();
 		this.ambient.Play();
-		TweenService.Create(this.ambient, new TweenInfo(2), {
-			Volume: 0.03,
-		}).Play();
+		this.ambientFadeTween = TweenService.Create(
+			this.ambient,
+			new TweenInfo(2),
+			{
+				Volume: 0.03,
+			},
+		);
+		this.ambientFadeTween.Play();
 
 		// Pre-populate SE cache and preload assets to avoid first-play silence
 		const seIds = [
@@ -78,12 +84,14 @@ export class BGMController implements OnStart {
 
 		// Fade ambient during active matches and stop all SFX on return to lobby
 		clientEvents.matchPhaseChanged.connect((phase) => {
+			this.ambientFadeTween?.Cancel();
 			this.ambient.Volume = getAmbientVolumeForPhase(phase);
 			if (phase === MatchPhase.WaitingForPlayers) {
 				this.stopAllSE();
 			}
 		});
 		clientEvents.matchSnapshot.connect((phase) => {
+			this.ambientFadeTween?.Cancel();
 			this.ambient.Volume = getAmbientVolumeForPhase(phase);
 		});
 
