@@ -256,15 +256,6 @@ export function MissionPanel() {
 		matchPhase === MatchPhase.RoundOver ||
 		matchPhase === MatchPhase.Rewarding;
 
-	// Check for notification dot (claimable missions or PoI rewards)
-	const hasClaimableMission = missions.some(
-		(m) => m.progress >= m.target && !m.rewardCollected,
-	);
-	const hasClaimablePoi = ALL_POI_ZONES.some(
-		(z) => discoveredPoi.includes(z) && !poiClaimedRewards.includes(z),
-	);
-	const showNotifDot = hasClaimableMission || hasClaimablePoi;
-
 	// During gameplay, only show the claim toast (not the full panel/button)
 	if (isGameplayPhase) {
 		return (
@@ -298,58 +289,13 @@ export function MissionPanel() {
 
 	return (
 		<>
-			{/* Toggle button (top-right) */}
-			<frame
-				key="MissionPanel"
-				Size={new UDim2(0, 100, 0, 30)}
-				Position={new UDim2(1, -10, 0, 10)}
-				AnchorPoint={new Vector2(1, 0)}
-				BackgroundColor3={Color3.fromRGB(30, 30, 70)}
-				BackgroundTransparency={0.3}
-				BorderSizePixel={0}
-				ZIndex={10}
-			>
-				<uicorner CornerRadius={new UDim(0, 15)} />
-				<textbutton
-					Size={new UDim2(1, 0, 1, 0)}
-					BackgroundTransparency={1}
-					TextColor3={Color3.fromRGB(255, 255, 150)}
-					TextScaled={true}
-					Font={Enum.Font.GothamBold}
-					Text={t(L_MISSIONS)}
-					Event={{
-						Activated: () =>
-							gameStore.setActiveOverlay(open ? "none" : "missions"),
-					}}
-				>
-					<uipadding
-						PaddingLeft={new UDim(0, 8)}
-						PaddingRight={new UDim(0, 8)}
-					/>
-				</textbutton>
-				{/* Notification dot */}
-				{showNotifDot ? (
-					<frame
-						key="NotifDot"
-						Size={new UDim2(0, 10, 0, 10)}
-						Position={new UDim2(1, -4, 0, -2)}
-						AnchorPoint={new Vector2(1, 0)}
-						BackgroundColor3={Color3.fromRGB(255, 80, 80)}
-						BorderSizePixel={0}
-						ZIndex={11}
-					>
-						<uicorner CornerRadius={new UDim(1, 0)} />
-					</frame>
-				) : (
-					undefined!
-				)}
-			</frame>
+			{/* Toggle button removed — now handled by ActionBar */}
 			{/* Centered overlay when open */}
 			{open ? (
 				<frame
 					key="MissionOverlay"
-					Size={new UDim2(0, 380, 0, 420)}
-					Position={new UDim2(0.5, 0, 0.5, 0)}
+					Size={new UDim2(0, 340, 0, 280)}
+					Position={new UDim2(0.5, 0, 0.55, 0)}
 					AnchorPoint={new Vector2(0.5, 0.5)}
 					BackgroundColor3={Color3.fromRGB(20, 20, 40)}
 					BackgroundTransparency={0.05}
@@ -378,8 +324,9 @@ export function MissionPanel() {
 					{/* Tab bar */}
 					<frame
 						key="TabBar"
-						Size={new UDim2(0.85, 0, 0, 28)}
-						Position={new UDim2(0.075, 0, 0, 10)}
+						Size={new UDim2(0.7, -40, 0, 28)}
+						Position={new UDim2(0.5, -20, 0, 10)}
+						AnchorPoint={new Vector2(0.5, 0)}
 						BackgroundTransparency={1}
 						BorderSizePixel={0}
 						ZIndex={19}

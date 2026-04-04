@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- Bus - white silhouette -->
+  <g fill="white">
+    <!-- Body (tall rectangle) -->
+    <rect x="6" y="12" width="52" height="34" rx="4"/>
+    <!-- Windows (dark cutouts, row) -->
+    <rect x="10" y="18" width="10" height="10" rx="2" fill="#222"/>
+    <rect x="24" y="18" width="10" height="10" rx="2" fill="#222"/>
+    <rect x="38" y="18" width="10" height="10" rx="2" fill="#222"/>
+    <!-- Front windshield -->
+    <rect x="50" y="16" width="6" height="14" rx="2" fill="#222"/>
+    <!-- Stripe -->
+    <rect x="6" y="34" width="52" height="3" fill="#ccc"/>
+    <!-- Left wheel -->
+    <circle cx="16" cy="50" r="6"/>
+    <circle cx="16" cy="50" r="3" fill="#222"/>
+    <!-- Right wheel -->
+    <circle cx="48" cy="50" r="6"/>
+    <circle cx="48" cy="50" r="3" fill="#222"/>
+  </g>
+</svg>

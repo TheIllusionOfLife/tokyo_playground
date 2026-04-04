@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- Shopping bag icon - white silhouette on transparent -->
+  <g fill="white" fill-rule="evenodd">
+    <!-- Bag body -->
+    <rect x="14" y="24" width="36" height="32" rx="4"/>
+    <!-- Handle -->
+    <path d="M24 24V18a8 8 0 0 1 16 0v6" fill="none" stroke="white" stroke-width="4" stroke-linecap="round"/>
+  </g>
+</svg>

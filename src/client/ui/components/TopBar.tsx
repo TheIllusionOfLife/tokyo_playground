@@ -1,6 +1,7 @@
 import React from "@rbxts/react";
 import { useSelector } from "@rbxts/react-reflex";
 import { GuiService } from "@rbxts/services";
+import { ICON_CLOCK } from "shared/constants";
 import { t } from "shared/localization";
 import {
 	L_PHASE_GET_READY,
@@ -12,6 +13,29 @@ import {
 } from "shared/localization/keys";
 import { GameStoreState } from "shared/store/game-store";
 import { MatchPhase } from "shared/types";
+
+// Pre-defined timer color palettes (avoids Color3 allocation per render)
+const TIMER_CRITICAL = {
+	text: Color3.fromRGB(255, 80, 60),
+	stroke: Color3.fromRGB(255, 80, 60),
+	strokeTransparency: 0.3,
+};
+const TIMER_WARNING = {
+	text: Color3.fromRGB(255, 160, 60),
+	stroke: Color3.fromRGB(255, 160, 60),
+	strokeTransparency: 0.5,
+};
+const TIMER_NORMAL = {
+	text: Color3.fromRGB(255, 220, 100),
+	stroke: Color3.fromRGB(255, 200, 80),
+	strokeTransparency: 0.5,
+};
+
+function getTimerColors(seconds: number) {
+	if (seconds <= 10) return TIMER_CRITICAL;
+	if (seconds <= 30) return TIMER_WARNING;
+	return TIMER_NORMAL;
+}
 
 const PHASE_LABELS: Record<string, () => string> = {
 	[MatchPhase.WaitingForPlayers]: () => t(L_PHASE_WAITING),
@@ -42,9 +66,7 @@ export function TopBarTimer() {
 
 	if (matchPhase !== MatchPhase.InProgress) return undefined!;
 
-	// Get the topbar inset height for positioning within the topbar zone
-	const [insetTop] = GuiService.GetGuiInset();
-	const topbarHeight = insetTop.Y;
+	const colors = getTimerColors(timeRemaining);
 
 	return (
 		<screengui
@@ -56,23 +78,58 @@ export function TopBarTimer() {
 		>
 			<frame
 				key="TimerFrame"
-				Size={new UDim2(0, 100, 0, math.max(topbarHeight - 4, 28))}
-				Position={new UDim2(0.5, 0, 0, 20)}
+				Size={new UDim2(0, 110, 0, 30)}
+				Position={new UDim2(0.5, 0, 0, 8)}
 				AnchorPoint={new Vector2(0.5, 0)}
-				BackgroundColor3={Color3.fromRGB(0, 0, 0)}
-				BackgroundTransparency={0.4}
+				BackgroundColor3={Color3.fromRGB(10, 10, 20)}
+				BackgroundTransparency={0.25}
 				BorderSizePixel={0}
 			>
-				<uicorner CornerRadius={new UDim(0, 8)} />
+				<uicorner CornerRadius={new UDim(0, 10)} />
+				<uistroke
+					Color={colors.stroke}
+					Thickness={1.5}
+					Transparency={colors.strokeTransparency}
+				/>
+				<uigradient
+					Color={
+						new ColorSequence(
+							Color3.fromRGB(30, 30, 50),
+							Color3.fromRGB(10, 10, 20),
+						)
+					}
+					Rotation={90}
+				/>
+				<uilistlayout
+					FillDirection={Enum.FillDirection.Horizontal}
+					VerticalAlignment={Enum.VerticalAlignment.Center}
+					HorizontalAlignment={Enum.HorizontalAlignment.Center}
+					Padding={new UDim(0, 6)}
+				/>
+				{/* Clock icon */}
+				<imagelabel
+					key="ClockIcon"
+					Size={new UDim2(0, 16, 0, 16)}
+					BackgroundTransparency={1}
+					Image={ICON_CLOCK}
+					ImageColor3={colors.text}
+					ScaleType={Enum.ScaleType.Fit}
+					LayoutOrder={1}
+				/>
+				{/* Time text */}
 				<textlabel
 					key="Timer"
-					Size={new UDim2(1, 0, 1, 0)}
+					Size={new UDim2(0, 60, 0, 22)}
 					BackgroundTransparency={1}
-					TextColor3={Color3.fromRGB(255, 220, 100)}
+					TextColor3={colors.text}
 					TextScaled={true}
 					Font={Enum.Font.GothamBold}
 					Text={formatTime(timeRemaining)}
-				/>
+					TextXAlignment={Enum.TextXAlignment.Left}
+					LayoutOrder={2}
+				>
+					<uitextsizeconstraint MaxTextSize={18} />
+				</textlabel>
 			</frame>
 		</screengui>
 	);

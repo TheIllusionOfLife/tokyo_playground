@@ -27,6 +27,9 @@ export const EN: Record<string, string> = {
 	daily_missions: "Daily Missions",
 	claimed: "Claimed",
 
+	// Ranks
+	ranks: "Ranks",
+
 	// Shop
 	shop: "Shop",
 	shop_balance: "Balance: %d pts",

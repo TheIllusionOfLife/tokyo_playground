@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- Skateboard profile - white silhouette -->
+  <g fill="white">
+    <!-- Deck (curved ends) -->
+    <path d="M8 30 Q4 28 6 24 L12 26 H52 L58 24 Q60 28 56 30 Z"/>
+    <!-- Grip tape stripe -->
+    <rect x="14" y="26" width="36" height="2" fill="#ccc"/>
+    <!-- Left truck -->
+    <rect x="14" y="32" width="8" height="3" rx="1"/>
+    <!-- Right truck -->
+    <rect x="42" y="32" width="8" height="3" rx="1"/>
+    <!-- Left wheels -->
+    <circle cx="15" cy="40" r="4"/>
+    <circle cx="15" cy="40" r="2" fill="#222"/>
+    <circle cx="21" cy="40" r="4"/>
+    <circle cx="21" cy="40" r="2" fill="#222"/>
+    <!-- Right wheels -->
+    <circle cx="43" cy="40" r="4"/>
+    <circle cx="43" cy="40" r="2" fill="#222"/>
+    <circle cx="49" cy="40" r="4"/>
+    <circle cx="49" cy="40" r="2" fill="#222"/>
+  </g>
+</svg>

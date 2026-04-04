@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- Maneki Neko (lucky cat) with raised paw - white silhouette -->
+  <g fill="white">
+    <!-- Left ear -->
+    <polygon points="12,10 18,4 22,20"/>
+    <!-- Right ear -->
+    <polygon points="52,10 46,4 42,20"/>
+    <!-- Head -->
+    <ellipse cx="32" cy="30" rx="18" ry="18"/>
+    <!-- Body -->
+    <ellipse cx="32" cy="50" rx="14" ry="12"/>
+    <!-- Raised right paw -->
+    <ellipse cx="50" cy="34" rx="5" ry="8" transform="rotate(-15 50 34)"/>
+    <!-- Eyes (happy, closed arcs) -->
+    <path d="M22 28 Q25 24 28 28" fill="none" stroke="#222" stroke-width="2.5" stroke-linecap="round"/>
+    <path d="M36 28 Q39 24 42 28" fill="none" stroke="#222" stroke-width="2.5" stroke-linecap="round"/>
+    <!-- Nose -->
+    <polygon points="32,33 30,36 34,36" fill="#222"/>
+    <!-- Coin (circle on belly) -->
+    <circle cx="32" cy="50" r="6" fill="#ccc"/>
+  </g>
+</svg>

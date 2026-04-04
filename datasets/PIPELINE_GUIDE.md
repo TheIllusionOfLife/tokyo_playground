@@ -1,6 +1,6 @@
 # PLATEAU SDK Pipeline Guide: Shibuya City Expansion
 
-Step-by-step guide for expanding the Tokyo Playground city from 1 tile to 4 LOD2 tiles + underground using PLATEAU SDK for Unity.
+Step-by-step guide for expanding the Shibuya Open World city from 1 tile to 4 LOD2 tiles + underground using PLATEAU SDK for Unity.
 
 ## Prerequisites
 

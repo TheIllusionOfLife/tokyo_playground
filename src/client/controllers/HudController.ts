@@ -6,6 +6,7 @@ import {
 	GuiService,
 	HapticService,
 	Players,
+	ReplicatedStorage,
 	RunService,
 	SoundService,
 	UserInputService,
@@ -32,6 +33,15 @@ export class HudController implements OnStart {
 	onStart() {
 		print("[HudController] Client initialized");
 		this.wireNetworkEvents();
+
+		// Delay React UI mount until loading screen finishes so React's
+		// ScreenGui tree doesn't render on top of the ReplicatedFirst loading screen.
+		const loadingDone = ReplicatedStorage.FindFirstChild("LoadingDone") as
+			| BoolValue
+			| undefined;
+		if (loadingDone && !loadingDone.Value) {
+			loadingDone.GetPropertyChangedSignal("Value").Wait();
+		}
 		this.mountReactUi();
 		clientEvents.playerReady.fire();
 		clientEvents.reportPlatform.fire(this.detectPlatform());

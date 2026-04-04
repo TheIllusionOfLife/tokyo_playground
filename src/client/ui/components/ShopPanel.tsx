@@ -1,6 +1,7 @@
 import React, { useState } from "@rbxts/react";
 import { useSelector } from "@rbxts/react-reflex";
 import { clientEvents } from "client/network";
+import { VEHICLE_ICON_IDS } from "shared/constants";
 import { t } from "shared/localization";
 import {
 	L_SHOP,
@@ -308,11 +309,11 @@ function VehicleCard({
 		buttonColor = Color3.fromRGB(80, 50, 50);
 		active = false;
 	} else if (!canAfford) {
-		buttonText = t(L_SHOP_NEED_PTS);
+		buttonText = vehicle.price > 0 ? `${vehicle.price}pts` : "Free";
 		buttonColor = Color3.fromRGB(80, 50, 50);
 		active = false;
 	} else {
-		buttonText = t(L_SHOP_BUY);
+		buttonText = vehicle.price > 0 ? `${vehicle.price}pts` : "Free";
 		buttonColor = Color3.fromRGB(80, 200, 120);
 		active = true;
 	}
@@ -320,7 +321,7 @@ function VehicleCard({
 	return (
 		<frame
 			key={vehicle.id}
-			Size={new UDim2(0, 150, 0, 140)}
+			Size={new UDim2(0, 140, 0, 84)}
 			BackgroundColor3={Color3.fromRGB(35, 35, 50)}
 			BackgroundTransparency={0.2}
 			BorderSizePixel={0}
@@ -328,11 +329,27 @@ function VehicleCard({
 		>
 			<uicorner CornerRadius={new UDim(0, 8)} />
 			<uistroke
-				Color={Color3.fromRGB(60, 60, 80)}
-				Thickness={1}
-				Transparency={0.3}
+				Color={Color3.fromRGB(100, 100, 140)}
+				Thickness={1.5}
+				Transparency={0.1}
 			/>
-			{/* Colored icon area */}
+			{/* Family tag (inside card, top-right) */}
+			<textlabel
+				Size={new UDim2(0, 48, 0, 14)}
+				Position={new UDim2(1, -4, 0, 2)}
+				AnchorPoint={new Vector2(1, 0)}
+				BackgroundColor3={Color3.fromRGB(0, 0, 0)}
+				BackgroundTransparency={0.4}
+				TextColor3={Color3.fromRGB(220, 220, 240)}
+				TextScaled={true}
+				Font={Enum.Font.GothamBold}
+				Text={t(info.familyTag)}
+				ZIndex={2}
+			>
+				<uicorner CornerRadius={new UDim(0, 4)} />
+				<uitextsizeconstraint MaxTextSize={10} />
+			</textlabel>
+			{/* Colored icon area with name */}
 			<frame
 				Size={new UDim2(1, 0, 0, 44)}
 				BackgroundColor3={info.accentColor}
@@ -340,58 +357,49 @@ function VehicleCard({
 				BorderSizePixel={0}
 			>
 				<uicorner CornerRadius={new UDim(0, 8)} />
+				{VEHICLE_ICON_IDS[vehicle.id] !== undefined &&
+				VEHICLE_ICON_IDS[vehicle.id] !== "rbxassetid://0" ? (
+					<imagelabel
+						Size={new UDim2(0, 32, 0, 32)}
+						Position={new UDim2(0, 6, 0.5, 0)}
+						AnchorPoint={new Vector2(0, 0.5)}
+						BackgroundTransparency={1}
+						Image={VEHICLE_ICON_IDS[vehicle.id]}
+						ImageColor3={Color3.fromRGB(255, 255, 255)}
+						ScaleType={Enum.ScaleType.Fit}
+					/>
+				) : (
+					<textlabel
+						Size={new UDim2(0, 28, 0, 28)}
+						Position={new UDim2(0, 8, 0.5, 0)}
+						AnchorPoint={new Vector2(0, 0.5)}
+						BackgroundTransparency={1}
+						TextScaled={true}
+						Text={info.emoji}
+						Font={Enum.Font.GothamBold}
+						TextColor3={Color3.fromRGB(255, 255, 255)}
+					/>
+				)}
+				{/* Vehicle name (next to icon) */}
 				<textlabel
-					Size={new UDim2(0, 32, 0, 32)}
-					Position={new UDim2(0, 6, 0.5, 0)}
+					Size={new UDim2(1, -46, 0, 24)}
+					Position={new UDim2(0, 42, 0.5, 0)}
 					AnchorPoint={new Vector2(0, 0.5)}
 					BackgroundTransparency={1}
-					TextScaled={true}
-					Text={info.emoji}
-					Font={Enum.Font.GothamBold}
 					TextColor3={Color3.fromRGB(255, 255, 255)}
-				/>
-				{/* Family tag */}
-				<textlabel
-					Size={new UDim2(0, 50, 0, 14)}
-					Position={new UDim2(1, -4, 0, 4)}
-					AnchorPoint={new Vector2(1, 0)}
-					BackgroundColor3={Color3.fromRGB(0, 0, 0)}
-					BackgroundTransparency={0.5}
-					TextColor3={Color3.fromRGB(200, 200, 220)}
 					TextScaled={true}
-					Font={Enum.Font.Gotham}
-					Text={t(info.familyTag)}
+					Font={Enum.Font.GothamBold}
+					Text={vehicle.name}
+					TextXAlignment={Enum.TextXAlignment.Left}
 				>
-					<uicorner CornerRadius={new UDim(0, 3)} />
+					<uitextsizeconstraint MaxTextSize={15} />
 				</textlabel>
 			</frame>
-			{/* Vehicle name */}
-			<textlabel
-				Size={new UDim2(1, -8, 0, 20)}
-				Position={new UDim2(0, 4, 0, 48)}
-				BackgroundTransparency={1}
-				TextColor3={Color3.fromRGB(230, 230, 230)}
-				TextScaled={true}
-				Font={Enum.Font.GothamBold}
-				Text={vehicle.name}
-				TextXAlignment={Enum.TextXAlignment.Left}
-			/>
-			{/* Price */}
-			<textlabel
-				Size={new UDim2(1, -8, 0, 14)}
-				Position={new UDim2(0, 4, 0, 70)}
-				BackgroundTransparency={1}
-				TextColor3={Color3.fromRGB(150, 150, 200)}
-				TextScaled={true}
-				Font={Enum.Font.Gotham}
-				Text={vehicle.price > 0 ? `${vehicle.price}pts` : "Free"}
-				TextXAlignment={Enum.TextXAlignment.Left}
-			/>
-			{/* Action button */}
+			{/* Action button (shows price for unacquired, EQUIP/UNEQUIP for owned) */}
 			<textbutton
-				Size={new UDim2(1, -16, 0, 26)}
-				Position={new UDim2(0.5, 0, 0, 90)}
-				AnchorPoint={new Vector2(0.5, 0)}
+				Size={new UDim2(1, -12, 0, 28)}
+				Position={new UDim2(0.5, 0, 1, -6)}
+				AnchorPoint={new Vector2(0.5, 1)}
 				BackgroundColor3={buttonColor}
 				TextColor3={Color3.fromRGB(255, 255, 255)}
 				TextScaled={true}
@@ -434,61 +442,25 @@ export function ShopPanel() {
 	const matchPhase = useSelector((state: GameStoreState) => state.matchPhase);
 	const [tab, setTab] = useState<ShopTab>("vehicles");
 
-	// Hide during gameplay phases (Countdown through Rewarding)
-	const hideButton =
-		matchPhase === MatchPhase.Countdown ||
-		matchPhase === MatchPhase.Preparing ||
-		matchPhase === MatchPhase.InProgress ||
-		matchPhase === MatchPhase.RoundOver ||
-		matchPhase === MatchPhase.Rewarding;
-
-	const onOpen = () => {
-		gameStore.setActiveOverlay(open ? "none" : "shop");
-		if (!open) {
+	// Request catalog data when shop opens (replaces old onOpen callback)
+	React.useEffect(() => {
+		if (open) {
 			setTab("vehicles");
 			clientEvents.requestShopCatalog.fire();
 			clientEvents.requestVehicleCatalog.fire();
 		}
-	};
+	}, [open]);
 
 	return (
 		<>
-			{/* Toggle button (top-right, above missions) */}
-			{!hideButton && (
-				<frame
-					key="ShopPanel"
-					Size={new UDim2(0, 100, 0, 30)}
-					Position={new UDim2(1, -10, 0, 48)}
-					AnchorPoint={new Vector2(1, 0)}
-					BackgroundColor3={Color3.fromRGB(70, 45, 25)}
-					BackgroundTransparency={0.3}
-					BorderSizePixel={0}
-					ZIndex={10}
-				>
-					<uicorner CornerRadius={new UDim(0, 15)} />
-					<textbutton
-						Size={new UDim2(1, 0, 1, 0)}
-						BackgroundTransparency={1}
-						TextColor3={Color3.fromRGB(255, 210, 100)}
-						TextScaled={true}
-						Font={Enum.Font.GothamBold}
-						Text={t(L_SHOP)}
-						Event={{ Activated: onOpen }}
-					>
-						<uipadding
-							PaddingLeft={new UDim(0, 8)}
-							PaddingRight={new UDim(0, 8)}
-						/>
-					</textbutton>
-				</frame>
-			)}
+			{/* Toggle button removed — now handled by ActionBar */}
 			{/* Full-screen overlay when open */}
 			{open ? (
 				<>
 					{/* Centered shop card */}
 					<frame
 						key="ShopOverlay"
-						Size={new UDim2(0.75, 0, 0.65, 0)}
+						Size={new UDim2(0.75, 0, 0.8, 0)}
 						Position={new UDim2(0.5, 0, 0.5, 0)}
 						AnchorPoint={new Vector2(0.5, 0.5)}
 						BackgroundColor3={Color3.fromRGB(20, 20, 40)}
@@ -590,7 +562,7 @@ export function ShopPanel() {
 							<uigridlayout
 								CellSize={
 									tab === "vehicles"
-										? new UDim2(0, 150, 0, 140)
+										? new UDim2(0, 140, 0, 84)
 										: new UDim2(0, 128, 0, 96)
 								}
 								CellPadding={

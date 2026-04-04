@@ -1,4 +1,4 @@
-# Release Guide: Tokyo Playground: Shibuya
+# Release Guide: Shibuya Open World
 
 ---
 

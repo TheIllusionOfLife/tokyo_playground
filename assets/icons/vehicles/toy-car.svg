@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- Rounded toy car - white silhouette -->
+  <g fill="white">
+    <!-- Body -->
+    <rect x="6" y="30" width="52" height="14" rx="6"/>
+    <!-- Cabin (rounded top) -->
+    <path d="M18 30 Q20 14 32 14 Q44 14 46 30 Z"/>
+    <!-- Windows (dark cutouts) -->
+    <path d="M22 30 Q24 20 32 20 Q40 20 42 30 Z" fill="#222"/>
+    <!-- Window divider -->
+    <rect x="31" y="18" width="2" height="14" fill="white"/>
+    <!-- Left wheel -->
+    <circle cx="16" cy="46" r="6"/>
+    <circle cx="16" cy="46" r="3" fill="#222"/>
+    <!-- Right wheel -->
+    <circle cx="48" cy="46" r="6"/>
+    <circle cx="48" cy="46" r="3" fill="#222"/>
+    <!-- Headlight -->
+    <circle cx="54" cy="34" r="2.5" fill="#ccc"/>
+  </g>
+</svg>

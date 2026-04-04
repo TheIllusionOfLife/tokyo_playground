@@ -6,17 +6,17 @@ Copy-paste-ready metadata for the Roblox game page and store listing.
 
 ## Game Name
 
-**Tokyo Playground: Shibuya**
+**Shibuya Open World**
 
 ---
 
 ## Short Description (EN)
 
-Classic street games at Tokyo scale. Hide, chase, and ride through real Shibuya.
+Open world party games in real Shibuya. Hide, chase, and ride through the city.
 
 ## Long Description (EN)
 
-Welcome to Shibuya, where the whole city is your playground.
+Welcome to Shibuya Open World, where the whole city is your playground.
 
 Jump into classic games you already know: hide-and-seek with a twist, chaotic tag at the famous Scramble Crossing, and a wild item-collecting race on Hachi the dog. Every round is fast, every round is different.
 
@@ -26,13 +26,13 @@ Bring your friends or make new ones. The next game starts in seconds.
 
 ## Short Description (JA)
 
-渋谷の街がまるごと遊び場。かくれんぼ、鬼ごっこ、ハチ公ライド。
+渋谷オープンワールド。かくれんぼ、鬼ごっこ、ハチ公ライド。
 
 ## Long Description (JA)
 
-渋谷の街が、まるごと遊び場になった。
+渋谷の街が、まるごとオープンワールドになった。
 
-みんなが知ってる遊びを、東京スケールで。路地裏のかくれんぼ、スクランブル交差点の鬼ごっこ、ハチ公に乗ってアイテム集め。毎ラウンド速くて、毎ラウンド違う。
+みんなが知ってる遊びを、渋谷スケールで。路地裏のかくれんぼ、スクランブル交差点の鬼ごっこ、ハチ公に乗ってアイテム集め。毎ラウンド速くて、毎ラウンド違う。
 
 試合の合間には本物の渋谷を探検。名所めぐり、NPCとの出会い、神社でおみくじ、夜空の花火。ポイントを貯めてレベルアップ、ラッキースピンで帽子やトレイルをアンロックしよう。
 

@@ -1,4 +1,4 @@
-# Screenshot & Video Guide: Tokyo Playground: Shibuya
+# Screenshot & Video Guide: Shibuya Open World
 
 ---
 
@@ -69,7 +69,7 @@
 | 13-20s | Hachi Ride: mounting Hachi, items falling, evolution flash | BGM peak |
 | 20-25s | Exploration: stamps, NPC, shrine, cosmetics | BGM softens |
 | 25-28s | Group shot: multiple players with cosmetics at Hachiko statue | BGM resolves |
-| 28-30s | Title card: "Tokyo Playground: Shibuya" + "Play Now" | BGM ends |
+| 28-30s | Title card: "Shibuya Open World" + "Play Now" | BGM ends |
 
 ### Recording Tips
 - Use Roblox's built-in screen recorder or OBS

@@ -8,6 +8,9 @@ include/
 *.rbxlx.lock
 flamework.build
 
+# Exported PNGs (regenerate from SVGs via sharp-cli)
+assets/icons/png/
+
 # Binary tools (use GitHub Releases for distribution)
 plateau_importer.zip
 

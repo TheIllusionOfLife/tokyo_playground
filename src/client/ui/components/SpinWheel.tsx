@@ -30,7 +30,7 @@ export function SpinWheel() {
 	const [resultScale, setResultScale] = useState(1);
 	const wheelRef = useRef<Frame>();
 	const centerTextRef = useRef<TextLabel>();
-	const sparkleRefs = useRef<(TextLabel | undefined)[]>([]);
+	const sparkleRefs = useRef<(Frame | undefined)[]>([]);
 	const rotationRef = useRef(0);
 	const scaleDelayRef = useRef<thread>();
 
@@ -65,7 +65,7 @@ export function SpinWheel() {
 				const sparkle = sparkleRefs.current[i];
 				if (!sparkle) continue;
 				const rad = ((rot * 0.7 + SPARKLE_OFFSETS[i]) * math.pi) / 180;
-				const orbitR = 95;
+				const orbitR = 55;
 				sparkle.Position = new UDim2(
 					0.5,
 					math.cos(rad) * orbitR,
@@ -84,51 +84,7 @@ export function SpinWheel() {
 
 	return (
 		<>
-			{/* Toggle button in topbar zone */}
-			<screengui
-				key="SpinButtonGui"
-				ResetOnSpawn={false}
-				ScreenInsets={Enum.ScreenInsets.None}
-				DisplayOrder={4}
-				ZIndexBehavior={Enum.ZIndexBehavior.Sibling}
-			>
-				<frame
-					key="SpinButton"
-					Size={new UDim2(0, 100, 0, 30)}
-					Position={new UDim2(1, -120, 0, 20)}
-					AnchorPoint={new Vector2(1, 0)}
-					BackgroundColor3={
-						alreadySpun
-							? Color3.fromRGB(60, 45, 20)
-							: Color3.fromRGB(90, 50, 20)
-					}
-					BackgroundTransparency={0.2}
-					BorderSizePixel={0}
-				>
-					<uicorner CornerRadius={new UDim(0, 15)} />
-					<textbutton
-						Size={new UDim2(1, 0, 1, 0)}
-						BackgroundTransparency={1}
-						TextColor3={
-							alreadySpun
-								? Color3.fromRGB(180, 160, 100)
-								: Color3.fromRGB(255, 220, 100)
-						}
-						TextScaled={true}
-						Font={Enum.Font.GothamBold}
-						Text={`\u{1F3B0} ${t("spin_toggle")}`}
-						Event={{
-							Activated: () =>
-								gameStore.setActiveOverlay(open ? "none" : ("spin" as never)),
-						}}
-					>
-						<uipadding
-							PaddingLeft={new UDim(0, 8)}
-							PaddingRight={new UDim(0, 8)}
-						/>
-					</textbutton>
-				</frame>
-			</screengui>
+			{/* Toggle button removed — now handled by ActionBar */}
 			{/* Spin overlay (separate ScreenGui with default insets) */}
 			{open ? (
 				<screengui
@@ -139,19 +95,32 @@ export function SpinWheel() {
 				>
 					<frame
 						key="SpinOverlay"
-						Size={new UDim2(0, 280, 0, 300)}
+						Size={new UDim2(0, 260, 0.75, 0)}
 						Position={new UDim2(0.5, 0, 0.5, 0)}
 						AnchorPoint={new Vector2(0.5, 0.5)}
-						BackgroundColor3={Color3.fromRGB(20, 15, 35)}
-						BackgroundTransparency={0.05}
+						BackgroundColor3={Color3.fromRGB(16, 12, 30)}
+						BackgroundTransparency={0}
 						BorderSizePixel={0}
 						ZIndex={19}
 					>
-						<uicorner CornerRadius={new UDim(0, 16)} />
+						<uicorner CornerRadius={new UDim(0, 18)} />
+						<uisizeconstraint
+							MinSize={new Vector2(220, 220)}
+							MaxSize={new Vector2(280, 340)}
+						/>
 						<uistroke
-							Color={Color3.fromRGB(255, 200, 100)}
-							Thickness={2}
-							Transparency={0.3}
+							Color={Color3.fromRGB(255, 190, 80)}
+							Thickness={2.5}
+							Transparency={0.15}
+						/>
+						<uigradient
+							Color={
+								new ColorSequence(
+									Color3.fromRGB(25, 20, 50),
+									Color3.fromRGB(12, 8, 24),
+								)
+							}
+							Rotation={90}
 						/>
 						{/* Close button */}
 						<textbutton
@@ -182,58 +151,44 @@ export function SpinWheel() {
 							Text={t("spin_title")}
 							ZIndex={19}
 						/>
-						{/* Wheel container with rotation */}
+						{/* Spinning coin container */}
 						<frame
 							ref={wheelRef}
-							Size={new UDim2(0, 160, 0, 160)}
-							Position={new UDim2(0.5, 0, 0.5, -15)}
+							Size={new UDim2(0, 90, 0, 90)}
+							Position={new UDim2(0.5, 0, 0.48, 0)}
 							AnchorPoint={new Vector2(0.5, 0.5)}
 							BackgroundTransparency={1}
 							BorderSizePixel={0}
 							Rotation={0}
 							ZIndex={19}
 						>
-							{/* Colored segments (8 wedge-like sections) */}
-							{SPIN_REWARDS.map((reward, i) => {
-								const angle = (i / SPIN_REWARDS.size()) * 360;
-								const segColor = SEGMENT_COLORS[i % SEGMENT_COLORS.size()];
-								const dimmed = alreadySpun
-									? new Color3(
-											segColor.R * 0.4,
-											segColor.G * 0.4,
-											segColor.B * 0.4,
-										)
-									: segColor;
-								return (
-									<frame
-										key={`seg-${i}`}
-										Size={new UDim2(0, 28, 0, 60)}
-										Position={new UDim2(0.5, 0, 0.5, 0)}
-										AnchorPoint={new Vector2(0.5, 1)}
-										BackgroundColor3={dimmed}
-										BackgroundTransparency={0.15}
-										BorderSizePixel={0}
-										Rotation={angle}
-										ZIndex={19}
-									>
-										<uicorner CornerRadius={new UDim(0, 4)} />
-										<textlabel
-											Size={new UDim2(1, 0, 0.5, 0)}
-											Position={new UDim2(0, 0, 0, 2)}
-											BackgroundTransparency={1}
-											TextColor3={Color3.fromRGB(255, 255, 255)}
-											TextScaled={true}
-											Font={Enum.Font.GothamBold}
-											Text={`${reward}`}
-											ZIndex={20}
-											Rotation={0}
-										/>
-									</frame>
-								);
-							})}
-							{/* Center circle */}
+							{/* Outer glow ring */}
 							<frame
-								Size={new UDim2(0, 50, 0, 50)}
+								Size={new UDim2(0, 82, 0, 82)}
+								Position={new UDim2(0.5, 0, 0.5, 0)}
+								AnchorPoint={new Vector2(0.5, 0.5)}
+								BackgroundColor3={Color3.fromRGB(255, 200, 50)}
+								BackgroundTransparency={0.75}
+								BorderSizePixel={0}
+								ZIndex={19}
+							>
+								<uicorner CornerRadius={new UDim(1, 0)} />
+							</frame>
+							{/* Middle ring */}
+							<frame
+								Size={new UDim2(0, 70, 0, 70)}
+								Position={new UDim2(0.5, 0, 0.5, 0)}
+								AnchorPoint={new Vector2(0.5, 0.5)}
+								BackgroundColor3={Color3.fromRGB(255, 200, 50)}
+								BackgroundTransparency={0.5}
+								BorderSizePixel={0}
+								ZIndex={20}
+							>
+								<uicorner CornerRadius={new UDim(1, 0)} />
+							</frame>
+							{/* Center coin */}
+							<frame
+								Size={new UDim2(0, 56, 0, 56)}
 								Position={new UDim2(0.5, 0, 0.5, 0)}
 								AnchorPoint={new Vector2(0.5, 0.5)}
 								BackgroundColor3={Color3.fromRGB(255, 200, 50)}
@@ -241,46 +196,56 @@ export function SpinWheel() {
 								ZIndex={21}
 							>
 								<uicorner CornerRadius={new UDim(1, 0)} />
-								<uistroke Color={Color3.fromRGB(255, 160, 20)} Thickness={3} />
+								<uistroke Color={Color3.fromRGB(255, 160, 20)} Thickness={4} />
+								<uigradient
+									Color={
+										new ColorSequence(
+											Color3.fromRGB(255, 230, 100),
+											Color3.fromRGB(255, 170, 20),
+										)
+									}
+									Rotation={90}
+								/>
 								<textlabel
 									ref={centerTextRef}
 									Size={new UDim2(resultScale, 0, resultScale, 0)}
 									Position={new UDim2(0.5, 0, 0.5, 0)}
 									AnchorPoint={new Vector2(0.5, 0.5)}
 									BackgroundTransparency={1}
-									TextColor3={Color3.fromRGB(50, 30, 10)}
+									TextColor3={Color3.fromRGB(60, 30, 0)}
 									TextScaled={true}
 									Font={Enum.Font.FredokaOne}
 									Text={lastReward > 0 ? `+${lastReward}` : "\u{2B50}"}
 									ZIndex={22}
 									Rotation={0}
-								/>
+								>
+									<uitextsizeconstraint MaxTextSize={30} />
+								</textlabel>
 							</frame>
 						</frame>
-						{/* Sparkle stars (positioned imperatively via refs) */}
+						{/* Glow dots orbiting the wheel */}
 						{SPARKLE_OFFSETS.map((_, i) => (
-							<textlabel
-								key={`sparkle-${i}`}
+							<frame
+								key={`glow-${i}`}
 								ref={(ref) => {
 									sparkleRefs.current[i] = ref;
 								}}
-								Size={new UDim2(0, 12, 0, 12)}
+								Size={new UDim2(0, 6, 0, 6)}
 								Position={new UDim2(0.5, 0, 0.5, 0)}
 								AnchorPoint={new Vector2(0.5, 0.5)}
-								BackgroundTransparency={1}
-								TextColor3={Color3.fromRGB(255, 255, 200)}
-								TextTransparency={alreadySpun ? 0.7 : 0.2}
-								TextScaled={true}
-								Font={Enum.Font.GothamBold}
-								Text={"\u{2728}"}
+								BackgroundColor3={Color3.fromRGB(255, 220, 120)}
+								BackgroundTransparency={alreadySpun ? 0.7 : 0.2}
+								BorderSizePixel={0}
 								ZIndex={20}
-							/>
+							>
+								<uicorner CornerRadius={new UDim(1, 0)} />
+							</frame>
 						))}
 						{/* Spin / Come back tomorrow button */}
 						<textbutton
-							Size={new UDim2(0.65, 0, 0, 40)}
-							Position={new UDim2(0.5, 0, 1, -45)}
-							AnchorPoint={new Vector2(0.5, 0)}
+							Size={new UDim2(0.7, 0, 0, 38)}
+							Position={new UDim2(0.5, 0, 1, -14)}
+							AnchorPoint={new Vector2(0.5, 1)}
 							BackgroundColor3={
 								spinning || alreadySpun
 									? Color3.fromRGB(80, 80, 80)

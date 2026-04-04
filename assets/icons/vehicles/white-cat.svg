@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- White cat face - white silhouette -->
+  <g fill="white">
+    <!-- Left ear (pointed) -->
+    <polygon points="10,10 18,4 22,22"/>
+    <!-- Right ear (pointed) -->
+    <polygon points="54,10 46,4 42,22"/>
+    <!-- Head -->
+    <ellipse cx="32" cy="34" rx="20" ry="20"/>
+    <!-- Eyes (dark cutouts) -->
+    <ellipse cx="24" cy="30" rx="3" ry="4" fill="#222"/>
+    <ellipse cx="40" cy="30" rx="3" ry="4" fill="#222"/>
+    <!-- Nose -->
+    <polygon points="32,37 30,40 34,40" fill="#222"/>
+    <!-- Whiskers -->
+    <line x1="6" y1="36" x2="20" y2="38" stroke="#222" stroke-width="1.5"/>
+    <line x1="6" y1="42" x2="20" y2="40" stroke="#222" stroke-width="1.5"/>
+    <line x1="58" y1="36" x2="44" y2="38" stroke="#222" stroke-width="1.5"/>
+    <line x1="58" y1="42" x2="44" y2="40" stroke="#222" stroke-width="1.5"/>
+  </g>
+</svg>

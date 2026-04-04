@@ -1,4 +1,4 @@
-# Roblox Ecosystem Research for Tokyo Playground
+# Roblox Ecosystem Research for Shibuya Open World
 
 > Researched: March 2026
 
@@ -47,7 +47,7 @@
 - Still need Roblox Studio for the visual editor (roblox-ts handles scripts only)
 - Smaller community = fewer examples, slower support
 
-### Verdict for Tokyo Playground
+### Verdict for Shibuya Open World
 roblox-ts is the recommended choice given:
 - TypeScript familiarity
 - Git-based workflow requirement
@@ -97,7 +97,7 @@ Engine-level services for developers. Key capabilities:
 - **Context-blind**: Cannot see your whole game; may place objects in wrong locations
 - **Moderation filters**: Strict safety filters block some benign prompts (e.g., "broken glass")
 
-### Impact on Tokyo Playground World-Building
+### Impact on Shibuya Open World World-Building
 Roblox AI **significantly reduces** but does not eliminate manual labor:
 - Generate individual buildings, props, vending machines from prompts
 - Generate terrain and ground materials
@@ -268,7 +268,7 @@ Search terms that yield results:
 
 ## 8. Development Toolchain
 
-### Recommended Stack for Tokyo Playground
+### Recommended Stack for Shibuya Open World
 
 | Layer | Tool |
 |-------|------|
@@ -504,7 +504,7 @@ Roblox has **Team Create** — built-in real-time collaboration in Studio (like 
 - Built-in version history with rollback
 - No merge conflicts — Roblox handles concurrent edits
 
-**2-person team split (Tokyo Playground):**
+**2-person team split (Shibuya Open World):**
 
 | Role | Tools | What they do |
 |------|-------|-------------|
@@ -630,7 +630,7 @@ Hot-reload libraries (Rewire) can sync changes into a running playtest without f
 - 13+ games are invisible to under-13 accounts with parental restrictions
 - Unrated games are hidden from ALL under-13 users by default
 
-**Tokyo Playground target: 9+**
+**Shibuya Open World target: 9+**
 - Captures entire 9-12 bracket (~20% of platform) without parental consent issues
 - No visibility penalty with any age group
 - Mild cartoon violence (tag, dodgeball, can kick) is fine at 9+

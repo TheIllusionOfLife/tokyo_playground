@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- White dragon head - white silhouette -->
+  <g fill="white">
+    <!-- Head -->
+    <ellipse cx="32" cy="32" rx="18" ry="16"/>
+    <!-- Left horn -->
+    <polygon points="14,18 8,4 20,16"/>
+    <!-- Right horn -->
+    <polygon points="50,18 56,4 44,16"/>
+    <!-- Snout (elongated) -->
+    <ellipse cx="32" cy="42" rx="10" ry="8"/>
+    <!-- Nostrils -->
+    <circle cx="28" cy="42" r="2" fill="#222"/>
+    <circle cx="36" cy="42" r="2" fill="#222"/>
+    <!-- Eyes (fierce, narrow) -->
+    <path d="M20 28 L28 26 L26 32 Z" fill="#222"/>
+    <path d="M44 28 L36 26 L38 32 Z" fill="#222"/>
+    <!-- Jaw ridge -->
+    <path d="M22 46 Q32 52 42 46" fill="none" stroke="#ccc" stroke-width="2"/>
+    <!-- Small spines on top -->
+    <polygon points="26,16 28,8 30,16" fill="#eee"/>
+    <polygon points="34,16 36,8 38,16" fill="#eee"/>
+  </g>
+</svg>
