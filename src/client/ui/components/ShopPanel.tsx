@@ -376,10 +376,11 @@ function VehicleCard({
 				>
 					<uicorner CornerRadius={new UDim(0, 3)} />
 				</textlabel>
-				{/* Vehicle name (overlaid at bottom of accent area) */}
+				{/* Vehicle name (next to icon, vertically centered) */}
 				<textlabel
-					Size={new UDim2(1, -8, 0, 16)}
-					Position={new UDim2(0, 4, 1, -18)}
+					Size={new UDim2(1, -48, 0, 20)}
+					Position={new UDim2(0, 44, 0.5, 0)}
+					AnchorPoint={new Vector2(0, 0.5)}
 					BackgroundTransparency={1}
 					TextColor3={Color3.fromRGB(255, 255, 255)}
 					TextScaled={true}

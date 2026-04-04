@@ -152,38 +152,31 @@ export function ActionBar() {
 	const hasClaimable = hasClaimableMission || hasClaimablePoi;
 
 	return (
-		<screengui
-			key="ActionBarGui"
-			ResetOnSpawn={false}
-			ScreenInsets={Enum.ScreenInsets.None}
-			DisplayOrder={4}
-			ZIndexBehavior={Enum.ZIndexBehavior.Sibling}
+		<frame
+			key="ActionBarContainer"
+			AutomaticSize={Enum.AutomaticSize.X}
+			Size={new UDim2(0, 0, 0, 58)}
+			Position={new UDim2(1, -10, 0, 10)}
+			AnchorPoint={new Vector2(1, 0)}
+			BackgroundTransparency={1}
+			BorderSizePixel={0}
+			ZIndex={10}
 		>
-			<frame
-				key="ActionBarContainer"
-				AutomaticSize={Enum.AutomaticSize.X}
-				Size={new UDim2(0, 0, 0, 58)}
-				Position={new UDim2(1, -14, 0, 10)}
-				AnchorPoint={new Vector2(1, 0)}
-				BackgroundTransparency={1}
-				BorderSizePixel={0}
-			>
-				<uilistlayout
-					FillDirection={Enum.FillDirection.Horizontal}
-					HorizontalAlignment={Enum.HorizontalAlignment.Right}
-					VerticalAlignment={Enum.VerticalAlignment.Center}
-					Padding={new UDim(0, 6)}
-					SortOrder={Enum.SortOrder.LayoutOrder}
+			<uilistlayout
+				FillDirection={Enum.FillDirection.Horizontal}
+				HorizontalAlignment={Enum.HorizontalAlignment.Right}
+				VerticalAlignment={Enum.VerticalAlignment.Center}
+				Padding={new UDim(0, 6)}
+				SortOrder={Enum.SortOrder.LayoutOrder}
+			/>
+			{ACTION_ITEMS.map((item) => (
+				<ActionBarButton
+					key={item.id}
+					item={item}
+					isActive={activeOverlay === item.id}
+					showNotifDot={item.id === "missions" && hasClaimable}
 				/>
-				{ACTION_ITEMS.map((item) => (
-					<ActionBarButton
-						key={item.id}
-						item={item}
-						isActive={activeOverlay === item.id}
-						showNotifDot={item.id === "missions" && hasClaimable}
-					/>
-				))}
-			</frame>
-		</screengui>
+			))}
+		</frame>
 	);
 }

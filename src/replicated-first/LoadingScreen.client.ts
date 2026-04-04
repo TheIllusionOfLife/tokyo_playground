@@ -55,12 +55,14 @@ ReplicatedFirst.RemoveDefaultLoadingScreen();
 const locale = player.LocaleId;
 const isJa = locale.sub(1, 2) === "ja";
 
-// Dark background
+// Dark background (explicitly opaque to cover 3D world during load)
 const bg = new Instance("Frame");
 bg.Name = "Background";
 bg.Size = new UDim2(1, 0, 1, 0);
 bg.BackgroundColor3 = Color3.fromRGB(10, 12, 24);
+bg.BackgroundTransparency = 0;
 bg.BorderSizePixel = 0;
+bg.ZIndex = 10;
 bg.Parent = screenGui;
 
 // Game logo (replaces plain text title if asset is uploaded)
