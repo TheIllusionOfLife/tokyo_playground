@@ -95,7 +95,7 @@ export function SpinWheel() {
 				>
 					<frame
 						key="SpinOverlay"
-						Size={new UDim2(0, 280, 0.7, 0)}
+						Size={new UDim2(0.55, 0, 0.85, 0)}
 						Position={new UDim2(0.5, 0, 0.5, 0)}
 						AnchorPoint={new Vector2(0.5, 0.5)}
 						BackgroundColor3={Color3.fromRGB(16, 12, 30)}
@@ -104,6 +104,10 @@ export function SpinWheel() {
 						ZIndex={19}
 					>
 						<uicorner CornerRadius={new UDim(0, 18)} />
+						<uisizeconstraint
+							MinSize={new Vector2(240, 260)}
+							MaxSize={new Vector2(320, 380)}
+						/>
 						<uistroke
 							Color={Color3.fromRGB(255, 190, 80)}
 							Thickness={2.5}
@@ -150,8 +154,8 @@ export function SpinWheel() {
 						{/* Reward ring: 8 colored circles arranged around center */}
 						<frame
 							ref={wheelRef}
-							Size={new UDim2(0, 220, 0, 220)}
-							Position={new UDim2(0.5, 0, 0.46, 0)}
+							Size={new UDim2(0, 190, 0, 190)}
+							Position={new UDim2(0.5, 0, 0.47, 0)}
 							AnchorPoint={new Vector2(0.5, 0.5)}
 							BackgroundTransparency={1}
 							BorderSizePixel={0}
@@ -160,7 +164,7 @@ export function SpinWheel() {
 						>
 							{SPIN_REWARDS.map((reward, i) => {
 								const angle = ((i / SPIN_REWARDS.size()) * 360 * math.pi) / 180;
-								const radius = 80;
+								const radius = 68;
 								const x = math.cos(angle) * radius;
 								const y = math.sin(angle) * radius;
 								const segColor = SEGMENT_COLORS[i % SEGMENT_COLORS.size()];
@@ -174,7 +178,7 @@ export function SpinWheel() {
 								return (
 									<frame
 										key={`reward-${i}`}
-										Size={new UDim2(0, 36, 0, 36)}
+										Size={new UDim2(0, 30, 0, 30)}
 										Position={new UDim2(0.5, x, 0.5, y)}
 										AnchorPoint={new Vector2(0.5, 0.5)}
 										BackgroundColor3={dimmed}
@@ -203,7 +207,7 @@ export function SpinWheel() {
 							})}
 							{/* Outer glow ring */}
 							<frame
-								Size={new UDim2(0, 90, 0, 90)}
+								Size={new UDim2(0, 76, 0, 76)}
 								Position={new UDim2(0.5, 0, 0.5, 0)}
 								AnchorPoint={new Vector2(0.5, 0.5)}
 								BackgroundColor3={Color3.fromRGB(255, 200, 50)}
@@ -215,7 +219,7 @@ export function SpinWheel() {
 							</frame>
 							{/* Center coin */}
 							<frame
-								Size={new UDim2(0, 70, 0, 70)}
+								Size={new UDim2(0, 58, 0, 58)}
 								Position={new UDim2(0.5, 0, 0.5, 0)}
 								AnchorPoint={new Vector2(0.5, 0.5)}
 								BackgroundColor3={Color3.fromRGB(255, 200, 50)}
