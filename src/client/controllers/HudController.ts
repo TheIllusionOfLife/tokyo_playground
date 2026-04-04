@@ -34,19 +34,15 @@ export class HudController implements OnStart {
 		print("[HudController] Client initialized");
 		this.wireNetworkEvents();
 
-		// Mount React BEFORE the loading wait. react-roblox's createRoot calls
-		// clearContainer on first render, which destroys ALL existing PlayerGui
-		// children. Mounting early ensures the engine's TouchGui (mobile thumbstick
-		// + jump button) hasn't been created yet, so it survives. The loading
-		// screen (DisplayOrder=100) stays on top of React ScreenGuis (0-5).
-		this.mountReactUi();
-
+		// Wait for loading screen to finish so React ScreenGuis don't render
+		// on top of the ReplicatedFirst loading screen.
 		const loadingDone = ReplicatedStorage.FindFirstChild("LoadingDone") as
 			| BoolValue
 			| undefined;
 		if (loadingDone && !loadingDone.Value) {
 			loadingDone.GetPropertyChangedSignal("Value").Wait();
 		}
+		this.mountReactUi();
 		clientEvents.playerReady.fire();
 		clientEvents.reportPlatform.fire(this.detectPlatform());
 		clientEvents.requestShopCatalog.fire();
@@ -477,7 +473,17 @@ export class HudController implements OnStart {
 			existing.Destroy();
 		}
 
-		this.root = ReactRoblox.createRoot(playerGui);
+		// Mount React into a dedicated Folder so clearContainer (called on
+		// first render) only destroys React-owned instances, not the engine's
+		// TouchGui (mobile thumbstick + jump). ScreenGuis work as descendants
+		// of PlayerGui, not just direct children.
+		let container = playerGui.FindFirstChild("ReactRoot") as Folder | undefined;
+		if (!container) {
+			container = new Instance("Folder");
+			container.Name = "ReactRoot";
+			container.Parent = playerGui;
+		}
+		this.root = ReactRoblox.createRoot(container);
 		this.root.render(
 			React.createElement(
 				ReflexProvider,
