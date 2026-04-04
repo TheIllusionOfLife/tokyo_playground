@@ -95,7 +95,7 @@ export function SpinWheel() {
 				>
 					<frame
 						key="SpinOverlay"
-						Size={new UDim2(0, 300, 0, 330)}
+						Size={new UDim2(0, 280, 0.7, 0)}
 						Position={new UDim2(0.5, 0, 0.5, 0)}
 						AnchorPoint={new Vector2(0.5, 0.5)}
 						BackgroundColor3={Color3.fromRGB(16, 12, 30)}
