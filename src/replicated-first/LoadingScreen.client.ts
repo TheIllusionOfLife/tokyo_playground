@@ -20,8 +20,8 @@ const player = Players.LocalPlayer;
 const playerGui = player.WaitForChild("PlayerGui") as PlayerGui;
 
 // Asset IDs (replace with real IDs after uploading PNGs)
-const HACHI_SPRITESHEET_ID = "rbxassetid://0"; // TODO: upload hachi-loading-spritesheet.png
-const GAME_LOGO_ID = "rbxassetid://0"; // TODO: upload shibuya-open-world-logo.png
+const HACHI_SPRITESHEET_ID = "rbxassetid://111475345325479";
+const GAME_LOGO_ID = "rbxassetid://0"; // TODO: generate and upload logo
 
 // Spritesheet config: 8 frames in a 4x2 grid, each 128x128
 const SPRITE_COLS = 4;

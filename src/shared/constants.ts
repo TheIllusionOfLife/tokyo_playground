@@ -610,34 +610,34 @@ export const SE_FOOD_TRUCK_JINGLE = "rbxassetid://7024340270"; // catchy jingle 
 export const SE_RAIN_AMBIENT = "rbxassetid://9112758242"; // rain ambience (reuses city ambient)
 export const SE_GOLDEN_HOUR_CHIME = "rbxassetid://6518811702"; // warm shimmer
 
-// ── Icon Assets (upload PNGs from assets/icons/, replace placeholder IDs) ───
+// ── Icon Assets ─────────────────────────────────────────────────────────
 // UI action bar icons
-export const ICON_SHOP = "rbxassetid://0"; // TODO: upload assets/icons/shop.png
-export const ICON_MISSIONS = "rbxassetid://0"; // TODO: upload assets/icons/missions.png
-export const ICON_SPIN = "rbxassetid://0"; // TODO: upload assets/icons/spin.png
-export const ICON_RANKS = "rbxassetid://0"; // TODO: upload assets/icons/ranks.png
-export const ICON_CLOCK = "rbxassetid://0"; // TODO: upload assets/icons/clock.png
+export const ICON_SHOP = "rbxassetid://99697323432075";
+export const ICON_MISSIONS = "rbxassetid://134386666895513";
+export const ICON_SPIN = "rbxassetid://104727328856191";
+export const ICON_RANKS = "rbxassetid://116304637844107";
+export const ICON_CLOCK = "rbxassetid://138491369732342";
 // Loading screen assets
-export const ICON_HACHI_SPRITESHEET = "rbxassetid://0"; // TODO: upload hachi-loading-spritesheet.png
-export const ICON_GAME_LOGO = "rbxassetid://0"; // TODO: upload shibuya-open-world-logo.png
-// Vehicle icons (keyed by VehicleId after upload)
+export const ICON_HACHI_SPRITESHEET = "rbxassetid://111475345325479";
+export const ICON_GAME_LOGO = "rbxassetid://0"; // TODO: generate and upload logo
+// Vehicle icons (keyed by VehicleId)
 export const VEHICLE_ICON_IDS: Record<string, string> = {
-	DefaultHachi: "rbxassetid://0", // TODO: upload vehicles/dog.png
-	WhiteCat: "rbxassetid://0", // TODO: upload vehicles/white-cat.png
-	CalicoCat: "rbxassetid://0", // TODO: upload vehicles/calico-cat.png
-	Bear: "rbxassetid://0", // TODO: upload vehicles/bear.png
-	ShibaInu: "rbxassetid://0", // TODO: upload vehicles/shiba-inu.png
-	Kitsune: "rbxassetid://0", // TODO: upload vehicles/kitsune.png
-	ManekiNeko: "rbxassetid://0", // TODO: upload vehicles/maneki-neko.png
-	Kart: "rbxassetid://0", // TODO: upload vehicles/kart.png
-	ToyCar: "rbxassetid://0", // TODO: upload vehicles/toy-car.png
-	ShibuyaBus: "rbxassetid://0", // TODO: upload vehicles/bus.png
-	Rickshaw: "rbxassetid://0", // TODO: upload vehicles/rickshaw.png
-	Skateboard: "rbxassetid://0", // TODO: upload vehicles/skateboard.png
-	Shinkansen: "rbxassetid://0", // TODO: upload vehicles/shinkansen.png
-	WhiteDragon: "rbxassetid://0", // TODO: upload vehicles/white-dragon.png
-	GreenDragon: "rbxassetid://0", // TODO: upload vehicles/green-dragon.png
-	Onigiri: "rbxassetid://0", // TODO: upload vehicles/onigiri.png
+	DefaultHachi: "rbxassetid://127934066909590",
+	WhiteCat: "rbxassetid://71170749017973",
+	CalicoCat: "rbxassetid://75919962396216",
+	Bear: "rbxassetid://88431777714829",
+	ShibaInu: "rbxassetid://72727673180072",
+	Kitsune: "rbxassetid://95368460002068",
+	ManekiNeko: "rbxassetid://93180019547282",
+	Kart: "rbxassetid://107913359057397",
+	ToyCar: "rbxassetid://77252525952967",
+	ShibuyaBus: "rbxassetid://94994396445423",
+	Rickshaw: "rbxassetid://79917989893525",
+	Skateboard: "rbxassetid://118718098074957",
+	Shinkansen: "rbxassetid://119440856455833",
+	WhiteDragon: "rbxassetid://71745805734415",
+	GreenDragon: "rbxassetid://79934237860092",
+	Onigiri: "rbxassetid://114117313020681",
 };
 
 // Streak bonuses — multiplier by consecutive games played (index = streak count, capped)
