@@ -147,10 +147,10 @@ export function SpinWheel() {
 							Text={t("spin_title")}
 							ZIndex={19}
 						/>
-						{/* Wheel container with rotation */}
+						{/* Reward ring: 8 colored circles arranged around center */}
 						<frame
 							ref={wheelRef}
-							Size={new UDim2(0, 180, 0, 180)}
+							Size={new UDim2(0, 220, 0, 220)}
 							Position={new UDim2(0.5, 0, 0.46, 0)}
 							AnchorPoint={new Vector2(0.5, 0.5)}
 							BackgroundTransparency={1}
@@ -158,9 +158,11 @@ export function SpinWheel() {
 							Rotation={0}
 							ZIndex={19}
 						>
-							{/* Colored segments (8 wedge-like sections) */}
 							{SPIN_REWARDS.map((reward, i) => {
-								const angle = (i / SPIN_REWARDS.size()) * 360;
+								const angle = ((i / SPIN_REWARDS.size()) * 360 * math.pi) / 180;
+								const radius = 80;
+								const x = math.cos(angle) * radius;
+								const y = math.sin(angle) * radius;
 								const segColor = SEGMENT_COLORS[i % SEGMENT_COLORS.size()];
 								const dimmed = alreadySpun
 									? new Color3(
@@ -171,41 +173,37 @@ export function SpinWheel() {
 									: segColor;
 								return (
 									<frame
-										key={`seg-${i}`}
-										Size={new UDim2(0, 34, 0, 70)}
-										Position={new UDim2(0.5, 0, 0.5, 0)}
-										AnchorPoint={new Vector2(0.5, 1)}
+										key={`reward-${i}`}
+										Size={new UDim2(0, 36, 0, 36)}
+										Position={new UDim2(0.5, x, 0.5, y)}
+										AnchorPoint={new Vector2(0.5, 0.5)}
 										BackgroundColor3={dimmed}
-										BackgroundTransparency={0.1}
 										BorderSizePixel={0}
-										Rotation={angle}
 										ZIndex={19}
 									>
-										<uicorner CornerRadius={new UDim(0, 6)} />
+										<uicorner CornerRadius={new UDim(1, 0)} />
 										<uistroke
 											Color={Color3.fromRGB(255, 255, 255)}
-											Thickness={1}
-											Transparency={0.7}
+											Thickness={1.5}
+											Transparency={0.5}
 										/>
 										<textlabel
-											Size={new UDim2(1, 0, 0.4, 0)}
-											Position={new UDim2(0, 0, 0, 4)}
+											Size={new UDim2(1, 0, 1, 0)}
 											BackgroundTransparency={1}
 											TextColor3={Color3.fromRGB(255, 255, 255)}
 											TextScaled={true}
 											Font={Enum.Font.GothamBold}
 											Text={`${reward}`}
 											ZIndex={20}
-											Rotation={0}
 										>
 											<uitextsizeconstraint MaxTextSize={14} />
 										</textlabel>
 									</frame>
 								);
 							})}
-							{/* Center circle */}
+							{/* Center coin */}
 							<frame
-								Size={new UDim2(0, 60, 0, 60)}
+								Size={new UDim2(0, 70, 0, 70)}
 								Position={new UDim2(0.5, 0, 0.5, 0)}
 								AnchorPoint={new Vector2(0.5, 0.5)}
 								BackgroundColor3={Color3.fromRGB(255, 200, 50)}
@@ -236,7 +234,7 @@ export function SpinWheel() {
 									ZIndex={22}
 									Rotation={0}
 								>
-									<uitextsizeconstraint MaxTextSize={20} />
+									<uitextsizeconstraint MaxTextSize={24} />
 								</textlabel>
 							</frame>
 						</frame>

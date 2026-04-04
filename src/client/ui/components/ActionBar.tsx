@@ -71,15 +71,11 @@ function ActionBarButton({
 	return (
 		<frame
 			key={item.id}
-			Size={new UDim2(0, 66, 0, 58)}
-			BackgroundColor3={
-				isActive ? Color3.fromRGB(60, 50, 90) : Color3.fromRGB(20, 20, 40)
-			}
-			BackgroundTransparency={isActive ? 0.15 : 0.3}
+			Size={new UDim2(0, 60, 0, 50)}
+			BackgroundTransparency={1}
 			BorderSizePixel={0}
 			LayoutOrder={item.order}
 		>
-			<uicorner CornerRadius={new UDim(0, 10)} />
 			<textbutton
 				Size={new UDim2(1, 0, 1, 0)}
 				BackgroundTransparency={1}
@@ -89,34 +85,39 @@ function ActionBarButton({
 						gameStore.setActiveOverlay(isActive ? "none" : item.id),
 				}}
 			/>
-			{/* Icon (top 60%) */}
+			{/* Icon with stroke for readability on any background */}
 			<imagelabel
-				Size={new UDim2(0, 30, 0, 30)}
-				Position={new UDim2(0.5, 0, 0, 4)}
+				Size={new UDim2(0, 28, 0, 28)}
+				Position={new UDim2(0.5, 0, 0, 2)}
 				AnchorPoint={new Vector2(0.5, 0)}
 				BackgroundTransparency={1}
 				Image={item.iconAssetId}
-				ImageColor3={item.iconColor}
+				ImageColor3={isActive ? Color3.fromRGB(255, 255, 255) : item.iconColor}
 				ScaleType={Enum.ScaleType.Fit}
 			/>
-			{/* Label (bottom 40%) */}
+			{/* Label (close to icon) */}
 			<textlabel
-				Size={new UDim2(1, -4, 0, 14)}
-				Position={new UDim2(0, 2, 1, -16)}
+				Size={new UDim2(1, 0, 0, 14)}
+				Position={new UDim2(0, 0, 0, 32)}
 				BackgroundTransparency={1}
-				TextColor3={Color3.fromRGB(220, 220, 240)}
+				TextColor3={Color3.fromRGB(255, 255, 255)}
 				TextScaled={true}
 				Font={Enum.Font.GothamBold}
 				Text={t(item.labelKey)}
 			>
 				<uitextsizeconstraint MaxTextSize={11} />
+				<uistroke
+					Color={Color3.fromRGB(0, 0, 0)}
+					Thickness={1.5}
+					Transparency={0.3}
+				/>
 			</textlabel>
 			{/* Notification dot (missions only) */}
 			{showNotifDot ? (
 				<frame
 					key="NotifDot"
 					Size={new UDim2(0, 8, 0, 8)}
-					Position={new UDim2(1, -4, 0, 0)}
+					Position={new UDim2(1, -2, 0, 0)}
 					AnchorPoint={new Vector2(1, 0)}
 					BackgroundColor3={Color3.fromRGB(255, 80, 80)}
 					BorderSizePixel={0}
@@ -168,7 +169,7 @@ export function ActionBar() {
 			<frame
 				key="ActionBarContainer"
 				AutomaticSize={Enum.AutomaticSize.X}
-				Size={new UDim2(0, 0, 0, 58)}
+				Size={new UDim2(0, 0, 0, 50)}
 				Position={new UDim2(1, -rightPad, 0, 10)}
 				AnchorPoint={new Vector2(1, 0)}
 				BackgroundTransparency={1}

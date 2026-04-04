@@ -333,13 +333,14 @@ function VehicleCard({
 				Thickness={1}
 				Transparency={0.3}
 			/>
-			{/* Family tag (positioned half outside the card top) */}
+			{/* Family tag (inside card, top-right) */}
 			<textlabel
-				Size={new UDim2(0, 48, 0, 16)}
-				Position={new UDim2(1, -6, 0, -8)}
+				Size={new UDim2(0, 48, 0, 14)}
+				Position={new UDim2(1, -4, 0, 2)}
 				AnchorPoint={new Vector2(1, 0)}
-				BackgroundColor3={info.accentColor}
-				TextColor3={Color3.fromRGB(255, 255, 255)}
+				BackgroundColor3={Color3.fromRGB(0, 0, 0)}
+				BackgroundTransparency={0.4}
+				TextColor3={Color3.fromRGB(220, 220, 240)}
 				TextScaled={true}
 				Font={Enum.Font.GothamBold}
 				Text={t(info.familyTag)}
