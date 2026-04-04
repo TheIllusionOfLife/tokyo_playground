@@ -66,14 +66,16 @@ bg.BorderSizePixel = 0;
 bg.ZIndex = 10;
 bg.Parent = screenGui;
 
-// Game logo (replaces plain text title if asset is uploaded)
+// Game logo
 const logoImage = new Instance("ImageLabel");
 logoImage.Name = "Logo";
-logoImage.Size = new UDim2(0.4, 0, 0.08, 0);
-logoImage.Position = new UDim2(0.3, 0, 0.18, 0);
+logoImage.Size = new UDim2(0.5, 0, 0.15, 0);
+logoImage.Position = new UDim2(0.5, 0, 0.2, 0);
+logoImage.AnchorPoint = new Vector2(0.5, 0.5);
 logoImage.BackgroundTransparency = 1;
 logoImage.Image = GAME_LOGO_ID;
 logoImage.ScaleType = Enum.ScaleType.Fit;
+logoImage.ZIndex = 11;
 logoImage.Parent = bg;
 
 // Fallback text title (visible when logo asset is not yet uploaded)

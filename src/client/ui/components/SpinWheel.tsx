@@ -154,7 +154,7 @@ export function SpinWheel() {
 						{/* Spinning coin container */}
 						<frame
 							ref={wheelRef}
-							Size={new UDim2(0, 120, 0, 120)}
+							Size={new UDim2(0, 90, 0, 90)}
 							Position={new UDim2(0.5, 0, 0.48, 0)}
 							AnchorPoint={new Vector2(0.5, 0.5)}
 							BackgroundTransparency={1}
@@ -164,7 +164,7 @@ export function SpinWheel() {
 						>
 							{/* Outer glow ring */}
 							<frame
-								Size={new UDim2(0, 110, 0, 110)}
+								Size={new UDim2(0, 82, 0, 82)}
 								Position={new UDim2(0.5, 0, 0.5, 0)}
 								AnchorPoint={new Vector2(0.5, 0.5)}
 								BackgroundColor3={Color3.fromRGB(255, 200, 50)}
@@ -176,7 +176,7 @@ export function SpinWheel() {
 							</frame>
 							{/* Middle ring */}
 							<frame
-								Size={new UDim2(0, 96, 0, 96)}
+								Size={new UDim2(0, 70, 0, 70)}
 								Position={new UDim2(0.5, 0, 0.5, 0)}
 								AnchorPoint={new Vector2(0.5, 0.5)}
 								BackgroundColor3={Color3.fromRGB(255, 200, 50)}
@@ -188,7 +188,7 @@ export function SpinWheel() {
 							</frame>
 							{/* Center coin */}
 							<frame
-								Size={new UDim2(0, 80, 0, 80)}
+								Size={new UDim2(0, 56, 0, 56)}
 								Position={new UDim2(0.5, 0, 0.5, 0)}
 								AnchorPoint={new Vector2(0.5, 0.5)}
 								BackgroundColor3={Color3.fromRGB(255, 200, 50)}
