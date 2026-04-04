@@ -71,7 +71,7 @@ function ActionBarButton({
 	return (
 		<frame
 			key={item.id}
-			Size={new UDim2(0, 60, 0, 50)}
+			Size={new UDim2(0, 50, 0, 50)}
 			BackgroundTransparency={1}
 			BorderSizePixel={0}
 			LayoutOrder={item.order}
