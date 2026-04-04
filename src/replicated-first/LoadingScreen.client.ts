@@ -256,7 +256,10 @@ const spawnPos = spawnLocation ? spawnLocation.Position : new Vector3(0, 0, 0);
 // RequestStreamAroundAsync hints the engine to prioritize spawn-area geometry
 let streamingDone = false;
 task.spawn(() => {
-	player.RequestStreamAroundAsync(spawnPos);
+	const [ok, err] = pcall(() => player.RequestStreamAroundAsync(spawnPos));
+	if (!ok) {
+		warn(`[LoadingScreen] RequestStreamAroundAsync failed: ${err}`);
+	}
 	streamingDone = true;
 });
 setProgress(0.3);
@@ -282,10 +285,15 @@ const totalAssets = math.max(assetsToPreload.size(), 1);
 
 task.spawn(() => {
 	if (assetsToPreload.size() > 0) {
-		ContentProvider.PreloadAsync(assetsToPreload, () => {
-			preloaded++;
-			setProgress(0.3 + 0.6 * (preloaded / totalAssets));
+		const [ok, err] = pcall(() => {
+			ContentProvider.PreloadAsync(assetsToPreload, () => {
+				preloaded++;
+				setProgress(0.3 + 0.6 * (preloaded / totalAssets));
+			});
 		});
+		if (!ok) {
+			warn(`[LoadingScreen] PreloadAsync failed: ${err}`);
+		}
 	}
 	preloadDone = true;
 });
