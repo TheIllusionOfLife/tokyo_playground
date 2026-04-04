@@ -294,7 +294,7 @@ export function MissionPanel() {
 			{open ? (
 				<frame
 					key="MissionOverlay"
-					Size={new UDim2(0, 380, 0, 420)}
+					Size={new UDim2(0, 380, 0, 320)}
 					Position={new UDim2(0.5, 0, 0.5, 0)}
 					AnchorPoint={new Vector2(0.5, 0.5)}
 					BackgroundColor3={Color3.fromRGB(20, 20, 40)}

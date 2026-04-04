@@ -70,7 +70,7 @@ function ActionBarButton({
 	return (
 		<frame
 			key={item.id}
-			Size={new UDim2(0, 56, 0, 52)}
+			Size={new UDim2(0, 66, 0, 58)}
 			BackgroundColor3={
 				isActive ? Color3.fromRGB(60, 50, 90) : Color3.fromRGB(20, 20, 40)
 			}
@@ -90,7 +90,7 @@ function ActionBarButton({
 			/>
 			{/* Icon (top 60%) */}
 			<imagelabel
-				Size={new UDim2(0, 24, 0, 24)}
+				Size={new UDim2(0, 30, 0, 30)}
 				Position={new UDim2(0.5, 0, 0, 4)}
 				AnchorPoint={new Vector2(0.5, 0)}
 				BackgroundTransparency={1}
@@ -105,7 +105,7 @@ function ActionBarButton({
 				BackgroundTransparency={1}
 				TextColor3={Color3.fromRGB(220, 220, 240)}
 				TextScaled={true}
-				Font={Enum.Font.Gotham}
+				Font={Enum.Font.GothamBold}
 				Text={t(item.labelKey)}
 			>
 				<uitextsizeconstraint MaxTextSize={11} />
@@ -162,8 +162,8 @@ export function ActionBar() {
 			<frame
 				key="ActionBarContainer"
 				AutomaticSize={Enum.AutomaticSize.X}
-				Size={new UDim2(0, 0, 0, 52)}
-				Position={new UDim2(1, -10, 0, 14)}
+				Size={new UDim2(0, 0, 0, 58)}
+				Position={new UDim2(1, -14, 0, 10)}
 				AnchorPoint={new Vector2(1, 0)}
 				BackgroundTransparency={1}
 				BorderSizePixel={0}

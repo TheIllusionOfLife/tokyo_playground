@@ -309,11 +309,11 @@ function VehicleCard({
 		buttonColor = Color3.fromRGB(80, 50, 50);
 		active = false;
 	} else if (!canAfford) {
-		buttonText = t(L_SHOP_NEED_PTS);
+		buttonText = vehicle.price > 0 ? `${vehicle.price}pts` : "Free";
 		buttonColor = Color3.fromRGB(80, 50, 50);
 		active = false;
 	} else {
-		buttonText = t(L_SHOP_BUY);
+		buttonText = vehicle.price > 0 ? `${vehicle.price}pts` : "Free";
 		buttonColor = Color3.fromRGB(80, 200, 120);
 		active = true;
 	}
@@ -321,7 +321,7 @@ function VehicleCard({
 	return (
 		<frame
 			key={vehicle.id}
-			Size={new UDim2(0, 150, 0, 140)}
+			Size={new UDim2(0, 140, 0, 100)}
 			BackgroundColor3={Color3.fromRGB(35, 35, 50)}
 			BackgroundTransparency={0.2}
 			BorderSizePixel={0}
@@ -333,9 +333,9 @@ function VehicleCard({
 				Thickness={1}
 				Transparency={0.3}
 			/>
-			{/* Colored icon area */}
+			{/* Colored icon area with name overlaid */}
 			<frame
-				Size={new UDim2(1, 0, 0, 44)}
+				Size={new UDim2(1, 0, 0, 58)}
 				BackgroundColor3={info.accentColor}
 				BackgroundTransparency={0.3}
 				BorderSizePixel={0}
@@ -344,9 +344,8 @@ function VehicleCard({
 				{VEHICLE_ICON_IDS[vehicle.id] !== undefined &&
 				VEHICLE_ICON_IDS[vehicle.id] !== "rbxassetid://0" ? (
 					<imagelabel
-						Size={new UDim2(0, 36, 0, 36)}
-						Position={new UDim2(0, 4, 0.5, 0)}
-						AnchorPoint={new Vector2(0, 0.5)}
+						Size={new UDim2(0, 34, 0, 34)}
+						Position={new UDim2(0, 6, 0, 4)}
 						BackgroundTransparency={1}
 						Image={VEHICLE_ICON_IDS[vehicle.id]}
 						ImageColor3={Color3.fromRGB(255, 255, 255)}
@@ -354,9 +353,8 @@ function VehicleCard({
 					/>
 				) : (
 					<textlabel
-						Size={new UDim2(0, 32, 0, 32)}
-						Position={new UDim2(0, 6, 0.5, 0)}
-						AnchorPoint={new Vector2(0, 0.5)}
+						Size={new UDim2(0, 30, 0, 30)}
+						Position={new UDim2(0, 8, 0, 6)}
 						BackgroundTransparency={1}
 						TextScaled={true}
 						Text={info.emoji}
@@ -366,7 +364,7 @@ function VehicleCard({
 				)}
 				{/* Family tag */}
 				<textlabel
-					Size={new UDim2(0, 50, 0, 14)}
+					Size={new UDim2(0, 48, 0, 14)}
 					Position={new UDim2(1, -4, 0, 4)}
 					AnchorPoint={new Vector2(1, 0)}
 					BackgroundColor3={Color3.fromRGB(0, 0, 0)}
@@ -378,34 +376,25 @@ function VehicleCard({
 				>
 					<uicorner CornerRadius={new UDim(0, 3)} />
 				</textlabel>
+				{/* Vehicle name (overlaid at bottom of accent area) */}
+				<textlabel
+					Size={new UDim2(1, -8, 0, 16)}
+					Position={new UDim2(0, 4, 1, -18)}
+					BackgroundTransparency={1}
+					TextColor3={Color3.fromRGB(255, 255, 255)}
+					TextScaled={true}
+					Font={Enum.Font.GothamBold}
+					Text={vehicle.name}
+					TextXAlignment={Enum.TextXAlignment.Left}
+				>
+					<uitextsizeconstraint MaxTextSize={13} />
+				</textlabel>
 			</frame>
-			{/* Vehicle name */}
-			<textlabel
-				Size={new UDim2(1, -8, 0, 20)}
-				Position={new UDim2(0, 4, 0, 48)}
-				BackgroundTransparency={1}
-				TextColor3={Color3.fromRGB(230, 230, 230)}
-				TextScaled={true}
-				Font={Enum.Font.GothamBold}
-				Text={vehicle.name}
-				TextXAlignment={Enum.TextXAlignment.Left}
-			/>
-			{/* Price */}
-			<textlabel
-				Size={new UDim2(1, -8, 0, 14)}
-				Position={new UDim2(0, 4, 0, 70)}
-				BackgroundTransparency={1}
-				TextColor3={Color3.fromRGB(150, 150, 200)}
-				TextScaled={true}
-				Font={Enum.Font.Gotham}
-				Text={vehicle.price > 0 ? `${vehicle.price}pts` : "Free"}
-				TextXAlignment={Enum.TextXAlignment.Left}
-			/>
-			{/* Action button */}
+			{/* Action button (shows price for unacquired, EQUIP/UNEQUIP for owned) */}
 			<textbutton
-				Size={new UDim2(1, -16, 0, 26)}
-				Position={new UDim2(0.5, 0, 0, 90)}
-				AnchorPoint={new Vector2(0.5, 0)}
+				Size={new UDim2(1, -12, 0, 28)}
+				Position={new UDim2(0.5, 0, 1, -6)}
+				AnchorPoint={new Vector2(0.5, 1)}
 				BackgroundColor3={buttonColor}
 				TextColor3={Color3.fromRGB(255, 255, 255)}
 				TextScaled={true}
@@ -568,7 +557,7 @@ export function ShopPanel() {
 							<uigridlayout
 								CellSize={
 									tab === "vehicles"
-										? new UDim2(0, 150, 0, 140)
+										? new UDim2(0, 140, 0, 100)
 										: new UDim2(0, 128, 0, 96)
 								}
 								CellPadding={

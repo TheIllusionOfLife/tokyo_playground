@@ -78,8 +78,8 @@ export function TopBarTimer() {
 		>
 			<frame
 				key="TimerFrame"
-				Size={new UDim2(0, 140, 0, 36)}
-				Position={new UDim2(0.5, 0, 0, 14)}
+				Size={new UDim2(0, 110, 0, 30)}
+				Position={new UDim2(0.5, 0, 0, 8)}
 				AnchorPoint={new Vector2(0.5, 0)}
 				BackgroundColor3={Color3.fromRGB(10, 10, 20)}
 				BackgroundTransparency={0.25}
@@ -109,7 +109,7 @@ export function TopBarTimer() {
 				{/* Clock icon */}
 				<imagelabel
 					key="ClockIcon"
-					Size={new UDim2(0, 20, 0, 20)}
+					Size={new UDim2(0, 16, 0, 16)}
 					BackgroundTransparency={1}
 					Image={ICON_CLOCK}
 					ImageColor3={colors.text}
@@ -119,7 +119,7 @@ export function TopBarTimer() {
 				{/* Time text */}
 				<textlabel
 					key="Timer"
-					Size={new UDim2(0, 70, 0, 28)}
+					Size={new UDim2(0, 60, 0, 22)}
 					BackgroundTransparency={1}
 					TextColor3={colors.text}
 					TextScaled={true}
@@ -128,7 +128,7 @@ export function TopBarTimer() {
 					TextXAlignment={Enum.TextXAlignment.Left}
 					LayoutOrder={2}
 				>
-					<uitextsizeconstraint MaxTextSize={22} />
+					<uitextsizeconstraint MaxTextSize={18} />
 				</textlabel>
 			</frame>
 		</screengui>
