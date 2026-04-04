@@ -16,6 +16,7 @@ import {
 	SE_ITEM_PICKUP,
 	SE_TICK,
 } from "shared/constants";
+import { gameStore } from "shared/store/game-store";
 import { MatchPhase } from "shared/types";
 import { getAmbientVolumeForPhase } from "shared/utils/ambientAudio";
 
@@ -112,26 +113,41 @@ export class BGMController implements OnStart {
 				| BoolValue
 				| undefined;
 			if (loadingDone) {
-				// Use while-loop to avoid check-then-wait race: if Value flips
-				// between the check and the .Wait() call, we'd block forever.
-				while (!loadingDone.Value) {
+				// Safety timeout: if loading screen errors after creating the
+				// BoolValue but before setting it true, don't suppress BGM forever.
+				let timedOut = false;
+				const timeout = task.delay(25, () => {
+					timedOut = true;
+				});
+				while (!loadingDone.Value && !timedOut) {
 					loadingDone.GetPropertyChangedSignal("Value").Wait();
 				}
+				task.cancel(timeout);
 			}
 
-			// Fade in BGM and ambient over 2 seconds
-			this.bgm.Play();
-			TweenService.Create(this.bgm, new TweenInfo(2), {
-				Volume: 0.05,
-			}).Play();
-			this.ambient.Play();
-			this.ambientFadeTween = TweenService.Create(
-				this.ambient,
-				new TweenInfo(2),
-				{ Volume: 0.03 },
-			);
-			this.ambientFadeTween.Play();
+			this.startAudio();
 		});
+	}
+
+	/** Start BGM and ambient after loading wait. Reads current phase so
+	 *  mid-match joiners get the correct ambient volume, not lobby default. */
+	private startAudio() {
+		this.bgm.Play();
+		TweenService.Create(this.bgm, new TweenInfo(2), {
+			Volume: 0.05,
+		}).Play();
+
+		// Use current phase volume (not hardcoded 0.03) so mid-match joins
+		// don't override the reduced in-progress ambient volume.
+		const currentPhase = gameStore.getState().matchPhase;
+		const targetVolume = getAmbientVolumeForPhase(currentPhase);
+		this.ambient.Play();
+		this.ambientFadeTween = TweenService.Create(
+			this.ambient,
+			new TweenInfo(2),
+			{ Volume: targetVolume },
+		);
+		this.ambientFadeTween.Play();
 	}
 
 	playSE(id: string, volume: number) {
