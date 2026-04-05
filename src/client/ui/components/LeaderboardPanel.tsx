@@ -6,7 +6,10 @@ import { t } from "shared/localization";
 import {
 	L_LEADERBOARD_ALL_TIME,
 	L_LEADERBOARD_LOADING,
+	L_LEADERBOARD_NEXT,
 	L_LEADERBOARD_NO_DATA,
+	L_LEADERBOARD_PREV,
+	L_LEADERBOARD_TITLE,
 	L_LEADERBOARD_UNRANKED,
 	L_LEADERBOARD_WEEKLY_HACHI,
 	L_LEADERBOARD_YOUR_RANK,
@@ -174,7 +177,9 @@ export function LeaderboardPanel() {
 		yourEntry === undefined &&
 		entries.size() > 0;
 	// Adjust scroll area to avoid overlapping pinned sections below
-	const scrollBottomOffset = showYourRank ? -156 : showUnranked ? -148 : -118;
+	const scrollBottomOffset = showYourRank ? -160 : showUnranked ? -148 : -118;
+	const canPrev = page > 1 && !loading;
+	const canNext = hasNextPage && !loading;
 
 	return (
 		<>
@@ -222,7 +227,7 @@ export function LeaderboardPanel() {
 							TextColor3={COLOR_GOLD}
 							TextScaled={true}
 							Font={Enum.Font.FredokaOne}
-							Text="Leaderboard"
+							Text={t(L_LEADERBOARD_TITLE)}
 							ZIndex={19}
 						/>
 						{/* Tab bar */}
@@ -454,21 +459,21 @@ export function LeaderboardPanel() {
 								LayoutOrder={1}
 								Size={new UDim2(0, 60, 1, 0)}
 								BackgroundColor3={
-									page > 1 ? COLOR_PAGE_ENABLED : COLOR_PAGE_DISABLED
+									canPrev ? COLOR_PAGE_ENABLED : COLOR_PAGE_DISABLED
 								}
-								BackgroundTransparency={page > 1 ? 0.2 : 0.5}
+								BackgroundTransparency={canPrev ? 0.2 : 0.5}
 								BorderSizePixel={0}
 								TextColor3={
-									page > 1 ? Color3.fromRGB(255, 255, 255) : COLOR_MUTED
+									canPrev ? Color3.fromRGB(255, 255, 255) : COLOR_MUTED
 								}
 								TextScaled={true}
 								Font={Enum.Font.GothamBold}
-								Text="< Prev"
+								Text={t(L_LEADERBOARD_PREV)}
 								ZIndex={19}
-								Active={page > 1}
+								Active={canPrev}
 								Event={{
 									Activated: () => {
-										if (page > 1) setPage(page - 1);
+										if (canPrev) setPage(page - 1);
 									},
 								}}
 							>
@@ -490,21 +495,21 @@ export function LeaderboardPanel() {
 								LayoutOrder={3}
 								Size={new UDim2(0, 60, 1, 0)}
 								BackgroundColor3={
-									hasNextPage ? COLOR_PAGE_ENABLED : COLOR_PAGE_DISABLED
+									canNext ? COLOR_PAGE_ENABLED : COLOR_PAGE_DISABLED
 								}
-								BackgroundTransparency={hasNextPage ? 0.2 : 0.5}
+								BackgroundTransparency={canNext ? 0.2 : 0.5}
 								BorderSizePixel={0}
 								TextColor3={
-									hasNextPage ? Color3.fromRGB(255, 255, 255) : COLOR_MUTED
+									canNext ? Color3.fromRGB(255, 255, 255) : COLOR_MUTED
 								}
 								TextScaled={true}
 								Font={Enum.Font.GothamBold}
-								Text="Next >"
+								Text={t(L_LEADERBOARD_NEXT)}
 								ZIndex={19}
-								Active={hasNextPage}
+								Active={canNext}
 								Event={{
 									Activated: () => {
-										if (hasNextPage) setPage(page + 1);
+										if (canNext) setPage(page + 1);
 									},
 								}}
 							>

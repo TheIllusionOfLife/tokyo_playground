@@ -221,3 +221,6 @@ export const L_LEADERBOARD_LOADING = "leaderboard_loading";
 export const L_LEADERBOARD_NO_DATA = "leaderboard_no_data";
 export const L_LEADERBOARD_YOUR_RANK = "leaderboard_your_rank";
 export const L_LEADERBOARD_UNRANKED = "leaderboard_unranked";
+export const L_LEADERBOARD_TITLE = "leaderboard_title";
+export const L_LEADERBOARD_PREV = "leaderboard_prev";
+export const L_LEADERBOARD_NEXT = "leaderboard_next";

@@ -241,4 +241,7 @@ export const JA: Record<string, string> = {
 	leaderboard_no_data: "まだデータがありません",
 	leaderboard_your_rank: "あなたの順位",
 	leaderboard_unranked: "ランク外",
+	leaderboard_title: "ランキング",
+	leaderboard_prev: "< 前へ",
+	leaderboard_next: "次へ >",
 };

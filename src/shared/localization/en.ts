@@ -243,4 +243,7 @@ export const EN: Record<string, string> = {
 	leaderboard_no_data: "No data yet.",
 	leaderboard_your_rank: "Your Rank",
 	leaderboard_unranked: "Unranked",
+	leaderboard_title: "Leaderboard",
+	leaderboard_prev: "< Prev",
+	leaderboard_next: "Next >",
 };

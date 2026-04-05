@@ -140,19 +140,10 @@ export class LeaderboardService implements OnStart {
 	) {
 		const uid = player.UserId;
 
-		// In-flight guard: if already processing a request for this player,
-		// send back an empty response so the client can clear its loading state.
-		if (this.inFlight.has(uid)) {
-			this.serverEvents.leaderboardData.fire(player, {
-				tab,
-				entries: [],
-				yourEntry: undefined,
-				page,
-				requestId,
-				hasNextPage: false,
-			});
-			return;
-		}
+		// In-flight guard: silently drop duplicate requests while one is pending.
+		// The client keeps its current state (loading spinner or stale data).
+		// The real response from the in-flight request will arrive shortly.
+		if (this.inFlight.has(uid)) return;
 
 		this.inFlight.add(uid);
 		try {
@@ -246,17 +237,24 @@ export class LeaderboardService implements OnStart {
 			rank++;
 		}
 
-		const hasNextPage = !pages.IsFinished;
+		const hasNextPage = !pages.IsFinished && clampedPage < MAX_PAGE;
 
-		// "Your rank" lookup: only compute on page 1, cache for other pages
+		// "Your rank" lookup: compute on page 1 or cache miss, cache for other pages
 		let yourEntry: LeaderboardEntry | undefined;
 		if (foundSelf) {
 			yourEntry = entries.find((e) => e.isYou);
-		} else if (clampedPage === 1) {
-			yourEntry = this.lookupYourRank(player, store, tab);
+			// Cache when found on page, so page 2+ can use it
+			if (yourEntry) this.setYourRankCache(player.UserId, tab, yourEntry);
 		} else {
 			const cached = this.getCachedYourRank(player.UserId, tab);
-			yourEntry = cached === "miss" ? undefined : cached;
+			if (cached !== "miss") {
+				yourEntry = cached;
+			} else if (clampedPage === 1) {
+				yourEntry = this.lookupYourRank(player, store, tab);
+			} else {
+				// Cache miss on page 2+: fall back to lookup rather than showing "Unranked"
+				yourEntry = this.lookupYourRank(player, store, tab);
+			}
 		}
 
 		this.serverEvents.leaderboardData.fire(player, {
