@@ -111,6 +111,7 @@ export function LeaderboardPanel() {
 	const matchPhase = useSelector((s: GameStoreState) => s.matchPhase);
 	const activeOverlay = useSelector((s: GameStoreState) => s.activeOverlay);
 	const open = activeOverlay === "leaderboard";
+	const visible = open && matchPhase === MatchPhase.WaitingForPlayers;
 
 	const [response, setResponse] = useState<LeaderboardResponse | undefined>();
 	const [page, setPage] = useState(1);
@@ -131,9 +132,9 @@ export function LeaderboardPanel() {
 		return () => conn.Disconnect();
 	}, [activeTab]);
 
-	// Fire request when panel opens, tab changes, or page changes
+	// Fire request when panel is visible, tab changes, or page changes
 	useEffect(() => {
-		if (open) {
+		if (visible) {
 			requestIdRef.current++;
 			setLoading(true);
 			clientEvents.requestLeaderboard.fire(
@@ -142,11 +143,11 @@ export function LeaderboardPanel() {
 				requestIdRef.current,
 			);
 		}
-	}, [open, activeTab, page]);
+	}, [visible, activeTab, page]);
 
-	// Silent auto-refresh while open
+	// Silent auto-refresh while visible
 	useEffect(() => {
-		if (!open) return;
+		if (!visible) return;
 		let alive = true;
 		task.spawn(() => {
 			while (alive) {
@@ -163,9 +164,9 @@ export function LeaderboardPanel() {
 		return () => {
 			alive = false;
 		};
-	}, [open, activeTab, page]);
+	}, [visible, activeTab, page]);
 
-	if (matchPhase !== MatchPhase.WaitingForPlayers) return undefined!;
+	if (!visible) return undefined!;
 
 	const entries = response?.entries ?? [];
 	const yourEntry = response?.yourEntry;

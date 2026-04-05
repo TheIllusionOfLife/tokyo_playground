@@ -153,28 +153,40 @@ export class LeaderboardService implements OnStart {
 			return;
 		}
 
+		// Iteratively process the request and any queued follow-ups
+		let currentTab = tab;
+		let currentPage = page;
+		let currentRequestId = requestId;
+
 		this.inFlight.add(uid);
-		try {
-			this.doSendLeaderboard(player, tab, page, requestId);
-		} catch {
-			// Should not happen (pcall inside), but safety net.
-			this.serverEvents.leaderboardData.fire(player, {
-				tab,
-				entries: [],
-				yourEntry: undefined,
-				page,
-				requestId,
-				hasNextPage: false,
-			});
+		while (true) {
+			try {
+				this.doSendLeaderboard(
+					player,
+					currentTab,
+					currentPage,
+					currentRequestId,
+				);
+			} catch {
+				this.serverEvents.leaderboardData.fire(player, {
+					tab: currentTab,
+					entries: [],
+					yourEntry: undefined,
+					page: currentPage,
+					requestId: currentRequestId,
+					hasNextPage: false,
+				});
+			}
+
+			// Drain queued request if one was stored while in-flight
+			const pending = this.queued.get(uid);
+			if (!pending) break;
+			this.queued.delete(uid);
+			currentTab = pending.tab;
+			currentPage = pending.page;
+			currentRequestId = pending.requestId;
 		}
 		this.inFlight.delete(uid);
-
-		// Drain queued request if one was stored while in-flight
-		const pending = this.queued.get(uid);
-		if (pending) {
-			this.queued.delete(uid);
-			this.sendLeaderboard(player, pending.tab, pending.page, pending.requestId);
-		}
 	}
 
 	private doSendLeaderboard(
