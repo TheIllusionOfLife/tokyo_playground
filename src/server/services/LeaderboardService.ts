@@ -23,8 +23,13 @@ export class LeaderboardService implements OnStart {
 	private weeklyStoreKey = "";
 	private weeklyStore?: OrderedDataStore;
 
-	/** Tracks players with an in-flight leaderboard request to prevent spam. */
+	/** Tracks players with an in-flight leaderboard request. */
 	private readonly inFlight = new Set<number>();
+	/** Stores the latest queued request per player when one is already in-flight. */
+	private readonly queued = new Map<
+		number,
+		{ tab: LeaderboardTab; page: number; requestId: number }
+	>();
 	/** Caches resolved player names to avoid repeated GetNameFromUserIdAsync calls. */
 	private readonly nameCache = new Map<number, string>();
 	/** Caches "your rank" lookups. Key: `${userId}_${tab}_${weeklyStoreKey}`. */
@@ -60,6 +65,7 @@ export class LeaderboardService implements OnStart {
 		// Clean up on player leave
 		Players.PlayerRemoving.Connect((player) => {
 			this.inFlight.delete(player.UserId);
+			this.queued.delete(player.UserId);
 			this.clearYourRankCache(player.UserId);
 		});
 
@@ -140,10 +146,12 @@ export class LeaderboardService implements OnStart {
 	) {
 		const uid = player.UserId;
 
-		// In-flight guard: silently drop duplicate requests while one is pending.
-		// The client keeps its current state (loading spinner or stale data).
-		// The real response from the in-flight request will arrive shortly.
-		if (this.inFlight.has(uid)) return;
+		// In-flight guard: if already processing, queue the newest request.
+		// When the current request completes, the queued one is drained.
+		if (this.inFlight.has(uid)) {
+			this.queued.set(uid, { tab, page, requestId });
+			return;
+		}
 
 		this.inFlight.add(uid);
 		try {
@@ -160,6 +168,13 @@ export class LeaderboardService implements OnStart {
 			});
 		}
 		this.inFlight.delete(uid);
+
+		// Drain queued request if one was stored while in-flight
+		const pending = this.queued.get(uid);
+		if (pending) {
+			this.queued.delete(uid);
+			this.sendLeaderboard(player, pending.tab, pending.page, pending.requestId);
+		}
 	}
 
 	private doSendLeaderboard(
@@ -282,17 +297,17 @@ export class LeaderboardService implements OnStart {
 			store.GetSortedAsync(false, LEADERBOARD_MAX_SCAN),
 		);
 		if (!ok || !pages) {
-			this.setYourRankCache(player.UserId, tab, undefined);
+			// Transient error: don't cache as unranked
 			return undefined;
 		}
 
 		let rank = 1;
-		let exceeded = false;
+		let scanCompleted = false;
 		// Scan through pages, capped at LEADERBOARD_MAX_SCAN entries
-		while (!exceeded) {
+		while (true) {
 			for (const entry of pages.GetCurrentPage()) {
 				if (rank > LEADERBOARD_MAX_SCAN) {
-					exceeded = true;
+					scanCompleted = true;
 					break;
 				}
 				const data = entry as { key: string; value: number };
@@ -308,13 +323,19 @@ export class LeaderboardService implements OnStart {
 				}
 				rank++;
 			}
-			if (exceeded || pages.IsFinished) break;
+			if (scanCompleted) break;
+			if (pages.IsFinished) {
+				scanCompleted = true;
+				break;
+			}
 			const [advOk] = pcall(() => pages.AdvanceToNextPageAsync());
-			if (!advOk) break;
+			if (!advOk) break; // Transient error: don't cache
 		}
 
-		// Not found in scan: player is unranked or beyond scan range
-		this.setYourRankCache(player.UserId, tab, undefined);
+		// Only cache as unranked if the scan completed successfully
+		if (scanCompleted) {
+			this.setYourRankCache(player.UserId, tab, undefined);
+		}
 		return undefined;
 	}
 

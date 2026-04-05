@@ -246,4 +246,6 @@ export const EN: Record<string, string> = {
 	leaderboard_title: "Leaderboard",
 	leaderboard_prev: "< Prev",
 	leaderboard_next: "Next >",
+	leaderboard_pts: "%1 pts",
+	leaderboard_page: "Page %1",
 };

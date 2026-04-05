@@ -244,4 +244,6 @@ export const JA: Record<string, string> = {
 	leaderboard_title: "ランキング",
 	leaderboard_prev: "< 前へ",
 	leaderboard_next: "次へ >",
+	leaderboard_pts: "%1 pt",
+	leaderboard_page: "%1 ページ",
 };

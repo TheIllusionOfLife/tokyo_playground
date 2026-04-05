@@ -224,3 +224,5 @@ export const L_LEADERBOARD_UNRANKED = "leaderboard_unranked";
 export const L_LEADERBOARD_TITLE = "leaderboard_title";
 export const L_LEADERBOARD_PREV = "leaderboard_prev";
 export const L_LEADERBOARD_NEXT = "leaderboard_next";
+export const L_LEADERBOARD_PTS = "leaderboard_pts";
+export const L_LEADERBOARD_PAGE = "leaderboard_page";

@@ -2,13 +2,15 @@ import React, { useEffect, useRef, useState } from "@rbxts/react";
 import { useSelector } from "@rbxts/react-reflex";
 import { clientEvents } from "client/network";
 import { LEADERBOARD_AUTO_REFRESH } from "shared/constants";
-import { t } from "shared/localization";
+import { t, tf } from "shared/localization";
 import {
 	L_LEADERBOARD_ALL_TIME,
 	L_LEADERBOARD_LOADING,
 	L_LEADERBOARD_NEXT,
 	L_LEADERBOARD_NO_DATA,
+	L_LEADERBOARD_PAGE,
 	L_LEADERBOARD_PREV,
+	L_LEADERBOARD_PTS,
 	L_LEADERBOARD_TITLE,
 	L_LEADERBOARD_UNRANKED,
 	L_LEADERBOARD_WEEKLY_HACHI,
@@ -99,7 +101,7 @@ function EntryRow({
 				TextColor3={COLOR_POINTS}
 				TextScaled={true}
 				Font={Enum.Font.GothamBold}
-				Text={`${entry.points} pts`}
+				Text={tf(L_LEADERBOARD_PTS, `${entry.points}`)}
 			/>
 		</frame>
 	);
@@ -269,6 +271,7 @@ export function LeaderboardPanel() {
 								ZIndex={19}
 								Event={{
 									Activated: () => {
+										if (activeTab === "allTime") return;
 										setPage(1);
 										setResponse(undefined);
 										setActiveTab("allTime");
@@ -303,6 +306,7 @@ export function LeaderboardPanel() {
 								ZIndex={19}
 								Event={{
 									Activated: () => {
+										if (activeTab === "weeklyHachi") return;
 										setPage(1);
 										setResponse(undefined);
 										setActiveTab("weeklyHachi");
@@ -415,7 +419,7 @@ export function LeaderboardPanel() {
 										TextColor3={COLOR_POINTS}
 										TextScaled={true}
 										Font={Enum.Font.GothamBold}
-										Text={`${yourEntry.points} pts`}
+										Text={tf(L_LEADERBOARD_PTS, `${yourEntry.points}`)}
 									/>
 								</frame>
 							</frame>
@@ -488,7 +492,7 @@ export function LeaderboardPanel() {
 								TextColor3={Color3.fromRGB(200, 200, 220)}
 								TextScaled={true}
 								Font={Enum.Font.Gotham}
-								Text={`Page ${page}`}
+								Text={tf(L_LEADERBOARD_PAGE, `${page}`)}
 								ZIndex={19}
 							/>
 							<textbutton
