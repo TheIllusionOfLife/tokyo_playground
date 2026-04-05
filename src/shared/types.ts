@@ -91,6 +91,22 @@ export enum RoundResult {
 
 export type LeaderboardTab = "allTime" | "weeklyHachi";
 
+export interface LeaderboardEntry {
+	rank: number;
+	name: string;
+	points: number;
+	isYou: boolean;
+}
+
+export interface LeaderboardResponse {
+	tab: LeaderboardTab;
+	entries: LeaderboardEntry[];
+	yourEntry: LeaderboardEntry | undefined;
+	page: number;
+	requestId: number;
+	hasNextPage: boolean;
+}
+
 export enum MissionId {
 	PlayGames = "PlayGames",
 	WinAsOni = "WinAsOni",

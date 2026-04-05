@@ -1,14 +1,20 @@
 import { OnStart, Service } from "@flamework/core";
 import { DataStoreService, Players } from "@rbxts/services";
+import { LEADERBOARD_MAX_SCAN, LEADERBOARD_PAGE_SIZE } from "shared/constants";
 import { GlobalEvents } from "shared/network";
-import { LeaderboardTab } from "shared/types";
+import {
+	LeaderboardEntry,
+	LeaderboardResponse,
+	LeaderboardTab,
+} from "shared/types";
 import { safeHandler } from "../utils/safeConnect";
 import { PlayerDataService } from "./PlayerDataService";
 
 const ALL_TIME_KEY = "AllTimePoints";
-const MAX_ENTRIES = 10;
 const UPDATE_INTERVAL = 30; // seconds between leaderboard writes
 const JST_OFFSET = 9 * 3600; // UTC+9 in seconds
+const MAX_PAGE = 5; // cap pagination depth to conserve DataStore budget
+const YOUR_RANK_TTL = 60; // seconds to cache "your rank" results
 
 @Service()
 export class LeaderboardService implements OnStart {
@@ -16,6 +22,21 @@ export class LeaderboardService implements OnStart {
 	private orderedStore?: OrderedDataStore;
 	private weeklyStoreKey = "";
 	private weeklyStore?: OrderedDataStore;
+
+	/** Tracks players with an in-flight leaderboard request. */
+	private readonly inFlight = new Set<number>();
+	/** Stores the latest queued request per player when one is already in-flight. */
+	private readonly queued = new Map<
+		number,
+		{ tab: LeaderboardTab; page: number; requestId: number }
+	>();
+	/** Caches resolved player names to avoid repeated GetNameFromUserIdAsync calls. */
+	private readonly nameCache = new Map<number, string>();
+	/** Caches "your rank" lookups. Key: `${userId}_${tab}_${weeklyStoreKey}`. */
+	private readonly yourRankCache = new Map<
+		string,
+		{ entry: LeaderboardEntry | undefined; expiry: number }
+	>();
 
 	constructor(private readonly playerDataService: PlayerDataService) {}
 
@@ -33,11 +54,34 @@ export class LeaderboardService implements OnStart {
 
 		this.refreshWeeklyStore();
 
+		// Pre-populate name cache from online players (free, no API call)
+		for (const player of Players.GetPlayers()) {
+			this.nameCache.set(player.UserId, player.Name);
+		}
+		Players.PlayerAdded.Connect((player) => {
+			this.nameCache.set(player.UserId, player.Name);
+		});
+
+		// Clean up on player leave
+		Players.PlayerRemoving.Connect((player) => {
+			this.inFlight.delete(player.UserId);
+			this.queued.delete(player.UserId);
+			this.clearYourRankCache(player.UserId);
+		});
+
 		// Handle leaderboard request
 		this.serverEvents.requestLeaderboard.connect(
-			safeHandler("LeaderboardService.requestLeaderboard", (player, tab) => {
-				this.sendLeaderboard(player, tab ?? "allTime");
-			}),
+			safeHandler(
+				"LeaderboardService.requestLeaderboard",
+				(player, tab, page, requestId) => {
+					this.sendLeaderboard(
+						player,
+						tab ?? "allTime",
+						page ?? 1,
+						requestId ?? 0,
+					);
+				},
+			),
 		);
 
 		// Periodically update all-time leaderboard entries for all online players
@@ -72,6 +116,10 @@ export class LeaderboardService implements OnStart {
 		);
 	}
 
+	// ---------------------------------------------------------------------------
+	// Private helpers
+	// ---------------------------------------------------------------------------
+
 	private updateAllPlayers() {
 		for (const player of Players.GetPlayers()) {
 			this.updatePlayerScore(player);
@@ -79,38 +127,265 @@ export class LeaderboardService implements OnStart {
 		}
 	}
 
-	private sendLeaderboard(player: Player, tab: LeaderboardTab) {
+	private resolvePlayerName(userId: number): string {
+		const cached = this.nameCache.get(userId);
+		if (cached) return cached;
+		const [ok, name] = pcall(() => Players.GetNameFromUserIdAsync(userId));
+		if (ok && name) {
+			this.nameCache.set(userId, name);
+			return name;
+		}
+		return `Player${userId}`;
+	}
+
+	private sendLeaderboard(
+		player: Player,
+		tab: LeaderboardTab,
+		page: number,
+		requestId: number,
+	) {
+		const uid = player.UserId;
+
+		// In-flight guard: if already processing, queue the newest request.
+		// When the current request completes, the queued one is drained.
+		if (this.inFlight.has(uid)) {
+			this.queued.set(uid, { tab, page, requestId });
+			return;
+		}
+
+		// Iteratively process the request and any queued follow-ups
+		let currentTab = tab;
+		let currentPage = page;
+		let currentRequestId = requestId;
+
+		this.inFlight.add(uid);
+		while (true) {
+			try {
+				this.doSendLeaderboard(
+					player,
+					currentTab,
+					currentPage,
+					currentRequestId,
+				);
+			} catch {
+				this.serverEvents.leaderboardData.fire(player, {
+					tab: currentTab,
+					entries: [],
+					yourEntry: undefined,
+					page: currentPage,
+					requestId: currentRequestId,
+					hasNextPage: false,
+				});
+			}
+
+			// Drain queued request if one was stored while in-flight
+			const pending = this.queued.get(uid);
+			if (!pending) break;
+			this.queued.delete(uid);
+			currentTab = pending.tab;
+			currentPage = pending.page;
+			currentRequestId = pending.requestId;
+		}
+		this.inFlight.delete(uid);
+	}
+
+	private doSendLeaderboard(
+		player: Player,
+		tab: LeaderboardTab,
+		page: number,
+		requestId: number,
+	) {
 		if (tab === "weeklyHachi") this.refreshWeeklyStore();
 		const store = tab === "weeklyHachi" ? this.weeklyStore : this.orderedStore;
 
+		const emptyResponse: LeaderboardResponse = {
+			tab,
+			entries: [],
+			yourEntry: undefined,
+			page,
+			requestId,
+			hasNextPage: false,
+		};
+
 		if (!store) {
-			this.serverEvents.leaderboardData.fire(player, tab, []);
+			this.serverEvents.leaderboardData.fire(player, emptyResponse);
 			return;
 		}
 
-		const [ok, pages] = pcall(() => store.GetSortedAsync(false, MAX_ENTRIES));
+		// Clamp page to valid range
+		const clampedPage = math.clamp(math.floor(page), 1, MAX_PAGE);
+
+		const [ok, pages] = pcall(() =>
+			store.GetSortedAsync(false, LEADERBOARD_PAGE_SIZE),
+		);
 		if (!ok || !pages) {
-			this.serverEvents.leaderboardData.fire(player, tab, []);
+			this.serverEvents.leaderboardData.fire(player, emptyResponse);
 			return;
 		}
 
-		const entries: { rank: number; name: string; points: number }[] = [];
-		let rank = 1;
+		// Advance to the requested page
+		for (let i = 1; i < clampedPage; i++) {
+			if (pages.IsFinished) {
+				// Requested page doesn't exist
+				this.serverEvents.leaderboardData.fire(player, {
+					...emptyResponse,
+					page: clampedPage,
+				});
+				return;
+			}
+			const [advOk] = pcall(() => pages.AdvanceToNextPageAsync());
+			if (!advOk) {
+				this.serverEvents.leaderboardData.fire(player, {
+					...emptyResponse,
+					page: clampedPage,
+				});
+				return;
+			}
+		}
+
+		// Build entries from current page
+		const entries: LeaderboardEntry[] = [];
+		let rank = (clampedPage - 1) * LEADERBOARD_PAGE_SIZE + 1;
+		const playerKey = `${player.UserId}`;
+		let foundSelf = false;
+
 		for (const entry of pages.GetCurrentPage()) {
 			const data = entry as { key: string; value: number };
 			const userId = tonumber(data.key);
-			let playerName = `Player${userId}`;
-			if (userId) {
-				const [nameOk, name] = pcall(() =>
-					Players.GetNameFromUserIdAsync(userId),
-				);
-				if (nameOk && name) playerName = name;
-			}
-			entries.push({ rank, name: playerName, points: data.value });
+			const isSelf = data.key === playerKey;
+			if (isSelf) foundSelf = true;
+
+			entries.push({
+				rank,
+				name: userId ? this.resolvePlayerName(userId) : `Player?`,
+				points: data.value,
+				isYou: isSelf,
+			});
 			rank++;
 		}
 
-		this.serverEvents.leaderboardData.fire(player, tab, entries);
+		const hasNextPage = !pages.IsFinished && clampedPage < MAX_PAGE;
+
+		// "Your rank" lookup: compute on page 1 or cache miss, cache for other pages
+		let yourEntry: LeaderboardEntry | undefined;
+		if (foundSelf) {
+			yourEntry = entries.find((e) => e.isYou);
+			// Cache when found on page, so page 2+ can use it
+			if (yourEntry) this.setYourRankCache(player.UserId, tab, yourEntry);
+		} else {
+			const cached = this.getCachedYourRank(player.UserId, tab);
+			if (cached !== "miss") {
+				yourEntry = cached;
+			} else if (clampedPage === 1) {
+				yourEntry = this.lookupYourRank(player, store, tab);
+			} else {
+				// Cache miss on page 2+: fall back to lookup rather than showing "Unranked"
+				yourEntry = this.lookupYourRank(player, store, tab);
+			}
+		}
+
+		this.serverEvents.leaderboardData.fire(player, {
+			tab,
+			entries,
+			yourEntry,
+			page: clampedPage,
+			requestId,
+			hasNextPage,
+		});
+	}
+
+	/** Scan up to LEADERBOARD_MAX_SCAN entries to find the player's rank. Caches result. */
+	private lookupYourRank(
+		player: Player,
+		store: OrderedDataStore,
+		tab: LeaderboardTab,
+	): LeaderboardEntry | undefined {
+		// Check cache first
+		const cached = this.getCachedYourRank(player.UserId, tab);
+		if (cached !== "miss") return cached;
+
+		const playerKey = `${player.UserId}`;
+		const [ok, pages] = pcall(() =>
+			store.GetSortedAsync(false, LEADERBOARD_MAX_SCAN),
+		);
+		if (!ok || !pages) {
+			// Transient error: don't cache as unranked
+			return undefined;
+		}
+
+		let rank = 1;
+		let scanCompleted = false;
+		// Scan through pages, capped at LEADERBOARD_MAX_SCAN entries
+		while (true) {
+			for (const entry of pages.GetCurrentPage()) {
+				if (rank > LEADERBOARD_MAX_SCAN) {
+					scanCompleted = true;
+					break;
+				}
+				const data = entry as { key: string; value: number };
+				if (data.key === playerKey) {
+					const result: LeaderboardEntry = {
+						rank,
+						name: this.resolvePlayerName(player.UserId),
+						points: data.value,
+						isYou: true,
+					};
+					this.setYourRankCache(player.UserId, tab, result);
+					return result;
+				}
+				rank++;
+			}
+			if (scanCompleted) break;
+			if (pages.IsFinished) {
+				scanCompleted = true;
+				break;
+			}
+			const [advOk] = pcall(() => pages.AdvanceToNextPageAsync());
+			if (!advOk) break; // Transient error: don't cache
+		}
+
+		// Only cache as unranked if the scan completed successfully
+		if (scanCompleted) {
+			this.setYourRankCache(player.UserId, tab, undefined);
+		}
+		return undefined;
+	}
+
+	private yourRankCacheKey(userId: number, tab: LeaderboardTab): string {
+		const weekKey = tab === "weeklyHachi" ? this.weeklyStoreKey : "allTime";
+		return `${userId}_${tab}_${weekKey}`;
+	}
+
+	/**
+	 * Returns the cached entry, or `"miss"` if no valid cache exists.
+	 * This distinguishes "player is unranked (cached as undefined)" from "no cache entry".
+	 */
+	private getCachedYourRank(
+		userId: number,
+		tab: LeaderboardTab,
+	): LeaderboardEntry | undefined | "miss" {
+		const key = this.yourRankCacheKey(userId, tab);
+		const cached = this.yourRankCache.get(key);
+		if (cached && os.clock() < cached.expiry) return cached.entry;
+		return "miss";
+	}
+
+	private setYourRankCache(
+		userId: number,
+		tab: LeaderboardTab,
+		entry: LeaderboardEntry | undefined,
+	) {
+		const key = this.yourRankCacheKey(userId, tab);
+		this.yourRankCache.set(key, { entry, expiry: os.clock() + YOUR_RANK_TTL });
+	}
+
+	private clearYourRankCache(userId: number) {
+		const prefix = `${userId}_`;
+		for (const [key] of this.yourRankCache) {
+			if (key.sub(1, prefix.size()) === prefix) {
+				this.yourRankCache.delete(key);
+			}
+		}
 	}
 
 	/**

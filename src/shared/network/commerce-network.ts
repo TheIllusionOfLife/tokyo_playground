@@ -6,6 +6,7 @@
 import {
 	ItemCategory,
 	ItemId,
+	LeaderboardResponse,
 	LeaderboardTab,
 	MissionId,
 	MissionProgressData,
@@ -45,10 +46,7 @@ export interface CommerceServerToClient {
 	): void;
 	spinResult(reward: number, success: boolean): void;
 	spinStatusSync(available: boolean): void;
-	leaderboardData(
-		tab: LeaderboardTab,
-		entries: { rank: number; name: string; points: number }[],
-	): void;
+	leaderboardData(response: LeaderboardResponse): void;
 	dailyLoginBonus(points: number): void;
 }
 
@@ -62,5 +60,9 @@ export interface CommerceClientToServer {
 	requestVehicleEquip(vehicleId: VehicleId): void;
 	requestPreview(itemId: ItemId): void;
 	requestSpin(): void;
-	requestLeaderboard(tab: LeaderboardTab): void;
+	requestLeaderboard(
+		tab: LeaderboardTab,
+		page: number,
+		requestId: number,
+	): void;
 }
