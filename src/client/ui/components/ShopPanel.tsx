@@ -461,7 +461,7 @@ export function ShopPanel() {
 					{/* Centered shop card */}
 					<frame
 						key="ShopOverlay"
-						Size={new UDim2(0.75, 0, 0.8, 0)}
+						Size={new UDim2(0.75, 0, 1, -10)}
 						Position={new UDim2(0.5, 0, 0.5, 0)}
 						AnchorPoint={new Vector2(0.5, 0.5)}
 						BackgroundColor3={Color3.fromRGB(20, 20, 40)}

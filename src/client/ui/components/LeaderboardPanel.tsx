@@ -192,7 +192,7 @@ export function LeaderboardPanel() {
 				>
 					<frame
 						key="LeaderboardOverlay"
-						Size={new UDim2(0, 280, 0, 420)}
+						Size={new UDim2(0.55, 0, 1, -10)}
 						Position={new UDim2(0.5, 0, 0.5, 0)}
 						AnchorPoint={new Vector2(0.5, 0.5)}
 						BackgroundColor3={COLOR_PANEL_BG}
@@ -449,6 +449,7 @@ export function LeaderboardPanel() {
 							ZIndex={19}
 						>
 							<uilistlayout
+								SortOrder={Enum.SortOrder.LayoutOrder}
 								FillDirection={Enum.FillDirection.Horizontal}
 								Padding={new UDim(0, 4)}
 								HorizontalAlignment={Enum.HorizontalAlignment.Center}
