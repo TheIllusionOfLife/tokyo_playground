@@ -407,6 +407,11 @@ export function findCatalogItem(itemId: ItemId) {
 	);
 }
 
+// Leaderboard
+export const LEADERBOARD_PAGE_SIZE = 10;
+export const LEADERBOARD_AUTO_REFRESH = 30; // seconds, client-side silent refresh
+export const LEADERBOARD_MAX_SCAN = 100; // max entries scanned for "your rank" lookup
+
 // Shop
 export const SHOP_CATALOG_COOLDOWN = 2; // seconds between catalog requests
 

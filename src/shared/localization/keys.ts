@@ -214,6 +214,10 @@ export const L_ZONE_HIKARIE = "zone_Hikarie";
 export const L_ZONE_MIYASHITA_PARK = "zone_Miyashita Park";
 export const L_ZONE_SHIBUYA_STATION = "zone_Shibuya Station";
 
-// Leaderboard tabs
+// Leaderboard
 export const L_LEADERBOARD_ALL_TIME = "leaderboard_all_time";
 export const L_LEADERBOARD_WEEKLY_HACHI = "leaderboard_weekly_hachi";
+export const L_LEADERBOARD_LOADING = "leaderboard_loading";
+export const L_LEADERBOARD_NO_DATA = "leaderboard_no_data";
+export const L_LEADERBOARD_YOUR_RANK = "leaderboard_your_rank";
+export const L_LEADERBOARD_UNRANKED = "leaderboard_unranked";

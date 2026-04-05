@@ -234,7 +234,11 @@ export const JA: Record<string, string> = {
 	"zone_Miyashita Park": "宮下パーク",
 	"zone_Shibuya Station": "渋谷駅",
 
-	// Leaderboard tabs
+	// Leaderboard
 	leaderboard_all_time: "歴代",
 	leaderboard_weekly_hachi: "今週のハチ",
+	leaderboard_loading: "読み込み中...",
+	leaderboard_no_data: "まだデータがありません",
+	leaderboard_your_rank: "あなたの順位",
+	leaderboard_unranked: "ランク外",
 };
